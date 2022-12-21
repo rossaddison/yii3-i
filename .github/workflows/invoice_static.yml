@@ -1,6 +1,3 @@
-defaults:
-  run:
-    working-directory:
 on:
   pull_request:
     paths-ignore:
