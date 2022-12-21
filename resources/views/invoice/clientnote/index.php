@@ -1,0 +1,75 @@
+<?php
+
+declare(strict_types=1);
+
+use Yiisoft\Html\Html;
+use Yiisoft\Yii\Bootstrap5\Alert;
+use Yiisoft\Yii\Bootstrap5\Modal;
+
+/**
+ * @var \App\Invoice\Entity\ClientNote $clientnote
+ * @var \Yiisoft\Router\UrlGeneratorInterface $urlGenerator
+ * @var bool $canEdit
+ * @var string $id
+ * @var \Yiisoft\Session\Flash\FlashInterface $flash 
+ */
+
+?>
+<h1>Clientnote</h1>
+<?php
+        $danger = $flash->get('danger');
+        if ($danger != null) {
+            $alert =  Alert::widget()
+            ->body($danger)
+            ->options(['class' => ['alert-danger shadow'],])
+            ->render();
+            echo $alert;
+        }
+        $info = $flash->get('info');
+        if ($info != null) {
+            $alert =  Alert::widget()
+            ->body($info)
+            ->options(['class' => ['alert-info shadow'],])
+            ->render();
+            echo $alert;
+        }
+        $warning = $flash->get('warning');
+        if ($warning != null) {
+            $alert =  Alert::widget()
+            ->body($warning)
+            ->options(['class' => ['alert-warning shadow'],])
+            ->render();
+            echo $alert;
+        }
+        
+
+?>
+<div>
+<?php
+    if ($canEdit) {
+        echo Html::a('Add',
+        $urlGenerator->generate('clientnote/add'),
+            ['class' => 'btn btn-outline-secondary btn-md-12 mb-3']
+     );
+    //list all the items
+    foreach ($clientnotes as $clientnote){
+      echo Html::br();
+      $label = $clientnote->getId() . " ";
+      echo Html::label($label);
+      echo Html::a('Edit',
+      $urlGenerator->generate('clientnote/edit', ['id' => $clientnote->getId()]),
+            ['class' => 'btn btn-info btn-sm ms-2']
+          );
+      echo Html::a('View',
+      $urlGenerator->generate('clientnote/view', ['id' => $clientnote->getId()]),
+      ['class' => 'btn btn-warning btn-sm ms-2']
+             );
+       //modal delete button
+      echo Html::a('Delete',
+      $urlGenerator->generate('clientnote/delete', ['id' => $clientnote->getId()]),
+            ['class' => 'btn btn-danger btn-sm ms-2', 'onclick'=>"return confirm('".$s->trans('delete').'?'."')" ]
+          );
+    }
+    }
+?>
+</div>

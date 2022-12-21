@@ -1,0 +1,23 @@
+*
+!.gitignore
+
+# Core
+!core
+!core/**/*
+
+# DatePicker
+!i18nAsset
+!i18nAsset/**/*
+
+# Base themes
+!invoice
+!invoice/**/*
+!jquery-ui-1.13.2
+!jquery-ui-1.13.2/**/*
+!kartik-v
+!kartik-v/**/*
+!rebuild-1.13
+!rebuild-1.13/**/*
+
+#InvoiceAsset
+!InvoiceAsset.php

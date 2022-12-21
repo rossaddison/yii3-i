@@ -1,0 +1,404 @@
+<?php
+
+declare(strict_types=1); 
+
+namespace App\Invoice\Quote;
+
+use App\Invoice\Entity\Quote;
+use App\Invoice\Setting\SettingRepository as SR;
+use App\Invoice\Group\GroupRepository as GR;
+use Cycle\ORM\Select;
+use Throwable;
+use Cycle\Database\Injection\Parameter;
+use Yiisoft\Data\Reader\DataReaderInterface;
+use Yiisoft\Data\Reader\Sort;
+use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
+use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
+
+final class QuoteRepository extends Select\Repository
+{
+private EntityWriter $entityWriter;
+
+    public function __construct(Select $select, EntityWriter $entityWriter)
+    {
+        $this->entityWriter = $entityWriter;
+        parent::__construct($select);
+    }
+    
+    /**
+     * Get Quotes with filter
+     *
+     * @psalm-return DataReaderInterface<int, Quote>
+     */
+    public function findAllWithStatus(int $status_id) : DataReaderInterface
+    {
+        if (($status_id) > 0) {
+        $query = $this->select()
+                ->load(['client','group','user'])
+                ->where(['status_id' => $status_id]);  
+         return $this->prepareDataReader($query);
+       } else {
+         return $this->findAllPreloaded();  
+       }       
+    }
+    
+    /**
+     * Get quotes  without filter
+     *
+     * @psalm-return DataReaderInterface<int,Quote>
+     */
+    public function findAllPreloaded(): DataReaderInterface
+    {
+        $query = $this->select()
+                ->load(['client','group','user']);
+        return $this->prepareDataReader($query);
+    }
+    
+    /**
+     * @psalm-return DataReaderInterface<int, Quote>
+     */
+    public function getReader(): DataReaderInterface
+    {
+        return (new EntityReader($this->select()))
+            ->withSort($this->getSort());
+    }
+    
+    private function getSort(): Sort
+    {
+        // Provide the latest quote at the top of the list and order additionally according to status
+        return Sort::only(['id', 'status'])->withOrder(['id' => 'desc', 'status' => 'asc']);
+    }
+    
+    /**
+     * @throws Throwable
+     */
+    public function save(Quote $quote): void
+    {
+        $this->entityWriter->write([$quote]);
+    }
+    
+    /**
+     * @throws Throwable
+     */
+    public function delete(Quote $quote): void
+    {
+        $this->entityWriter->delete([$quote]);
+    }
+    
+    private function prepareDataReader(Select $query): EntityReader
+    {
+        return (new EntityReader($query))->withSort(
+            Sort::only(['id'])
+                ->withOrder(['id' => 'desc'])
+        );
+    }
+    
+    public function repoQuoteUnLoadedquery(string $id): object|null    {
+        $query = $this->select()
+                      ->where(['id' => $id]);
+        return  $query->fetchOne() ?: null;        
+    }
+    
+    public function repoQuoteLoadedquery(string $id): object|null    {
+        $query = $this->select()
+                      ->load(['client','group','user']) 
+                      ->where(['id' => $id]);
+        return  $query->fetchOne() ?: null;        
+    }
+    
+    /**
+     * 
+     * @param string|null $quote_id
+     * @param int $status_id
+     * @return Quote|null
+     */
+    public function repoQuoteStatusquery(string|null $quote_id, int $status_id) : ?Quote {
+        $query = $this->select()->where(['id' => $quote_id])
+                                ->where(['status_id'=>$status_id]);
+        return  $query->fetchOne() ?: null;        
+    }
+    
+    /**
+     * @psalm-param 1 $status_id
+     *
+     * @param null|string $quote_id
+     */
+    public function repoQuoteStatuscount(string|null $quote_id, int $status_id): int {
+        $count = $this->select()->where(['id' => $quote_id])
+                                ->where(['status_id'=>$status_id])
+                                ->count();
+        return  $count;      
+    }
+        
+    public function repoUrl_key_guest_loaded(string $url_key) : ?Quote {
+        $query = $this->select()
+                       ->load('client') 
+                       ->where(['url_key' => $url_key]);
+        return  $query->fetchOne() ?: null;        
+    }
+    
+    public function repoUrl_key_guest_count(string $url_key) : int {
+        $count = $this->select()
+                      ->where(['url_key' => $url_key])
+                      ->count();
+        return  $count;        
+    }
+    
+    /**
+     * 
+     * @param string $quote_id
+     * @param array $user_client
+     * @return int
+     */
+    public function repoClient_guest_count(string $quote_id, array $user_client = []) : int {
+        $count = $this->select()
+                      ->where(['id' => $quote_id])
+                      ->andWhere(['client_id'=>['in'=> new Parameter($user_client)]])
+                      ->count();
+        return  $count;        
+    }
+    
+    /**
+     * @psalm-return DataReaderInterface<int, Quote>
+     */
+    public function repoGuest_Clients_Sent_Viewed_Approved_Rejected_Cancelled(int $status_id, array $user_client = []) : DataReaderInterface {
+        // Get specific statuses
+        if ($status_id > 0) {
+            $query = $this->select()
+                    ->where(['status_id'=>$status_id])
+                    ->andWhere(['client_id'=>['in'=> new Parameter($user_client)]]);
+            return $this->prepareDataReader($query);
+       } else
+       // Get all the quotes that are either sent, viewed, approved, or rejected, or cancelled
+       {
+            $query = $this->select()
+                    // sent = 2, viewed = 3, approved = 4, rejected = 5, cancelled = 6
+                    ->where(['client_id'=>['in'=> new Parameter($user_client)]])                      
+                    ->andWhere(['status_id'=>['in'=> new Parameter([2,3,4,5,6])]]);
+            return $this->prepareDataReader($query);
+       }
+    }
+        
+    /**
+     * @return array
+     */
+    public function getStatuses(SR $s)
+    {
+        return array(
+            '1' => array(
+                'label' => $s->trans('draft'),
+                'class' => 'draft',
+                'href' => 1
+            ),
+            '2' => array(
+                'label' => $s->trans('sent'),
+                'class' => 'sent',
+                'href' => 2
+            ),
+            '3' => array(
+                'label' => $s->trans('viewed'),
+                'class' => 'viewed',
+                'href' => 3
+            ),
+            '4' => array(
+                'label' => $s->trans('approved'),
+                'class' => 'approved',
+                'href' => 4
+            ),
+            '5' => array(
+                'label' => $s->trans('rejected'),
+                'class' => 'rejected',
+                'href' => 5
+            ),
+            '6' => array(
+                'label' => $s->trans('canceled'),
+                'class' => 'canceled',
+                'href' => 6
+            )
+        );       
+    }
+    
+    /**
+     * @param string $group_id
+     * @return mixed
+     */
+    public function get_quote_number(string $group_id, GR $gR) : mixed
+    {   
+        return $gR->generate_number((int)$group_id);
+    }
+    
+    /**
+     * @psalm-return Select<object>
+     */
+    public function is_draft(): Select
+    {
+        $query = $this->select()->where(['status_id' => 1]);
+        return $query;
+    }
+   
+    /**
+     * @psalm-return Select<object>
+     */
+    public function is_sent(): Select
+    {
+        $query = $this->select()->where(['status_id' => 2]);
+        return $query;
+    }
+
+    /**
+     * @psalm-return Select<object>
+     */
+    public function is_viewed(): Select
+    {
+        $query = $this->select()->where(['status_id' => 3]);
+        return $query;
+    }
+
+    /**
+     * @psalm-return Select<object>
+     */
+    public function is_approved(): Select
+    {
+        $query = $this->select()->where(['status_id' => 4]);
+        return $query;
+    }
+
+    /**
+     * @psalm-return Select<object>
+     */
+    public function is_rejected(): Select
+    {
+        $query = $this->select()->where(['status_id' => 5]);
+        return $query;
+    }
+
+    /**
+     * @psalm-return Select<object>
+     */
+    public function is_canceled(): Select
+    {
+        $query = $this->select()->where(['status_id' => 6]);
+        return $query;
+    }
+
+    /**
+     * Used by guest; includes only sent and viewed
+     *
+     * @psalm-return Select<object>
+     */
+    public function is_open(): Select
+    {
+        $query = $this->select()->where(['status_id'=>['in'=>new Parameter([2,3])]]);
+        return $query;
+    }
+
+    /**
+     * @psalm-return Select<object>
+     */
+    public function guest_visible(): Select
+    {
+        $query = $this->select()->where(['status_id'=>['in'=>new Parameter([2,3,4,5])]]);
+        return $query ;
+    }
+
+    /**
+     * @param $client_id
+     *
+     * @psalm-return Select<object>
+     */
+    public function by_client($client_id): Select
+    {
+        $query = $this->select()
+                      ->where(['client_id'=>$client_id]);
+        return $query;
+    }
+    
+    /**
+     * @param $client_id
+     * @param $status_id
+     * @psalm-return DataReaderInterface<int, Quote>
+     */
+    public function by_client_quote_status(int $client_id, int $status_id): DataReaderInterface
+    {
+        $query = $this->select()
+                      ->where(['client_id' => $client_id])
+                      ->andWhere(['status_id' => $status_id]);
+        return $this->prepareDataReader($query);
+    }
+    
+    /**
+     * 
+     * @param int $client_id
+     * @param int $status_id
+     * @return int
+     */
+    public function by_client_quote_status_count(int $client_id, int $status_id): int
+    {
+        $count = $this->select()
+                      ->where(['client_id' => $client_id])
+                      ->andWhere(['status_id' => $status_id])
+                      ->count();        
+        return $count; 
+    }
+
+    /**
+     * @param $url_key
+     *
+     * @psalm-return Select<object>
+     */
+    public function approve_or_reject_quote_by_key($url_key): Select{
+        $query = $this->select()
+                      ->where(['status_id'=>['in'=>new Parameter([2,3,4,5])]])
+                      ->where(['url_key'=>$url_key]);
+        return $query;
+    }
+
+    /**
+     * @param $id
+     *
+     * @psalm-return Select<object>
+     */
+    public function approve_or_reject_quote_by_id($id): Select{
+        $query = $this->select()
+                      ->where(['status_id'=>['in'=>new Parameter([2,3,4,5])]])
+                      ->where(['id'=>$id]);
+        return $query;
+    }
+    
+    /**
+     * @param null|string $quote_id
+     */
+    public function repoCount(string|null $quote_id) : int {
+        $count = $this->select()
+                      ->where(['id'=>$quote_id])
+                      ->count();
+        return $count;
+    }
+    
+    /**
+     * 
+     * @return int
+     */
+    public function repoCountAll() : int {
+        $count = $this->select()
+                      ->count();
+        return $count;
+    }
+    
+    public function repoCountByClient($client_id) : int {
+        $count = $this->select()
+                      ->where(['client_id'=>$client_id])  
+                      ->count();
+        return $count;
+    }
+    
+    /**
+     * @psalm-return DataReaderInterface<int,Quote>
+     */
+        
+    public function repoClient($client_id) : DataReaderInterface { 
+        $query = $this->select()
+                      ->where(['client_id' => $client_id]); 
+        return $this->prepareDataReader($query);
+    }
+}

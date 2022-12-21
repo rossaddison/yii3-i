@@ -1,0 +1,99 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\User;
+
+use Cycle\ORM\Select;
+use Throwable;
+use Yiisoft\Data\Reader\DataReaderInterface;
+use Yiisoft\Data\Reader\Sort;
+use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
+use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
+
+final class UserRepository extends Select\Repository
+{
+    public function __construct(private EntityWriter $entityWriter, Select $select)
+    {
+        parent::__construct($select);
+    }
+
+    /**
+     * @psalm-return DataReaderInterface<int, User>
+     */
+    public function getReader(): DataReaderInterface
+    {
+        return (new EntityReader($this->select()))->withSort($this->getSort());
+    }
+
+    private function getSort(): Sort
+    {
+        return Sort::only(['id', 'login'])->withOrder(['id' => 'asc']);
+    }
+
+    private function prepareDataReader(Select $query): EntityReader
+    {
+        return (new EntityReader($query))->withSort(
+            Sort::only(['id', 'login'])
+                ->withOrder([
+                             'id' => 'desc',
+                             'login' => 'desc'
+                ])
+        );
+    }
+    
+    /**
+     *
+     * @psalm-return DataReaderInterface<int, User>
+     */
+    public function findAllPreloaded(): DataReaderInterface
+    {
+        $query = $this->select();
+        return $this->prepareDataReader($query);
+    }
+
+    public function findAll(array $scope = [], array $orderBy = []): DataReaderInterface
+    {
+        return new EntityReader($this
+            ->select()
+            ->where($scope)
+            ->orderBy($orderBy));
+    }
+
+    /**
+     * @param string $id
+     *
+     * @return User|null
+     */
+    public function findById(string $id): ?User
+    {
+        return $this->findByPK($id);
+    }
+
+    public function findByLogin(string $login): ?User
+    {
+        return $this->findBy('login', $login);
+    }
+
+    public function findByLoginWithAuthIdentity(string $login): ?User
+    {
+        return $this
+            ->select()
+            ->where(['login' => $login])
+            ->load('identity')
+            ->fetchOne();
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function save(User $user): void
+    {
+        $this->entityWriter->write([$user]);
+    }
+
+    private function findBy(string $field, string $value): ?User
+    {
+        return $this->findOne([$field => $value]);
+    }
+}

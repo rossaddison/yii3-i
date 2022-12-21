@@ -1,0 +1,307 @@
+<?php
+
+declare(strict_types=1);
+
+use App\ViewInjection\CommonViewInjection;
+use App\ViewInjection\LayoutViewInjection;
+use App\ViewInjection\LinkTagsViewInjection;
+use App\ViewInjection\MetaTagsViewInjection;
+use Cycle\Database\Config\SQLite\FileConnectionConfig;
+use Cycle\Database\Config\SQLiteDriverConfig;
+use Yiisoft\Assets\AssetManager;
+use Yiisoft\Cookies\CookieMiddleware;
+use Yiisoft\Definitions\Reference;
+use Yiisoft\ErrorHandler\Middleware\ErrorCatcher;
+use Yiisoft\Form\Field\SubmitButton;
+use Yiisoft\Router\CurrentRoute;
+use Yiisoft\Router\Middleware\Router;
+use Yiisoft\Router\UrlGeneratorInterface;
+use Yiisoft\Session\SessionMiddleware;
+use Yiisoft\Translator\TranslatorInterface;
+use Yiisoft\User\Login\Cookie\CookieLoginMiddleware;
+use Yiisoft\Yii\Console\Application;
+use Yiisoft\Yii\Console\Command\Serve;
+use Yiisoft\Yii\Cycle\Schema\Conveyor\AttributedSchemaConveyor;
+use Yiisoft\Yii\Cycle\Schema\Provider\FromConveyorSchemaProvider;
+use Yiisoft\Yii\Cycle\Schema\Provider\PhpFileSchemaProvider;
+use Yiisoft\Yii\Middleware\Locale;
+use Yiisoft\Yii\Sentry\SentryMiddleware;
+use Yiisoft\Yii\View\CsrfViewInjection;
+
+// yii-invoice
+use App\Invoice\Setting\SettingRepository;
+use App\Invoice\Helpers\DateHelper;
+use Yiisoft\Session\SessionInterface;
+
+return [
+    'locale' => [
+        'locales' => ['en' => 'en-US', 'ru' => 'ru-RU', 'id' => 'id-ID', 'sk' => 'sk-SK'],
+        'ignoredRequests' => [
+            '/debug**',
+            '/inspect**',
+        ],
+    ],
+    'mailer' => [
+        'adminEmail' => 'admin@example.com',
+        'senderEmail' => 'sender@example.com',
+    ],
+    'middlewares' => [
+        ErrorCatcher::class,
+        SentryMiddleware::class,
+        SessionMiddleware::class,
+        CookieMiddleware::class,
+        CookieLoginMiddleware::class,
+        Locale::class,
+        Router::class,
+    ],
+
+    'yiisoft/aliases' => [
+        'aliases' => [
+            '@root' => dirname(__DIR__),
+            '@assets' => '@root/public/assets',
+            '@assetsUrl' => '@baseUrl/assets',
+            '@baseUrl' => '/',
+            '@messages' => '@resources/messages',
+            '@npm' => '@root/node_modules',
+            '@public' => '@root/public',
+            '@resources' => '@root/resources',
+            '@runtime' => '@root/runtime',
+            '@src' => '@root/src',
+            '@vendor' => '@root/vendor',
+            '@layout' => '@views/layout',
+            '@views' => '@resources/views',
+            // yii-invoice            
+            '@messages_invoice' => '@resources/messages/invoice',
+        ],
+    ],
+
+    'yiisoft/form' => [
+        'configs' => [
+            'default' => [
+                'containerClass' => 'form-floating mb-3',
+                'inputClass' => 'form-control',
+                'invalidClass' => 'is-invalid',
+                'validClass' => 'is-valid',
+                'template' => '{input}{label}{hint}{error}',
+                'labelClass' => 'floatingInput',
+                'errorClass' => 'fw-bold fst-italic',
+                'hintClass' => 'form-text',
+                'fieldConfigs' => [
+                    SubmitButton::class => [
+                        'buttonClass()' => ['btn btn-primary btn-lg mt-3'],
+                        'containerClass()' => ['d-grid gap-2 form-floating'],
+                    ],
+                ],
+            ],
+        ],
+    ],
+
+    'yiisoft/rbac-rules-container' => [
+        'rules' => require __DIR__ . '/rbac-rules.php',
+    ],
+
+    'yiisoft/router-fastroute' => [
+        'enableCache' => false,
+    ],
+
+    'yiisoft/translator' => [
+        'locale' => 'en',
+        'fallbackLocale' => 'en',
+        'defaultCategory' => 'app',
+        'categorySources' => [
+            // You can add categories from your application and additional modules using `Reference::to` below
+            // Reference::to(ApplicationCategorySource::class),
+            Reference::to('translation.app'),
+            
+            // yii-invoice - Refer to config/common/translator.php
+            Reference::to('translation.invoice'),
+        ],
+    ],
+
+    'yiisoft/view' => [
+        'basePath' => '@views',
+        'parameters' => [
+            'assetManager' => Reference::to(AssetManager::class),
+            'urlGenerator' => Reference::to(UrlGeneratorInterface::class),
+            'currentRoute' => Reference::to(CurrentRoute::class),
+            'translator' => Reference::to(TranslatorInterface::class),
+            // yii-invoice - Below parameters are specifically used in views/layout/invoice
+            's' => Reference::to(SettingRepository::class),
+            'session' => Reference::to(SessionInterface::class),
+            'datehelper' => Reference::to(DateHelper::class),
+            
+        ],
+    ],
+
+    'yiisoft/cookies' => [
+        'secretKey' => '53136271c432a1af377c3806c3112ddf',
+    ],
+
+    'yiisoft/yii-view' => [
+        'viewPath' => '@views',
+        'layout' => '@views/layout/main',
+        'injections' => [
+            Reference::to(CommonViewInjection::class),
+            Reference::to(CsrfViewInjection::class),
+            Reference::to(LayoutViewInjection::class),
+            Reference::to(LinkTagsViewInjection::class),
+            Reference::to(MetaTagsViewInjection::class),
+        ],
+    ],
+
+    'yiisoft/yii-console' => [
+        'name' => Application::NAME,
+        'version' => Application::VERSION,
+        'autoExit' => false,
+        'commands' => [
+            'serve' => Serve::class,
+            'user/create' => App\User\Console\CreateCommand::class,
+            'user/assignRole' => App\User\Console\AssignRoleCommand::class,
+            'fixture/add' => App\Command\Fixture\AddCommand::class,
+            'fixture/schema/clear' => App\Command\Fixture\SchemaClearCommand::class,
+            'router/list' => App\Command\Router\ListCommand::class,
+            'translator/translate' => App\Command\Translation\TranslateCommand::class,
+        ],
+    ],
+
+    'yiisoft/yii-cycle' => [
+        // DBAL config
+        'dbal' => [
+            // SQL query logger. Definition of Psr\Log\LoggerInterface
+            // For example, \Yiisoft\Yii\Cycle\Logger\StdoutQueryLogger::class
+            'query-logger' => null,
+            // Default database
+            'default' => 'default',
+            'aliases' => [],
+            'databases' => [
+                //'default' => ['connection' => 'sqlite'],
+                
+                // yii-invoice
+                'default' => ['connection' => 'mysql'],
+            ],
+            'connections' => [
+                // 'sqlite' => new SQLiteDriverConfig(
+                //     connection: new FileConnectionConfig(
+                //        database: 'runtime/database.db'
+                //    )
+                //),
+                
+                // yii-invoice
+                'mysql'=> new \Cycle\Database\Config\MySQLDriverConfig(
+                    connection: 
+                          new \Cycle\Database\Config\MySQL\DsnConnectionConfig('mysql:host=localhost;dbname=yii3-i', 
+                                                                               'root', 
+                                                                               ''),
+                          driver: \Cycle\Database\Driver\MySQL\MySQLDriver::class,
+                ), 
+            ],
+        ],
+
+        // Cycle migration config
+        'migrations' => [
+            'directory' => '@root/migrations',
+            'namespace' => 'App\\Migration',
+            'table' => 'migration',
+            'safe' => false,
+        ],
+
+        /**
+         * SchemaProvider list for {@see \Yiisoft\Yii\Cycle\Schema\Provider\Support\SchemaProviderPipeline}
+         * Array of classname and {@see SchemaProviderInterface} object.
+         * You can configure providers if you pass classname as key and parameters as array:
+         * [
+         *     SimpleCacheSchemaProvider::class => [
+         *         'key' => 'my-custom-cache-key'
+         *     ],
+         *     FromFilesSchemaProvider::class => [
+         *         'files' => ['@runtime/cycle-schema.php']
+         *     ],
+         *     FromConveyorSchemaProvider::class => [
+         *         'generators' => [
+         *              Generator\SyncTables::class, // sync table changes to database
+         *          ]
+         *     ],
+         * ]
+         */
+        'schema-providers' => [
+            // Uncomment next line to enable a Schema caching in the common cache
+            // \Yiisoft\Yii\Cycle\Schema\Provider\SimpleCacheSchemaProvider::class => ['key' => 'cycle-orm-cache-key'],
+
+            // Store generated Schema in the file
+            PhpFileSchemaProvider::class => [
+                'mode' => PhpFileSchemaProvider::MODE_WRITE_ONLY,
+                // yii-invoice
+            //    'mode' => PhpFileSchemaProvider::MODE_READ_AND_WRITE,
+                'file' => 'runtime/schema.php',
+            ],
+
+            //PhpFileSchemaProvider::class => [
+            //    'mode' => PhpFileSchemaProvider::MODE_WRITE_ONLY,
+            //    'file' => 'runtime/schema.php',
+            //],
+            FromConveyorSchemaProvider::class => [
+                'generators' => [
+                    Cycle\Schema\Generator\SyncTables::class, // sync table changes to database
+                ],
+            ],
+        ],
+
+        /**
+         * Config for {@see \Yiisoft\Yii\Cycle\Schema\Conveyor\AnnotatedSchemaConveyor}
+         * Annotated entity directories list.
+         * {@see \Yiisoft\Aliases\Aliases} are also supported.
+         */
+        'entity-paths' => [
+            '@src',
+        ],
+        'conveyor' => AttributedSchemaConveyor::class,
+    ],
+    'yiisoft/yii-swagger' => [
+        'annotation-paths' => [
+            '@src/Controller',
+            '@src/User/Controller',
+        ],
+    ],
+    'yiisoft/yii-sentry' => [
+        'handleConsoleErrors' => false, // Add to disable console errors.
+        'options' => [
+            // Set to `null` to disable error sending (note that in case of web application errors it only prevents
+            // sending them via HTTP). To disable interactions with Sentry SDK completely, remove middleware and the
+            // rest of the config.
+            'dsn' => $_ENV['SENTRY_DSN'] ?? null,
+            'environment' => $_ENV['YII_ENV'] ?? null, // Add to separate "production" / "staging" environment errors.
+        ],
+    ],
+    
+    //yii-invoice
+    // Additional setup params for yii-invoice below
+    'yiisoft/yii-debug' => ['enabled'=>false],         
+       
+    'yiisoft/yii-debug-api' => [
+        'enabled' => false,
+        'allowedIPs' => ['127.0.0.1', '::1'],
+        'allowedHosts' => [],
+    ],
+    
+    'yiisoft/mailer' => [
+        'messageBodyTemplate' => [
+            'viewPath' => '@src/Contact/mail',
+        ],
+        'fileMailer' => [
+            'fileMailerStorage' => '@runtime/mail',
+        ],
+        'useSendmail' => false,
+        'writeToFiles' => false,
+    ],
+    
+    'symfony/mailer' => [
+        'esmtpTransport' => [
+            'scheme' => 'smtp', // "smtps": using TLS, "smtp": without using TLS.
+            'host' => 'mail.yourinternet.com',
+            'port' => 25,
+            'username' => 'your.name@yourinternet.com',
+            'password' => 'yourpassword',
+            'options' => [], // See: https://symfony.com/doc/current/mailer.html#tls-peer-verification
+        ],
+    ],  
+];
