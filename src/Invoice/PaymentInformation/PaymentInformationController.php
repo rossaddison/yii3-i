@@ -487,7 +487,7 @@ final class PaymentInformationController
                     'paymentMethodNonce' => $body['payment_method_nonce'] ?? '',
                     //'deviceData' => $deviceDataFromTheClient,
                     'options' => [
-                      'submitForSettlement' => True
+                      'submitForSettlement' => true
                     ]
                 ]);
                 if ($result->success) {
