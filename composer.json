@@ -99,7 +99,7 @@
         "yiisoft/yii-runner": "*",
         "league/omnipay": "^3.0",
         "omnipay/stripe": "*",
-        
+        "omnipay/common": "*",
         "stripe/stripe-php": "*",
         "amzn/amazon-pay-api-sdk-php": "*",        
         "braintree/braintree_php" : "6.9.1"
