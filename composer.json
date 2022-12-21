@@ -102,7 +102,7 @@
         "omnipay/common": "*",
         "stripe/stripe-php": "*",
         "amzn/amazon-pay-api-sdk-php": "*",        
-        "braintree/braintree_php" : "6.9.1"
+        "braintree/braintree_php" : "6.10.0"
     },
     "require-dev": {
         "codeception/c3": "^2.6",
