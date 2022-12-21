@@ -90,6 +90,7 @@
         
         "rossaddison/mpdf": "*",        
         "ext-gd": "*",
+        "ext-openssl": "*",
         "yiisoft/arrays": "*",
         "yiisoft/files": "*",
         "yiisoft/json": "*",
