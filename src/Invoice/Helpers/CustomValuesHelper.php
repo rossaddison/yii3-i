@@ -288,7 +288,7 @@ Class CustomValuesHelper {
                     break;
                 case 'BOOLEAN':
                     ?>
-                    <label><?php echo ($this->form_value($entity_custom_values,$custom_field->getId()) ? $this->s->trans('true'): $this->s-trans('false')); ?></label><br><br>   
+                    <label><?php echo ($this->form_value($entity_custom_values,$custom_field->getId()) ? $this->s->trans('true'): $this->s->trans('false')); ?></label><br><br>   
                         <?php
                     break;
                 case 'NUMBER':
