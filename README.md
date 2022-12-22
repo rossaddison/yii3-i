@@ -7,4 +7,5 @@ An invoicing system using Yii3 Demo's composer.json with additions.  The databas
 
 Currently 3 payment gateways have been introduced namely Amazon Pay, Braintree, and Stripe. 
 
-[![Yii2](https://img.shields.io/badge/Powered_by-Yii_Framework-green.svg?style=flat)](https://www.yiiframework.com/) [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause) ![stable](https://img.shields.io/static/v1?label=stable&message=1.0.1&color=9cf)  ![Downloads](https://img.shields.io/static/v1?label=Downloads/week&message=185&color=9cf)
+[![Yii2](https://img.shields.io/badge/Powered_by-Yii_Framework-green.svg?style=flat)](https://www.yiiframework.com/) [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause) ![stable](https://img.shields.io/static/v1?label=stable&message=1.0.1&color=9cf)  ![Downloads](https://img.shields.io/static/v1?label=Downloads/week&message=185&color=9cf)  ![Build](https://img.shields.io/static/v1?label=Build&message=passing&color=66ff00)
+
