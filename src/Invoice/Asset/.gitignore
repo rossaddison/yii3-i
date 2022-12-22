@@ -16,8 +16,11 @@
 !jquery-ui-1.13.2/**/*
 !kartik-v
 !kartik-v/**/*
+!pciAsset/**/*
 !rebuild-1.13
 !rebuild-1.13/**/*
-
+!stripe/**/*
 #InvoiceAsset
 !InvoiceAsset.php
+!MonospaceAsset
+!ReportAsset
