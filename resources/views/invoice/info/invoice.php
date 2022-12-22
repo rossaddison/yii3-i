@@ -4,7 +4,7 @@
         as a test platform for WAMP and also Ubuntu 22.04 LTS for LAMP.</b>
 </p>
 <p><b>To Do's - Longer Term Goals</b></p>
-<p>1. <s>Integration of Payment Gateways</s>PCI Compliant Stripe and Amazon Pay have been introduced.</p>
+<p>1. <s>Integration of Payment Gateways</s>PCI Compliant Stripe, Amazon Pay, and Braintree have been introduced.</p>
 <p>2. Accountant Role with the ability of an accountant/bookkeeper to record payments against invoices.</p>
 <p>3. Include a <b>Company Private Detail</b> specific logo on an invoice.</p>
 <p>4. Acceptance Tests for Invoice</p>

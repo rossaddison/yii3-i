@@ -100,9 +100,9 @@
         "league/omnipay": "^3.0",
         "omnipay/stripe": "*",
         "omnipay/common": "*",
-        "stripe/stripe-php": "*",
-        "amzn/amazon-pay-api-sdk-php": "*",        
-        "braintree/braintree_php" : "6.9.1"
+        "stripe/stripe-php": "10.2.0",
+        "amzn/amazon-pay-api-sdk-php": "2.4.0",        
+        "braintree/braintree_php" : "6.10.0" 
     },
     "require-dev": {
         "codeception/c3": "^2.6",
@@ -115,7 +115,7 @@
         "roave/security-advisories": "dev-master",        
         "roave/better-reflection":"^6.5",
         "spatie/phpunit-watcher": "^1.23",
-        "vimeo/psalm": "^4.3",
+        "vimeo/psalm": "^5.4",
         "yiisoft/translator-extractor": "^1.0",
         "yiisoft/yii-debug-viewer": "^3.0@dev",
         "yiisoft/yii-gii": "^3.0@dev",
