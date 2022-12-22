@@ -115,7 +115,7 @@
         "roave/security-advisories": "dev-master",        
         "roave/better-reflection":"^6.5",
         "spatie/phpunit-watcher": "^1.23",
-        "vimeo/psalm": "^5.4",
+        "vimeo/psalm": "^4.3",
         "yiisoft/translator-extractor": "^1.0",
         "yiisoft/yii-debug-viewer": "^3.0@dev",
         "yiisoft/yii-gii": "^3.0@dev",
