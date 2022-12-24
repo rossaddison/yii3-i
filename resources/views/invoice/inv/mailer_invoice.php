@@ -6,7 +6,6 @@ use Yiisoft\Form\Field;
 use Yiisoft\Html\Html;
 use Yiisoft\Html\Tag\Form;
 use Yiisoft\Html\Tag\Input;
-use Yiisoft\VarDumper\VarDumper;
 
 /**
  * @var \Yiisoft\View\View $this
@@ -241,7 +240,7 @@ use Yiisoft\VarDumper\VarDumper;
                             Field::text($form,'guest_url')->readonly(true)
                                                           ->addInputAttributes(['id'=>'invoice-guest-url','readonly'=>'true',
                                                           'value'=> $urlGenerator->generate('inv/url_key',
-                                                          ['url_key' => $invoice->getUrl_key()]),'class'=>'form-control']);
+                                                          ['url_key' => $invoice->getUrl_key(),'gateway'=>'']),'class'=>'form-control']);
                     
                             echo Html::tag('Div', Html::tag('i','',['class'=>'fa fa-clipboard fa-fw']),
                                                   ['class'=>'input-group-text to-clipboard cursor-pointer', 

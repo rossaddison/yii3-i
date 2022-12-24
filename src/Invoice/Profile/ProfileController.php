@@ -214,16 +214,13 @@ final class ProfileController
     }
     
     /**
-     * @return Response|\Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      *
-     * @psalm-return Response|\Yiisoft\Data\Reader\DataReaderInterface<int, Profile>
+     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Profile>
      */
-    private function profiles(ProfileRepository $profileRepository): \Yiisoft\Data\Reader\DataReaderInterface|Response 
+    private function profiles(ProfileRepository $profileRepository): \Yiisoft\Data\Reader\DataReaderInterface 
     {
         $profiles = $profileRepository->findAllPreloaded();        
-        if ($profiles === null) {
-            return $this->webService->getNotFoundResponse();
-        }
         return $profiles;
     }
     

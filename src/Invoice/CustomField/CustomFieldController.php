@@ -230,16 +230,13 @@ final class CustomFieldController
     }
     
     /**
-     * @return Response|\Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      *
-     * @psalm-return Response|\Yiisoft\Data\Reader\DataReaderInterface<int, CustomField>
+     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, CustomField>
      */
-    private function customfields(CustomFieldRepository $customfieldRepository): \Yiisoft\Data\Reader\DataReaderInterface|Response 
+    private function customfields(CustomFieldRepository $customfieldRepository): \Yiisoft\Data\Reader\DataReaderInterface 
     {
         $customfields = $customfieldRepository->findAllPreloaded();        
-        if ($customfields === null) {
-            return $this->webService->getNotFoundResponse();
-        }
         return $customfields;
     }
     

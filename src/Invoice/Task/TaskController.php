@@ -348,16 +348,13 @@ final class TaskController
     }
     
     /**
-     * @return Response|\Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      *
-     * @psalm-return Response|\Yiisoft\Data\Reader\DataReaderInterface<int, Task>
+     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Task>
      */
-    private function tasks(tR $tR): \Yiisoft\Data\Reader\DataReaderInterface|Response 
+    private function tasks(tR $tR): \Yiisoft\Data\Reader\DataReaderInterface
     {
         $tasks = $tR->findAllPreloaded();        
-        if ($tasks === null) {
-            return $this->webService->getNotFoundResponse();
-        }
         return $tasks;
     }
     

@@ -91,9 +91,6 @@ final class CustomValueController
         null!==($session->get('custom_field_id')) ?: $session->set('custom_field_id', $id);
         $custom_field = $customfieldRepository->repoCustomFieldquery($id);
         $customvalues = $customvalueRepository->repoCustomFieldquery((int)$id);    
-        if ($customvalues === null) {
-            return $this->webService->getNotFoundResponse();
-        }
         $parameters = [
             's'=>$settingRepository,
             'canEdit' => $canEdit,
@@ -264,16 +261,13 @@ final class CustomValueController
     }  
     
     /**
-     * @return Response|\Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      *
-     * @psalm-return Response|\Yiisoft\Data\Reader\DataReaderInterface<int, CustomValue>
+     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, CustomValue>
      */
-    private function customvalues(CustomValueRepository $customvalueRepository): \Yiisoft\Data\Reader\DataReaderInterface|Response 
+    private function customvalues(CustomValueRepository $customvalueRepository): \Yiisoft\Data\Reader\DataReaderInterface 
     {
         $customvalues = $customvalueRepository->findAllPreloaded();        
-        if ($customvalues === null) {
-            return $this->webService->getNotFoundResponse();
-        }
         return $customvalues;
     }
     

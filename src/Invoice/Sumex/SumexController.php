@@ -203,16 +203,13 @@ final class SumexController
     }
     
     /**
-     * @return Response|\Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      *
-     * @psalm-return Response|\Yiisoft\Data\Reader\DataReaderInterface<int, Sumex>
+     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Sumex>
      */
-    private function sumexs(SumexRepository $sumexRepository): \Yiisoft\Data\Reader\DataReaderInterface|Response 
+    private function sumexs(SumexRepository $sumexRepository): \Yiisoft\Data\Reader\DataReaderInterface 
     {
         $sumexs = $sumexRepository->findAllPreloaded();        
-        if ($sumexs === null) {
-            return $this->webService->getNotFoundResponse();
-        }
         return $sumexs;
     }
     

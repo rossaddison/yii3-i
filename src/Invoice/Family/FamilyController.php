@@ -200,15 +200,12 @@ final class FamilyController
     }
     
     /**
-     * @return Response|\Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      *
-     * @psalm-return Response|\Yiisoft\Data\Reader\DataReaderInterface<int, Family>
+     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Family>
      */
-    private function familys(FamilyRepository $familyRepository): \Yiisoft\Data\Reader\DataReaderInterface|Response{
+    private function familys(FamilyRepository $familyRepository): \Yiisoft\Data\Reader\DataReaderInterface{
         $familys = $familyRepository->findAllPreloaded();
-        if ($familys === null) {
-            return $this->webService->getNotFoundResponse();
-        }
         return $familys;
     }
     

@@ -80,6 +80,7 @@ use Yiisoft\Session\SessionInterface;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\VarDumper\VarDumper;
 use Yiisoft\Yii\View\ViewRenderer;
 // Psr\Http
 use Psr\Log\LoggerInterface;
@@ -309,7 +310,15 @@ final class InvController
         $client_id = null!== $invoice ? $invoice->getClient()->getClient_id() : '';
         $url_key = $invoice->getUrl_key();
         if (!empty($_FILES)) {
+            // @see https://github.com/vimeo/psalm/issues/5458
+            
+            /**
+             * @psalm-suppress InvalidArrayOffset 
+             */
             $temporary_file = $_FILES['InvAttachmentsForm']['tmp_name']['attachFile']; 
+            /**
+             * @psalm-suppress InvalidArrayOffset
+             */
             $original_file_name = preg_replace('/\s+/', '_', $_FILES['InvAttachmentsForm']['name']['attachFile']);
             $target_path_with_filename = $targetPath . '/' . $url_key .'_'.$original_file_name;
             if ($this->attachment_move_to($temporary_file, $target_path_with_filename, $client_id, $url_key, $original_file_name, $uPR)) {       
@@ -841,7 +850,7 @@ final class InvController
             //eg. If the invoice is overdue ie. status is 5, automatically select the 'overdue' pdf template
             //which has 'overdue' text on it as a watermark
             'setting_status_pdf_template' => $template_helper->select_pdf_invoice_template($invoice),            
-            'email_templates' => $etR->repoEmailTemplateType('invoice') ?: null,
+            'email_templates' => $etR->repoEmailTemplateType('invoice'),
             'dropdown_titles_of_email_templates' => $this->email_templates($etR),
             'userinv'=> $uiR->repoUserInvUserIdcount($invoice->getUser_id()) > 0 ? $uiR->repoUserInvUserIdquery($invoice->getUser_id()) : null,
             'invoice' => $invoice,
@@ -885,12 +894,10 @@ final class InvController
      */
     
     public function email_templates(ETR $etR) : array {
-        $email_templates = $etR->repoEmailTemplateType('invoice') ?: null;
+        $email_templates = $etR->repoEmailTemplateType('invoice');
         $data = [];
-        if (null!==$email_templates) {
-            foreach ($email_templates as $email_template) {
-                $data[$email_template->getEmail_template_id()] = $email_template->getEmail_template_title();
-            }
+        foreach ($email_templates as $email_template) {
+            $data[$email_template->getEmail_template_id()] = $email_template->getEmail_template_title();
         }
         return $data;
     }
@@ -1495,16 +1502,13 @@ final class InvController
     }
     
     /**
-     * @return Response|\Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      *
-     * @psalm-return Response|\Yiisoft\Data\Reader\DataReaderInterface<int, Inv>
+     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Inv>
      */
-    private function invs(InvRepository $invRepo, int $status): \Yiisoft\Data\Reader\DataReaderInterface|Response 
+    private function invs(InvRepository $invRepo, int $status): \Yiisoft\Data\Reader\DataReaderInterface 
     {
         $invs = $invRepo->findAllWithStatus($status);    
-        if ($invs === null) {
-            return $this->web_service->getNotFoundResponse();
-        }
         return $invs;
     }
     

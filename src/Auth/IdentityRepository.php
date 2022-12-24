@@ -9,8 +9,17 @@ use Throwable;
 use Yiisoft\Auth\IdentityRepositoryInterface;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
+/**
+ * @template TEntity of object
+ * @extends Select\Repository<TEntity>
+ */
 final class IdentityRepository extends Select\Repository implements IdentityRepositoryInterface
 {
+    /**
+     * 
+     * @param EntityWriter $entityWriter
+     * @param Select<TEntity> $select
+     */
     public function __construct(private EntityWriter $entityWriter, Select $select)
     {
         parent::__construct($select);

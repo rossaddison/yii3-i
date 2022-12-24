@@ -203,16 +203,13 @@ final class ItemLookupController
     }
     
     /**
-     * @return Response|\Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      *
-     * @psalm-return Response|\Yiisoft\Data\Reader\DataReaderInterface<int, ItemLookup>
+     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, ItemLookup>
      */
-    private function itemlookups(ItemLookupRepository $itemlookupRepository): \Yiisoft\Data\Reader\DataReaderInterface|Response 
+    private function itemlookups(ItemLookupRepository $itemlookupRepository): \Yiisoft\Data\Reader\DataReaderInterface 
     {
         $itemlookups = $itemlookupRepository->findAllPreloaded();        
-        if ($itemlookups === null) {
-            return $this->webService->getNotFoundResponse();
-        }
         return $itemlookups;
     }
     

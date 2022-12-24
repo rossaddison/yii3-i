@@ -222,16 +222,13 @@ final class GroupController
     }
     
     /**
-     * @return Response|\Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      *
-     * @psalm-return Response|\Yiisoft\Data\Reader\DataReaderInterface<int, Group>
+     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Group>
      */
-    private function groups(GroupRepository $groupRepository) : \Yiisoft\Data\Reader\DataReaderInterface|Response
+    private function groups(GroupRepository $groupRepository) : \Yiisoft\Data\Reader\DataReaderInterface
     {
-        $groups = $groupRepository->findAllPreloaded() ?: null;        
-        if ($groups === null) {
-            return $this->webService->getNotFoundResponse();
-        }
+        $groups = $groupRepository->findAllPreloaded();        
         return $groups;
     }
     

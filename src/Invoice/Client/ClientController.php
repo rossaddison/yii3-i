@@ -156,15 +156,12 @@ final class ClientController
     }
     
     /**
-     * @return Response|\Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      *
-     * @psalm-return Response|\Yiisoft\Data\Reader\DataReaderInterface<int, Client>
+     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Client>
      */
-    private function clients(cR $cR, int $active): \Yiisoft\Data\Reader\DataReaderInterface|Response {
+    private function clients(cR $cR, int $active): \Yiisoft\Data\Reader\DataReaderInterface {
         $clients = $cR->findAllWithActive($active); 
-        if ($clients === null) {
-            return $this->webService->getNotFoundResponse();
-        }
         return $clients;
     }
     
@@ -577,7 +574,7 @@ final class ClientController
             'quote_table'=>$this->viewRenderer->renderPartialAsString('/invoice/quote/partial_quote_table', [
                 'qaR'=> $qaR,
                 'quote_count' => $qR->repoCountByClient($client->getClient_id()),
-                'quotes' => $qR->repoClient($client->getClient_id()) ?? [],
+                'quotes' => $qR->repoClient($client->getClient_id()),
                 'clienthelper' => new ClientHelper($sR),
                 'datehelper' => new DateHelper($sR),
                 'quote_statuses' => $qR->getStatuses($sR),
@@ -634,7 +631,7 @@ final class ClientController
                 'iaR'=> $iaR,
                 'irR'=> $irR,
                 'invoice_count'=>$iR->repoCountByClient($client->getClient_id()),
-                'invoices' => $iR->repoClient($client->getClient_id()) ?? [],
+                'invoices' => $iR->repoClient($client->getClient_id()),
                 'clienthelper' => new ClientHelper($sR),
                 'datehelper' => new DateHelper($sR),
                 'inv_statuses' => $iR->getStatuses($sR)

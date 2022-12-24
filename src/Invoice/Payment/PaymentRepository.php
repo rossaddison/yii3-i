@@ -16,10 +16,17 @@ use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 use Throwable;
 
+/**
+ * @template TEntity of object
+ * @extends Select\Repository<TEntity>
+ */
 final class PaymentRepository extends Select\Repository
 {
 private EntityWriter $entityWriter;
-
+     /**
+     * @param Select<TEntity> $select
+     * @param EntityWriter $entityWriter
+     */
     public function __construct(Select $select, EntityWriter $entityWriter)
     {
         $this->entityWriter = $entityWriter;

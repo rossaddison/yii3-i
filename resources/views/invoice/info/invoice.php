@@ -17,6 +17,10 @@
 <p>CompanyPrivate logo will be automatically input on invoice/quotes depending on whether the date of the invoice falls between the start and end date.</p>
 <p>Introducing Paypal.</p>
 <p>Introducing India's PayTm payment gateway's QR code method of payment and comparing this with Stripe's method.
+<p><b>24th December 2022</b></p>
+<p>1. Retesting Sending of invoices by email.</p>
+<p>2. Remove 55 Psalm Errors mostly related to <a href="https://github.com/rossaddison/yii3-i/issues/5">Issue #5</a>
+<p>3. Psalm Level 7,6,5,4 Testing using Psalm 5.4 instead of 4.3</p>    
 <p><b>20th December 2022</b></p>
 <p>1. Moved repository into separate working folder under blog, and blog-api for separate github workflow purposes.</p>
 <p>2. Invoice works separately from blog. There are no hyperlinks to blog.</p>

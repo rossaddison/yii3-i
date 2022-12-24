@@ -202,16 +202,13 @@ final class QuoteItemAmountController
     }
     
     /**
-     * @return Response|\Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      *
-     * @psalm-return Response|\Yiisoft\Data\Reader\DataReaderInterface<int, QuoteItemAmount>
+     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, QuoteItemAmount>
      */
-    private function quoteitemamounts(QuoteItemAmountRepository $quoteitemamountRepository): \Yiisoft\Data\Reader\DataReaderInterface|Response 
+    private function quoteitemamounts(QuoteItemAmountRepository $quoteitemamountRepository): \Yiisoft\Data\Reader\DataReaderInterface 
     {
         $quoteitemamounts = $quoteitemamountRepository->findAllPreloaded();        
-        if ($quoteitemamounts === null) {
-            return $this->webService->getNotFoundResponse();
-        }
         return $quoteitemamounts;
     }
     

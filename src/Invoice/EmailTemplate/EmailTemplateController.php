@@ -289,15 +289,12 @@ final class EmailTemplateController
     }
     
     /**
-     * @return Response|\Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      *
-     * @psalm-return Response|\Yiisoft\Data\Reader\DataReaderInterface<int, EmailTemplate>
+     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, EmailTemplate>
      */
-    private function emailtemplates(EmailTemplateRepository $emailtemplateRepository): \Yiisoft\Data\Reader\DataReaderInterface|Response {
+    private function emailtemplates(EmailTemplateRepository $emailtemplateRepository): \Yiisoft\Data\Reader\DataReaderInterface {
         $emailtemplates = $emailtemplateRepository->findAllPreloaded();        
-        if ($emailtemplates === null) {
-            return $this->webService->getNotFoundResponse();
-        }
         return $emailtemplates;
     }
     

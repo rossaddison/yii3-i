@@ -479,15 +479,12 @@ final class SettingController
     //$settings = $this->settings();
     
     /**
-     * @return Response|\Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      *
-     * @psalm-return Response|\Yiisoft\Data\Reader\DataReaderInterface<int, Setting>
+     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Setting>
      */
-    private function settings(SettingRepository $settingRepository): \Yiisoft\Data\Reader\DataReaderInterface|Response{
+    private function settings(SettingRepository $settingRepository): \Yiisoft\Data\Reader\DataReaderInterface{
         $settings = $settingRepository->findAllPreloaded();
-        if ($settings === null) {
-            return $this->webService->getNotFoundResponse();
-        }
         return $settings;
     }
     

@@ -480,15 +480,12 @@ class ProductController
     }
     
     /**
-     * @return Response|\Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      *
-     * @psalm-return Response|\Yiisoft\Data\Reader\DataReaderInterface<int, Product>
+     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Product>
      */
-    private function products(pR $pR): \Yiisoft\Data\Reader\DataReaderInterface|Response {
+    private function products(pR $pR): \Yiisoft\Data\Reader\DataReaderInterface {
         $products = $pR->findAllPreloaded();        
-        if ($products === null) {
-            return $this->webService->getNotFoundResponse();
-        }
         return $products;
     }
     

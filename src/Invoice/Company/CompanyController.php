@@ -167,16 +167,13 @@ final class CompanyController
     }
     
     /**
-     * @return Response|\Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      *
-     * @psalm-return Response|\Yiisoft\Data\Reader\DataReaderInterface<int, Company>
+     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Company>
      */
-    private function companies(CompanyRepository $companyRepository): \Yiisoft\Data\Reader\DataReaderInterface|Response 
+    private function companies(CompanyRepository $companyRepository): \Yiisoft\Data\Reader\DataReaderInterface 
     {
         $companies = $companyRepository->findAllPreloaded();        
-        if ($companies === null) {
-            return $this->webService->getNotFoundResponse();
-        }
         return $companies;
     }
     

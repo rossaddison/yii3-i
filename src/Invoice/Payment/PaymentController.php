@@ -410,7 +410,7 @@ final class PaymentController
             'head'=>$head, 
             'open_invs'=>$open,            
             'open_invs_count'=>$invRepository->open_count(),
-            'payment_methods'=>$payment_methodRepository->findAllPreloaded() ?? null,
+            'payment_methods'=>$payment_methodRepository->findAllPreloaded(),
             'cR'=>$cR,
             'iaR'=>$iaR,
             'cvH'=> new CustomValuesHelper($settingRepository),
@@ -641,14 +641,11 @@ final class PaymentController
     /**
      * 
      * @param MerchantRepository $merchantRepository
-     * @return \Yiisoft\Data\Reader\DataReaderInterface|Response
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      */
-    private function merchants(MerchantRepository $merchantRepository): \Yiisoft\Data\Reader\DataReaderInterface|Response 
+    private function merchants(MerchantRepository $merchantRepository): \Yiisoft\Data\Reader\DataReaderInterface 
     {
         $merchants = $merchantRepository->findAllPreloaded();        
-        if ($merchants === null) {
-            return $this->webService->getNotFoundResponse();
-        }
         return $merchants;
     }
     
@@ -755,16 +752,13 @@ final class PaymentController
     }
     
     /**
-     * @return Response|\Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      *
-     * @psalm-return Response|\Yiisoft\Data\Reader\DataReaderInterface<int, Payment>
+     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Payment>
      */
-    private function payments(PaymentRepository $paymentRepository): \Yiisoft\Data\Reader\DataReaderInterface|Response 
+    private function payments(PaymentRepository $paymentRepository): \Yiisoft\Data\Reader\DataReaderInterface 
     {
         $payments = $paymentRepository->findAllPreloaded();        
-        if ($payments === null) {
-            return $this->webService->getNotFoundResponse();
-        }
         return $payments;
     }
     

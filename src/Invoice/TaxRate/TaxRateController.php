@@ -220,15 +220,12 @@ final class TaxRateController
     //$taxrates = $this->taxrates();
     
     /**
-     * @return Response|\Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      *
-     * @psalm-return Response|\Yiisoft\Data\Reader\DataReaderInterface<int, TaxRate>
+     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, TaxRate>
      */
-    private function taxrates(TaxRateRepository $taxrateRepository): \Yiisoft\Data\Reader\DataReaderInterface|Response{
+    private function taxrates(TaxRateRepository $taxrateRepository): \Yiisoft\Data\Reader\DataReaderInterface{
         $taxrates = $taxrateRepository->findAllPreloaded();
-        if ($taxrates === null) {
-            return $this->webService->getNotFoundResponse();
-        }
         return $taxrates;
     }
     

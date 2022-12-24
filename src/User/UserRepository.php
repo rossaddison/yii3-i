@@ -11,10 +11,20 @@ use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
+/**
+ * @template TEntity of object
+ * @extends Select\Repository<TEntity>
+ */
 final class UserRepository extends Select\Repository
-{
+{    
+    /**
+     * 
+     * @param EntityWriter $entityWriter
+     * @param Select<TEntity> $select
+     */
     public function __construct(private EntityWriter $entityWriter, Select $select)
     {
+        $this->entityWriter = $entityWriter;
         parent::__construct($select);
     }
 

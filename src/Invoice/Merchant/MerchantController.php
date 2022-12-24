@@ -218,16 +218,13 @@ final class MerchantController
     }
     
     /**
-     * @return Response|\Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      *
-     * @psalm-return Response|\Yiisoft\Data\Reader\DataReaderInterface<int, Merchant>
+     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Merchant>
      */
-    private function merchants(MerchantRepository $merchantRepository): \Yiisoft\Data\Reader\DataReaderInterface|Response 
+    private function merchants(MerchantRepository $merchantRepository): \Yiisoft\Data\Reader\DataReaderInterface 
     {
         $merchants = $merchantRepository->findAllPreloaded();        
-        if ($merchants === null) {
-            return $this->webService->getNotFoundResponse();
-        }
         return $merchants;
     }
     

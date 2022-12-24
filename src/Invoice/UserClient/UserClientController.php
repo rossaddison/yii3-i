@@ -297,16 +297,13 @@ final class UserClientController
     }
     
     /**
-     * @return Response|\Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      *
-     * @psalm-return Response|\Yiisoft\Data\Reader\DataReaderInterface<int, UserClient>
+     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, UserClient>
      */
-    private function userclients(UserClientRepository $userclientRepository): \Yiisoft\Data\Reader\DataReaderInterface|Response 
+    private function userclients(UserClientRepository $userclientRepository): \Yiisoft\Data\Reader\DataReaderInterface 
     {
         $userclients = $userclientRepository->findAllPreloaded();        
-        if ($userclients === null) {
-            return $this->webService->getNotFoundResponse();
-        }
         return $userclients;
     }
     

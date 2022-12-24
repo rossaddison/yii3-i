@@ -203,15 +203,12 @@ final class GeneratorRelationController
     
     //$generatorrelations = $this->generatorrelations();
     /**
-     * @return Response|\Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      *
-     * @psalm-return Response|\Yiisoft\Data\Reader\DataReaderInterface<int, GentorRelation>
+     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, GentorRelation>
      */
-    private function generatorrelations(GeneratorRelationRepository $generatorrelationRepository): \Yiisoft\Data\Reader\DataReaderInterface|Response{
+    private function generatorrelations(GeneratorRelationRepository $generatorrelationRepository): \Yiisoft\Data\Reader\DataReaderInterface{
         $generatorrelations = $generatorrelationRepository->findAllPreloaded();
-        if ($generatorrelations === null) {
-            return $this->webService->getNotFoundResponse();
-        }
         return $generatorrelations;
     }
     

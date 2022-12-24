@@ -12,10 +12,17 @@ use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
+/**
+ * @template TEntity of object
+ * @extends Select\Repository<TEntity>
+ */
 final class GroupRepository extends Select\Repository
 {
 private EntityWriter $entityWriter;
-
+    /**
+     * @param Select<TEntity> $select
+     * @param EntityWriter $entityWriter
+     */
     public function __construct(Select $select, EntityWriter $entityWriter)
     {
         $this->entityWriter = $entityWriter;

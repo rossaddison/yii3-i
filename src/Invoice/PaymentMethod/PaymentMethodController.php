@@ -227,16 +227,13 @@ final class PaymentMethodController
     }
     
     /**
-     * @return Response|\Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      *
-     * @psalm-return Response|\Yiisoft\Data\Reader\DataReaderInterface<int, PaymentMethod>
+     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, PaymentMethod>
      */
-    private function paymentmethods(PaymentMethodRepository $paymentmethodRepository): \Yiisoft\Data\Reader\DataReaderInterface|Response 
+    private function paymentmethods(PaymentMethodRepository $paymentmethodRepository): \Yiisoft\Data\Reader\DataReaderInterface
     {
         $paymentmethods = $paymentmethodRepository->findAllPreloaded();        
-        if ($paymentmethods === null) {
-            return $this->webService->getNotFoundResponse();
-        }
         return $paymentmethods;
     }
     

@@ -392,16 +392,13 @@ final class InvItemController
     }
     
     /**
-     * @return Response|\Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      *
-     * @psalm-return Response|\Yiisoft\Data\Reader\DataReaderInterface<int, InvItem>
+     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, InvItem>
      */
-    private function invitems(IIR $iiR): \Yiisoft\Data\Reader\DataReaderInterface|Response 
+    private function invitems(IIR $iiR): \Yiisoft\Data\Reader\DataReaderInterface 
     {
         $invitems = $iiR->findAllPreloaded();        
-        if ($invitems === null) {
-            return $this->webService->getNotFoundResponse();
-        }
         return $invitems;
     }
     

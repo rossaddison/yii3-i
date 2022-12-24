@@ -294,16 +294,13 @@ final class QuoteItemController
     }
     
     /**
-     * @return Response|\Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      *
-     * @psalm-return Response|\Yiisoft\Data\Reader\DataReaderInterface<int, QuoteItem>
+     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, QuoteItem>
      */
-    private function quoteitems(QIR $qiR): \Yiisoft\Data\Reader\DataReaderInterface|Response 
+    private function quoteitems(QIR $qiR): \Yiisoft\Data\Reader\DataReaderInterface 
     {
         $quoteitems = $qiR->findAllPreloaded();        
-        if ($quoteitems === null) {
-            return $this->webService->getNotFoundResponse();
-        }
         return $quoteitems;
     }
     

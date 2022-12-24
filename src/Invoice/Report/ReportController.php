@@ -138,7 +138,7 @@ class ReportController
     private function invoice_aging_report($cR, $iaR, $sR) : array {
         $clienthelper = new ClientHelper($sR);
         $numberhelper = new NumberHelper($sR);
-        $clients = $cR->findAllPreloaded() ?? null;
+        $clients = $cR->findAllPreloaded();
         $fifteens = $iaR->AgingCount(1,15)>0 ? $iaR->Aging(1,15): null;
         $thirties = $iaR->AgingCount(16,30)>0 ? $iaR->Aging(16,30): null;
         $overthirties = $iaR->AgingCount(31,365)>0 ? $iaR->Aging(31,365): null;

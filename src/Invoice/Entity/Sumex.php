@@ -106,12 +106,6 @@ class Sumex
     
     public function getTreatmentstart(): DateTimeImmutable|null
     {
-      if (isset($this->treatmentstart) && !empty($this->treatmentstart)){
-            return $this->treatmentstart;
-      }
-      if (empty($this->treatmentstart)){
-            return $this->treatmentstart = null;
-      }
       return $this->treatmentstart;
     }
     
@@ -122,12 +116,6 @@ class Sumex
     
     public function getTreatmentend(): DateTimeImmutable|null
     {
-      if (isset($this->treatmentend) && !empty($this->treatmentend)){
-       return $this->treatmentend;
-      }
-      if (empty($this->treatmentend)){
-            return $this->treatmentend = null;
-      }
       return $this->treatmentend;
     }
     

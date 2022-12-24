@@ -171,16 +171,13 @@ final class ClientNoteController
     }
     
     /**
-     * @return Response|\Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      *
-     * @psalm-return Response|\Yiisoft\Data\Reader\DataReaderInterface<int, ClientNote>
+     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, ClientNote>
      */
-    private function clientnotes(ClientNoteRepository $clientnoteRepository): \Yiisoft\Data\Reader\DataReaderInterface|Response 
+    private function clientnotes(ClientNoteRepository $clientnoteRepository): \Yiisoft\Data\Reader\DataReaderInterface 
     {
         $clientnotes = $clientnoteRepository->findAllPreloaded();        
-        if ($clientnotes === null) {
-            return $this->webService->getNotFoundResponse();
-        }
         return $clientnotes;
     }
     

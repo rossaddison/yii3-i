@@ -209,14 +209,11 @@ final class UploadController
     
     /**
      * @param UploadRepository $uploadRepository
-     * @return \Yiisoft\Data\Reader\DataReaderInterface|Response
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      */
-    private function uploads(UploadRepository $uploadRepository) : \Yiisoft\Data\Reader\DataReaderInterface|Response
+    private function uploads(UploadRepository $uploadRepository) : \Yiisoft\Data\Reader\DataReaderInterface
     {
         $uploads = $uploadRepository->findAllPreloaded();        
-        if ($uploads === null) {
-            return $this->webService->getNotFoundResponse();
-        }
         return $uploads;
     }
     

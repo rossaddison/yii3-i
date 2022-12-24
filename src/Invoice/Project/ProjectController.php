@@ -217,16 +217,13 @@ final class ProjectController
     }
     
     /**
-     * @return Response|\Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      *
-     * @psalm-return Response|\Yiisoft\Data\Reader\DataReaderInterface<int, Project>
+     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Project>
      */
-    private function projects(ProjectRepository $projectRepository): \Yiisoft\Data\Reader\DataReaderInterface|Response 
+    private function projects(ProjectRepository $projectRepository): \Yiisoft\Data\Reader\DataReaderInterface 
     {
         $projects = $projectRepository->findAllPreloaded();        
-        if ($projects === null) {
-            return $this->webService->getNotFoundResponse();
-        };
         return $projects;
     }
     

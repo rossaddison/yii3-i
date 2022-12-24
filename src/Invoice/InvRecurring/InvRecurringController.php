@@ -281,16 +281,13 @@ final class InvRecurringController
     }
     
     /**
-     * @return Response|\Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      *
-     * @psalm-return Response|\Yiisoft\Data\Reader\DataReaderInterface<int, InvRecurring>
+     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, InvRecurring>
      */
-    private function invrecurrings(IRR $invrecurringRepository): \Yiisoft\Data\Reader\DataReaderInterface|Response 
+    private function invrecurrings(IRR $invrecurringRepository): \Yiisoft\Data\Reader\DataReaderInterface
     {
         $invrecurrings = $invrecurringRepository->findAllPreloaded();        
-        if ($invrecurrings === null) {
-            return $this->webService->getNotFoundResponse();
-        }
         return $invrecurrings;
     }
            

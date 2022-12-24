@@ -671,7 +671,7 @@ final class QuoteController
             // TODO 'user_custom' => 'user',
         ];
         foreach (array_keys($custom_tables) as $table) {
-            $custom_fields[$table] = $cfR->repoTablequery((string)$table);
+            $custom_fields[$table] = $cfR->repoTablequery($table);
         }        
         if ($template_helper->select_email_quote_template() == '') {
             $this->flash('warning', 'Email templates not configured. Settings...Quotes...Quote Templates...Default Email Template');
@@ -738,12 +738,10 @@ final class QuoteController
      */
     
     public function email_templates(ETR $etR) : array {
-        $email_templates = $etR->repoEmailTemplateType('quote') ?: null;
+        $email_templates = $etR->repoEmailTemplateType('quote');
         $data = [];
-        if (null!==$email_templates) {
-            foreach ($email_templates as $email_template) {
-                $data[$email_template->getEmail_template_id()] = $email_template->getEmail_template_title();
-            }
+        foreach ($email_templates as $email_template) {
+            $data[$email_template->getEmail_template_id()] = $email_template->getEmail_template_title();
         }
         return $data;
     }

@@ -189,15 +189,12 @@ final class GeneratorController
     }
    
     /**
-     * @return Response|\Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      *
-     * @psalm-return Response|\Yiisoft\Data\Reader\DataReaderInterface<int, Gentor>
+     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Gentor>
      */
-    private function generators(GeneratorRepository $generatorRepository): \Yiisoft\Data\Reader\DataReaderInterface|Response{
+    private function generators(GeneratorRepository $generatorRepository): \Yiisoft\Data\Reader\DataReaderInterface{
         $generators = $generatorRepository->findAllPreloaded();
-        if ($generators === null) {
-            return $this->webService->getNotFoundResponse();
-        }
         return $generators;
     }
     

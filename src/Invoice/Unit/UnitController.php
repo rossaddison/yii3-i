@@ -197,15 +197,12 @@ final class UnitController
     
     
     /**
-     * @return Response|\Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Data\Reader\DataReaderInterface
      *
-     * @psalm-return Response|\Yiisoft\Data\Reader\DataReaderInterface<int, Unit>
+     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Unit>
      */
-    private function units(UnitRepository $unitRepository): \Yiisoft\Data\Reader\DataReaderInterface|Response{
+    private function units(UnitRepository $unitRepository): \Yiisoft\Data\Reader\DataReaderInterface{
         $units = $unitRepository->findAllPreloaded();
-        if ($units === null) {
-            return $this->webService->getNotFoundResponse();
-        }
         return $units;
     }
     

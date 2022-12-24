@@ -12,11 +12,20 @@ use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 use Yiisoft\Files\FileHelper;
+use Yiisoft\Files\PathMatcher\PathMatcher;
 
+/**
+ * @template TEntity of object
+ * @extends Select\Repository<TEntity>
+ */
 final class EmailTemplateRepository extends Select\Repository
 {
     private EntityWriter $entityWriter;
-
+    
+    /**
+     * @param Select<TEntity> $select
+     * @param EntityWriter $entityWriter
+     */
     public function __construct(Select $select, EntityWriter $entityWriter)
     {
         $this->entityWriter = $entityWriter;
@@ -94,16 +103,19 @@ final class EmailTemplateRepository extends Select\Repository
      */
     public function get_invoice_templates(string $type)
     {
-        $pdf_template_directory = dirname(dirname(dirname(__DIR__))).'/views/invoice/template/invoice/pdf'; 
-        $public_template_directory = dirname(dirname(dirname(__DIR__))).'/views/invoice/template/invoice/public';
+        $pdf_template_directory = dirname(dirname(dirname(__DIR__))).'/resources/views/invoice/template/invoice/pdf'; 
+        $public_template_directory = dirname(dirname(dirname(__DIR__))).'/resources/views/invoice/template/invoice/public';
+        $php_only = (new PathMatcher())
+        ->doNotCheckFilesystem()
+        ->only('*.php');
         if ($type === 'pdf') {
               $templates = FileHelper::findFiles($pdf_template_directory, [
-                                        'only' => ['*.php'],
+                                        'filter' => $php_only,
                                         'recursive' => false,
                                 ]);
         } elseif ($type === 'public') {
               $templates = FileHelper::findFiles($public_template_directory, [
-                                        'only' => ['*.php'],
+                                        'filter' => $php_only,
                                         'recursive' => false,
                                 ]);
         }
@@ -117,16 +129,19 @@ final class EmailTemplateRepository extends Select\Repository
      */
     public function get_quote_templates(string $type)
     {
-        $pdf_template_directory = dirname(dirname(dirname(__DIR__))).'/views/invoice/template/quote/pdf'; 
-        $public_template_directory = dirname(dirname(dirname(__DIR__))).'/views/invoice/template/quote/public';
+        $pdf_template_directory = dirname(dirname(dirname(__DIR__))).'/resources/views/invoice/template/quote/pdf'; 
+        $public_template_directory = dirname(dirname(dirname(__DIR__))).'/resources/views/invoice/template/quote/public';
+        $pdf_only = (new PathMatcher())
+        ->doNotCheckFilesystem()
+        ->only('*.pdf');
         if ($type === 'pdf') {
             $templates = FileHelper::findFiles($pdf_template_directory, [
-                                        'only' => ['*.pdf'],
+                                        'filter' => $pdf_only,
                                         'recursive' => false,
                                 ]);
         } elseif ($type === 'public') {
             $templates = FileHelper::findFiles($public_template_directory, [
-                                        'only' => ['*.pdf'],
+                                        'filter' => $pdf_only,
                                         'recursive' => false,
                                 ]);
         }

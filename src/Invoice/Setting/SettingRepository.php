@@ -21,6 +21,10 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 use Yiisoft\Yii\Runner\ConfigFactory;
 
+/**
+ * @template TEntity of object
+ * @extends Select\Repository<TEntity>
+ */
 final class SettingRepository extends Select\Repository
 {
     private EntityWriter $entityWriter;
@@ -29,6 +33,12 @@ final class SettingRepository extends Select\Repository
     
     private $session;
 
+    /**
+     * 
+     * @param Select<TEntity> $select 
+     * @param EntityWriter $entityWriter
+     * @param SessionInterface $session
+     */
     public function __construct(Select $select, EntityWriter $entityWriter, SessionInterface $session)
     {
         $this->entityWriter = $entityWriter;
