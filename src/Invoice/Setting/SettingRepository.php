@@ -1078,7 +1078,7 @@ final class SettingRepository extends Select\Repository
             'where'=>'InvController/pdf and InvController/email_stage_2 when viewing the invoice.'
         ],
         'mark_invoices_sent_copy'=>[
-            'why'=>'Clients do not have access to draft invoices. Mark a copied invoice as "sent" so that the client can view it. Normally used for testing purposes.',
+            'why'=>'Clients do not have access to draft invoices. Mark a copied invoice as sent so that the client can view it. Normally used for testing purposes. By default copied invoices are marked as draft and therefore can not be viewed by the client online.',
             'where'=>'InvController/inv_to_inv'
         ],
         'pdf_watermark'=>[
@@ -1097,9 +1097,10 @@ final class SettingRepository extends Select\Repository
             'why'=>'Clients can download pdfs online if logged in and given observer status. This represents the overdue template. ie. if an invoice is overdue and is used alongside the normal and paid template.',
             'where'=>'src/Invoice/Helpers/TemplateHelper/select_pdf_invoice_template function.'
         ],
+        // Note: Appears as 'public_invoice_template' under settings table but as 'default_invoice_template' for language purposes =>ip_lang.php
         'default_public_template'=>[
-            'why'=>'Clients can download pdfs online if logged in and given observer status. This represents the overdue template. ie. if an invoice is overdue and is used alongside the normal and paid template.',
-            'where'=>'src/Invoice/Helpers/TemplateHelper/select_pdf_invoice_template function.'
+            'why'=>'This is the HTML template that the client will see online prior to payment. The template has a pay-now button. The client must log in having been assigned observer role status in order to see this html invoice template. Different HTML Templates can be created in this folder and chosen in this dropdown.',
+            'where'=>'views/invoice/template/invoice/public/Invoice_Web.php (subsequent to client gateway selection from inv/view) and also InvController/url_key function that receives the url_key and gateway query parameters in the Url from inv/view. This HTML template holds the pay-now button with the chosen gateway (passed from inv/view) which at this point cannot be changed. If the payment is successful the template and therefore the pay-now button will reflect as paid.'
         ],
         'email_send_method'=>[
             'why'=>'Symfony mailer is now the default mailer. '.
@@ -1121,7 +1122,8 @@ final class SettingRepository extends Select\Repository
             'This setting is enabled by default under the InvoiceController',
             'where'=>'src/Invoice/Helpers/MailerHelper/yii_mailer_send function variable email_attachment_with_pdf_template. ' .
             'Run with view/invoice Options...Send  using MailerInvForm'
-        ],    
+        ],
+        ''    
         ];
         $information = 'data-toggle = "tooltip"'.' '.'title = "'. $tooltip[$setting]['why'].' and is used in '.$tooltip[$setting]['where'].'"';
         $build = $debug_mode ? $information : '';

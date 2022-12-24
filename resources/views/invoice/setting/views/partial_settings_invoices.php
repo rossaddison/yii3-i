@@ -223,7 +223,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="settings[public_invoice_template]">
+                            <label for="settings[public_invoice_template]"<?= $s->where('default_public_template'); ?>>
                                 <?= $s->trans('default_public_template'); ?>
                             </label>                            
                             <?php $body['settings[public_invoice_template]'] = $s->get_setting('public_invoice_template');?>

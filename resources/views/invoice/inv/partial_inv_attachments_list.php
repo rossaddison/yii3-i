@@ -19,11 +19,11 @@ use Yiisoft\Yii\DataView\Column\DataColumn;
             ->columns(
                 DataColumn::create()
                     ->attribute('file_name_original')
-                    ->label($s->trans('id'))
+                    ->label($s->trans('name'))
                     ->value(static fn ($model): string => ($model->getFile_name_original())), 
                 DataColumn::create()
                     ->attribute('uploaded_date')
-                    ->label($s->trans('id'))
+                    ->label($s->trans('date'))
                     ->value(static fn ($model): string => ($model->getUploaded_date())->format($datehelper->style())),
                 DataColumn::create()
                     ->label($s->trans('download'))
