@@ -100,7 +100,7 @@
         "league/omnipay": "^3.0",
         "omnipay/stripe": "*",
         "omnipay/common": "*",
-        "stripe/stripe-php": "10.2.0",
+        "stripe/stripe-php": "10.3.0",
         "amzn/amazon-pay-api-sdk-php": "2.4.0",        
         "braintree/braintree_php" : "6.10.0" 
     },
