@@ -22,7 +22,6 @@ use Yiisoft\Yii\Bootstrap5\NavBar;
  * @var CurrentRoute          $currentRoute
  * @var WebView               $this
  * @var AssetManager          $assetManager
- * @var TranslatorInterface   $translator
  * @var string                $content
  *
  * @see \App\ApplicationViewInjection
@@ -89,12 +88,28 @@ $this->beginPage();
             ->items(
                 [
                     [
-                        'label' => $translator->translate('menu.language'),
+                        'label' => $s->trans('language'),
                         'url' => '#',
                         'items' => [
                             [
+                                'label' => 'Arabic',
+                                'url' => $urlGenerator->generateFromCurrent(['_language' => 'ar'], fallbackRouteName: 'site/index'),
+                            ],
+                            [
                                 'label' => 'English',
                                 'url' => $urlGenerator->generateFromCurrent(['_language' => 'en'], fallbackRouteName: 'site/index'),
+                            ],
+                            [
+                                'label' => 'Indonesia',
+                                'url' => $urlGenerator->generateFromCurrent(['_language' => 'id'], fallbackRouteName: 'site/index'),
+                            ],
+                            [
+                                'label' => 'Japanese',
+                                'url' => $urlGenerator->generateFromCurrent(['_language' => 'ja'], fallbackRouteName: 'site/index'),
+                            ],
+                            [
+                                'label' => 'Dutch',
+                                'url' => $urlGenerator->generateFromCurrent(['_language' => 'nl'], fallbackRouteName: 'site/index'),
                             ],
                             [
                                 'label' => 'Ру�?�?кий',
@@ -105,18 +120,18 @@ $this->beginPage();
                                 'url' => $urlGenerator->generateFromCurrent(['_language' => 'sk'], fallbackRouteName: 'site/index'),
                             ],
                             [
-                                'label' => 'Indonesia',
-                                'url' => $urlGenerator->generateFromCurrent(['_language' => 'id'], fallbackRouteName: 'site/index'),
+                                'label' => 'Chinese Simplified',
+                                'url' => $urlGenerator->generateFromCurrent(['_language' => 'zh'], fallbackRouteName: 'site/index'),
                             ],
                         ],
                     ],
                     [
-                        'label' => $translator->translate('menu.login'),
+                        'label' => $s->trans('login'),
                         'url' => $urlGenerator->generate('auth/login'),
                         'visible' => $isGuest,
                     ],
                     [
-                        'label' => $translator->translate('menu.signup'),
+                        'label' => $s->trans('setup_create_user'),
                         'url' => $urlGenerator->generate('auth/signup'),
                         'visible' => $isGuest,
                     ],
@@ -126,7 +141,7 @@ $this->beginPage();
                             ->open()
                         . '<div class="mb-1">'
                         . Button::submit(
-                            $translator->translate('menu.logout', ['login' => Html::encode($user->getLogin())])
+                            $s->trans('logout', ['login' => Html::encode($user->getLogin())])
                         )
                             ->class('btn btn-primary')
                         . '</div>'

@@ -19,7 +19,7 @@ final class LayoutViewInjection implements LayoutParametersInjectionInterface
         $identity = $this->currentUser->getIdentity();
 
         return [
-            'brandLabel' => 'Yii Demo',
+            'brandLabel' => 'Yii3-i',
             'user' => $identity instanceof Identity ? $identity->getUser() : null,
         ];
     }

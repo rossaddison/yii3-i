@@ -12,11 +12,14 @@
 <p>Work on info issues</p>
 <p>Work In Progress - Shorter Term Goals</p>
 <p>Dead Code Removal with Psalm 3 Testing</p>
+<p>Language array generator using Google Translate</p>
 <p>All invoices with dates falling within CompanyPrivate start and end dates will have the specific logo uploaded</p>
 <p>for this CompanyPrivate record attached to these invoices.</p>
 <p>CompanyPrivate logo will be automatically input on invoice/quotes depending on whether the date of the invoice falls between the start and end date.</p>
 <p>Introducing Paypal.</p>
 <p>Introducing India's PayTm payment gateway's QR code method of payment and comparing this with Stripe's method.
+<p><b>26th December 2022</b></p>
+<p>Include additional demo languages</p>
 <p><b>24th December 2022</b></p>
 <p>1. Retesting Sending of invoices by email.</p>
 <p>2. Remove 55 Psalm Errors mostly related to <a href="https://github.com/rossaddison/yii3-i/issues/5">Issue #5</a>
@@ -406,6 +409,7 @@ and Japanese
 <b>Netbeans: <a href="https://stackoverflow.com/questions/59800221/gradle-netbeans-howto-set-encoding-to-utf-8-in-editor-and-compiler">How to include UTF-8 in Netbeans</a></b>
 <p>Set encoding used in Netbeans globally to UTF-8. Added in netbeans.conf "-J-Dfile.encoding=UTF-8" to parameter "netbeans_default_options". This unfortunately has
 to be done everytime you edit a file with 'special letters'. So edit the file with the UTF-8 setting above, save it, and then remove the above setting from Netbeans.conf. </p> 
+<p>File Location: C:\Program Files\NetBeans-16\netbeans\etc\netbeans.conf open with notepad cntrl+F netbeans_default_options </p>
 <b>Improved Features</b>
 <p>A start tax year date eg. 06/04/2022 can be setup under view so that reports will use this by default as their start date.</p>
 <p>The invoice aging report includes the invoice number(s) of the outstanding balance.</p>

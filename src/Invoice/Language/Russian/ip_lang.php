@@ -310,6 +310,7 @@ $lang = array(
     'logout'                                       => 'Logout',
     'mark_invoices_sent_pdf'                       => 'Mark invoices as sent when PDF is generated',
     'mark_quotes_sent_pdf'                         => 'Mark quotes as sent when PDF is generated',
+    'mark_invoices_sent_copy'                      => 'Mark invoices as sent when copying an invoice',  
     'max_quantity'                                 => 'Maximum Quantity',
     'menu'                                         => 'Menu',
     'min_quantity'                                 => 'Minimal Quantity',

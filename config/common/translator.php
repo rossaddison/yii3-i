@@ -20,15 +20,5 @@ return [
             );
         },
         'tags' => ['translation.categorySource'],
-    ],
-    'translation.invoice' => [
-        'definition' => static function (Aliases $aliases) use ($params) {
-            return new CategorySource(
-                $params['yiisoft/translator']['defaultCategory'],
-                new MessageSource($aliases->get('@messages_invoice')),
-                new IntlMessageFormatter(),
-            );
-        },
-        'tags' => ['translation.categorySource'],
-    ],     
+    ], 
 ];

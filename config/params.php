@@ -35,7 +35,7 @@ use Yiisoft\Session\SessionInterface;
 
 return [
     'locale' => [
-        'locales' => ['en' => 'en-US', 'ru' => 'ru-RU', 'id' => 'id-ID', 'sk' => 'sk-SK'],
+        'locales' => ['ar' => 'ar-BH','en' => 'en-US', 'id' => 'id-ID', 'ja' => 'ja_JP', 'nl' => 'nl_NL', 'ru' => 'ru-RU', 'sk' => 'sk-SK', 'zh' => 'zh_CN'],
         'ignoredRequests' => [
             '/debug**',
             '/inspect**',
@@ -70,8 +70,6 @@ return [
             '@vendor' => '@root/vendor',
             '@layout' => '@views/layout',
             '@views' => '@resources/views',
-            // yii-invoice            
-            '@messages_invoice' => '@resources/messages/invoice',
         ],
     ],
 
@@ -109,12 +107,7 @@ return [
         'fallbackLocale' => 'en',
         'defaultCategory' => 'app',
         'categorySources' => [
-            // You can add categories from your application and additional modules using `Reference::to` below
-            // Reference::to(ApplicationCategorySource::class),
             Reference::to('translation.app'),
-            
-            // yii-invoice - Refer to config/common/translator.php
-            Reference::to('translation.invoice'),
         ],
     ],
 
@@ -129,7 +122,6 @@ return [
             's' => Reference::to(SettingRepository::class),
             'session' => Reference::to(SessionInterface::class),
             'datehelper' => Reference::to(DateHelper::class),
-            
         ],
     ],
 
@@ -146,6 +138,7 @@ return [
             Reference::to(LayoutViewInjection::class),
             Reference::to(LinkTagsViewInjection::class),
             Reference::to(MetaTagsViewInjection::class),
+            Reference::to(SettingRepository::class)
         ],
     ],
 
