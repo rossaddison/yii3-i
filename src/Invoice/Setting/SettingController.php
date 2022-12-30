@@ -174,6 +174,10 @@ final class SettingController
             'email'=>$this->viewRenderer->renderPartialAsString('/invoice/setting/views/partial_settings_email',[
                 's'=>$this->s,
             ]),
+            'google_translate'=>$this->viewRenderer->renderPartialAsString('/invoice/setting/views/partial_settings_google_translate',[
+                'locales'=>$this->s->locales(),
+                's'=>$this->s,
+            ]),
             'online_payment'=>$this->viewRenderer->renderPartialAsString('/invoice/setting/views/partial_settings_online_payment',[
                 's'=>$this->s,
                 'gateway_drivers'=>$this->s->payment_gateways(),

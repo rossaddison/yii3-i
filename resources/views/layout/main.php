@@ -12,7 +12,6 @@ use Yiisoft\Html\Tag\Form;
 use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Router\UrlGeneratorInterface;
 use Yiisoft\Strings\StringHelper;
-use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\View\WebView;
 use Yiisoft\Yii\Bootstrap5\Nav;
 use Yiisoft\Yii\Bootstrap5\NavBar;
@@ -44,7 +43,7 @@ $isGuest = $user === null || $user->getId() === null;
 $this->beginPage();
 ?>
     <!DOCTYPE html>
-    <html class="h-100" lang="en">
+    <html class="h-100" lang="<?= $s->get_setting('cldr');?>">
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -92,37 +91,57 @@ $this->beginPage();
                         'url' => '#',
                         'items' => [
                             [
-                                'label' => 'Arabic',
-                                'url' => $urlGenerator->generateFromCurrent(['_language' => 'ar'], fallbackRouteName: 'site/index'),
-                            ],
-                            [
-                                'label' => 'English',
-                                'url' => $urlGenerator->generateFromCurrent(['_language' => 'en'], fallbackRouteName: 'site/index'),
-                            ],
-                            [
-                                'label' => 'Indonesia',
-                                'url' => $urlGenerator->generateFromCurrent(['_language' => 'id'], fallbackRouteName: 'site/index'),
-                            ],
-                            [
-                                'label' => 'Japanese',
-                                'url' => $urlGenerator->generateFromCurrent(['_language' => 'ja'], fallbackRouteName: 'site/index'),
-                            ],
-                            [
-                                'label' => 'Dutch',
-                                'url' => $urlGenerator->generateFromCurrent(['_language' => 'nl'], fallbackRouteName: 'site/index'),
-                            ],
-                            [
-                                'label' => 'Ру�?�?кий',
-                                'url' => $urlGenerator->generateFromCurrent(['_language' => 'ru'], fallbackRouteName: 'site/index'),
-                            ],
-                            [
-                                'label' => 'Slovenský',
-                                'url' => $urlGenerator->generateFromCurrent(['_language' => 'sk'], fallbackRouteName: 'site/index'),
-                            ],
-                            [
-                                'label' => 'Chinese Simplified',
-                                'url' => $urlGenerator->generateFromCurrent(['_language' => 'zh'], fallbackRouteName: 'site/index'),
-                            ],
+                        'label' => 'Afrikaans',
+                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'af'], fallbackRouteName: 'site/index'),
+                    ],
+                    [
+                        'label' => 'Arabic / عربي',
+                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'ar'], fallbackRouteName: 'site/index'),
+                    ],                    
+                    [
+                        'label' => 'Chinese Simplified / 简体中文',
+                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'zh'], fallbackRouteName: 'site/index'),
+                    ],
+                    [
+                        'label' => 'English',
+                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'en'], fallbackRouteName: 'site/index'),
+                    ],                    
+                    [
+                        'label' => 'Dutch / Nederlands',
+                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'nl'], fallbackRouteName: 'site/index'),
+                    ],
+                    [
+                        'label' => 'German / Deutsch',
+                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'de'], fallbackRouteName: 'site/index'),
+                    ],
+                    [
+                        'label' => 'Indonesian / bahasa Indonesia',
+                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'id'], fallbackRouteName: 'site/index'),
+                    ],
+                    [
+                        'label' => 'Japanese / 日本',
+                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'ja'], fallbackRouteName: 'site/index'),
+                    ],
+                    [
+                        'label' => 'Russian / Русский',
+                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'ru'], fallbackRouteName: 'site/index'),
+                    ],
+                    [
+                        'label' => 'Slovakian / Slovenský',
+                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'sk'], fallbackRouteName: 'site/index'),
+                    ],
+                    [
+                        'label' => 'Spanish / Española x',
+                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'es'], fallbackRouteName: 'site/index'),
+                    ],
+                    [
+                        'label' => 'Ukrainian / українська',
+                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'uk'], fallbackRouteName: 'site/index'),
+                    ],
+                    [
+                        'label' => 'Vietnamese / Tiếng Việt',
+                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'vi'], fallbackRouteName: 'site/index'),
+                    ],
                         ],
                     ],
                     [

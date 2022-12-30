@@ -12,12 +12,42 @@
 <p>Work on info issues</p>
 <p>Work In Progress - Shorter Term Goals</p>
 <p>Dead Code Removal with Psalm 3 Testing</p>
-<p>Language array generator using Google Translate</p>
+<p><s>Language array generator using Google Translate</s></p>
 <p>All invoices with dates falling within CompanyPrivate start and end dates will have the specific logo uploaded</p>
 <p>for this CompanyPrivate record attached to these invoices.</p>
 <p>CompanyPrivate logo will be automatically input on invoice/quotes depending on whether the date of the invoice falls between the start and end date.</p>
 <p>Introducing Paypal.</p>
-<p>Introducing India's PayTm payment gateway's QR code method of payment and comparing this with Stripe's method.
+<p>Introducing India's PayTm payment gateway's QR code method of payment and comparing this with Stripe's method.</p>
+<p><b>29 December 2022</b></p>
+<p>Psalm Level 4 Testing (0 errors)</p>
+<p>Using Generator...Translate{language file} and Setting...View...Google Translate...locale,
+<p>Afrikaans, Russian, German, Ukrainian, Vietnamese language folders generated using Google Translate</p>
+<p><b>Locale related files adjusted:</b></p>
+<p>...src/Invoice/Setting/SettingRepository/locale_language_array/{insert the locale}</p>
+<p>...src/Invoice/Asset/i18nAsset/{create your file with class name the same as the file name}</p>
+<p>...resources/views/layout/main.php/{insert the language menu item}</p>
+<p>...resources/views/layout/invoice.php{insert the 'use' namespace, 'case', and menu item.</p>
+<p>...adjust the config/params 'locales' setting.</p>
+<p><b>28 December 2022</b></p>
+<p></p>
+<p>Google Translate included to generate language files ie. ip_lang.php, gateway_lang.php, app.php for a locale.</p>    
+<p><a href="https://github.com/googleapis/google-cloud-php-translate">Examples here</a></p>
+<p><a href="https://console.cloud.google.com/iam-admin/serviceaccounts/details/
+        // {unique_project_id}/keys?project={your_project_name}"">Build your cloud project<a/>
+<p><b>Steps to get the Json file that must be saved in src/Invoice/google_tranlate_unique_folder</b></p>
+<p>1: Download https://curl.haxx.se/ca/cacert.pem into active c:\wamp64\bin\php\php8.1.12 folder</p>
+<p>2: Select your project that you created under https://console.cloud.google.com/projectselector2/iam-admin/serviceaccounts?supportedpurview=project'</p>
+<p>3: Click on Actions icon and select Manage Keys</p>
+<p>4: Add Key</p>
+<p>5: Choose the Json File option and Download the file to src/Invoice/Google_translate_unique_folder</p>
+<p>6: You will have to enable the Cloud Translation API and provide your billing details. You will be charged 0 currency</p>
+<p>7: Move the file from views/generator/output_overwrite to eg. src/Invoice/Language/{your language}</p>
+<p><b>Step to choose a locale for translation: Settings...View...Google Translate...{dropdown}...save</b></p>
+<p><b>Steps to generate eg. ip_lang.php</b></p>
+<p>1: Generator ...Translate English\ip_lang.php</p>
+<p>2: Either copy the array from off the screen or move it from ..resources/views/generator/output_overwrite into the appropriate folder</p>
+<P>3. The separator ie. 'YYYY' will enable you to do a search and replace ie search 'YYYY' and replace ', to provide a comma separating each array item from the screen outputted array with a comma.</p>
+<p>4. Dont forget to restart Netbeans 16 after adjusting C:\Program Files\NetBeans-16\netbeans\etc\netbeans.conf and inserting <code>"-J-Dfile.encoding=UTF-8"</code>  to parameter "netbeans_default_options". when dealing with languages with special characters.</p>
 <p><b>26th December 2022</b></p>
 <p>Include additional demo languages</p>
 <p><b>24th December 2022</b></p>
@@ -25,6 +55,8 @@
 <p>2. Remove 55 Psalm Errors mostly related to <a href="https://github.com/rossaddison/yii3-i/issues/5">Issue #5</a>
 <p>3. Psalm Level 7,6,5,4 Testing using Psalm 5.4 instead of 4.3</p>    
 <p>4. Auditing of Setting...View...Invoice...Default Public Template and Mark Invoices Sent Copy</p>.
+<p>5. Moved rossaddison/yii-invoice to rossaddison/yii3-i.</p>
+<p>6. Resynced rossaddison/yii-invoice fork.</p>
 <p><b>20th December 2022</b></p>
 <p>1. Moved repository into separate working folder under blog, and blog-api for separate github workflow purposes.</p>
 <p>2. Invoice works separately from blog. There are no hyperlinks to blog.</p>

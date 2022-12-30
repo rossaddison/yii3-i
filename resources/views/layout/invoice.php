@@ -5,12 +5,17 @@ use App\Invoice\Asset\InvoiceAsset;
 use App\Invoice\Asset\MonospaceAsset;
 
 // DatePicker Assets available for dropdown locale/cldr selection
+use App\Invoice\Asset\i18nAsset\af_Asset;
 use App\Invoice\Asset\i18nAsset\ar_Asset;
+use App\Invoice\Asset\i18nAsset\de_DE_Asset;
 use App\Invoice\Asset\i18nAsset\en_GB_Asset;
+use App\Invoice\Asset\i18nAsset\es_ES_Asset;
 use App\Invoice\Asset\i18nAsset\id_Asset;
 use App\Invoice\Asset\i18nAsset\ja_Asset;
 use App\Invoice\Asset\i18nAsset\nl_Asset;
 use App\Invoice\Asset\i18nAsset\ru_Asset;
+use App\Invoice\Asset\i18nAsset\sk_Asset;
+use App\Invoice\Asset\i18nAsset\uk_UA_Asset;
 use App\Invoice\Asset\i18nAsset\zh_CN_Asset;
 // PCI Compliant Payment Gateway Assets
 use App\Invoice\Asset\pciAsset\stripe_v10_Asset;
@@ -57,12 +62,17 @@ $s->get_setting('gateway_braintree_version') == '0' ? $assetManager->register(br
 // The $s value is configured for the layout in config/params.php yii-soft/view Reference::to and NOT by means of the InvoiceController
 
 switch ($session->get('_language') ?? $session->set('_language','en')) {
+    case 'af' : $assetManager->register(af_Asset::class); $locale = 'Afrikaans'; break;
     case 'ar' : $assetManager->register(ar_Asset::class); $locale = 'Arabic'; break;
+    case 'de' : $assetManager->register(de_DE_Asset::class); $locale = 'German'; break;
     case 'en' : $assetManager->register(en_GB_Asset::class); $locale = 'English'; break;
     case 'id' : $assetManager->register(id_Asset::class); $locale = 'Indonesian'; break;
     case 'ja' : $assetManager->register(ja_Asset::class); $locale = 'Japanese'; break;
     case 'nl' : $assetManager->register(nl_Asset::class); $locale = 'Dutch'; break;
     case 'ru' : $assetManager->register(ru_Asset::class); $locale = 'Russian'; break;
+    case 'sk' : $assetManager->register(sk_Asset::class); $locale = 'Slovensky'; break;    
+    case 'es' : $assetManager->register(es_ES_Asset::class); $locale = 'Spanish'; break;
+    case 'uk' : $assetManager->register(uk_UA_Asset::class); $locale = 'Ukrainian'; break;
     case 'zh' : $assetManager->register(zh_CN_Asset::class); $locale = 'Chinese Simplified'; break;
     default   : $assetManager->register(en_GB_Asset::class); $locale = 'English'; break;
 }
@@ -211,6 +221,7 @@ echo Nav::widget()
                                  ['label' => $translator->translate('invoice.vendor.nikic.fast-route'), 'url'=>'https://github.com/nikic/FastRoute'],
                                  ['label' => $translator->translate('invoice.platform.netbeans.UTF-8'), 'url'=>'https://stackoverflow.com/questions/59800221/gradle-netbeans-howto-set-encoding-to-utf-8-in-editor-and-compiler'],
                                  ['label' => $translator->translate('invoice.platform.csrf'), 'url'=>'https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#use-of-custom-request-headers'],
+                                 ['label' => 'Html to Markdown', 'url'=>'https://convertsimple.com/convert-html-to-markdown/'],
                                  ['label' => 'LAMP'],
                                  ['label' => $translator->translate('invoice.platform.editor'). ': Apache Netbeans 12.4 64 bit'], 
                                  ['label' => $translator->translate('invoice.platform.server'). ': Ubuntu LTS 22.04 64 bit'],
@@ -242,6 +253,13 @@ echo Nav::widget()
                                    ['options'=>['class'=>'nav fs-4'],'label' => $translator->translate('invoice.generator.relations.add'),'url'=>$urlGenerator->generate('generatorrelation/add')],                                                                    
                                    ['options'=>['class'=>'nav fs-4'],'label' => $translator->translate('invoice.development.progress'),'url'=>$urlGenerator->generate('invoice/index')],
                                    ['options'=>['class'=>'nav fs-4'],'label' => $translator->translate('invoice.development.schema'),'url'=>$urlGenerator->generate('generator/quick_view_schema')],
+                                   // Using the saved locale dropdown setting under Settings ... Views ... Google Translate, translate one of the three files located in
+                                   // ..resources/views/generator/templates_protected
+                                   // Your Json file must be located in src/Invoice/google_translate_unique folder
+                                   // Get your downloaded Json file from 
+                                   ['options'=>['class'=>'nav fs-4','data-toggle'=>'tooltip','title'=>$s->where('google_translate_json_filename')],'label' => $translator->translate('invoice.generator.google.translate.ip'),'url'=>$urlGenerator->generate('generator/google_translate',['type'=>'ip'])],
+                                   ['options'=>['class'=>'nav fs-4'],'label' => $translator->translate('invoice.generator.google.translate.gateway'),'url'=>$urlGenerator->generate('generator/google_translate',['type'=>'gateway'])],                                   
+                                   ['options'=>['class'=>'nav fs-4','data-toggle'=>'tooltip','title'=>$s->where('google_translate_en_app_php')],'label' => $translator->translate('invoice.generator.google.translate.app'),'url'=>$urlGenerator->generate('generator/google_translate',['type'=>'app'])],
                                    ['label' => $translator->translate('invoice.test.reset.setting'),'url'=>$urlGenerator->generate('invoice/setting_reset'),
                                     'options'=>['class'=>'nav fs-4','data-toggle'=>'tooltip','title'=>$translator->translate('invoice.test.reset.setting.tooltip')]],
                                    ['label' => $translator->translate('invoice.test.reset'),'url'=>$urlGenerator->generate('invoice/test_data_reset'),
@@ -282,36 +300,56 @@ echo Nav::widget()
                 'url' => '#',
                 'items' => [
                     [
-                        'label' => 'Arabic',
+                        'label' => 'Afrikaans',
+                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'af'], fallbackRouteName: 'site/index'),
+                    ],
+                    [
+                        'label' => 'Arabic / عربي',
                         'url' => $urlGenerator->generateFromCurrent(['_language' => 'ar'], fallbackRouteName: 'site/index'),
+                    ],                    
+                    [
+                        'label' => 'Chinese Simplified / 简体中文',
+                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'zh'], fallbackRouteName: 'site/index'),
                     ],
                     [
                         'label' => 'English',
                         'url' => $urlGenerator->generateFromCurrent(['_language' => 'en'], fallbackRouteName: 'site/index'),
-                    ],
+                    ],                    
                     [
-                        'label' => 'Indonesia',
-                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'id'], fallbackRouteName: 'site/index'),
-                    ],
-                    [
-                        'label' => 'Japanese',
-                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'ja'], fallbackRouteName: 'site/index'),
-                    ],
-                    [
-                        'label' => 'Dutch',
+                        'label' => 'Dutch / Nederlands',
                         'url' => $urlGenerator->generateFromCurrent(['_language' => 'nl'], fallbackRouteName: 'site/index'),
                     ],
                     [
-                        'label' => 'Ру�?�?кий',
+                        'label' => 'German / Deutsch',
+                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'de'], fallbackRouteName: 'site/index'),
+                    ],
+                    [
+                        'label' => 'Indonesian / bahasa Indonesia',
+                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'id'], fallbackRouteName: 'site/index'),
+                    ],
+                    [
+                        'label' => 'Japanese / 日本',
+                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'ja'], fallbackRouteName: 'site/index'),
+                    ],
+                    [
+                        'label' => 'Russian / Русский',
                         'url' => $urlGenerator->generateFromCurrent(['_language' => 'ru'], fallbackRouteName: 'site/index'),
                     ],
                     [
-                        'label' => 'Slovenský',
+                        'label' => 'Slovakian / Slovenský',
                         'url' => $urlGenerator->generateFromCurrent(['_language' => 'sk'], fallbackRouteName: 'site/index'),
                     ],
                     [
-                        'label' => 'Chinese Simplified',
-                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'zh'], fallbackRouteName: 'site/index'),
+                        'label' => 'Spanish / Española x',
+                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'es'], fallbackRouteName: 'site/index'),
+                    ],
+                    [
+                        'label' => 'Ukrainian / українська',
+                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'uk'], fallbackRouteName: 'site/index'),
+                    ],
+                    [
+                        'label' => 'Vietnamese / Tiếng Việt',
+                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'vi'], fallbackRouteName: 'site/index'),
                     ],
                 ],
             ],

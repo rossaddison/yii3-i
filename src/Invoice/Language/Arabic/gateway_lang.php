@@ -1,69 +1,78 @@
 <?php
+
 declare(strict_types=1);
-$lang = array(
-    // General strings
-    'online_payment'                     => 'الد�?ع الالكتروني',
-    'online_payments'                    => 'الد�?ع الالكتروني',
-    'online_payment_for'                 => 'الد�?ع الالكتروني لـ',
-    'online_payment_for_invoice'         => 'الد�?ع الإلكتروني لل�?اتورة',
-    'online_payment_method'              => 'طريقة الد�?ع عبر الإنترنت',
-    'online_payment_creditcard_hint'     => 'إذا كنت تود الد�?ع عبر بطاقة الإئتمان, الرجاء إدخال المعلومات المدرجة.<br/> بيانات بطاقة الإئتمان لن تكون مح�?وظة �?ي سير�?راتنا وسيتم تحويلك لبوابة الد�?ع بإستخدام إتصال آمن ومش�?ر.',
-    'enable_online_payments'             => 'تمكين الد�?ع عبر الإنترنت',
-    'payment_provider'                   => 'مزود خدمة الد�?ع',
-    'add_payment_provider'               => 'إضا�?ة مو�?ر الد�?ع',
-    'transaction_reference'              => 'رقم قيد الحركة',
-    'payment_description'                => 'الد�?ع لل�?اتورة %s',
 
-    // Credit card strings
-    'creditcard_cvv'                     => 'الرقم CVV',
-    'creditcard_details'                 => 'ت�?اصيل بطاقة الائتمان',
-    'creditcard_expiry_month'            => 'شهر الانتهاء',
-    'creditcard_expiry_year'             => 'سنة الإنتهاء',
-    'creditcard_number'                  => 'رقم بطاقة الائتمان',
-    'online_payment_card_invalid'        => 'هذه البطاقة غير صالحة. الرجاء التحقق من المعلومات المقدمة.',
-
-    // Payment Gateway Fields
-    'online_payment_apiLoginId'          => 'معر�? تسجيل الدخول Api', // Field for AuthorizeNet_AIM
-    'online_payment_transactionKey'      => 'رقم العملية', // Field for AuthorizeNet_AIM
-    'online_payment_testMode'            => 'وضع الاختبار', // Field for AuthorizeNet_AIM
-    'online_payment_developerMode'       => 'وضع المطور', // Field for AuthorizeNet_AIM
-    'online_payment_websiteKey'          => 'م�?تاح الموقع', // Field for Buckaroo_Ideal
-    'online_payment_secretKey'           => 'الم�?تاح السري', // Field for Buckaroo_Ideal
-    'online_payment_merchantId'          => 'معر�? التاجر', // Field for CardSave
-    'online_payment_password'            => 'كلمة المرور', // Field for CardSave
-    'online_payment_apiKey'              => 'Api', // Field for Coinbase
-    'online_payment_secret'              => 'الرمز السري', // Field for Coinbase
-    'online_payment_accountId'           => 'معر�? الحساب', // Field for Coinbase
-    'online_payment_storeId'             => 'معر�? المخزن', // Field for FirstData_Connect
-    'online_payment_sharedSecret'        => 'الرمز السري المشترك', // Field for FirstData_Connect
-    'online_payment_appId'               => 'معر�? التطبيق', // Field for GoCardless
-    'online_payment_appSecret'           => 'كلمة سر التطبيق', // Field for GoCardless
-    'online_payment_accessToken'         => 'رمزالوصول المميز', // Field for GoCardless
-    'online_payment_merchantAccessCode'  => 'رمز وصول التاجر', // Field for Migs_ThreeParty
-    'online_payment_secureHash'          => 'تجزئة آمنة', // Field for Migs_ThreeParty
-    'online_payment_siteId'              => 'معر�? الموقع', // Field for MultiSafepay
-    'online_payment_siteCode'            => 'موقع التعليمات البرمجية', // Field for MultiSafepay
-    'online_payment_accountNumber'       => 'رقم الحساب', // Field for NetBanx
-    'online_payment_storePassword'       => 'تخزين كلمات المرور', // Field for NetBanx
-    'online_payment_merchantKey'         => 'م�?تاح التاجر', // Field for PayFast
-    'online_payment_pdtKey'              => 'م�?تاح Pdt', // Field for PayFast
-    'online_payment_username'            => 'اسم المستخدم', // Field for Payflow_Pro
-    'online_payment_vendor'              => 'المورد', // Field for Payflow_Pro
-    'online_payment_partner'             => 'الشريك', // Field for Payflow_Pro
-    'online_payment_pxPostUsername'      => 'اسم المستخدم ل Px Post', // Field for PaymentExpress_PxPay
-    'online_payment_pxPostPassword'      => 'كلمة المرور ل Px Post', // Field for PaymentExpress_PxPay
-    'online_payment_signature'           => 'التوقيع', // Field for PayPal_Express
-    'online_payment_referrerId'          => 'معر�? المرجع', // Field for SagePay_Direct
-    'online_payment_transactionPassword' => 'كلمة مرور المعاملة', // Field for SecurePay_DirectPost
-    'online_payment_subAccountId'        => 'معر�? الحساب ال�?رعي', // Field for TargetPay_Directebanking
-    'online_payment_secretWord'          => 'كلمة سر', // Field for TwoCheckout
-    'online_payment_installationId'      => 'رمز التثبيت', // Field for WorldPay
-    'online_payment_callbackPassword'    => 'كلمة المرور Callback', // Field for WorldPay
-
-    // Status / Error Messages
-    'online_payment_payment_cancelled'   => 'تم إلغاء الد�?ع.',
-    'online_payment_payment_failed'      => '�?شل الد�?ع. الرجاء المحاولة مرة أخرى.',
-    'online_payment_payment_successful'  => 'نجح الد�?ع لل�?اتورة %s!',
-    'online_payment_payment_redirect'    => 'الرجاء الانتظار بينما يتم توجيهك إلى ص�?حة الد�?ع...',
-    'online_payment_3dauth_redirect'     => 'الرجاء الانتظار بينما يتم إعادة توجيهك إلى المتحقق من البطاقة للمصادقة...'
-);
+$lang = [
+'online_payment' => 'الدفع الالكتروني',
+'online_payments' => 'المدفوعات عبر الإنترنت',
+'online_payment_for' => 'الدفع عبر الإنترنت لـ',
+'online_payment_for_invoice' => 'الدفع عبر الإنترنت للفاتورة',
+'online_payment_method' => 'طريقة الدفع عبر الإنترنت',
+'online_payment_creditcard_hint' => 'إذا كنت ترغب في الدفع عن طريق بطاقة الائتمان ، يرجى إدخال المعلومات أدناه.<br/> لا يتم تخزين معلومات بطاقة الائتمان على خوادمنا وسيتم نقلها إلى بوابة الدفع عبر الإنترنت باستخدام اتصال آمن.',
+'online_payment_version' => 'إصدار Omnipay',
+'enable_online_payments' => 'تمكين المدفوعات عبر الإنترنت',
+'payment_provider' => 'مزود الدفع',
+'provider_response' => 'استجابة المزود',
+'add_payment_provider' => 'إضافة موفر الدفع',
+'transaction_reference' => 'رمز العملية',
+'transaction_successful' => 'عملية ناجحة',
+'payment_description' => 'دفع الفاتورة٪ s',
+'creditcard_cvv' => 'CVV / CSC',
+'creditcard_details' => 'تفاصيل بطاقة الائتمان',
+'creditcard_expiry_month' => 'شهر انتهاء الصلاحية',
+'creditcard_expiry_year' => 'سنة انتهاء الصلاحية',
+'creditcard_number' => 'رقم بطاقة الائتمان',
+'online_payment_card_invalid' => 'بطاقة الائتمان هذه غير صالحة. يرجى التحقق من المعلومات المقدمة.',
+'online_payment_apiLoginId' => 'معرف تسجيل الدخول إلى Api',
+'online_payment_transactionKey' => 'مفتاح الصفقة',
+'online_payment_testMode' => 'وضع الاختبار',
+'online_payment_developerMode' => 'وضع المطور',
+'online_payment_websiteKey' => 'مفتاح الموقع',
+'online_payment_secretKey' => 'المفتاح السري',
+'online_payment_merchantId' => 'معرّف التاجر',
+'online_payment_password' => 'كلمة المرور',
+'online_payment_apiKey' => 'مفتاح API',
+'online_payment_secret' => 'سر',
+'online_payment_accountId' => 'معرف الحساب',
+'online_payment_storeId' => 'معرف المتجر',
+'online_payment_sharedSecret' => 'السر المشترك',
+'online_payment_appId' => 'معرف التطبيق',
+'online_payment_appSecret' => 'سر التطبيق',
+'online_payment_accessToken' => 'رمز وصول',
+'online_payment_merchantAccessCode' => 'رمز دخول التاجر',
+'online_payment_secureHash' => 'تجزئة آمنة',
+'online_payment_siteId' => 'معرف الموقع',
+'online_payment_siteCode' => 'رمز الموقع',
+'online_payment_accountNumber' => 'رقم حساب',
+'online_payment_storePassword' => 'تخزين كلمة المرور',
+'online_payment_merchantKey' => 'مفتاح التاجر',
+'online_payment_pdtKey' => 'مفتاح PDT',
+'online_payment_username' => 'اسم المستخدم',
+'online_payment_vendor' => 'بائع',
+'online_payment_partner' => 'شريك',
+'online_payment_pxPostUsername' => 'اسم مستخدم Px Post',
+'online_payment_pxPostPassword' => 'Px Post Password',
+'online_payment_signature' => 'إمضاء',
+'online_payment_referrerId' => 'معرف المرجع',
+'online_payment_transactionPassword' => 'عملية كلمة المرور',
+'online_payment_subAccountId' => 'معرف الحساب الفرعي',
+'online_payment_secretWord' => 'كلمة سرية',
+'online_payment_installationId' => 'معرف التثبيت',
+'online_payment_callbackPassword' => 'كلمة مرور رد الاتصال',
+'online_payment_privateKey' => 'مفتاح سري',
+'online_payment_publicKey' => 'المفتاح العمومي',
+'online_payment_profileId' => 'ملف البطاقة الشخصية',
+'online_payment_accessKey' => 'مفتاح الوصول',
+'online_payment_publishableKey' => 'مفتاح قابل للنشر',
+'online_payment_clientId' => 'معرف العميل',
+'online_payment_clientSecret' => 'سر العميل',
+'online_payment_publicKeyId' => 'معرف المفتاح العام',
+'online_payment_returnUrl' => 'إرجاع عنوان Url',
+'online_payment_sandboxId' => 'معرّف Sandbox',
+'online_payment_sandbox' => 'صندوق الرمل',
+'online_payment_payment_cancelled' => 'تم إلغاء الدفع.',
+'online_payment_payment_failed' => 'عملية الدفع فشلت. حاول مرة اخرى.',
+'online_payment_payment_successful' => 'تم دفع الفاتورة٪ s بنجاح!',
+'online_payment_payment_redirect' => 'الرجاء الانتظار حتى نعيد توجيهك إلى صفحة الدفع ...',
+'online_payment_3dauth_redirect' => 'يُرجى الانتظار حتى نعيد توجيهك إلى جهة إصدار بطاقتك للمصادقة ...',
+];

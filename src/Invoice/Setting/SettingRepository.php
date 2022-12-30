@@ -290,17 +290,23 @@ final class SettingRepository extends Select\Repository
      * @return array
      */
     public function locale_language_array() : array {
+    // locale => src/Invoice/Language/{language folder name}    
         $language_list = [
+            'af'=>'Afrikaans',
             'ar'=>'Arabic',
+            'de'=>'German',
             'en'=>'English',
+            'es'=>'Spanish',
             'id'=>'Indonesian',            
             'ja'=>'Japanese',
             'nl'=>'Dutch',
-           
             // There is currently no russian language folder under invoiceplane. Substitute English here with Russian when it becomes available
-            'ru'=>'English',
+            'ru'=>'Russian',
+            'uk'=>'Ukrainian',
+            'sk'=>'Slovakian',
             // Use camelcase here => remove the space between Chinese and Simplified and in the original folder otherwise it will not be 
             // retrieved
+            'vi'=>'Vietnamese',
             'zh'=>'ChineseSimplified',                
         ];
         return $language_list;
@@ -491,6 +497,10 @@ final class SettingRepository extends Select\Repository
         return '/Pem_unique_folder';
     }
     
+    public static function getGoogleTranslateJsonFileFolder() {
+        return '/Google_translate_unique_folder';
+    }
+    
     public static function getCompanyPrivateLogosRelativefolderUrl(): string
     {        
         return '/Company_private_logos';
@@ -652,6 +662,16 @@ final class SettingRepository extends Select\Repository
         $aliases = new Aliases(['@base' => dirname(dirname(dirname(__DIR__))), 
                                 '@company_private_logos' => '@base/src/Invoice/Uploads'.$this->getCompanyPrivateLogosRelativefolderUrl(),
                                 '@public' => '@base/public'
+        ]);
+        return $aliases;
+    }
+    
+    /**
+     * @return Aliases
+     */
+    public function get_google_translate_json_file_aliases(): Aliases {
+        $aliases = new Aliases(['@base' => dirname(dirname(dirname(__DIR__))), 
+                                '@google_translate_json_file_folder' => '@base/src/Invoice'.$this->getGoogleTranslateJsonFileFolder()
         ]);
         return $aliases;
     }
@@ -1001,8 +1021,8 @@ final class SettingRepository extends Select\Repository
           'where'=>'views/invoice/inv/partial_item_table, views/invoice/quote/partial_item_table, views/invoice/invitem/_item_edit_task and _item_edit_product'
         ],   
         'currency_code' => [
-          'why'=>'Used in PaymentInformationController.',
-          'where'=>''
+          'why'=>'Used in PaymentInformationController and the dropdown array is constructed in src/Invoice/Helpers/CurrencyHelper',
+          'where'=>'PaymentInformationController and CurrencyHelper'
         ], 
         'tax_rate_decimal_places'=>[
           'why'=>'TODO: Currency decimal places vary per country. The decimal column of the TaxRate table, tax_rate_percent column has to be adjusted during runtime using the ALTER COMMAND sql statement preferably in a FRAGMENT',
@@ -1073,6 +1093,26 @@ final class SettingRepository extends Select\Repository
             'why'=>'Automatically generate a Quote Number by means of the Group Identifier.',
             'where'=>'QuoteController/generate_quote_number_if_applicable and QuoteRepository/get_quote_number and GroupRepository/generate_number.'
         ],
+        'google_translate_json_filename'=>[
+            'why'=>'GeneratorController includes a function google_translate_lang. '.            
+            'This function takes the English ip_lang array or gateway_lang located in src/Invoice/Language/English and translates it into the chosen locale (Settings...View...Google Translate) outputting it to resources/views/generator/output_overwrite'. "\r\n".
+            '---Step--1: Download https://curl.haxx.se/ca/cacert.pem into active c:\wamp64\bin\php\php8.1.12 folder'."\r\n".
+            '---Step--2: Select your project that you created under https://console.cloud.google.com/projectselector2/iam-admin/serviceaccounts?supportedpurview=project'."\r\n".
+            '---Step--3: Click on Actions icon and select Manage Keys'."\r\n".
+            '---Step--4: Add Key'."\r\n".
+            '---Step--5: Choose the Json File option and Download the file to src/Invoice/Google_translate_unique_folder'."\r\n".
+            '---Step--6: You will have to enable the Cloud Translation API and provide your billing details. You will be charged 0 currency. '."\r\n".
+            '---Step--7: Move the file from views/generator/output_overwrite to eg. src/Invoice/Language/{your language}',
+            'where'=>'GeneratorController/google_translate_lang'
+        ],
+        'google_translate_en_app_php'=>[
+            'why'=>'If you are wanting to translate resources/messages/en/app.php make sure you have loaded a copy in the ../Language/English folder.',
+            'where'=>'GeneratorController/google_translate_lang'
+        ],       
+        'google_translate_locale'=>[
+            'why'=>'To save time manually translating an ip_lang file using Google Translate Online, the Google Translate API https://github.com/googleapis/google-cloud-php-translate can be used to translate to your chosen locale. eg. es / Spanish',
+            'where'=>'GeneratorController/google_translate_lang'
+        ],    
         'mark_invoices_sent_pdf'=>[
             'why'=>'If the invoice is downloaded it will be marked as sent.',
             'where'=>'InvController/pdf and InvController/email_stage_2 when viewing the invoice.'
@@ -1260,6 +1300,33 @@ final class SettingRepository extends Select\Repository
                 break;
         }
         return $message;
+    }
+    
+    public function locales() {
+        $locales = [
+            'af', 'ar', 'az', 
+            'be', 'bg', 'bs', 
+            'ca', 'cs', 
+            'da', 'de', 
+            'el', 'es', 'et', 
+            'fa', 'fi', 'fr', 
+            'he', 'hr', 'hu', 'hy', 
+            'id', 'it', 
+            'ja', 
+            'ka', 'kk', 'ko', 'kz', 
+            'lt', 'lv', 
+            'ms', 
+            'nb-NO', 'nl', 
+            'pl', 'pt', 'pt-BR', 
+            'ro', 'ru', 
+            'sk', 'sl', 'sr', 'sr-Latn', 'sv', 
+            'tg', 'th', 'tr', 
+            'uk', 'uz', 
+            'vi', 
+            'zh-CN', 
+            'zh-TW'
+        ];
+        return $locales;
     }
 
 }

@@ -40,6 +40,9 @@ use Yiisoft\Yii\Bootstrap5\Alert;
     <li>
         <a data-toggle="tab" href="#settings-projects-tasks" style="text-decoration: none"><?= $s->trans('projects'); ?></a>
     </li>
+    <li>
+        <a data-toggle="tab" href="#settings-google-translate" style="text-decoration: none"><?= 'Google Translate' ?></a>
+    </li>
 </ul>
 
 <form method="post" id="form-settings" action="<?= $urlGenerator->generate(...$action) ?>"  enctype="multipart/form-data">
@@ -80,6 +83,10 @@ use Yiisoft\Yii\Bootstrap5\Alert;
 
             <div id="settings-projects-tasks" class="tab-pane">
                 <?= $projects_tasks; ?>
+            </div>
+            
+            <div id="settings-google-translate" class="tab-pane">
+                <?= $google_translate; ?>
             </div>
 
         </div>

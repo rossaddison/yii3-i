@@ -78,7 +78,6 @@ use Yiisoft\Yii\Bootstrap5\Modal;
                 foreach ($relations as $relation) {
                     echo Html::a($relation->getLowercase_name(),$urlGenerator->generate('generatorrelation/edit',['id' => $relation->getRelation_id()]),['class' => 'btn btn-primary btn-sm']);
                 }
-                echo '</div>';
                 echo Html::a($s->trans('edit'),
                 $urlGenerator->generate('generator/edit', ['id' => $generator->getGentor_id()]),
                 ['class' => 'btn btn-info btn-sm ms-2']
@@ -88,6 +87,9 @@ use Yiisoft\Yii\Bootstrap5\Modal;
                 ['class' => 'btn btn-warning btn-sm ms-2']
                 );
                 //modal delete button
+                echo '</div>';
+                echo str_repeat("&nbsp;", 2);
+                echo '<div class="btn-group">';
                 echo Modal::widget()
                 ->title('Please confirm that you want to delete this record #'.$generator->getGentor_id())
                 ->titleOptions(['class' => 'text-center'])
@@ -114,12 +116,13 @@ use Yiisoft\Yii\Bootstrap5\Modal;
                             )
                 ->withoutCloseButton()
                 ->toggleButton([
-                                'class' => ['btn btn-danger btn-sm ms-2'],
+                                'class' => ['btn btn-danger btn-sm'],
                                 'label' => $s->trans('delete'),
                             ])
                 ->begin();
                 echo '<p>Are you sure you want to delete this record? </p>';
                 echo Modal::end();
+                echo '</div>';
                 echo Html::a('Entity'.DIRECTORY_SEPARATOR.$generator->getCamelcase_capital_name(),
                 $urlGenerator->generate('generator/entity',['id' => $generator->getGentor_id()]),
                 ['class' => 'btn btn-secondary btn-sm ms-2']

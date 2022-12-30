@@ -499,6 +499,14 @@ return [
                 ->middleware(fn (AccessChecker $checker) => $checker->withPermission('editInv'))
                 ->middleware(Authentication::class)
                 ->action([GeneratorController::class, 'quick_view_schema']),    
+             // type = eg. 'ip' or 'gateway'    
+             // Translate either ip_lang.php or gateway_lang.php in src/Invoice/Language/English
+             // using Setting google_translate_locale under Settings...View...Google Translate   
+             Route::methods([Method::GET, Method::POST], '/generator/google_translate/{type}')
+                ->name('generator/google_translate')
+                ->middleware(fn (AccessChecker $checker) => $checker->withPermission('editInv'))
+                ->middleware(Authentication::class)
+                ->action([GeneratorController::class, 'google_translate']),    
             Route::get('/generatorrelation')                
                 ->middleware(fn (AccessChecker $checker) => $checker->withPermission('editInv'))
                 ->middleware(Authentication::class)

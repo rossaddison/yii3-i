@@ -28,14 +28,14 @@ use Yiisoft\Yii\Middleware\Locale;
 use Yiisoft\Yii\Sentry\SentryMiddleware;
 use Yiisoft\Yii\View\CsrfViewInjection;
 
-// yii-invoice
+// yii3-i
 use App\Invoice\Setting\SettingRepository;
 use App\Invoice\Helpers\DateHelper;
 use Yiisoft\Session\SessionInterface;
 
 return [
     'locale' => [
-        'locales' => ['ar' => 'ar-BH','en' => 'en-US', 'id' => 'id-ID', 'ja' => 'ja_JP', 'nl' => 'nl_NL', 'ru' => 'ru-RU', 'sk' => 'sk-SK', 'zh' => 'zh_CN'],
+        'locales' => ['af'=>'af','ar' => 'ar-BH','de'=>'DE', 'en' => 'en-US', 'es'=>'es', 'id' => 'id-ID', 'ja' => 'ja_JP', 'nl' => 'nl_NL', 'ru' => 'ru-RU', 'sk' => 'sk-SK','uk'=>'UA', 'vi' => 'vi_VN', 'zh' => 'zh_CN'],
         'ignoredRequests' => [
             '/debug**',
             '/inspect**',
