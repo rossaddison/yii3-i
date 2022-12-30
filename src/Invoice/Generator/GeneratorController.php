@@ -929,13 +929,13 @@ final class GeneratorController
     private function google_translate_get_file_from_type(string $type) : string {
         switch ($type) {
             case 'ip':
-                $file = SELF::_IP;
+                $file = self::_IP;
                 break;
             case 'gateway':
-                $file = SELF::_GATEWAY;
+                $file = self::_GATEWAY;
                 break;
             case 'app':
-                $file = SELF::_APP;
+                $file = self::_APP;
                 break;
             default:
                 break;
