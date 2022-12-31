@@ -294,6 +294,7 @@ final class SettingRepository extends Select\Repository
         $language_list = [
             'af'=>'Afrikaans',
             'ar'=>'Arabic',
+            'az'=>'Azerbaijani',
             'de'=>'German',
             'en'=>'English',
             'es'=>'Spanish',

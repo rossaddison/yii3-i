@@ -97,7 +97,11 @@ $this->beginPage();
                     [
                         'label' => 'Arabic / عربي',
                         'url' => $urlGenerator->generateFromCurrent(['_language' => 'ar'], fallbackRouteName: 'site/index'),
-                    ],                    
+                    ],
+                    [
+                        'label' => 'Azerbaijani / Azərbaycan',
+                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'az'], fallbackRouteName: 'site/index'),
+                    ], 
                     [
                         'label' => 'Chinese Simplified / 简体中文',
                         'url' => $urlGenerator->generateFromCurrent(['_language' => 'zh'], fallbackRouteName: 'site/index'),

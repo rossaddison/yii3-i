@@ -18,6 +18,21 @@
 <p>CompanyPrivate logo will be automatically input on invoice/quotes depending on whether the date of the invoice falls between the start and end date.</p>
 <p>Introducing Paypal.</p>
 <p>Introducing India's PayTm payment gateway's QR code method of payment and comparing this with Stripe's method.</p>
+<p><b>30 December 2022</b></p>
+<p><b>12 Post-setup Steps to Introducing Azerbaijani language</b></p>
+<p>1. config/params {locales}</p>
+<p>2. views/layout/invoice.php {az_Asset and menu construction}</p>
+<p>3. views/layout/main.php {menu construction}</p>
+<p>4. SettingRepository/locale_language_array</p>
+<p>5. Settings...Views...Google Translate...select locale from dropdown</p>
+<p>6. Generator... Translate src/Invoice/Language/English/ip_lang.php</p>
+<p>7. Generator... Translate src/Invoice/Language/English/gateway_lang.php</p>
+<p>8. Generator... Translate src/Invoice/Language/English/app_lang {copied from ...resources/messages/en/app.php</p>
+<p>9. Retrieve from ...views/invoice/generator/output_overwrite</p>
+<p>10. copy output_overwrite/_ip_lang to src/Invoice/Language/{new language}</p>
+<p>11. copy output_overwrite/_gateway_lang to src/Invoice/Language/{new language}</p>
+<p>12. copy output_overwrite/_app.php to ...resources/messages/{new locale}</p>
+
 <p><b>29 December 2022</b></p>
 <p>Psalm Level 4 Testing (0 errors)</p>
 <p>Using Generator...Translate{language file} and Setting...View...Google Translate...locale,

@@ -35,7 +35,7 @@ use Yiisoft\Session\SessionInterface;
 
 return [
     'locale' => [
-        'locales' => ['af'=>'af','ar' => 'ar-BH','de'=>'DE', 'en' => 'en-US', 'es'=>'es', 'id' => 'id-ID', 'ja' => 'ja_JP', 'nl' => 'nl_NL', 'ru' => 'ru-RU', 'sk' => 'sk-SK','uk'=>'UA', 'vi' => 'vi_VN', 'zh' => 'zh_CN'],
+        'locales' => ['af'=>'af', 'ar' => 'ar-BH', 'az' => 'az-AZ', 'de'=>'DE', 'en' => 'en-US', 'es'=>'es', 'id' => 'id-ID', 'ja' => 'ja_JP', 'nl' => 'nl_NL', 'ru' => 'ru-RU', 'sk' => 'sk-SK','uk'=>'UA', 'vi' => 'vi_VN', 'zh' => 'zh_CN'],
         'ignoredRequests' => [
             '/debug**',
             '/inspect**',

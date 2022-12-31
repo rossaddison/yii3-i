@@ -7,6 +7,7 @@ use App\Invoice\Asset\MonospaceAsset;
 // DatePicker Assets available for dropdown locale/cldr selection
 use App\Invoice\Asset\i18nAsset\af_Asset;
 use App\Invoice\Asset\i18nAsset\ar_Asset;
+use App\Invoice\Asset\i18nAsset\az_Asset;
 use App\Invoice\Asset\i18nAsset\de_DE_Asset;
 use App\Invoice\Asset\i18nAsset\en_GB_Asset;
 use App\Invoice\Asset\i18nAsset\es_ES_Asset;
@@ -60,10 +61,12 @@ $s->get_setting('gateway_amazon_pay_version') == '0' ? $assetManager->register(a
 $s->get_setting('gateway_braintree_version') == '0' ? $assetManager->register(braintree_dropin_1_33_7_Asset::class) : '';
 // The InvoiceController/index receives the $session->get('_language') or 'drop-down' locale user selection and saves it into a setting called 'cldr'
 // The $s value is configured for the layout in config/params.php yii-soft/view Reference::to and NOT by means of the InvoiceController
-
+// NOTE: $locale must correspond with SettingRepository/locale_language_array and 
+// ALSO: src/Invoice/Language/{folder_name}
 switch ($session->get('_language') ?? $session->set('_language','en')) {
     case 'af' : $assetManager->register(af_Asset::class); $locale = 'Afrikaans'; break;
     case 'ar' : $assetManager->register(ar_Asset::class); $locale = 'Arabic'; break;
+    case 'az' : $assetManager->register(az_Asset::class); $locale = 'Azerbaijani'; break;
     case 'de' : $assetManager->register(de_DE_Asset::class); $locale = 'German'; break;
     case 'en' : $assetManager->register(en_GB_Asset::class); $locale = 'English'; break;
     case 'id' : $assetManager->register(id_Asset::class); $locale = 'Indonesian'; break;
@@ -306,7 +309,11 @@ echo Nav::widget()
                     [
                         'label' => 'Arabic / عربي',
                         'url' => $urlGenerator->generateFromCurrent(['_language' => 'ar'], fallbackRouteName: 'site/index'),
-                    ],                    
+                    ],
+                    [
+                        'label' => 'Azerbaijani / Azərbaycan',
+                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'az'], fallbackRouteName: 'site/index'),
+                    ], 
                     [
                         'label' => 'Chinese Simplified / 简体中文',
                         'url' => $urlGenerator->generateFromCurrent(['_language' => 'zh'], fallbackRouteName: 'site/index'),
