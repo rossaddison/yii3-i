@@ -51,12 +51,10 @@ final class CompanyPrivateController
     }
     
     /**
-     * 
      * @param CompanyPrivateRepository $companyprivateRepository
      * @param SettingRepository $settingRepository
-     * @return Response
      */
-    public function index(CompanyPrivateRepository $companyprivateRepository, SettingRepository $settingRepository): Response
+    public function index(CompanyPrivateRepository $companyprivateRepository, SettingRepository $settingRepository): \Yiisoft\DataResponse\DataResponse
     {      
           $canEdit = $this->rbac();
           $parameters = [
@@ -253,11 +251,10 @@ final class CompanyPrivateController
      * @param CurrentRoute $currentRoute
      * @param CompanyPrivateRepository $companyprivateRepository
      * @param SettingRepository $settingRepository
-     * @return Response
      */
     public function view(CurrentRoute $currentRoute, CompanyPrivateRepository $companyprivateRepository,
         SettingRepository $settingRepository,
-        ): Response {
+        ): \Yiisoft\DataResponse\DataResponse {
         $company_private = $this->companyprivate($currentRoute, $companyprivateRepository);
         $parameters = [
             'title' => $settingRepository->trans('view'),
@@ -296,11 +293,11 @@ final class CompanyPrivateController
     }
     
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, CompanyPrivate>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function companyprivates(CompanyPrivateRepository $companyprivateRepository): \Yiisoft\Data\Reader\DataReaderInterface 
+    private function companyprivates(CompanyPrivateRepository $companyprivateRepository): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader 
     {
         $companyprivates = $companyprivateRepository->findAllPreloaded();        
         return $companyprivates;

@@ -29,11 +29,21 @@ final class ItemLookupForm extends FormModel
       return $this->price;
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
 
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{name: list{Required}, description: list{Required}, price: list{Required}}
+     */
     public function getRules(): array    {
       return [
         'name' => [new Required()],

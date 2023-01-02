@@ -50,15 +50,13 @@ final class FamilyController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param FamilyRepository $familyRepository
      * @param SettingRepository $settingRepository
-     * @return Response
      */
     public function index(CurrentRoute $currentRoute, 
                           FamilyRepository $familyRepository, 
-                          SettingRepository $settingRepository): Response
+                          SettingRepository $settingRepository): \Yiisoft\DataResponse\DataResponse
     {
         $familys = $this->familys($familyRepository);
         $pageNum = (int)$currentRoute->getArgument('page', '1');
@@ -164,13 +162,11 @@ final class FamilyController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param FamilyRepository $familyRepository
      * @param SettingRepository $settingRepository
-     * @return Response
      */
-    public function view(CurrentRoute $currentRoute, FamilyRepository $familyRepository,SettingRepository $settingRepository): Response {
+    public function view(CurrentRoute $currentRoute, FamilyRepository $familyRepository,SettingRepository $settingRepository): \Yiisoft\DataResponse\DataResponse {
         $family = $this->family($currentRoute, $familyRepository);
         $parameters = [
             'title' => 'View',
@@ -200,11 +196,11 @@ final class FamilyController
     }
     
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Family>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function familys(FamilyRepository $familyRepository): \Yiisoft\Data\Reader\DataReaderInterface{
+    private function familys(FamilyRepository $familyRepository): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader{
         $familys = $familyRepository->findAllPreloaded();
         return $familys;
     }

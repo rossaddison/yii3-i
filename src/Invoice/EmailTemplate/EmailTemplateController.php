@@ -55,14 +55,12 @@ final class EmailTemplateController
     }
     
     /**
-     * 
      * @param SessionInterface $session
      * @param CurrentRoute $currentRoute
      * @param EmailTemplateRepository $emailtemplateRepository
      * @param SettingRepository $settingRepository
-     * @return Response
      */
-    public function index(SessionInterface $session, CurrentRoute $currentRoute, EmailTemplateRepository $emailtemplateRepository, SettingRepository $settingRepository): Response
+    public function index(SessionInterface $session, CurrentRoute $currentRoute, EmailTemplateRepository $emailtemplateRepository, SettingRepository $settingRepository): \Yiisoft\DataResponse\DataResponse
     {
         $canEdit = $this->rbac($session); 
         $parameters = [              
@@ -216,13 +214,10 @@ final class EmailTemplateController
     }
     
     /**
-     * 
      * @param Request $request
      * @param EmailTemplateRepository $etR
-     * @return Response
      */
-    
-    public function get_content(Request $request, EmailTemplateRepository $etR) : Response {
+    public function get_content(Request $request, EmailTemplateRepository $etR) : \Yiisoft\DataResponse\DataResponse {
         //views/invoice/inv/mailer_invoice'
         $get_content = $request->getQueryParams() ?? [];
         $email_template_id = $get_content['email_template_id'];
@@ -243,14 +238,12 @@ final class EmailTemplateController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param EmailTemplateRepository $emailtemplateRepository
      * @param SettingRepository $settingRepository
-     * @return Response
      */
     public function view(CurrentRoute $currentRoute, EmailTemplateRepository $emailtemplateRepository, SettingRepository $settingRepository   
-    ): Response {
+    ): \Yiisoft\DataResponse\DataResponse {
         $parameters = [
             'title' => $settingRepository->trans('view'),
             'action' => ['emailtemplate/edit', ['email_template_id' => $this->emailtemplate($currentRoute, $emailtemplateRepository)->getEmail_template_id()]],
@@ -289,11 +282,11 @@ final class EmailTemplateController
     }
     
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, EmailTemplate>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function emailtemplates(EmailTemplateRepository $emailtemplateRepository): \Yiisoft\Data\Reader\DataReaderInterface {
+    private function emailtemplates(EmailTemplateRepository $emailtemplateRepository): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader {
         $emailtemplates = $emailtemplateRepository->findAllPreloaded();        
         return $emailtemplates;
     }

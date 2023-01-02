@@ -23,11 +23,21 @@ final class UnitForm extends FormModel
     }
     
        
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
         return '';
     }
     
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{unit_name: list{Required}, unit_name_plrl: list{Required}}
+     */
     public function getRules(): array
     {
         return [

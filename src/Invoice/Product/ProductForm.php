@@ -77,11 +77,21 @@ final class ProductForm extends FormModel
         return $this->product_tariff;
     }
     
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
         return '';
     }
     
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{family_id: list{Required}, product_name: list{Required}, tax_rate_id: list{Required}, unit_id: list{Required}}
+     */
     public function getRules(): array
     {
         return [

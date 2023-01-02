@@ -56,11 +56,21 @@ final class TaskForm extends FormModel
       return $this->tax_rate_id;
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
 
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{name: list{Required}, description: list{Required}, price: list{Required}, tax_rate_id: list{Required}, finish_date: list{Required}}
+     */
     public function getRules(): array    {
     return [
       'name' => [new Required()],

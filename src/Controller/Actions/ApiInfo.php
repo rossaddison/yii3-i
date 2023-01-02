@@ -24,10 +24,13 @@ final class ApiInfo implements MiddlewareInterface
     }
 
     /**
-     * @OA\Get(
+     * @OA\Get (
      *     path="/api/info/v2",
-     *     @OA\Response(response="200", description="Get api version")
+     *
+     * @OA\Response (response="200", description="Get api version")
      * )
+     *
+     * @return \Yiisoft\DataResponse\DataResponse
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {

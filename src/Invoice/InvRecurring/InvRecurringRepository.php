@@ -9,7 +9,6 @@ use App\Invoice\Entity\InvRecurring;
 use App\Invoice\Setting\SettingRepository;
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -35,18 +34,18 @@ private EntityWriter $entityWriter;
     /**
      * Get invrecurrings  without filter
      *
-     * @psalm-return DataReaderInterface<int,InvRecurring>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select();
         return $this->prepareDataReader($query);
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, InvRecurring>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
             ->withSort($this->getSort());
@@ -98,6 +97,11 @@ private EntityWriter $entityWriter;
         return $query->count();
     }
         
+    /**
+     * @return string[]
+     *
+     * @psalm-return array{1D: 'calendar_day_1', 2D: 'calendar_day_2', 3D: 'calendar_day_3', 4D: 'calendar_day_4', 5D: 'calendar_day_5', 6D: 'calendar_day_6', 15D: 'calendar_day_15', 30D: 'calendar_day_30', 7D: 'calendar_week_1', 14D: 'calendar_week_2', 21D: 'calendar_week_3', 28D: 'calendar_week_4', 1M: 'calendar_month_1', 2M: 'calendar_month_2', 3M: 'calendar_month_3', 4M: 'calendar_month_4', 5M: 'calendar_month_5', 6M: 'calendar_month_6', 7M: 'calendar_month_7', 8M: 'calendar_month_8', 9M: 'calendar_month_9', 10M: 'calendar_month_10', 11M: 'calendar_month_11', 1Y: 'calendar_year_1', 2Y: 'calendar_year_2', 3Y: 'calendar_year_3', 4Y: 'calendar_year_4', 5Y: 'calendar_year_5'}
+     */
     public function recur_frequencies() : array
     { 
         $recur_frequencies = [
@@ -141,9 +145,9 @@ private EntityWriter $entityWriter;
     /**
      * Get invrecurrings  that are active
      *
-     * @psalm-return DataReaderInterface<int,InvRecurring>
+     * @psalm-return EntityReader
      */
-    public function active(SettingRepository $s): DataReaderInterface
+    public function active(SettingRepository $s): EntityReader
     {
         $datehelper = new DateHelper($s);
         $query = $this->select()

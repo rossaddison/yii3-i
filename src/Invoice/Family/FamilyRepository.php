@@ -7,7 +7,6 @@ namespace App\Invoice\Family;
 use App\Invoice\Entity\Family;
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -33,9 +32,10 @@ final class FamilyRepository extends Select\Repository
     /**
      * Get families without filter
      *
-     * @psalm-return DataReaderInterface<int, Family>
+     * @psalm-return EntityReader
+     * 
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select();
         return $this->prepareDataReader($query);
@@ -65,6 +65,11 @@ final class FamilyRepository extends Select\Repository
         );
     }
     
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
     public function repoFamilyquery(string $family_id): object|null
     {
         $query = $this

@@ -69,9 +69,10 @@ class GenerateCodeFileHelper
 
     /**
      * Saves the code into the file specified by [[path]].
-     * @return string|bool the error occurred while saving the code file, or true if no error.
+     *
+     * @return string|true the error occurred while saving the code file, or true if no error.
      */
-    public function save()
+    public function save(): bool|string
     {
         if ($this->operation === self::OP_CREATE) {
             $dir = dirname($this->path);
@@ -117,9 +118,9 @@ class GenerateCodeFileHelper
     /**
      * Returns preview or false if it cannot be rendered
      *
-     * @return bool|string
+     * @return false|string
      */
-    public function preview()
+    public function preview(): string|false
     {
         if (($pos = strrpos($this->path, '.')) !== false) {
             $type = substr($this->path, $pos + 1);

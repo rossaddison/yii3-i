@@ -40,11 +40,21 @@ final class QuoteAmountForm extends FormModel
       return $this->total;
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
 
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{item_subtotal: list{Required}, item_tax_total: list{Required}, tax_total: list{Required}, total: list{Required}, quote_id: list{Required}}
+     */
     public function getRules(): array    {
       return [
         'item_subtotal' => [new Required()],

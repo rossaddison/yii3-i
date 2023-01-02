@@ -7,7 +7,6 @@ namespace App\Invoice\CompanyPrivate;
 use App\Invoice\Entity\CompanyPrivate;
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -32,18 +31,18 @@ private EntityWriter $entityWriter;
 
     /**
      *
-     * @psalm-return DataReaderInterface<int,CompanyPrivate>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select()->load('company');
         return $this->prepareDataReader($query);
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, CompanyPrivate>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
             ->withSort($this->getSort());
@@ -78,7 +77,12 @@ private EntityWriter $entityWriter;
         );
     }
     
-    public function repoCompanyPrivatequery(string $id): object|null    {
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
+    public function repoCompanyPrivatequery(string $id):object|null    {
         $query = $this->select()->load('company')->where(['id' =>$id]);
         return  $query->fetchOne() ?: null;        
     }

@@ -88,11 +88,21 @@ final class InvItemForm extends FormModel
       return $this->product_unit_id;
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
     
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{tax_rate_id: list{Required}, product_id: list{Required}, task_id: list{Required}, quantity: list{Required}, price: list{Required}, discount_amount: list{Required}, order: list{Required}, product_unit_id: list{Required}}
+     */
     public function getRule(): array {
         return [
           'tax_rate_id' => [new Required()],

@@ -13,6 +13,11 @@ final class CommonViewInjection implements CommonParametersInjectionInterface
     {
     }
 
+    /**
+     * @return UrlGeneratorInterface[]
+     *
+     * @psalm-return array{url: UrlGeneratorInterface}
+     */
     public function getCommonParameters(): array
     {
         return [

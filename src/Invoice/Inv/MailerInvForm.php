@@ -23,11 +23,21 @@ final class MailerInvForm extends FormModel
     private ?array $attachFiles = null;
     private string $guest_url = '';
 
+    /**
+     * @return string
+     *
+     * @psalm-return 'MailerInvForm'
+     */
     public function getFormName(): string
     {
         return 'MailerInvForm';
     }
     
+    /**
+     * @return (Email|Required)[][]
+     *
+     * @psalm-return array{to_email: list{Required, Email}, from_name: list{Required}, from_email: list{Required, Email}, subject: list{Required}}
+     */
     public function getRules(): array
     {
         return [

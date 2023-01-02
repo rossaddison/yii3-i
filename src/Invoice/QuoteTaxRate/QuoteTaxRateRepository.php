@@ -7,7 +7,6 @@ namespace App\Invoice\QuoteTaxRate;
 use App\Invoice\Entity\QuoteTaxRate;
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -34,18 +33,18 @@ private EntityWriter $entityWriter;
     /**
      * Get quotetaxrates  without filter
      *
-     * @psalm-return DataReaderInterface<int,QuoteTaxRate>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select()->load('quote')->load('tax_rate');
         return $this->prepareDataReader($query);
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, QuoteTaxRate>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
             ->withSort($this->getSort());
@@ -94,7 +93,12 @@ private EntityWriter $entityWriter;
     }
     
     //find a specific quotes tax rate, normally to delete
-    public function repoQuoteTaxRatequery(string $id): object|null    {
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
+    public function repoQuoteTaxRatequery(string $id):object|null    {
         $query = $this->select()
                       ->load('quote')
                       ->load('tax_rate')
@@ -107,21 +111,26 @@ private EntityWriter $entityWriter;
     // load 'tax rate' so that we can use tax_rate_id through the BelongTo relation in the Entity
     // to access the parent tax rate table's percent name and percentage 
     // which we will use in quote/view
-    public function repoQuotequery(string $quote_id): DataReaderInterface    {
+    public function repoQuotequery(string $quote_id): EntityReader    {
         $query = $this->select()
                       //->load('tax_rate')
                       ->where(['quote_id' => $quote_id]);
         return $this->prepareDataReader($query);   
     }
     
-    public function repoTaxRatequery(string $tax_rate_id): object|null    {
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
+    public function repoTaxRatequery(string $tax_rate_id):object|null    {
         $query = $this->select()
                       ->load('tax_rate')
                       ->where(['tax_rate_id' => $tax_rate_id]);
         return  $query->fetchOne() ?: null;        
     }
         
-    public function repoGetQuoteTaxRateAmounts(string $quote_id): DataReaderInterface  {
+    public function repoGetQuoteTaxRateAmounts(string $quote_id): EntityReader  {
         $query = $this->select()
                       ->where(['quote_id'=>$quote_id]);
         return $this->prepareDataReader($query);   

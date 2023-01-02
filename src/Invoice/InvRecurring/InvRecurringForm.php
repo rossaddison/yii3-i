@@ -43,11 +43,21 @@ final class InvRecurringForm extends FormModel
         return $this->next;
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
 
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{start: list{Required}, frequency: list{Required}, next: list{Required}}
+     */
     public function getRules(): array    {
         return [
         'start' => [new Required()],

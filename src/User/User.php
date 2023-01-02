@@ -64,7 +64,10 @@ class User
         ///$this->comments = new ArrayCollection();
     }
 
-    public function getId(): ?string
+    /**
+     * @return null|numeric-string
+     */
+    public function getId(): string|null
     {
         return $this->id === null ? null : (string) $this->id;
     }

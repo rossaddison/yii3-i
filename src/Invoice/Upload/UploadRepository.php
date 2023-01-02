@@ -7,7 +7,6 @@ namespace App\Invoice\Upload;
 use App\Invoice\Entity\Upload;
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -58,9 +57,9 @@ private EntityWriter $entityWriter;
     /**
      * Get uploads  without filter
      *
-     * @psalm-return DataReaderInterface<int,Upload>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select()
                       ->load('client');
@@ -68,9 +67,9 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, Upload>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
             ->withSort($this->getSort());
@@ -122,9 +121,9 @@ private EntityWriter $entityWriter;
     /**
      * Get uploads
      *
-     * @psalm-return DataReaderInterface<int, Upload>
+     * @psalm-return EntityReader
      */
-    public function repoUploadUrlClientquery(string $url_key, int $client_id): DataReaderInterface {
+    public function repoUploadUrlClientquery(string $url_key, int $client_id): EntityReader {
         $query = $this->select()
                       ->where(['url_key'=>$url_key])
                       ->andWhere(['client_id'=>$client_id]);        

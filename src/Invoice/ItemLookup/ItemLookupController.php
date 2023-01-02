@@ -47,15 +47,13 @@ final class ItemLookupController
     }
     
     /**
-     * 
      * @param SessionInterface $session
      * @param ItemLookupRepository $itemlookupRepository
      * @param SettingRepository $settingRepository
      * @param Request $request
      * @param ItemLookupService $service
-     * @return Response
      */
-    public function index(SessionInterface $session, ItemLookupRepository $itemlookupRepository, SettingRepository $settingRepository, Request $request, ItemLookupService $service): Response
+    public function index(SessionInterface $session, ItemLookupRepository $itemlookupRepository, SettingRepository $settingRepository, Request $request, ItemLookupService $service): \Yiisoft\DataResponse\DataResponse
     {
        
          $canEdit = $this->rbac($session);
@@ -157,15 +155,13 @@ final class ItemLookupController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param ItemLookupRepository $itemlookupRepository
      * @param SettingRepository $settingRepository
-     * @return Response
      */
     public function view(CurrentRoute $currentRoute, ItemLookupRepository $itemlookupRepository,
         SettingRepository $settingRepository,
-        ): Response {
+        ): \Yiisoft\DataResponse\DataResponse {
         $parameters = [
             'title' => $settingRepository->trans('view'),
             'action' => ['itemlookup/edit', ['id' => $this->itemlookup($currentRoute, $itemlookupRepository)->getId()]],
@@ -203,11 +199,11 @@ final class ItemLookupController
     }
     
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, ItemLookup>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function itemlookups(ItemLookupRepository $itemlookupRepository): \Yiisoft\Data\Reader\DataReaderInterface 
+    private function itemlookups(ItemLookupRepository $itemlookupRepository): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader 
     {
         $itemlookups = $itemlookupRepository->findAllPreloaded();        
         return $itemlookups;

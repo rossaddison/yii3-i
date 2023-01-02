@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Yiisoft\Html\Html;
 ?>
 
-<div class="table-striped">
+<div class="table-striped table-responsive">
         <table id="item_table" class="items table-primary table table-bordered no-margin">
             <thead style="display: none">
             <tr>
@@ -136,9 +136,9 @@ use Yiisoft\Html\Html;
                     </td>
                     <td class="td-text">
                         <div class="input-group">
-                            <input type="text" disabled="true" maxlength="4" size="4" name="quote_id" value="<?= $item->getQuote_id(); ?>" data-toggle="tooltip" title="quote_item->quote_id">
-                            <input type="text" disabled="true" maxlength="4" size="4" name="item_id" value="<?= $item->getId(); ?>" data-toggle="tooltip" title="quote_item->getId()">
-                            <input type="text" disabled="true" maxlength="4" size="4" name="item_product_id" value="<?= $item->getProduct_id(); ?>" data-toggle="tooltip" title="quote_item->product_id">
+                            <input type="text" disabled="true" maxlength="1" size="1" name="quote_id" value="<?= $item->getQuote_id(); ?>" data-toggle="tooltip" title="quote_item->quote_id">
+                            <input type="text" disabled="true" maxlength="1" size="1" name="item_id" value="<?= $item->getId(); ?>" data-toggle="tooltip" title="quote_item->getId()">
+                            <input type="text" disabled="true" maxlength="1" size="1" name="item_product_id" value="<?= $item->getProduct_id(); ?>" data-toggle="tooltip" title="quote_item->product_id">
                         </div>    
                         <div class="input-group">
                             <span class="input-group-text"><?= $s->trans('item'); ?></span>
@@ -321,6 +321,5 @@ use Yiisoft\Html\Html;
                 </tr>
             </table>
         </div>
-
     </div>
     <hr>

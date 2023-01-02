@@ -67,7 +67,6 @@ final class InvItemController
     }
     
     /**
-     * 
      * @param ViewRenderer $head
      * @param SessionInterface $session
      * @param Request $request
@@ -77,7 +76,6 @@ final class InvItemController
      * @param UR $uR
      * @param TRR $trR
      * @param IIAR $iiar
-     * @return Response
      */
     public function add_product(ViewRenderer $head, SessionInterface $session, Request $request, 
                         ValidatorInterface $validator,
@@ -86,7 +84,7 @@ final class InvItemController
                         UR $uR,                                                
                         TRR $trR,
                         IIAR $iiar,
-    ) : Response
+    ) : \Yiisoft\DataResponse\DataResponse
     {
         $inv_id = $session->get('inv_id');
         $parameters = [
@@ -118,7 +116,6 @@ final class InvItemController
     }
     
     /**
-     * 
      * @param ViewRenderer $head
      * @param SessionInterface $session
      * @param Request $request
@@ -128,7 +125,6 @@ final class InvItemController
      * @param UR $uR
      * @param TRR $trR
      * @param IIAR $iiar
-     * @return Response
      */
     public function add_task(ViewRenderer $head, SessionInterface $session, Request $request, 
                         ValidatorInterface $validator,
@@ -137,7 +133,7 @@ final class InvItemController
                         UR $uR,                                                
                         TRR $trR,
                         IIAR $iiar,
-    ) : Response
+    ) : \Yiisoft\DataResponse\DataResponse
     {
         $inv_id = $session->get('inv_id');
         $parameters = [
@@ -193,7 +189,6 @@ final class InvItemController
     }
     
     /**
-     * 
      * @param ViewRenderer $head
      * @param SessionInterface $session
      * @param CurrentRoute $currentRoute
@@ -208,10 +203,9 @@ final class InvItemController
      * @param IR $iR
      * @param IIAS $iias
      * @param IIAR $iiar
-     * @return Response
      */
     public function edit_product(ViewRenderer $head, SessionInterface $session, CurrentRoute $currentRoute, Request $request, ValidatorInterface $validator,
-                        IIR $iiR, SR $sR, TRR $trR, PR $pR, TaskR $taskR, UR $uR, IR $iR, IIAS $iias, IIAR $iiar): Response {
+                        IIR $iiR, SR $sR, TRR $trR, PR $pR, TaskR $taskR, UR $uR, IR $iR, IIAS $iias, IIAR $iiar): \Yiisoft\DataResponse\DataResponse {
         $inv_id = $session->get('inv_id');
         $parameters = [
             'title' => 'Edit',
@@ -278,7 +272,6 @@ final class InvItemController
     }   
     
     /**
-     * 
      * @param ViewRenderer $head
      * @param SessionInterface $session
      * @param CurrentRoute $currentRoute
@@ -293,10 +286,9 @@ final class InvItemController
      * @param IR $iR
      * @param IIAS $iias
      * @param IIAR $iiar
-     * @return Response
      */
     public function edit_task(ViewRenderer $head, SessionInterface $session, CurrentRoute $currentRoute, Request $request, ValidatorInterface $validator,
-                        IIR $iiR, SR $sR, TRR $trR, PR $pR, TaskR $taskR, UR $uR, IR $iR, IIAS $iias, IIAR $iiar): Response {
+                        IIR $iiR, SR $sR, TRR $trR, PR $pR, TaskR $taskR, UR $uR, IR $iR, IIAS $iias, IIAR $iiar): \Yiisoft\DataResponse\DataResponse {
         $inv_id = $session->get('inv_id');
         $parameters = [
             'title' => 'Edit',
@@ -334,12 +326,10 @@ final class InvItemController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param IIR $iiR
-     * @return Response
      */
-    public function delete(CurrentRoute $currentRoute, IIR $iiR): Response {
+    public function delete(CurrentRoute $currentRoute, IIR $iiR): \Yiisoft\DataResponse\DataResponse {
             $iiR->repoInvItemCount((string)$this->invitem($currentRoute, $iiR)->getId()) === 1  ? (($this->invitemService->deleteInvItem($this->invitem($currentRoute, $iiR)))): '';
             return $this->viewRenderer->render('inv/index');
     }            
@@ -358,13 +348,11 @@ final class InvItemController
     }
     
     /**
-     * 
      * @param SessionInterface $session
      * @param IIR $iiR
      * @param SR $sR
-     * @return Response
      */
-    public function index(SessionInterface $session, IIR $iiR, SR $sR): Response
+    public function index(SessionInterface $session, IIR $iiR, SR $sR): \Yiisoft\DataResponse\DataResponse
     {       
          $canEdit = $this->rbac($session);
          $flash = $this->flash($session, '','');
@@ -392,23 +380,21 @@ final class InvItemController
     }
     
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, InvItem>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function invitems(IIR $iiR): \Yiisoft\Data\Reader\DataReaderInterface 
+    private function invitems(IIR $iiR): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader 
     {
         $invitems = $iiR->findAllPreloaded();        
         return $invitems;
     }
     
     /**
-     * 
      * @param Request $request
      * @param IIR $iiR
-     * @return Response
      */
-    public function multiple(Request $request, IIR $iiR): Response {
+    public function multiple(Request $request, IIR $iiR): \Yiisoft\DataResponse\DataResponse {
         //jQuery parameters from inv.js function delete-items-confirm-inv 'item_ids' and 'inv_id'
         $select_items = $request->getQueryParams() ?? [];
         $result = false;
@@ -436,15 +422,13 @@ final class InvItemController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param IIR $iiR
      * @param SR $sR
-     * @return Response
      */
     public function view(CurrentRoute $currentRoute, IIR $iiR,
         SR $sR 
-        ): Response {
+        ): \Yiisoft\DataResponse\DataResponse {
         $parameters = [
             'title' => $sR->trans('view'),
             'action' => ['invitem/edit', ['id' => $this->invitem($currentRoute, $iiR)->getId()]],

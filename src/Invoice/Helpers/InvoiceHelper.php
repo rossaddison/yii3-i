@@ -21,7 +21,7 @@ Class InvoiceHelper
     /**
      * @psalm-param 'danger' $level
      */
-    private function flash(string $level, $message): Flash{
+    private function flash(string $level, string $message): Flash{
         $flash = new Flash($this->session);
         $flash->set($level, $message); 
         return $flash;
@@ -60,7 +60,7 @@ Class InvoiceHelper
      * @param $subNumb
      * @return string
      */
-    public function invoice_genCodeline($slipType, $amount, $rnumb, $subNumb)
+    public function invoice_genCodeline($slipType, $amount, $rnumb, $subNumb): string
     {
         $isEur = false;
 
@@ -96,9 +96,8 @@ Class InvoiceHelper
      * Page 5
      *
      * @param string $in
-     * @return integer
      */
-    function invoice_recMod10($in)
+    function invoice_recMod10($in): int
     {
         $line = [0, 9, 4, 6, 8, 2, 7, 1, 3, 5];
         $carry = 0;

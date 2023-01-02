@@ -312,15 +312,13 @@ final class QuoteController
     // Data fed from quote.js->$(document).on('click', '#quote_create_confirm', function () {
     
     /**
-     * 
      * @param Request $request
      * @param ValidatorInterface $validator
      * @param GR $gR
      * @param TRR $trR
      * @param QAR $qaR
-     * @return Response
      */
-    public function create_confirm(Request $request, ValidatorInterface $validator, GR $gR, TRR $trR) : Response
+    public function create_confirm(Request $request, ValidatorInterface $validator, GR $gR, TRR $trR) : \Yiisoft\DataResponse\DataResponse
     {
         $body = $request->getQueryParams() ?? [];
         $ajax_body = [
@@ -468,13 +466,11 @@ final class QuoteController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param QIR $qiR
-     * @return Response
      */
     public function delete_quote_item(CurrentRoute $currentRoute, QIR $qiR)
-                                          : Response {
+                                          : \Yiisoft\DataResponse\DataResponse {
         try {            
             $this->quote_item_service->deleteQuoteItem($this->quote_item($currentRoute,$qiR));
         } catch (\Exception $e) {
@@ -487,13 +483,11 @@ final class QuoteController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param QTRR $quotetaxrateRepository
-     * @return Response
      */
     public function delete_quote_tax_rate(CurrentRoute $currentRoute, QTRR $quotetaxrateRepository)
-                                          : Response {
+                                          : \Yiisoft\DataResponse\DataResponse {
         try {            
             $this->quote_tax_rate_service->deleteQuoteTaxRate($this->quotetaxrate($currentRoute,$quotetaxrateRepository));
         } catch (\Exception $e) {
@@ -506,7 +500,6 @@ final class QuoteController
     }
     
     /**
-     * 
      * @param ViewRenderer $head
      * @param Request $request
      * @param CurrentRoute $currentRoute
@@ -520,7 +513,6 @@ final class QuoteController
      * @param CFR $cfR
      * @param CVR $cvR
      * @param QCR $qcR
-     * @return Response
      */
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute,
                         ValidatorInterface $validator,
@@ -533,7 +525,7 @@ final class QuoteController
                         CFR $cfR,
                         CVR $cvR,
                         QCR $qcR
-    ): Response {
+    ): \Yiisoft\DataResponse\DataResponse {
         $quote_id = $this->quote($currentRoute, $quoteRepo,true)->getId(); 
         $action = ['quote/edit', ['id' => $quote_id]];
         $parameters = [
@@ -714,9 +706,11 @@ final class QuoteController
     }
     
     /**
-     * 
      * @param EmailTemplate $email_template
-     * @return array
+     *
+     * @return (null|string)[]
+     *
+     * @psalm-return array{body: string, subject: string, from_name: string, from_email: string, cc: string, bcc: string, pdf_template: null|string}
      */
     public function get_inject_email_template_array(EmailTemplate $email_template) : array {
         $email_template_array = [
@@ -732,11 +726,12 @@ final class QuoteController
     }
     
     /**
-     * 
      * @param ETR $etR
-     * @return array
+     *
+     * @return (null|string)[]
+     *
+     * @psalm-return array<''|int, null|string>
      */
-    
     public function email_templates(ETR $etR) : array {
         $email_templates = $etR->repoEmailTemplateType('quote');
         $data = [];
@@ -940,18 +935,15 @@ final class QuoteController
     // users with viewInv permission access this function
     
     /**
-     * 
      * @param Request $request
      * @param QAR $qaR
      * @param CurrentRoute $currentRoute
      * @param QR $qR
      * @param UCR $ucR
      * @param UIR $uiR
-     * @return Response
      */
-    
     public function guest(Request $request, QAR $qaR, CurrentRoute $currentRoute,
-                          QR $qR, UCR $ucR, UIR $uiR) : Response {
+                          QR $qR, UCR $ucR, UIR $uiR) : \Yiisoft\DataResponse\DataResponse {
         $query_params = $request->getQueryParams() ?? [];
         $pageNum = (int)$currentRoute->getArgument('page', '1');
          //status 0 => 'all';
@@ -1001,7 +993,6 @@ final class QuoteController
     // Only users with editInv permission can access this index. Refer to config/routes accesschecker.
     
     /**
-     * 
      * @param Request $request
      * @param QAR $qaR
      * @param QR $quoteRepo
@@ -1009,10 +1000,8 @@ final class QuoteController
      * @param GR $groupRepo
      * @param CurrentRoute $currentRoute
      * @param sR $sR
-     * @return Response
      */
-    
-    public function index(Request $request, QAR $qaR, QR $quoteRepo, CR $clientRepo, GR $groupRepo, CurrentRoute $currentRoute, sR $sR): Response
+    public function index(Request $request, QAR $qaR, QR $quoteRepo, CR $clientRepo, GR $groupRepo, CurrentRoute $currentRoute, sR $sR): \Yiisoft\DataResponse\DataResponse
     {
         $query_params = $request->getQueryParams();
         $page = (int)$currentRoute->getArgument('page','1');
@@ -1166,13 +1155,11 @@ final class QuoteController
     // Data parsed from quote.js:$(document).on('click', '#client_change_confirm', function () {
     
     /**
-     * 
      * @param Request $request
      * @param CR $cR
      * @param SR $sR
-     * @return Response
      */
-    public function modal_change_client(Request $request, CR $cR, SR $sR): Response 
+    public function modal_change_client(Request $request, CR $cR, SR $sR): \Yiisoft\DataResponse\DataResponse 
     { 
         $body = $request->getQueryParams() ?? [];
         $client = $cR->repoClientquery((string)$body['client_id']);
@@ -1199,7 +1186,6 @@ final class QuoteController
     // Called from quote.js quote_to_pdf_confirm_with_custom_fields
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param CR $cR
      * @param CVR $cvR
@@ -1214,9 +1200,8 @@ final class QuoteController
      * @param SR $sR
      * @param UIR $uiR
      * @param Request $request
-     * @return Response
      */
-    public function pdf(CurrentRoute $currentRoute, CR $cR, CVR $cvR, CFR $cfR, GR $gR, QAR $qaR, QCR $qcR, QIR $qiR, QIAR $qiaR, QR $qR, QTRR $qtrR, SR $sR, UIR $uiR, Request $request) : Response {
+    public function pdf(CurrentRoute $currentRoute, CR $cR, CVR $cvR, CFR $cfR, GR $gR, QAR $qaR, QCR $qcR, QIR $qiR, QIAR $qiaR, QR $qR, QTRR $qtrR, SR $sR, UIR $uiR, Request $request) : \Yiisoft\DataResponse\DataResponse {
         // include is a value of 0 or 1 passed from quote.js function quote_to_pdf_with(out)_custom_fields indicating whether the user
         // wants custom fields included on the quote or not.
         $include = $currentRoute->getArgument('include');        
@@ -1325,11 +1310,11 @@ final class QuoteController
     }
     
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Quote>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function quotes(QuoteRepository $quoteRepo, int $status): \Yiisoft\Data\Reader\DataReaderInterface 
+    private function quotes(QuoteRepository $quoteRepo, int $status): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
     {
         $quotes = $quoteRepo->findAllWithStatus($status);  
         return $quotes;
@@ -1339,8 +1324,11 @@ final class QuoteController
      * @param QuoteRepository $quoteRepo
      * @param int $status
      * @param Sort $sort
-     * @return \Yiisoft\Data\Reader\SortableDataInterface
-     */    
+     *
+     * @return \Yiisoft\Data\Reader\SortableDataInterface&\Yiisoft\Data\Reader\DataReaderInterface
+     *
+     * @psalm-return \Yiisoft\Data\Reader\SortableDataInterface&\Yiisoft\Data\Reader\DataReaderInterface<int, Quote>
+     */
     private function quotes_status_with_sort(QuoteRepository $quoteRepo, int $status, Sort $sort): \Yiisoft\Data\Reader\SortableDataInterface {       
         $quotes = $quoteRepo->findAllWithStatus($status)
                             ->withSort($sort);
@@ -1352,7 +1340,10 @@ final class QuoteController
      * @param int $status
      * @param array $user_clients
      * @param Sort $sort
-     * @return \Yiisoft\Data\Reader\SortableDataInterface
+     *
+     * @return \Yiisoft\Data\Reader\SortableDataInterface&\Yiisoft\Data\Reader\DataReaderInterface
+     *
+     * @psalm-return \Yiisoft\Data\Reader\SortableDataInterface&\Yiisoft\Data\Reader\DataReaderInterface<int, Quote>
      */
     private function quotes_status_with_sort_guest(QR $qR, int $status,  array $user_clients, Sort $sort): \Yiisoft\Data\Reader\SortableDataInterface {       
         $quotes = $qR->repoGuest_Clients_Sent_Viewed_Approved_Rejected_Cancelled($status, $user_clients)
@@ -1363,7 +1354,10 @@ final class QuoteController
     /**
      * @param string|null $quote_id
      * @param qcR $qcR
-     * @return array
+     *
+     * @return QuoteCustom[]
+     *
+     * @psalm-return array<string, QuoteCustom>
      */
     public function quote_custom_values(string|null $quote_id, qcR $qcR) : array
     {
@@ -1397,7 +1391,6 @@ final class QuoteController
     // Data fed from quote.js->$(document).on('click', '#quote_to_invoice_confirm', function () {
     
     /**
-     * 
      * @param Request $request
      * @param ValidatorInterface $validator
      * @param CFR $cfR
@@ -1413,11 +1406,10 @@ final class QuoteController
      * @param QTRR $qtrR
      * @param TRR $trR
      * @param UNR $unR
-     * @return Response
      */
     public function quote_to_invoice_confirm(Request $request, ValidatorInterface $validator, CFR $cfR, 
                                              GR $gR, IIAR $iiaR, IR $iR, InvItemAmountservice $iiaS, PR $pR, QAR $qaR, QCR $qcR,
-                                             QIR $qiR,QR $qR, QTRR $qtrR, TRR $trR, UNR $unR) : Response
+                                             QIR $qiR,QR $qR, QTRR $qtrR, TRR $trR, UNR $unR) : \Yiisoft\DataResponse\DataResponse
     {
         $body = $request->getQueryParams() ?? [];
         $quote_id = (string)$body['quote_id'];
@@ -1617,7 +1609,6 @@ final class QuoteController
      // Data fed from quote.js->$(document).on('click', '#quote_to_quote_confirm', function () {
     
     /**
-     * 
      * @param Request $request
      * @param ValidatorInterface $validator
      * @param GR $gR
@@ -1631,11 +1622,10 @@ final class QuoteController
      * @param QTRR $qtrR
      * @param TRR $trR
      * @param UNR $unR
-     * @return Response
      */
     public function quote_to_quote_confirm(Request $request, ValidatorInterface $validator, 
                                            GR $gR, QIAS $qiaS, PR $pR, QAR $qaR, QCR $qcR,
-                                           QIAR $qiaR, QIR $qiR, QR $qR, QTRR $qtrR, TRR $trR, UNR $unR) : Response
+                                           QIAR $qiaR, QIR $qiR, QR $qR, QTRR $qtrR, TRR $trR, UNR $unR) : \Yiisoft\DataResponse\DataResponse
     {
         $data_quote_js = $request->getQueryParams() ?? [];
         $quote_id = (string)$data_quote_js['quote_id'];
@@ -1801,13 +1791,11 @@ final class QuoteController
     // quote/view => '#btn_save_quote_custom_fields' => quote_custom_field.js => /invoice/quote/save_custom";
     
     /**
-     * 
      * @param ValidatorInterface $validator
      * @param Request $request
      * @param QCR $qcR
-     * @return Response
      */
-    public function save_custom(ValidatorInterface $validator, Request $request, QCR $qcR) : Response
+    public function save_custom(ValidatorInterface $validator, Request $request, QCR $qcR) : \Yiisoft\DataResponse\DataResponse
     {
             $parameters['success'] = 0;
             $js_data = $request->getQueryParams() ?? [];        
@@ -1825,13 +1813,11 @@ final class QuoteController
     // '#quote_tax_submit' => quote.js 
     
     /**
-     * 
      * @param Request $request
      * @param ValidatorInterface $validator
-     * @return Response
      */
     public function save_quote_tax_rate(Request $request, ValidatorInterface $validator)
-                                        : Response {       
+                                        : \Yiisoft\DataResponse\DataResponse {       
         $body = $request->getQueryParams() ?? [];
         $ajax_body = [
             'quote_id'=>$body['quote_id'],
@@ -1947,7 +1933,6 @@ final class QuoteController
     }
     
     /**
-     * 
      * @param ViewRenderer $head
      * @param CurrentRoute $currentRoute
      * @param Request $request
@@ -1965,11 +1950,10 @@ final class QuoteController
      * @param CR $cR
      * @param GR $gR
      * @param QCR $qcR
-     * @return Response
      */
     public function view(ViewRenderer $head, CurrentRoute $currentRoute, Request $request,
                          CFR $cfR, CVR $cvR, PR $pR, QAR $qaR, QIAR  $qiaR, QIR $qiR, QR $qR, QTRR $qtrR, TRR $trR, FR $fR,  UNR $uR, CR $cR, GR $gR, QCR $qcR)
-                         : Response {
+                         : \Yiisoft\DataResponse\DataResponse {
         $this->session->set('quote_id',$this->quote($currentRoute, $qR, false)->getId());
         $this->number_helper->calculate_quote($this->session->get('quote_id'), $qiR, $qiaR, $qtrR, $qaR, $qR); 
         $quote_tax_rates = (($qtrR->repoCount($this->session->get('quote_id')) > 0) ? $qtrR->repoQuotequery($this->session->get('quote_id')) : null); 

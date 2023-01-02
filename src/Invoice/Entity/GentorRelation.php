@@ -43,7 +43,7 @@ class GentorRelation
         $this->gentor_id = $gentor_id;
     }
     
-    public function getRelation_id(): ?string
+    public function getRelation_id(): string
     {
         return (string)$this->id;
     }

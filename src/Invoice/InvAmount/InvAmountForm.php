@@ -58,11 +58,21 @@ final class InvAmountForm extends FormModel
       return $this->balance;
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
 
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{item_subtotal: list{Required}, item_tax_total: list{Required}, tax_total: list{Required}, total: list{Required}, inv_id: list{Required}}
+     */
     public function getRules(): array    {
       return [
         'item_subtotal' => [new Required()],

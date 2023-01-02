@@ -23,11 +23,21 @@ final class ProjectForm extends FormModel
       return $this->name;
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
 
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{client_id: list{Required}, name: list{Required}}
+     */
     public function getRules(): array    {
       return [
         'client_id' => [new Required()],

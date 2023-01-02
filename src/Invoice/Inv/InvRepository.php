@@ -40,9 +40,9 @@ private EntityWriter $entityWriter;
     /**
      * Get Invoices with filter
      *
-     * @psalm-return DataReaderInterface<int, Inv>
+     * @psalm-return DataReaderInterface<int, Inv>|EntityReader
      */
-    public function findAllWithStatus(int $status_id) : DataReaderInterface
+    public function findAllWithStatus(int $status_id) : DataReaderInterface|EntityReader
     {
         if (($status_id) > 0) {
         $query = $this->select()
@@ -57,9 +57,9 @@ private EntityWriter $entityWriter;
     /**
      * Get Invoices with filter
      *
-     * @psalm-return DataReaderInterface<int, Inv>
+     * @psalm-return EntityReader
      */
-    public function findAllWithClient($client_id) : DataReaderInterface
+    public function findAllWithClient($client_id) : EntityReader
     {
         $query = $this->select()
                 ->where(['client_id' => $client_id]);  
@@ -69,9 +69,9 @@ private EntityWriter $entityWriter;
     /**
      * Get invoices without filter
      *
-     * @psalm-return DataReaderInterface<int,Inv>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select()
                 ->load(['client','group','user']);
@@ -79,9 +79,9 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, Inv>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
             ->withSort($this->getSort());
@@ -205,7 +205,7 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @psalm-return Select<object>
+     * @psalm-return Select<TEntity>
      */
     public function repoClient_guest_count($inv_id, array $user_client = []) : Select {
         $count = $this->select()
@@ -217,12 +217,11 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, Inv>
+     * @psalm-return EntityReader
      * @param int $status_id
      * @param array $user_client
-     * @return DataReaderInterface
      */
-    public function repoGuest_Clients_Sent_Viewed_Paid(int $status_id, array $user_client = []) : DataReaderInterface {
+    public function repoGuest_Clients_Sent_Viewed_Paid(int $status_id, array $user_client = []) : EntityReader {
         // Get specific statuses
         if ($status_id > 0) {
             $query = $this->select()
@@ -243,10 +242,9 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * 
-     * @psalm-return DataReaderInterface<int, Inv>
+     * @psalm-return EntityReader
      */
-    public function open() : DataReaderInterface {
+    public function open() : EntityReader {
         // 1 draft, 2 sent, 3 viewed, 4 paid
         $query = $this->select()
                       ->where(['status_id'=>['in'=> new Parameter([2,3])]]);
@@ -263,10 +261,9 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * 
-     * @psalm-return DataReaderInterface<int, Inv>
+     * @psalm-return EntityReader
      */
-    public function guest_visible() : DataReaderInterface {
+    public function guest_visible() : EntityReader {
         // 1 draft, 2 sent, 3 viewed, 4 paid
         $query = $this->select()
                       ->where(['status_id'=>['in'=> new Parameter([2,3,4])]]);
@@ -274,10 +271,9 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * 
-     * @psalm-return DataReaderInterface<int, Inv>
+     * @psalm-return EntityReader
      */
-    public function is_draft() : DataReaderInterface {
+    public function is_draft() : EntityReader {
         // 1 draft, 2 sent, 3 viewed, 4 paid
         $query = $this->select()
                       ->where(['status_id'=>['in'=> new Parameter([1])]]);
@@ -285,10 +281,9 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * 
-     * @psalm-return DataReaderInterface<int, Inv>
+     * @psalm-return EntityReader
      */
-    public function is_sent() : DataReaderInterface {
+    public function is_sent() : EntityReader {
         // 1 draft, 2 sent, 3 viewed, 4 paid
         $query = $this->select()
                       ->where(['status_id'=>['in'=> new Parameter([2])]]);
@@ -296,10 +291,9 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * 
-     * @psalm-return DataReaderInterface<int, Inv>
+     * @psalm-return EntityReader
      */
-    public function is_viewed() : DataReaderInterface {
+    public function is_viewed() : EntityReader {
         // 1 draft, 2 sent, 3 viewed, 4 paid
         $query = $this->select()
                       ->where(['status_id'=>['in'=> new Parameter([3])]]);
@@ -307,10 +301,9 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * 
-     * @psalm-return DataReaderInterface<int, Inv>
+     * @psalm-return EntityReader
      */
-    public function is_paid() : DataReaderInterface {
+    public function is_paid() : EntityReader {
         // 1 draft, 2 sent, 3 viewed, 4 paid
         $query = $this->select()
                       ->where(['status_id'=>['in'=> new Parameter([4])]]);
@@ -318,10 +311,9 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * 
-     * @psalm-return DataReaderInterface<int, Inv>
+     * @psalm-return EntityReader
      */
-    public function is_overdue() : DataReaderInterface {
+    public function is_overdue() : EntityReader {
         // 1 draft, 2 sent, 3 viewed, 4 paid
         $query = $this->select()
                       ->where(['status_id'=>['in'=> new Parameter([5])]]);
@@ -329,10 +321,9 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * 
-     * @psalm-return DataReaderInterface<int, Inv>
+     * @psalm-return EntityReader
      */
-    public function by_client($client_id) : DataReaderInterface {
+    public function by_client($client_id) : EntityReader {
         $query = $this->select()
                       ->where(['client_id'=> $client_id]);
         return $this->prepareDataReader($query);    
@@ -341,9 +332,10 @@ private EntityWriter $entityWriter;
     /**
      * @param $client_id
      * @param $status_id
-     * @psalm-return DataReaderInterface<int, Inv>
+     *
+     * @psalm-return EntityReader
      */
-    public function by_client_inv_status(int $client_id, int $status_id): DataReaderInterface
+    public function by_client_inv_status(int $client_id, int $status_id): EntityReader
     {
         $query = $this->select()
                       ->where(['client_id' => $client_id])
@@ -367,9 +359,9 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @return (int|mixed|string)[][]
+     * @return (int|string)[][]
      *
-     * @psalm-return array{1: array{label: mixed, class: 'draft', href: 1}, 2: array{label: mixed, class: 'sent', href: 2}, 3: array{label: mixed, class: 'viewed', href: 3}, 4: array{label: mixed, class: 'paid', href: 4}}
+     * @psalm-return array{1: array{label: string, class: 'draft', href: 1}, 2: array{label: string, class: 'sent', href: 2}, 3: array{label: string, class: 'viewed', href: 3}, 4: array{label: string, class: 'paid', href: 4}}
      */
     public function getStatuses(SR $s): array
     {
@@ -453,7 +445,7 @@ private EntityWriter $entityWriter;
     
     // total = item_subtotal + item_tax_total + tax_total
     // total => sales including item tax and tax
-    public function with_total_from_to($client_id, $from, $to, IAR $iaR): float
+    public function with_total_from_to(int|null $client_id, string $from, string $to, IAR $iaR): float
     {
         $invoices = $this->repoClientLoadedFromToDate($client_id, $from, $to);
         $sum = 0.00;
@@ -465,7 +457,7 @@ private EntityWriter $entityWriter;
     }
     
     // sales without item tax and tax => item_subtotal
-    public function with_item_subtotal_from_to($client_id, $from, $to, IAR $iaR): float
+    public function with_item_subtotal_from_to(int|null $client_id, string $from, string $to, IAR $iaR): float
     {
         $invoices = $this->repoClientLoadedFromToDate($client_id, $from, $to);
         $sum = 0.00;
@@ -477,7 +469,7 @@ private EntityWriter $entityWriter;
     }
     
     // First tax: Item tax total 
-    public function with_item_tax_total_from_to($client_id, $from, $to, IAR $iaR): float
+    public function with_item_tax_total_from_to(int|null $client_id, string $from, string $to, IAR $iaR): float
     {
         $invoices = $this->repoClientLoadedFromToDate($client_id, $from, $to);
         $sum = 0.00;
@@ -489,7 +481,7 @@ private EntityWriter $entityWriter;
     }
     
     // Second tax: Total tax total 
-    public function with_tax_total_from_to($client_id, $from, $to, IAR $iaR): float
+    public function with_tax_total_from_to(int|null $client_id, string $from, string $to, IAR $iaR): float
     {
         $invoices = $this->repoClientLoadedFromToDate($client_id, $from, $to);
         $sum = 0.00;
@@ -533,7 +525,7 @@ private EntityWriter $entityWriter;
         return $sum;
     }
     
-    public function repoCountByClient($client_id) : int {
+    public function repoCountByClient(int|null $client_id) : int {
         $count = $this->select()
                       ->where(['client_id'=>$client_id])  
                       ->count();
@@ -550,7 +542,7 @@ private EntityWriter $entityWriter;
         return $count;
     }
     
-    public function repoClientLoadedFromToDate($client_id, $from_date, $to_date) : DataReaderInterface {
+    public function repoClientLoadedFromToDate($client_id, $from_date, $to_date) : EntityReader {
         $query = $this->select()
                       ->load('client')  
                       ->where(['client_id'=>$client_id])
@@ -560,10 +552,9 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, Inv>
+     * @psalm-return EntityReader
      */
-    
-    public function repoClient($client_id) : DataReaderInterface { 
+    public function repoClient(int|null $client_id) : EntityReader { 
         $query = $this->select()
                       ->where(['client_id' => $client_id]); 
         return $this->prepareDataReader($query);

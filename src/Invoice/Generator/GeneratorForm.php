@@ -149,11 +149,21 @@ final class GeneratorForm extends FormModel
         return $this->headerline_include;
     }
     
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
         return '';
     }
     
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{route_prefix: list{Required}, route_suffix: list{Required}, camelcase_capital_name: list{Required}, small_singular_name: list{Required}, small_plural_name: list{Required}, namespace_path: list{Required}, controller_layout_dir: list{Required}, controller_layout_dir_dot_path: list{Required}, pre_entity_table: list{Required}}
+     */
     public function getRules(): array
     {
         return [

@@ -21,7 +21,7 @@ Class ClientHelper
                                                                       : ($client->getClient_name() ?: '');        
     }
 
-    public function format_gender(int $gender, SettingRepository $s)
+    public function format_gender(int $gender, SettingRepository $s): string
     {
         if ($gender == 0) {
             return $s->trans('gender_male');

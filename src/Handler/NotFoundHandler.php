@@ -19,6 +19,9 @@ final class NotFoundHandler implements RequestHandlerInterface
         $this->viewRenderer = $viewRenderer->withControllerName('site');
     }
 
+    /**
+     * @return \Yiisoft\DataResponse\DataResponse
+     */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         return $this->viewRenderer

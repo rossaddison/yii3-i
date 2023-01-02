@@ -8,12 +8,20 @@ use Yiisoft\FriendlyException\FriendlyExceptionInterface;
 
 class CaCertFileNotFoundException extends \RuntimeException implements FriendlyExceptionInterface
 {
+    /**
+     * @return string
+     */
     public function getName(): string
     {
         return 'Your SSL certificate cacert.pem for this version of PHP '.  PHP_VERSION .' from https://curl.haxx.se/ca/cacert.pem  does not exist under the server php directory  ...bin/php/'.PHP_VERSION;
     }
     
-    public function getSolution(): ?string
+    /**
+     * @return string
+     *
+     * @psalm-return string
+     */
+    public function getSolution(): string
     {
         return <<<'SOLUTION'
             Download from this website and just a reminder,

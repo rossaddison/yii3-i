@@ -49,9 +49,9 @@ final class SettingRepository extends Select\Repository
     /**
      * Get settings without filter
      *
-     * @psalm-return DataReaderInterface<int, Setting>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select();
         return $this->prepareDataReader($query);
@@ -195,10 +195,12 @@ final class SettingRepository extends Select\Repository
     }
     
     /**
-     * 
      * @param string $base_dir
      * @param int $level
-     * @return array
+     *
+     * @return (int|string)[][]
+     *
+     * @psalm-return list<array{level: int, name: string, path: non-empty-string}>
      */
     public function expandDirectoriesMatrix(string $base_dir, int $level): array {
         $directories = [];
@@ -255,7 +257,9 @@ final class SettingRepository extends Select\Repository
     }
     
     /**
-     * @return array
+     * @return (mixed|string)[]
+     *
+     * @psalm-return array{esmtp_scheme: mixed, esmtp_host: mixed, esmtp_port: mixed, use_send_mail: string}
      */
     public function config_params() : array {     
         $config = ConfigFactory::create(new ConfigPaths(dirname(dirname(dirname(__DIR__))), 'config/'), null);
@@ -270,8 +274,9 @@ final class SettingRepository extends Select\Repository
     }
     
     /**
-     * 
-     * @return array
+     * @return string[]
+     *
+     * @psalm-return array{English: 'en_GB', French: 'fr_FR', German: 'de_DE', Japan: 'jp_JP', Italian: 'it_IT', Spanish: 'es_ES'}
      */
     public function amazon_languages() : array {
         $languages = [
@@ -286,8 +291,9 @@ final class SettingRepository extends Select\Repository
     }
     
     /**
-     * 
-     * @return array
+     * @return string[]
+     *
+     * @psalm-return array{af: 'Afrikaans', ar: 'Arabic', az: 'Azerbaijani', de: 'German', en: 'English', es: 'Spanish', id: 'Indonesian', ja: 'Japanese', nl: 'Dutch', ru: 'Russian', uk: 'Ukrainian', sk: 'Slovakian', vi: 'Vietnamese', zh: 'ChineseSimplified'}
      */
     public function locale_language_array() : array {
     // locale => src/Invoice/Language/{language folder name}    
@@ -494,11 +500,11 @@ final class SettingRepository extends Select\Repository
         return '/Customer_files';
     }
     
-    public static function getPemFileFolder() {
+    public static function getPemFileFolder(): string {
         return '/Pem_unique_folder';
     }
     
-    public static function getGoogleTranslateJsonFileFolder() {
+    public static function getGoogleTranslateJsonFileFolder(): string {
         return '/Google_translate_unique_folder';
     }
     
@@ -715,6 +721,11 @@ final class SettingRepository extends Select\Repository
     // php 8.0 compatible gateways for omnipay 3.2
     // Working with ...src/Invoice/Language/English/gateway_lang.php
     // label must correspond to ...src/Language/English/gateway_lang.php
+    /**
+     * @return string[][][]
+     *
+     * @psalm-return array{AuthorizeNet_AIM: array{apiLoginId: array{type: 'text', label: 'Api Login Id'}, transactionKey: array{type: 'text', label: 'Transaction Key'}, testMode: array{type: 'checkbox', label: 'Test Mode'}, developerMode: array{type: 'checkbox', label: 'Developer Mode'}, version: array{type: 'checkbox', label: 'Omnipay Version'}}, AuthorizeNet_SIM: array{apiLoginId: array{type: 'text', label: 'Api Login Id'}, transactionKey: array{type: 'text', label: 'Transaction Key'}, testMode: array{type: 'checkbox', label: 'Test Mode'}, developerMode: array{type: 'checkbox', label: 'Developer Mode'}, version: array{type: 'checkbox', label: 'Omnipay Version'}}, PayPal_Express: array{username: array{type: 'text', label: 'Username'}, password: array{type: 'password', label: 'Password'}, signature: array{type: 'password', label: 'Signature'}, testMode: array{type: 'checkbox', label: 'Test Mode'}, version: array{type: 'checkbox', label: 'Omnipay Version'}}, PayPal_Pro: array{username: array{type: 'text', label: 'Username'}, password: array{type: 'password', label: 'Password'}, signature: array{type: 'text', label: 'Signature'}, testMode: array{type: 'checkbox', label: 'Test Mode'}, version: array{type: 'checkbox', label: 'Omnipay Version'}}, Amazon_Pay: array{publicKeyId: array{type: 'password', label: 'Public Key ID'}, merchantId: array{type: 'password', label: 'Merchant ID'}, clientId: array{type: 'password', label: 'Client ID'}, clientSecret: array{type: 'password', label: 'Client Secret'}, returnUrl: array{type: 'text', label: 'Return Url'}, storeId: array{type: 'password', label: 'Store Id'}, version: array{type: 'checkbox', label: 'Omnipay Version'}, sandbox: array{type: 'checkbox', label: 'Sandbox'}}, Stripe: array{apiKey: array{type: 'password', label: 'Api Key'}, publishableKey: array{type: 'password', label: 'Publishable Key'}, secretKey: array{type: 'password', label: 'Secret Key'}, version: array{type: 'checkbox', label: 'Omnipay Version'}}, Braintree: array{privateKey: array{type: 'password', label: 'Api Key'}, publicKey: array{type: 'password', label: 'Public Key'}, merchantId: array{type: 'password', label: 'Merchant Id'}, version: array{type: 'checkbox', label: 'Omnipay Version'}, sandbox: array{type: 'checkbox', label: 'Sandbox'}}}
+     */
     public function payment_gateways() : array 
     {
         $payment_gateways = array(
@@ -938,7 +949,12 @@ final class SettingRepository extends Select\Repository
     }
     
     // Return the Upper case first with underscore gateway keys
-    public function payment_gateways_enabled_DriverList() {
+    /**
+     * @return (int|string)[]
+     *
+     * @psalm-return list<array-key>
+     */
+    public function payment_gateways_enabled_DriverList(): array {
         $available_drivers = [];
         $gateways = $this->payment_gateways();
         foreach ($gateways as $driver => $fields) {
@@ -951,6 +967,11 @@ final class SettingRepository extends Select\Repository
     }
     
     // Sandbox Url Array
+    /**
+     * @return string[]
+     *
+     * @psalm-return array{stripe: 'https://dashboard.stripe.com', amazon_pay: 'https://sellercentral-europe.amazon.com/external-payments/sandbox/home', braintree: 'https://sandbox.braintreegateway.com/login'}
+     */
     public function sandbox_url_array() : array {
         $sandbox_array = [
             'stripe' => 'https://dashboard.stripe.com',
@@ -1171,6 +1192,11 @@ final class SettingRepository extends Select\Repository
         return $build;
     }
     
+    /**
+     * @return string[][]
+     *
+     * @psalm-return array{number_format_us_uk: array{label: 'number_format_us_uk', decimal_point: '.', thousands_separator: ','}, number_format_european: array{label: 'number_format_european', decimal_point: ',', thousands_separator: '.'}, number_format_iso80k1_point: array{label: 'number_format_iso80k1_point', decimal_point: '.', thousands_separator: ' '}, number_format_iso80k1_comma: array{label: 'number_format_iso80k1_comma', decimal_point: ',', thousands_separator: ' '}, number_format_compact_point: array{label: 'number_format_compact_point', decimal_point: '.', thousands_separator: ''}, number_format_compact_comma: array{label: 'number_format_compact_comma', decimal_point: ',', thousands_separator: ''}}
+     */
     public function number_formats() : array {
            /*
             | -------------------------------------------------------------------
@@ -1230,9 +1256,11 @@ final class SettingRepository extends Select\Repository
     }
     
     /**
-     * 
      * @param string $period
-     * @return array
+     *
+     * @return (\DateTimeImmutable|mixed)[]
+     *
+     * @psalm-return array{upper: \DateTimeImmutable, lower: \DateTimeImmutable,...}
      */
     public function range(string $period) : array {
         switch ($period) {
@@ -1269,7 +1297,7 @@ final class SettingRepository extends Select\Repository
     }
     
     //https://www.php.net/manual/en/features.file-upload.errors.php
-    public function codeToMessage($code)
+    public function codeToMessage($code): string
     {
         switch ($code) {
             case UPLOAD_ERR_INI_SIZE:
@@ -1303,7 +1331,12 @@ final class SettingRepository extends Select\Repository
         return $message;
     }
     
-    public function locales() {
+    /**
+     * @return string[]
+     *
+     * @psalm-return list{'af', 'ar', 'az', 'be', 'bg', 'bs', 'ca', 'cs', 'da', 'de', 'el', 'es', 'et', 'fa', 'fi', 'fr', 'he', 'hr', 'hu', 'hy', 'id', 'it', 'ja', 'ka', 'kk', 'ko', 'kz', 'lt', 'lv', 'ms', 'nb-NO', 'nl', 'pl', 'pt', 'pt-BR', 'ro', 'ru', 'sk', 'sl', 'sr', 'sr-Latn', 'sv', 'tg', 'th', 'tr', 'uk', 'uz', 'vi', 'zh-CN', 'zh-TW'}
+     */
+    public function locales(): array {
         $locales = [
             'af', 'ar', 'az', 
             'be', 'bg', 'bs', 

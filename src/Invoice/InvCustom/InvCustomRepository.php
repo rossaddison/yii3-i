@@ -7,7 +7,6 @@ namespace App\Invoice\InvCustom;
 use App\Invoice\Entity\InvCustom;
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -33,18 +32,18 @@ private EntityWriter $entityWriter;
     /**
      * Get invcustoms  without filter
      *
-     * @psalm-return DataReaderInterface<int,InvCustom>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select()->load('custom_field')->load('inv');
         return $this->prepareDataReader($query);
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, InvCustom>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
             ->withSort($this->getSort());
@@ -79,6 +78,11 @@ private EntityWriter $entityWriter;
         );
     }
     
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
     public function repoInvCustomquery(string $id): object|null    {
         $query = $this->select()->load('custom_field')
                                 ->load('inv')
@@ -86,7 +90,12 @@ private EntityWriter $entityWriter;
         return  $query->fetchOne() ?: null;        
     }
     
-    public function repoFormValuequery(string $inv_id, string $custom_field_id): object|null {
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
+    public function repoFormValuequery(string $inv_id, string $custom_field_id) : object|null {
         $query = $this->select()->where(['inv_id' =>$inv_id])
                                 ->andWhere(['custom_field_id' =>$custom_field_id]);
         return  $query->fetchOne();        
@@ -106,9 +115,9 @@ private EntityWriter $entityWriter;
     /**
      * Get all fields that have been setup for a particular inv
      *
-     * @psalm-return DataReaderInterface<int,InvCustom>
+     * @psalm-return EntityReader
      */
-    public function repoFields(string $inv_id): DataReaderInterface
+    public function repoFields(string $inv_id): EntityReader
     {
         $query = $this->select()->where(['inv_id'=>$inv_id]);                
         return $this->prepareDataReader($query);

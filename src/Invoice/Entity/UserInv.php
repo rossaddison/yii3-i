@@ -387,7 +387,7 @@ class UserInv
       $this->web = $web;
     }
     
-    public function getVat_id(): ?string
+    public function getVat_id(): string
     {
      return (string)$this->vat_id;
     }

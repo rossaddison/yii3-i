@@ -29,11 +29,21 @@ final class UserCustomForm extends FormModel
       return $this->fieldvalue;
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
 
+    /**
+     * @return Required[][][]
+     *
+     * @psalm-return array{fieldvalue: list{list{Required}}}
+     */
     public function getRules(): array    {
       return [
         'fieldvalue' => [

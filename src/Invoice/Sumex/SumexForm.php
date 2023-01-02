@@ -59,11 +59,21 @@ final class SumexForm extends FormModel
       return $this->casenumber;
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
 
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{invoice: list{Required}, reason: list{Required}, diagnosis: list{Required}, observations: list{Required}, treatmentstart: list{Required}, treatmentend: list{Required}, casedate: list{Required}, casenumber: list{Required}}
+     */
     public function getRules(): array    {
       return [
         'invoice' => [new Required()],

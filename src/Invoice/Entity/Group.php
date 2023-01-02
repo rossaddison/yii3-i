@@ -68,7 +68,7 @@ class Group
         $this->identifier_format =  $identifier_format;
     }
     
-    public function getNext_id(): ?string
+    public function getNext_id(): string
     {
         return (string)$this->next_id;
     }

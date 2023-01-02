@@ -14,6 +14,11 @@ final class LayoutViewInjection implements LayoutParametersInjectionInterface
     {
     }
 
+    /**
+     * @return (\App\User\User|null|string)[]
+     *
+     * @psalm-return array{brandLabel: 'Yii3-i', user: \App\User\User|null}
+     */
     public function getLayoutParameters(): array
     {
         $identity = $this->currentUser->getIdentity();

@@ -7,7 +7,6 @@ namespace App\Invoice\UserInv;
 use App\Invoice\Entity\UserInv;
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -35,18 +34,18 @@ private EntityWriter $entityWriter;
     /**
      * Get userinvs  without filter
      *
-     * @psalm-return DataReaderInterface<int,UserInv>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select(); 
         return $this->prepareDataReader($query);
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, UserInv>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
             ->withSort($this->getSort());
@@ -109,9 +108,9 @@ private EntityWriter $entityWriter;
     /**
      * Get Userinv with filter active
      *
-     * @psalm-return DataReaderInterface<int, UserInv>
+     * @psalm-return EntityReader
      */
-    public function findAllWithActive(int $active) : DataReaderInterface
+    public function findAllWithActive(int $active) : EntityReader
     {
         if (($active) < 2) {
          $query = $this->select()
@@ -125,11 +124,11 @@ private EntityWriter $entityWriter;
     /**
      * Get Userinv with filter all_clients
      *
-     * @psalm-return DataReaderInterface<int, UserInv>
+     * @psalm-return EntityReader
      */
     
     // Find users that have access to all clients
-    public function findAllWithAllClients() : DataReaderInterface
+    public function findAllWithAllClients() : EntityReader
     {
         $query = $this->select()
                       ->where(['all_clients' => 1]);  

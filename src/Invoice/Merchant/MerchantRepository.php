@@ -10,7 +10,6 @@ use App\Invoice\Entity\Merchant;
 use Cycle\Database\Injection\Parameter;
 use Cycle\ORM\Select;
 // Yiisoft
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -38,18 +37,18 @@ private EntityWriter $entityWriter;
     /**
      * Get merchants  without filter
      *
-     * @psalm-return DataReaderInterface<int,Merchant>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select();
         return $this->prepareDataReader($query);
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, Merchant>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
             ->withSort($this->getSort());
@@ -84,7 +83,12 @@ private EntityWriter $entityWriter;
         );
     }
     
-    public function repoMerchantquery(string $id): object|null    {
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
+    public function repoMerchantquery(string $id):object|null    {
         $query = $this->select()->load('inv')
                                 ->where(['id' => $id]);
         return  $query->fetchOne() ?: null;        
@@ -94,10 +98,12 @@ private EntityWriter $entityWriter;
     
     /**
      * Get payments  with filter
+     *
      * @param array $client_id_array
-     * @psalm-return DataReaderInterface<int,Merchant >
+     *
+     * @psalm-return EntityReader
      */
-    public function findOneUserManyClientsMerchantResponses(array $client_id_array): DataReaderInterface
+    public function findOneUserManyClientsMerchantResponses(array $client_id_array): EntityReader
     {
         $query = $this->select()
                       ->load('inv')

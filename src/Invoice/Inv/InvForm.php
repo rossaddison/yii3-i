@@ -87,11 +87,21 @@ final class InvForm extends FormModel
       return $this->terms;
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
     
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{client_id: list{Required}, group_id: list{Required}}
+     */
     public function getRules(): array    {
       return [
         'client_id' => [new Required()],

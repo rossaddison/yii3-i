@@ -50,15 +50,13 @@ final class ProjectController
     }
     
     /**
-     * 
      * @param SessionInterface $session
      * @param ProjectRepository $projectRepository
      * @param SettingRepository $settingRepository
      * @param Request $request
      * @param ProjectService $service
-     * @return Response
      */
-    public function index(SessionInterface $session, ProjectRepository $projectRepository, SettingRepository $settingRepository, Request $request, ProjectService $service): Response
+    public function index(SessionInterface $session, ProjectRepository $projectRepository, SettingRepository $settingRepository, Request $request, ProjectService $service): \Yiisoft\DataResponse\DataResponse
     {            
         $pageNum = (int)$request->getAttribute('page', '1');
         $paginator = (new OffsetPaginator($this->projects($projectRepository)))
@@ -171,15 +169,13 @@ final class ProjectController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param ProjectRepository $projectRepository
      * @param SettingRepository $settingRepository
-     * @return Response
      */
     public function view(CurrentRoute $currentRoute, ProjectRepository $projectRepository,
         SettingRepository $settingRepository,
-        ): Response {
+        ): \Yiisoft\DataResponse\DataResponse {
         $parameters = [
             'title' => $settingRepository->trans('view'),
             'action' => ['project/view', ['id' => $this->project($currentRoute, $projectRepository)->getId()]],
@@ -217,11 +213,11 @@ final class ProjectController
     }
     
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Project>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function projects(ProjectRepository $projectRepository): \Yiisoft\Data\Reader\DataReaderInterface 
+    private function projects(ProjectRepository $projectRepository): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
     {
         $projects = $projectRepository->findAllPreloaded();        
         return $projects;

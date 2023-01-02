@@ -450,9 +450,9 @@ final class PaymentController
     /**
      * @param array|null|object $parse
      */
-    public function edit_save_custom_fields($custom, ValidatorInterface $validator, PaymentCustomRepository $pcR,$payment_id): void {
+    public function edit_save_custom_fields($custom, ValidatorInterface $validator, PaymentCustomRepository $pcR,string $payment_id): void {
         foreach ($custom as $custom_field_id => $value) {
-            $payment_custom = $pcR->repoFormValuequery((string)$payment_id, (string)$custom_field_id);
+            $payment_custom = $pcR->repoFormValuequery($payment_id, (string)$custom_field_id);
             $payment_custom_input = [
                 'payment_id'=>(int)$payment_id,
                 'custom_field_id'=>(int)$custom_field_id,
@@ -480,7 +480,6 @@ final class PaymentController
     }
     
     /**
-     * 
      * @param Request $request
      * @param SessionInterface $session
      * @param CurrentRoute $currentRoute
@@ -490,7 +489,6 @@ final class PaymentController
      * @param InvAmountRepository $iaR
      * @param UserClientRepository $ucR
      * @param UserInvRepository $uiR
-     * @return Response
      */
     public function guest(Request $request, SessionInterface $session, 
                           CurrentRoute $currentRoute,  
@@ -499,7 +497,7 @@ final class PaymentController
                           DateHelper $dateHelper,  
                           InvAmountRepository $iaR,
                           UserClientRepository $ucR,
-                          UserInvRepository $uiR) : Response {
+                          UserInvRepository $uiR) : \Yiisoft\DataResponse\DataResponse {
         $query_params = $request->getQueryParams() ?? [];
         $page = (int)$currentRoute->getArgument('page','1');
         // Clicking on the gridview's Inv_id column hyperlink generates 
@@ -544,21 +542,19 @@ final class PaymentController
     }
     
      /**
-     * 
      * @param Request $request
      * @param CurrentRoute $currentRoute
      * @param SessionInterface $session
      * @param MerchantRepository $merchantRepository
      * @param SettingRepository $settingRepository
      * @param DateHelper $dateHelper
-     * @return Response
      */
     public function guest_online_log(Request $request, CurrentRoute $currentRoute, SessionInterface $session, 
                           MerchantRepository $merchantRepository, 
                           SettingRepository $settingRepository,
                           UserClientRepository $ucR,
                           UserInvRepository $uiR,
-                          DateHelper $dateHelper): Response
+                          DateHelper $dateHelper): \Yiisoft\DataResponse\DataResponse
     {   
         $query_params = $request->getQueryParams() ?? [];
         $page = (int)$currentRoute->getArgument('page','1');
@@ -593,7 +589,6 @@ final class PaymentController
     }
     
     /**
-     * 
      * @param Request $request
      * @param SessionInterface $session
      * @param CurrentRoute $currentRoute
@@ -601,14 +596,13 @@ final class PaymentController
      * @param SettingRepository $settingRepository
      * @param DateHelper $dateHelper
      * @param InvAmountRepository $iaR
-     * @return Response
      */
     public function index(Request $request, SessionInterface $session, 
                           CurrentRoute $currentRoute,  
                           PaymentRepository $paymentRepository, 
                           SettingRepository $settingRepository, 
                           DateHelper $dateHelper,  
-                          InvAmountRepository $iaR) : Response {
+                          InvAmountRepository $iaR) : \Yiisoft\DataResponse\DataResponse {
         $query_params = $request->getQueryParams() ?? [];
         $page = (int)$currentRoute->getArgument('page','1');
         // Clicking on the gridview's Inv_id column hyperlink generates 
@@ -639,21 +633,25 @@ final class PaymentController
     }
     
     /**
-     * 
      * @param MerchantRepository $merchantRepository
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     *
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
+     *
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function merchants(MerchantRepository $merchantRepository): \Yiisoft\Data\Reader\DataReaderInterface 
+    private function merchants(MerchantRepository $merchantRepository): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader 
     {
         $merchants = $merchantRepository->findAllPreloaded();        
         return $merchants;
     }
     
     /**
-     * 
      * @param MerchantRepository $merchantRepository
      * @param Sort $sort
-     * @return \Yiisoft\Data\Reader\SortableDataInterface
+     *
+     * @return \Yiisoft\Data\Reader\SortableDataInterface&\Yiisoft\Data\Reader\DataReaderInterface
+     *
+     * @psalm-return \Yiisoft\Data\Reader\SortableDataInterface&\Yiisoft\Data\Reader\DataReaderInterface<int, \App\Invoice\Entity\Merchant>
      */
     private function merchant_with_sort(MerchantRepository $merchantRepository, Sort $sort): \Yiisoft\Data\Reader\SortableDataInterface {       
         $merchants = $merchantRepository->findAllPreloaded()
@@ -662,11 +660,13 @@ final class PaymentController
     }
     
     /**
-     * 
      * @param MerchantRepository $merchantRepository
      * @param array $client_id_array
      * @param Sort $sort
-     * @return \Yiisoft\Data\Reader\SortableDataInterface
+     *
+     * @return \Yiisoft\Data\Reader\SortableDataInterface&\Yiisoft\Data\Reader\DataReaderInterface
+     *
+     * @psalm-return \Yiisoft\Data\Reader\SortableDataInterface&\Yiisoft\Data\Reader\DataReaderInterface<int, \App\Invoice\Entity\Merchant>
      */
     private function merchant_with_sort_guest(MerchantRepository $merchantRepository, array $client_id_array, Sort $sort): \Yiisoft\Data\Reader\SortableDataInterface {       
         $merchant_responses = $merchantRepository->findOneUserManyClientsMerchantResponses($client_id_array)
@@ -675,19 +675,17 @@ final class PaymentController
     }
     
     /**
-     * 
      * @param Request $request
      * @param CurrentRoute $currentRoute
      * @param SessionInterface $session
      * @param MerchantRepository $merchantRepository
      * @param SettingRepository $settingRepository
      * @param DateHelper $dateHelper
-     * @return Response
      */
     public function online_log(Request $request, CurrentRoute $currentRoute, SessionInterface $session, 
                           MerchantRepository $merchantRepository, 
                           SettingRepository $settingRepository, 
-                          DateHelper $dateHelper): Response
+                          DateHelper $dateHelper): \Yiisoft\DataResponse\DataResponse
     {   
         $query_params = $request->getQueryParams() ?? [];
         $page = (int)$currentRoute->getArgument('page','1');
@@ -715,10 +713,12 @@ final class PaymentController
     }
     
     /**
-     * 
      * @param PaymentRepository $paymentRepository
      * @param Sort $sort
-     * @return \Yiisoft\Data\Reader\SortableDataInterface
+     *
+     * @return \Yiisoft\Data\Reader\SortableDataInterface&\Yiisoft\Data\Reader\DataReaderInterface
+     *
+     * @psalm-return \Yiisoft\Data\Reader\SortableDataInterface&\Yiisoft\Data\Reader\DataReaderInterface<int, Payment>
      */
     private function payments_with_sort(PaymentRepository $paymentRepository, Sort $sort): \Yiisoft\Data\Reader\SortableDataInterface {       
         $payments = $paymentRepository->findAllPreloaded()
@@ -727,11 +727,13 @@ final class PaymentController
     }
     
     /**
-     * 
      * @param PaymentRepository $paymentRepository
      * @param array $client_id_array
      * @param Sort $sort
-     * @return \Yiisoft\Data\Reader\SortableDataInterface
+     *
+     * @return \Yiisoft\Data\Reader\SortableDataInterface&\Yiisoft\Data\Reader\DataReaderInterface
+     *
+     * @psalm-return \Yiisoft\Data\Reader\SortableDataInterface&\Yiisoft\Data\Reader\DataReaderInterface<int, Payment>
      */
     private function payments_with_sort_guest(PaymentRepository $paymentRepository, array $client_id_array, Sort $sort): \Yiisoft\Data\Reader\SortableDataInterface {       
         $payments = $paymentRepository->findOneUserManyClientsPayments($client_id_array)
@@ -752,21 +754,23 @@ final class PaymentController
     }
     
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Payment>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function payments(PaymentRepository $paymentRepository): \Yiisoft\Data\Reader\DataReaderInterface 
+    private function payments(PaymentRepository $paymentRepository): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader 
     {
         $payments = $paymentRepository->findAllPreloaded();        
         return $payments;
     }
     
     /**
-     * 
      * @param string $payment_id
      * @param PaymentCustomRepository $pcR
-     * @return array
+     *
+     * @return PaymentCustom[]
+     *
+     * @psalm-return array<string, PaymentCustom>
      */
     private function payment_custom_values(string $payment_id, PaymentCustomRepository $pcR) : array
     {
@@ -797,14 +801,12 @@ final class PaymentController
     // payment/view => '#btn_save_payment_custom_fields' => payment_custom_field.js => /invoice/payment/save_custom";
     
     /**
-     * 
      * @param ValidatorInterface $validator
      * @param Request $request
      * @param PaymentCustomRepository $pcR
      * @param SessionInterface $session
-     * @return Response
      */
-    public function save_custom(ValidatorInterface $validator, Request $request, PaymentCustomRepository $pcR, SessionInterface $session) : Response
+    public function save_custom(ValidatorInterface $validator, Request $request, PaymentCustomRepository $pcR, SessionInterface $session) : \Yiisoft\DataResponse\DataResponse
     {
             $parameters['success'] = 0; 
             $js_data = $request->getQueryParams() ?? [];        
@@ -821,16 +823,14 @@ final class PaymentController
     
     
     /**
-     * 
      * @param SessionInterface $session
      * @param CurrentRoute $currentRoute
      * @param PaymentRepository $paymentRepository
      * @param SettingRepository $settingRepository
-     * @return Response
      */
     public function view(CurrentRoute $currentRoute, PaymentRepository $paymentRepository,
         SettingRepository $settingRepository
-        ): Response {
+        ): \Yiisoft\DataResponse\DataResponse {
         $parameters = [
             'title' => $settingRepository->trans('view'),
             'action' => ['payment/edit', ['id' => $this->payment($currentRoute, $paymentRepository)->getId()]],

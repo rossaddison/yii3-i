@@ -79,11 +79,21 @@ final class CompanyPrivateForm extends FormModel
         return $datetime;
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
 
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{company_id: list{Required}}
+     */
     public function getRules(): array 
     {
       return [ 

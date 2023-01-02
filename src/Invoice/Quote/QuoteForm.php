@@ -72,11 +72,21 @@ final class QuoteForm extends FormModel
       return $this->notes;
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
     
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{client_id: list{Required}, group_id: list{Required}}
+     */
     public function getRules(): array    {
       return [
          'client_id'=> [new Required()],

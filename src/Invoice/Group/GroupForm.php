@@ -35,11 +35,21 @@ final class GroupForm extends FormModel
       return $this->left_pad;
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
 
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{name: list{Required}, identifier_format: list{Required}, next_id: list{Required}, left_pad: list{Required}}
+     */
     public function getRules(): array    {
       return [
         'name' => [new Required()],

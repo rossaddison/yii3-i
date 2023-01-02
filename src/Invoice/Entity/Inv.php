@@ -140,7 +140,10 @@ class Inv
         return $this->client;
     }
     
-    public function getId(): ?string
+    /**
+     * @return null|numeric-string
+     */
+    public function getId(): string|null
     {
         return $this->id === null ? null : (string)$this->id;
     }
@@ -232,7 +235,7 @@ class Inv
       $this->password =  $password;
     }
     
-    public function getDate_created(): ?DateTimeImmutable
+    public function getDate_created(): DateTimeImmutable
     {
        return $this->date_created;  
     }
@@ -269,7 +272,7 @@ class Inv
         $this->date_due =  ($this->date_created)->add(new \DateInterval('P'.$days.'D'));
     }
     
-    public function getDate_due(): ?DateTimeImmutable
+    public function getDate_due(): DateTimeImmutable
     {
        return $this->date_due;  
     }
@@ -334,7 +337,7 @@ class Inv
       $this->payment_method =  $payment_method;
     }
     
-    public function getCreditinvoice_parent_id(): ?string
+    public function getCreditinvoice_parent_id(): string
     {
      return (string)$this->creditinvoice_parent_id;
     }

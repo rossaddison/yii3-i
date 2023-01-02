@@ -7,7 +7,6 @@ namespace App\Invoice\PaymentCustom;
 use App\Invoice\Entity\PaymentCustom;
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -34,18 +33,18 @@ private EntityWriter $entityWriter;
     /**
      * Get paymentcustoms  without filter
      *
-     * @psalm-return DataReaderInterface<int,PaymentCustom>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select()->load('payment')->load('custom_field');
         return $this->prepareDataReader($query);
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, PaymentCustom>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
             ->withSort($this->getSort());
@@ -80,6 +79,11 @@ private EntityWriter $entityWriter;
         );
     }
     
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
     public function repoPaymentCustomquery(string $id): object|null    {
         $query = $this->select()->load('payment')
             ->load('custom_field')
@@ -87,6 +91,11 @@ private EntityWriter $entityWriter;
         return  $query->fetchOne() ?: null;        
     }
     
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
     public function repoFormValuequery(string $payment_id, string $custom_field_id): object|null {
         $query = $this->select()->where(['payment_id' =>$payment_id])
                                 ->andWhere(['custom_field_id' =>$custom_field_id]);
@@ -107,9 +116,9 @@ private EntityWriter $entityWriter;
     /**
      * Get all fields that have been setup for a particular payment
      *
-     * @psalm-return DataReaderInterface<int,PaymentCustom>
+     * @psalm-return EntityReader
      */
-    public function repoFields(string $payment_id): DataReaderInterface
+    public function repoFields(string $payment_id): EntityReader
     {
         $query = $this->select()->where(['payment_id'=>$payment_id]);                
         return $this->prepareDataReader($query);

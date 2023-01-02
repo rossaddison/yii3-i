@@ -39,11 +39,21 @@ final class GeneratorRelationForm extends FormModel
         return $this->gentor_id;
     }
     
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
         return '';
     }
     
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{lowercasename: list{Required}, camelcasename: list{Required}, view_field_name: list{Required}, gentor_id: list{Required}}
+     */
     public function getRules(): array
     {
         return [

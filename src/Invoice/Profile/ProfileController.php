@@ -51,9 +51,8 @@ final class ProfileController
      * @param SessionInterface $session
      * @param ProfileRepository $profileRepository
      * @param SettingRepository $settingRepository
-     * @return Response
      */
-    public function index(SessionInterface $session, ProfileRepository $profileRepository, SettingRepository $settingRepository): Response
+    public function index(SessionInterface $session, ProfileRepository $profileRepository, SettingRepository $settingRepository): \Yiisoft\DataResponse\DataResponse
     {      
          $canEdit = $this->rbac($session);
          $flash = $this->flash($session, 'info' , 'Create a profile with a new email address, or mobile number, make it active, '.
@@ -167,15 +166,13 @@ final class ProfileController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param ProfileRepository $profileRepository
      * @param SettingRepository $settingRepository
-     * @return Response
      */
     public function view(CurrentRoute $currentRoute, ProfileRepository $profileRepository,
         SettingRepository $settingRepository,
-        ): Response {
+        ): \Yiisoft\DataResponse\DataResponse {
         $profile = $this->profile($currentRoute, $profileRepository);
         $parameters = [
             'title' => $settingRepository->trans('view'),
@@ -214,11 +211,11 @@ final class ProfileController
     }
     
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Profile>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function profiles(ProfileRepository $profileRepository): \Yiisoft\Data\Reader\DataReaderInterface 
+    private function profiles(ProfileRepository $profileRepository): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
     {
         $profiles = $profileRepository->findAllPreloaded();        
         return $profiles;

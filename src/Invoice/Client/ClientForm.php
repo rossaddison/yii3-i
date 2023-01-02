@@ -151,11 +151,21 @@ final class ClientForm extends FormModel
       return $this->client_gender;
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
 
+    /**
+     * @return (Email|Required)[][]
+     *
+     * @psalm-return array{client_name: list{Required}, client_email: list{Required, Email}}
+     */
     public function getRules(): array    {
       return [
         'client_name' => [new Required()],

@@ -64,40 +64,13 @@ use Yiisoft\Yii\Bootstrap5\Modal;
       $urlGenerator->generate('company/view', ['id' => $company->getId()]),
       ['class' => 'btn btn-warning btn-sm ms-2']
              );
-      //modal delete button
-      echo Modal::widget()
-      ->title('Please confirm that you want to delete this record# '.$company->getId())
-      ->titleOptions(['class' => 'text-center'])
-      ->options(['class' => 'testMe'])
-      ->size(Modal::SIZE_SMALL)
-      ->headerOptions(['class' => 'text-danger'])
-      ->bodyOptions(['class' => 'modal-body', 'style' => 'text-align:center;',])
-      ->footerOptions(['class' => 'text-dark'])
-      ->footer(
-                  Html::button(
-                  'Close',
-                  [
-                              'type' => 'button',
-                              'class' => ['btn btn-success btn-sm ms-2'],
-                              'data' => [
-                              'bs-dismiss' => 'modal',
-                   ],
-                   ]
-                   ).                   Html::a('Yes Delete it Please ... I am sure!',
-                   $urlGenerator->generate('company/delete', ['id' => $company->getId()]),
-                   ['class' => 'btn btn-danger btn-sm ms-2']
-                              )
-                        )
-      ->withoutCloseButton()
-      ->toggleButton([
-                      'class' => ['btn btn-danger btn-sm ms-2'],
-                      'label' => 'Delete',
-                      ])
-      ->begin();
-      echo '<p>Are you sure you want to delete this record? </p>';
-      echo Modal::end();
-      echo Html::br();
-    }
+      }
+      echo Html::a('Delete',
+      $urlGenerator->generate('company/delete', ['id' => $company->getId()]),
+      ['class' => 'btn btn-danger btn-sm ms-2', 
+       'onclick'=>"return confirm('". $s->trans('delete_record_warning'). "')"
+      ]
+      );
     }
 ?>
-</div>
+</li>

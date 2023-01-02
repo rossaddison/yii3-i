@@ -7,7 +7,6 @@ use App\Invoice\Entity\EmailTemplate;
 use App\Invoice\Setting\SettingRepository;
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -33,9 +32,9 @@ final class EmailTemplateRepository extends Select\Repository
     }
 
     /**
-     * @psalm-return DataReaderInterface<int, EmailTemplate>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select();
         return $this->prepareDataReader($query);
@@ -65,7 +64,7 @@ final class EmailTemplateRepository extends Select\Repository
         );
     }
     
-    public function repoEmailTemplateCount($email_template_id) : int {
+    public function repoEmailTemplateCount(string $email_template_id) : int {
         $count = $this
             ->select()
             ->where(['id' => $email_template_id])
@@ -73,7 +72,12 @@ final class EmailTemplateRepository extends Select\Repository
         return  $count;        
     }
     
-    public function repoEmailTemplatequery(string $email_template_id): object|null
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
+    public function repoEmailTemplatequery(string $email_template_id):object|null
     {
         $query = $this
             ->select()
@@ -82,9 +86,9 @@ final class EmailTemplateRepository extends Select\Repository
     }
         
      /**
-     * @psalm-return DataReaderInterface<int, EmailTemplate>
+     * @psalm-return EntityReader
      */
-    public function repoEmailTemplateType(string $email_template_type): DataReaderInterface
+    public function repoEmailTemplateType(string $email_template_type): EntityReader
     {
         $query = $this
             ->select()
@@ -127,7 +131,7 @@ final class EmailTemplateRepository extends Select\Repository
     /**
      * @psalm-param 'pdf' $type
      */
-    public function get_quote_templates(string $type)
+    public function get_quote_templates(string $type): array
     {
         $pdf_template_directory = dirname(dirname(dirname(__DIR__))).'/resources/views/invoice/template/quote/pdf'; 
         $public_template_directory = dirname(dirname(dirname(__DIR__))).'/resources/views/invoice/template/quote/public';

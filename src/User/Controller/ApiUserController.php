@@ -25,13 +25,14 @@ final class ApiUserController
     }
 
     /**
-     * @OA\Get(
+     * @OA\Get (
      *     path="/api/user",
      *     tags={"user"},
-     *     @OA\Response(response="200", description="Get users list")
+     *
+     * @OA\Response (response="200", description="Get users list")
      * )
      */
-    public function index(UserRepository $userRepository): ResponseInterface
+    public function index(UserRepository $userRepository): \Yiisoft\DataResponse\DataResponse
     {
         $users = $userRepository->getReader();
 
@@ -46,19 +47,22 @@ final class ApiUserController
     }
 
     /**
-     * @OA\Get(
+     * @OA\Get (
      *     path="/api/user/{login}",
      *     tags={"user"},
-     *     @OA\Parameter(
-     *     @OA\Schema(type="string"),
+     *
+     * @OA\Parameter (
+     *
+     * @OA\Schema (type="string"),
      *     in="path",
      *     name="login",
      *     parameter="login"
      *     ),
-     *     @OA\Response(response="200", description="Get user info")
+     *
+     * @OA\Response (response="200", description="Get user info")
      * )
      */
-    public function profile(UserRepository $userRepository, CurrentRoute $currentRoute): ResponseInterface
+    public function profile(UserRepository $userRepository, CurrentRoute $currentRoute): \Yiisoft\DataResponse\DataResponse
     {
         $login = $currentRoute->getArgument('login');
 

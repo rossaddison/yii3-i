@@ -7,7 +7,6 @@ namespace App\Invoice\GeneratorRelation;
 use App\Invoice\Entity\GentorRelation;
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -33,16 +32,16 @@ final class GeneratorRelationRepository extends Select\Repository
     /**
      * Get generatorrelations without filter
      *
-     * @psalm-return DataReaderInterface<int, GentorRelation>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select();
         return $this->prepareDataReader($query);
     }
     
         
-    public function findRelations(string $id): DataReaderInterface 
+    public function findRelations(string $id): EntityReader 
     {
         $query = $this->select()->load('gentor')->where('gentor_id',$id);
         return $this->prepareDataReader($query);
@@ -72,7 +71,12 @@ final class GeneratorRelationRepository extends Select\Repository
         );
     }
     
-    public function repoGeneratorRelationquery(string $id): object|null
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
+    public function repoGeneratorRelationquery(string $id):object|null
     {
         $query = $this
             ->select()
@@ -81,6 +85,11 @@ final class GeneratorRelationRepository extends Select\Repository
         return  $query->fetchOne() ?: null;        
     }
     
+    /**
+     * @return object[]
+     *
+     * @psalm-return array<int, TEntity>
+     */
     public function repoGeneratorquery(string $id): array
     {
         $query = $this

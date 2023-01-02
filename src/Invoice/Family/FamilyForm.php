@@ -16,11 +16,21 @@ final class FamilyForm extends FormModel
         return $this->family_name;
     }
     
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
         return '';
     }
     
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{family_name: list{Required}}
+     */
     public function getRules(): array
     {
         return [

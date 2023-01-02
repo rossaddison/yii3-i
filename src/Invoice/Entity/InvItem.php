@@ -188,7 +188,7 @@ class InvItem
       $this->date_added =  $date_added;
     }
     
-    public function getProduct_id(): ?string
+    public function getProduct_id(): string
     {
      return (string)$this->product_id;
     }
@@ -198,7 +198,7 @@ class InvItem
       $this->product_id =  $product_id;
     }
     
-    public function getTask_id(): ?string
+    public function getTask_id(): string
     {
      return (string)$this->task_id;
     }
@@ -278,7 +278,7 @@ class InvItem
       $this->is_recurring =  $is_recurring;
     }
     
-    public function getDate() : ?DateTimeImmutable  
+    public function getDate() : DateTimeImmutable  
     {
         return $this->date;
     }    
@@ -298,7 +298,7 @@ class InvItem
       $this->product_unit =  $product_unit;
     }
     
-    public function getProduct_unit_id(): ?string
+    public function getProduct_unit_id(): string
     {
      return (string)$this->product_unit_id;
     }

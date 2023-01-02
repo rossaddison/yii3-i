@@ -9,7 +9,6 @@ use App\Invoice\Entity\Payment;
 use Cycle\Database\Injection\Parameter;
 use Cycle\ORM\Select;
 // Yiisoft
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -36,9 +35,9 @@ private EntityWriter $entityWriter;
     /**
      * Get payments  without filter
      *
-     * @psalm-return DataReaderInterface<int,Payment>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select()->load('inv')
                                 ->load('payment_method');
@@ -49,10 +48,12 @@ private EntityWriter $entityWriter;
     
     /**
      * Get payments  with filter
+     *
      * @param array $client_id_array
-     * @psalm-return DataReaderInterface<int,Payment>
+     *
+     * @psalm-return EntityReader
      */
-    public function findOneUserManyClientsPayments(array $client_id_array): DataReaderInterface
+    public function findOneUserManyClientsPayments(array $client_id_array): EntityReader
     {
         $query = $this->select()
                       ->load('inv')
@@ -61,9 +62,9 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, Payment>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
             ->withSort($this->getSort());
@@ -99,8 +100,8 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @psalm-return DataReaderInterface<int,Payment>
-     */    
+     * @psalm-return EntityReader
+     */
     public function repoPaymentInvLoadedAll(int $list_limit) {
         $query = $this->select()
                       ->load('inv')
@@ -108,6 +109,11 @@ private EntityWriter $entityWriter;
         return  $this->prepareDataReader($query);           
     }
     
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
     public function repoPaymentquery(string $id): object|null    {
         $query = $this->select()
                       ->load('inv')
@@ -126,7 +132,7 @@ private EntityWriter $entityWriter;
         return $count;        
     }
     
-    public function repoPaymentLoaded_from_to(string $from, string $to): DataReaderInterface {
+    public function repoPaymentLoaded_from_to(string $from, string $to): EntityReader {
         $query = $this->select()
                       ->load('inv')
                       ->load('payment_method')
@@ -138,9 +144,9 @@ private EntityWriter $entityWriter;
     /**
      * Get payments  without filter
      *
-     * @psalm-return DataReaderInterface<int,Payment>
-     */    
-    public function repoInvquery(string $inv_id): DataReaderInterface {
+     * @psalm-return EntityReader
+     */
+    public function repoInvquery(string $inv_id): EntityReader {
         $query = $this->select()
                       ->where(['inv_id' => $inv_id]);
         return $this->prepareDataReader($query);   

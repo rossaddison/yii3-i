@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Backend\Controller;
 
-use Psr\Http\Message\ResponseInterface;
 use Yiisoft\Yii\View\ViewRenderer;
 
 final class SiteController
@@ -18,7 +17,7 @@ final class SiteController
             ->withViewPath('@resources/backend/views');
     }
 
-    public function index(): ResponseInterface
+    public function index(): \Yiisoft\DataResponse\DataResponse
     {
         return $this->viewRenderer->render('index');
     }

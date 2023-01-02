@@ -64,11 +64,21 @@ final class EmailTemplateForm extends FormModel
         return $this->email_template_pdf_template;
     }
     
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
         return '';
     }
     
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{email_template_title: list{Required}, email_template_type: list{Required}, email_template_body: list{Required}, email_template_subject: list{Required}, email_template_from_name: list{Required}, email_template_from_email: list{Required}}
+     */
     public function getRules(): array
     {
         return [

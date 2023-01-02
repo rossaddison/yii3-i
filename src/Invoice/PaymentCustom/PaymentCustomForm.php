@@ -29,11 +29,21 @@ final class PaymentCustomForm extends FormModel
       return $this->value;
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
 
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{payment_id: list{Required}, custom_field_id: list{Required}, value: list{Required}}
+     */
     public function getRules(): array    {
       return [
         'payment_id' => [new Required()],

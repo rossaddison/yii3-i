@@ -83,11 +83,21 @@ final class CompanyForm extends FormModel
       return $this->web;
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
 
+    /**
+     * @return (Email|Required)[][]
+     *
+     * @psalm-return array{name: list{Required}, email: list{Required, Email}}
+     */
     public function getRules(): array    {
       return [
         'name' => [new Required()],       

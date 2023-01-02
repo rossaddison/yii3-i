@@ -48,7 +48,10 @@ use \DateTimeImmutable;
       $this->client =  $client;
     }
     
-    public function getId(): ?string
+    /**
+     * @return null|numeric-string
+     */
+    public function getId(): string|null
     {
         return $this->id === null ? null : (string)$this->id;
     }

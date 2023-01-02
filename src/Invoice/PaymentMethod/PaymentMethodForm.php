@@ -17,11 +17,21 @@ final class PaymentMethodForm extends FormModel
       return $this->name;
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
 
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{name: list{Required}}
+     */
     public function getRules(): array    {
       return [
         'name' => [new Required()],

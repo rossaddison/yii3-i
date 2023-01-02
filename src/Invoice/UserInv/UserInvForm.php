@@ -173,11 +173,21 @@ final class UserInvForm extends FormModel
       return $this->rcc;
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
 
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{user_id: list{Required}, type: list{Required}, language: list{Required}, name: list{Required}}
+     */
     public function getRules(): array  {
         return [
             'user_id' => [new Required()],

@@ -107,7 +107,6 @@ final class InvoiceController
     }
     
     /**
-     * 
      * @param SessionInterface $session
      * @param ClientRepository $cR
      * @param GroupRepository $gR
@@ -119,7 +118,6 @@ final class InvoiceController
      * @param SettingRepository $sR
      * @param TaskRepository $taskR
      * @param ProjectRepository $prjctR
-     * @return Response
      */
     public function dashboard (SessionInterface $session,
                                ClientRepository $cR,
@@ -132,7 +130,7 @@ final class InvoiceController
                                SettingRepository $sR,
                                TaskRepository $taskR,
                                ProjectRepository $prjctR
-                              ) : Response {
+                              ) : \Yiisoft\DataResponse\DataResponse {
         $data = [
             'alerts'=>$this->alert($session),
             'clienthelper'=>new ClientHelper($sR),
@@ -213,7 +211,6 @@ final class InvoiceController
     }
     
     /**
-     * 
      * @param SessionInterface $session
      * @param SettingRepository $sR
      * @param TaxRateRepository $trR
@@ -223,7 +220,6 @@ final class InvoiceController
      * @param ProductRepository $pR
      * @param ClientRepository $cR
      * @param GroupRepository $gR
-     * @return Response
      */
     public function index(SessionInterface $session, 
                           SettingRepository $sR,
@@ -234,7 +230,7 @@ final class InvoiceController
                           ProductRepository $pR,
                           ClientRepository $cR,
                           GroupRepository $gR
-                         ): Response {
+                         ): \Yiisoft\DataResponse\DataResponse {
         $this->flash($session, 'info' , $this->viewRenderer->renderPartialAsString('/invoice/info/invoice'));
         $gR->repoCountAll() === 0 ? $this->install_default_invoice_and_quote_group($gR) : '';
         $pmR->count() === 0 ? $this->install_default_payment_methods($pmR) : '';
@@ -671,7 +667,6 @@ final class InvoiceController
     }
     
     /**
-     * 
      * @param SessionInterface $session
      * @param SettingRepository $sR
      * @param UnitRepository $uR
@@ -680,7 +675,6 @@ final class InvoiceController
      * @param ClientRepository $cR
      * @param QuoteRepository $qR
      * @param InvRepository $iR
-     * @return Response
      */
     public function test_data_remove(SessionInterface $session,  
                                     SettingRepository $sR,
@@ -690,7 +684,7 @@ final class InvoiceController
                                     ClientRepository $cR,
                                     QuoteRepository $qR,
                                     InvRepository $iR,
-                                   ): Response {
+                                   ): \Yiisoft\DataResponse\DataResponse {
         $flash =  '';
         if (($sR->repoCount('use_test_data') > 0 && $sR->get_setting('use_test_data') == '0')) {
             // Only remove the test data if the user's test quotes and invoices have been removed FIRST else integrity constraint violations
@@ -713,7 +707,6 @@ final class InvoiceController
     }
     
     /**
-     * 
      * @param SessionInterface $session
      * @param SettingRepository $sR
      * @param UnitRepository $uR
@@ -723,7 +716,6 @@ final class InvoiceController
      * @param QuoteRepository $qR
      * @param InvRepository $iR
      * @param TaxRateRepository $trR
-     * @return Response
      */
     public function test_data_reset(SessionInterface $session,  
                                     SettingRepository $sR,
@@ -734,7 +726,7 @@ final class InvoiceController
                                     QuoteRepository $qR,
                                     InvRepository $iR,
                                     TaxRateRepository $trR
-                                   ): Response {        
+                                   ): \Yiisoft\DataResponse\DataResponse {        
         $flash =  '';
         if ($sR->repoCount('install_test_data') > 0 && $sR->get_setting('install_test_data') == 1) {
             // Only remove the test data if the user's test quotes and invoices have been removed FIRST else integrity constraint violations
@@ -788,7 +780,6 @@ final class InvoiceController
     }
     
     /**
-     * 
      * @param SessionInterface $session
      * @param CurrentUser $currentUser
      * @param DatabaseManager $dbal
@@ -799,7 +790,6 @@ final class InvoiceController
      * @param ProductRepository $pR
      * @param ClientRepository $cR
      * @param GroupRepository $gR
-     * @return Response
      */
     public function ubuntu(SessionInterface $session, CurrentUser $currentUser, DatabaseManager $dbal, 
                            SettingRepository $sR,
@@ -809,7 +799,7 @@ final class InvoiceController
                            ProductRepository $pR,
                            ClientRepository $cR,                           
                            GroupRepository $gR
-                          ): Response {
+                          ): \Yiisoft\DataResponse\DataResponse {
         $canEdit = $this->rbac($session);
         $flash = $this->flash($session, 'info' , $this->viewRenderer->renderPartialAsString('/invoice/info/ubuntu'));        
         $gR->repoCountAll() === 0 ? $this->install_default_invoice_and_quote_group($gR) : '';

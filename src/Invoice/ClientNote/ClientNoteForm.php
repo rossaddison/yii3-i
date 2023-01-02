@@ -40,11 +40,21 @@ final class ClientNoteForm extends FormModel
       return $this->note;
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
 
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{client_id: list{Required}, date: list{Required}, note: list{Required}}
+     */
     public function getRules(): array    {
       return [
         'client_id' => [new Required()],  

@@ -41,11 +41,21 @@ final class CustomFieldForm extends FormModel
       return $this->order;
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
 
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{table: list{Required}, label: list{Required}, type: list{Required}, location: list{Required}, order: list{Required}}
+     */
     public function getRules(): array    {
       return [
         'table' => [new Required()],

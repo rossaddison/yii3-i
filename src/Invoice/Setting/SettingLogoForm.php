@@ -10,6 +10,11 @@ final class SettingLogoForm extends FormModel
 {
     private ?array $attachLogoFile = null; 
 
+    /**
+     * @return string
+     *
+     * @psalm-return 'SettingLogoForm'
+     */
     public function getFormName(): string
     {
         return 'SettingLogoForm';

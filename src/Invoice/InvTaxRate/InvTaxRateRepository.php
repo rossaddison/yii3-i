@@ -7,7 +7,6 @@ namespace App\Invoice\InvTaxRate;
 use App\Invoice\Entity\InvTaxRate;
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -32,18 +31,18 @@ private EntityWriter $entityWriter;
     /**
      * Get invtaxrates  without filter
      *
-     * @psalm-return DataReaderInterface<int,InvTaxRate>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select()->load('inv')->load('tax_rate');
         return $this->prepareDataReader($query);
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, InvTaxRate>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
             ->withSort($this->getSort());
@@ -103,7 +102,7 @@ private EntityWriter $entityWriter;
     // load 'tax rate' so that we can use tax_rate_id through the BelongTo relation in the Entity
     // to access the parent tax rate table's percent name and percentage 
     // which we will use in inv/view
-    public function repoInvquery(string $inv_id): DataReaderInterface    {
+    public function repoInvquery(string $inv_id): EntityReader    {
         $query = $this->select()->load('tax_rate')->where(['inv_id' => $inv_id]);
         return $this->prepareDataReader($query);   
     }
@@ -113,7 +112,7 @@ private EntityWriter $entityWriter;
         return  $query->fetchOne() ?: null;        
     }
         
-    public function repoGetInvTaxRateAmounts(string $inv_id): DataReaderInterface  {
+    public function repoGetInvTaxRateAmounts(string $inv_id): EntityReader  {
         $query = $this->select()
                       ->where(['inv_id'=>$inv_id]);
         return $this->prepareDataReader($query);   

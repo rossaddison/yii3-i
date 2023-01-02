@@ -50,11 +50,21 @@ final class PaymentForm extends FormModel
       return $this->inv_id;
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
 
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{inv_id: list{Required}, payment_method_id: list{Required}, payment_date: list{Required}, amount: list{Required}, note: list{Required}}
+     */
     public function getRules(): array    {
       return [
         'inv_id' => [new Required()],

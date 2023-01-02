@@ -224,9 +224,11 @@ public function calculate_inv(string $inv_id, IIR $iiR, IIAR $iiaR, ITRR $itrR, 
     
     /**
      * @param $quote_id
-     * @return array
-     */  
-    
+     *
+     * @return (float|mixed)[]
+     *
+     * @psalm-return array{subtotal: float|mixed, tax_total: float|mixed, discount: float|mixed, total: float|mixed}
+     */
     private function quote_calculateTotalsofItemTotals(string $quote_id, QIR $qiR,QIAR $qiaR) : array { 
         $get_all_items_in_quote = $qiR->repoQuoteItemIdquery($quote_id);
         $grand_sub_total = 0.00;
@@ -260,7 +262,10 @@ public function calculate_inv(string $inv_id, IIR $iiR, IIAR $iiaR, ITRR $itrR, 
         return $totals;
     }
     
-    private function inv_balance_zero_set_to_read_only_if_fully_paid($iR, $sR, $invoice, $balance) : void {
+    /**
+     * @psalm-param IR<object> $iR
+     */
+    private function inv_balance_zero_set_to_read_only_if_fully_paid(IR $iR, SRepo $sR, \App\Invoice\Entity\Inv|null $invoice, float $balance) : void {
         if (($sR->get_setting('read_only_toggle') === (string)2) && null!==$invoice) {
             if ($balance == 0.00) {
                 $invoice->setIs_read_only(true);
@@ -273,9 +278,11 @@ public function calculate_inv(string $inv_id, IIR $iiR, IIAR $iiaR, ITRR $itrR, 
     
     /**
      * @param string $inv_id
-     * @return array
-     */  
-    
+     *
+     * @return (float|mixed)[]
+     *
+     * @psalm-return array{subtotal: float|mixed, tax_total: float|mixed, discount: float|mixed, total: float|mixed}
+     */
     private function inv_calculateTotalsofItemTotals(string $inv_id, IIR $iiR, IIAR $iiaR) : array { 
         $get_all_items_in_inv = $iiR->repoInvItemIdquery($inv_id);
         $grand_sub_total = 0.00;

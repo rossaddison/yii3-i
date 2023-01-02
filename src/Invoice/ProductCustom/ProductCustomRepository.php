@@ -7,7 +7,6 @@ namespace App\Invoice\ProductCustom;
 use App\Invoice\Entity\ProductCustom;
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -34,18 +33,18 @@ private EntityWriter $entityWriter;
     /**
      * Get productcustoms  without filter
      *
-     * @psalm-return DataReaderInterface<int,ProductCustom>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select()->load('custom_field')->load('product');
         return $this->prepareDataReader($query);
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, ProductCustom>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
             ->withSort($this->getSort());
@@ -80,7 +79,12 @@ private EntityWriter $entityWriter;
         );
     }
     
-    public function repoProductCustomquery(string $id): object|null    {
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
+    public function repoProductCustomquery(string $id):object|null    {
         $query = $this->select()->load('custom_field')
                                 ->load('product')
                                 ->where(['id'=>$id]);
@@ -88,7 +92,12 @@ private EntityWriter $entityWriter;
     }
     
     
-    public function repoFormValuequery(string $product_id, string $custom_field_id): object|null {
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
+    public function repoFormValuequery(string $product_id, string $custom_field_id):object|null {
         $query = $this->select()->where(['inv_id' =>$product_id])
                                 ->andWhere(['custom_field_id' =>$custom_field_id]);
         return  $query->fetchOne() ?: null;        
@@ -108,9 +117,9 @@ private EntityWriter $entityWriter;
     /**
      * Get all fields that have been setup for a particular inv
      *
-     * @psalm-return DataReaderInterface<int,ProductCustom>
+     * @psalm-return EntityReader
      */
-    public function repoFields(string $product_id): DataReaderInterface
+    public function repoFields(string $product_id): EntityReader
     {
         $query = $this->select()->where(['product_id'=>$product_id]);                
         return $this->prepareDataReader($query);

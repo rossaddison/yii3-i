@@ -12,7 +12,6 @@ use App\Invoice\Client\ClientRepository as CR;
 
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Validator\ValidatorInterface;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
@@ -38,18 +37,18 @@ private EntityWriter $entityWriter;
     /**
      * Get userclients  without filter
      *
-     * @psalm-return DataReaderInterface<int,UserClient>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select();
         return $this->prepareDataReader($query);
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, UserClient>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
             ->withSort($this->getSort());
@@ -84,7 +83,12 @@ private EntityWriter $entityWriter;
         );
     }
     
-    public function repoUserClientquery(string $id): object|null    {
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
+    public function repoUserClientquery(string $id):object|null    {
         $query = $this->select()
                       ->load('user')
                       ->load('client')
@@ -95,9 +99,9 @@ private EntityWriter $entityWriter;
      /**
      * Get clients  with filter user_id
      *
-     * @psalm-return DataReaderInterface<int,UserClient>
+     * @psalm-return EntityReader
      */
-    public function repoClientquery(string $user_id): DataReaderInterface    {
+    public function repoClientquery(string $user_id): EntityReader    {
         $query = $this->select()
                       ->load('client')
                       ->where(['user_id' => $user_id]);
@@ -118,9 +122,11 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * 
      * @param string $user_id
-     * @return array
+     *
+     * @return string[]
+     *
+     * @psalm-return list{0?: string,...}
      */
     public function get_assigned_to_user(string $user_id) : array {
         // Get all clients assigned to this user
@@ -137,11 +143,13 @@ private EntityWriter $entityWriter;
     }
     
    /**
-    * 
-    * @param string $user_id
-    * @param CR $cR
-    * @return array
-    */
+     * @param string $user_id
+     * @param CR $cR
+     *
+     * @return (int|null)[]
+     *
+     * @psalm-return array<int<0, max>, int|null>
+     */
     public function get_not_assigned_to_user(string $user_id, CR $cR) : array
     {
         // Get an array of client ids that have been assigned to this user

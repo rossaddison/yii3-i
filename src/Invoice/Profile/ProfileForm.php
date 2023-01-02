@@ -53,11 +53,21 @@ final class ProfileForm extends FormModel
       return $this->date_modified;
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
 
+    /**
+     * @return (Email|Required)[][]
+     *
+     * @psalm-return array{mobile: list{Required}, email: list{Required, Email}, description: list{Required}}
+     */
     public function getRules(): array    {
       return [
         'mobile' => [new Required()],

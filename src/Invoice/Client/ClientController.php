@@ -156,15 +156,20 @@ final class ClientController
     }
     
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Client>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function clients(cR $cR, int $active): \Yiisoft\Data\Reader\DataReaderInterface {
+    private function clients(cR $cR, int $active): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader {
         $clients = $cR->findAllWithActive($active); 
         return $clients;
     }
     
+    /**
+     * @return ClientCustom[]
+     *
+     * @psalm-return array<string, ClientCustom>
+     */
     public function client_custom_values(string $client_id, ccR $ccR) : array
     {
         // Get all the custom fields that have been registered with this client on creation, retrieve existing values via repo, and populate 
@@ -180,7 +185,7 @@ final class ClientController
     }
     
     // Data fed from client.js->$(document).on('click', '#client_create_confirm', function () {
-    public function create_confirm(Request $request, ValidatorInterface $validator, cfR $cfR, sR $sR) : Response
+    public function create_confirm(Request $request, ValidatorInterface $validator, cfR $cfR, sR $sR) : \Yiisoft\DataResponse\DataResponse
     {
         $body = $request->getQueryParams() ?? [];
         $datehelper = new DateHelper($sR);
@@ -234,7 +239,7 @@ final class ClientController
         } 
     }
     
-    public function custom_fields(ValidatorInterface $validator, $body, $matches, $client_id, $ccR) : Response
+    public function custom_fields(ValidatorInterface $validator, $body, $matches, $client_id, $ccR) : \Yiisoft\DataResponse\DataResponse
     {   
         $parameters =[];
         if (!empty($body['custom'])) {
@@ -368,7 +373,7 @@ final class ClientController
     }
     
     public function index(CurrentRoute $currentRoute, SessionInterface $session, cR $cR, iaR $iaR, iR $iR, sR $sR): 
-        Response
+        \Yiisoft\DataResponse\DataResponse
     {
         $canEdit = $this->rbac($session);
         $pageNum = (int)$currentRoute->getArgument('page', '1');        
@@ -417,7 +422,7 @@ final class ClientController
     
     // save the client custom fields
     public function save_client_custom_fields(ValidatorInterface $validator, ccR $ccR, $client_id, $body)
-                    : Response
+                    : \Yiisoft\DataResponse\DataResponse
     {
        $parameters = [];
        $parameters['success'] = 0;
@@ -466,7 +471,7 @@ final class ClientController
     
     // save the client custom fields
     public function save_custom_fields(SessionInterface $session, ValidatorInterface $validator, Request $request, ccR $ccR)
-                    : Response
+                    : \Yiisoft\DataResponse\DataResponse
     {
        $parameters = [];      
        $parameters['success'] = 0; 
@@ -514,7 +519,7 @@ final class ClientController
         }
     }
 
-    public function save_client_note_new(Request $request, ValidatorInterface $validator, cnS $cnS, cnR $cnR, sR $sR) : Response 
+    public function save_client_note_new(Request $request, ValidatorInterface $validator, cnS $cnS, cnR $cnR, sR $sR) : \Yiisoft\DataResponse\DataResponse 
     {
         $datehelper = new DateHelper($sR);
         //receive data ie. note
@@ -529,7 +534,7 @@ final class ClientController
         ];
         $content = new ClientNoteForm();        
         if ($content->load($data) && $validator->validate($content)->isValid()) {    
-            $cnS->saveClientNote(new ClientNote(), $content, $sR);
+            $cnS->addClientNote(new ClientNote(), $content, $sR);
             $parameters = [
                 'success' => 1,
             ];
@@ -543,7 +548,7 @@ final class ClientController
     }
         
     public function view(SessionInterface $session, CurrentRoute $currentRoute, cR $cR, cfR $cfR, cnR $cnR, cvR $cvR, ccR $ccR, gR $gR, iR $iR, iaR $iaR, irR $irR, qR $qR, pymtR $pymtR, qaR $qaR, sR $sR   
-    ): Response {
+    ): \Yiisoft\DataResponse\DataResponse {
         $client = $this->client($currentRoute, $cR);
         $parameters = [
             'title' => $sR->trans('client'),

@@ -267,7 +267,7 @@ class Client
       $this->client_web =  $client_web;
     }
     
-    public function getClient_vat_id(): ?string
+    public function getClient_vat_id(): string
     {
      return (string)$this->client_vat_id;
     }

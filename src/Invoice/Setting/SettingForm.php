@@ -22,11 +22,21 @@ final class SettingForm extends FormModel
         return $this->setting_value;
     }   
        
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
         return '';
     }
     
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{setting_key: list{Required}}
+     */
     public function getRules(): array
     {
         return [

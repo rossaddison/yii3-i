@@ -27,7 +27,7 @@ final class MerchantForm extends FormModel
       return $this->successful;
     }
 
-    public function getDate() : ?\DateTime
+    public function getDate() : \DateTime
     {
         return new \DateTime($this->date);       
     }
@@ -47,11 +47,21 @@ final class MerchantForm extends FormModel
       return $this->reference;
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
 
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{successful: list{Required}, date: list{Required}, driver: list{Required}, response: list{Required}, reference: list{Required}}
+     */
     public function getRules(): array    {
       return [
         'successful' => [new Required()],

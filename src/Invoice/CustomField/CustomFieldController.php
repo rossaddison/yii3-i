@@ -49,14 +49,12 @@ final class CustomFieldController
     }
     
     /**
-     * 
      * @param SessionInterface $session
      * @param CustomFieldRepository $customfieldRepository
      * @param SettingRepository $settingRepository
      * @param Request $request
-     * @return Response
      */
-    public function index(SessionInterface $session, CustomFieldRepository $customfieldRepository, SettingRepository $settingRepository, Request $request): Response
+    public function index(SessionInterface $session, CustomFieldRepository $customfieldRepository, SettingRepository $settingRepository, Request $request): \Yiisoft\DataResponse\DataResponse
     {
         $pageNum = (int)$request->getAttribute('page', '1');
         $paginator = (new OffsetPaginator($this->customfields($customfieldRepository)))
@@ -184,15 +182,13 @@ final class CustomFieldController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param CustomFieldRepository $customfieldRepository
      * @param SettingRepository $settingRepository
-     * @return Response
      */
     public function view(CurrentRoute $currentRoute,CustomFieldRepository $customfieldRepository,
         SettingRepository $settingRepository
-        ): Response {
+        ): \Yiisoft\DataResponse\DataResponse {
         $parameters = [
             'title' => $settingRepository->trans('view'),
             'action' => ['customfield/edit', ['id' => $this->customfield($currentRoute, $customfieldRepository)->getId()]],
@@ -230,11 +226,11 @@ final class CustomFieldController
     }
     
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, CustomField>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function customfields(CustomFieldRepository $customfieldRepository): \Yiisoft\Data\Reader\DataReaderInterface 
+    private function customfields(CustomFieldRepository $customfieldRepository): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader 
     {
         $customfields = $customfieldRepository->findAllPreloaded();        
         return $customfields;
@@ -296,9 +292,11 @@ final class CustomFieldController
     }
     
     /**
-     * @return array
+     * @return string[]
+     *
+     * @psalm-return array{client_custom: 'client', product_custom: 'product', inv_custom: 'invoice', payment_custom: 'payment', quote_custom: 'quote', user_custom: 'user'}
      */
-    private function custom_tables()
+    private function custom_tables(): array
     {
         return [
             'client_custom' => 'client',
@@ -312,8 +310,10 @@ final class CustomFieldController
     
     /**
      * @return string[]
+     *
+     * @psalm-return list{'SINGLE-CHOICE', 'MULTIPLE-CHOICE'}
      */
-    public static function custom_value_fields()
+    public static function custom_value_fields(): array
     {
         return array(
             'SINGLE-CHOICE',

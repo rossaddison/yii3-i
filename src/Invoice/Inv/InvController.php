@@ -80,7 +80,6 @@ use Yiisoft\Session\SessionInterface;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\Validator\ValidatorInterface;
-use Yiisoft\VarDumper\VarDumper;
 use Yiisoft\Yii\View\ViewRenderer;
 // Psr\Http
 use Psr\Log\LoggerInterface;
@@ -293,13 +292,12 @@ final class InvController
     
     /**
      * Upload a file
+     *
      * @param CurrentRoute $currentRoute
      * @param IR $iR
      * @param UPR $uPR
-     * @return Response
      */
-    
-    public function attachment(CurrentRoute $currentRoute, IR $iR, UPR $uPR) : Response {
+    public function attachment(CurrentRoute $currentRoute, IR $iR, UPR $uPR) : \Yiisoft\DataResponse\DataResponse {
         $aliases = $this->sR->get_customer_files_folder_aliases();
         $targetPath = $aliases->get('@customer_files');
         $inv_id = $currentRoute->getArgument('id');
@@ -383,14 +381,12 @@ final class InvController
     // Data fed from inv.js->$(document).on('click', '#inv_create_confirm', function () {
     
     /**
-     * 
      * @param Request $request
      * @param ValidatorInterface $validator
      * @param GR $gR
      * @param TRR $trR
-     * @return Response
      */
-    public function create_confirm(Request $request, ValidatorInterface $validator, GR $gR, TRR $trR, IAR $iaR) : Response
+    public function create_confirm(Request $request, ValidatorInterface $validator, GR $gR, TRR $trR, IAR $iaR) : \Yiisoft\DataResponse\DataResponse
     { 
         $body = $request->getQueryParams() ?? [];        
         $ajax_body = [
@@ -434,7 +430,6 @@ final class InvController
     // Reverse an invoice with a credit invoice/ debtor/client/customer credit note
     
     /**
-     * 
      * @param Request $request
      * @param ValidatorInterface $validator
      * @param IR $iR
@@ -442,9 +437,8 @@ final class InvController
      * @param IAR $iaR
      * @param IIR $iiR
      * @param IIAR $iiaR
-     * @return Response
      */
-    public function create_credit_confirm(Request $request, ValidatorInterface $validator,IR $iR, GR $gR, IAR $iaR, IIR $iiR, IIAR $iiaR) : Response {
+    public function create_credit_confirm(Request $request, ValidatorInterface $validator,IR $iR, GR $gR, IAR $iaR, IIR $iiR, IIAR $iiaR) : \Yiisoft\DataResponse\DataResponse {
             $body = $request->getQueryParams() ?? [];
             $basis_inv = $iR->repoInvLoadedquery($body['inv_id']);
             $basis_inv_id = $body['inv_id'];
@@ -548,12 +542,10 @@ final class InvController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param IIR $iiR
-     * @return Response
      */
-    public function delete_inv_item(CurrentRoute $currentRoute, IIR $iiR ) : Response {
+    public function delete_inv_item(CurrentRoute $currentRoute, IIR $iiR ) : \Yiisoft\DataResponse\DataResponse {
         try {            
             $this->inv_item_service->deleteInvItem($this->inv_item($currentRoute,$iiR));
         } catch (\Exception $e) {
@@ -566,12 +558,10 @@ final class InvController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param ITRR $invtaxrateRepository
-     * @return Response
      */
-    public function delete_inv_tax_rate(CurrentRoute $currentRoute, ITRR $invtaxrateRepository) : Response {
+    public function delete_inv_tax_rate(CurrentRoute $currentRoute, ITRR $invtaxrateRepository) : \Yiisoft\DataResponse\DataResponse {
         try {            
             $this->inv_tax_rate_service->deleteInvTaxRate($this->invtaxrate($currentRoute,$invtaxrateRepository));
         } catch (\Exception $e) {           
@@ -586,10 +576,10 @@ final class InvController
     /**
      * @param CurrentRoute $currentRoute
      * @param UPR $upR
-     * @return void
+     *
+     * @return never
      */
-    
-    public function download_file(CurrentRoute $currentRoute, UPR $upR) : void {
+    public function download_file(CurrentRoute $currentRoute, UPR $upR)  {
         $upload_id = $currentRoute->getArgument('upload_id');
         $upload = $upR->repoUploadquery($upload_id);
         $aliases = $this->sR->get_customer_files_folder_aliases();
@@ -646,7 +636,6 @@ final class InvController
      * @param CFR $cfR
      * @param CVR $cvR
      * @param ICR $icR
-     * @return Response
      */
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute,
                         ValidatorInterface $validator,
@@ -659,7 +648,7 @@ final class InvController
                         CFR $cfR,
                         CVR $cvR,
                         ICR $icR
-    ): Response {       
+    ): \Yiisoft\DataResponse\DataResponse {       
         $inv_id = $this->inv($currentRoute, $invRepo, true)->getId();
         $action = ['inv/edit', ['id' => $inv_id]];
         $parameters = [
@@ -872,9 +861,11 @@ final class InvController
     
     /**
      * @param EmailTemplate $email_template
-     * @return array
+     *
+     * @return (null|string)[]
+     *
+     * @psalm-return array{body: string, subject: string, from_name: string, from_email: string, cc: string, bcc: string, pdf_template: null|string}
      */
-    
     public function get_inject_email_template_array(EmailTemplate $email_template) : array {
         $email_template_array = [
                 'body' => Json::htmlEncode($email_template->getEmail_template_body()),
@@ -890,9 +881,11 @@ final class InvController
     
     /**
      * @param ETR $etR
-     * @return array
+     *
+     * @return (null|string)[]
+     *
+     * @psalm-return array<''|int, null|string>
      */
-    
     public function email_templates(ETR $etR) : array {
         $email_templates = $etR->repoEmailTemplateType('invoice');
         $data = [];
@@ -1071,11 +1064,9 @@ final class InvController
      * @param IR $iR
      * @param UCR $ucR
      * @param UIR $uiR
-     * @return Response
      */
-    
     public function guest(Request $request, IAR $iaR, IRR $irR, CurrentRoute $currentRoute,
-                          IR $iR, UCR $ucR, UIR $uiR) : Response {
+                          IR $iR, UCR $ucR, UIR $uiR) : \Yiisoft\DataResponse\DataResponse {
         $query_params = $request->getQueryParams() ?? [];
         $pageNum = (int)$currentRoute->getArgument('page', '1');
          //status 0 => 'all';
@@ -1132,10 +1123,8 @@ final class InvController
      * @param CR $clientRepo
      * @param GR $groupRepo
      * @param CurrentRoute $currentRoute
-     * @return Response
      */
-    
-    public function index(Request $request, IAR $iaR, IR $invRepo, IRR $irR, CR $clientRepo, GR $groupRepo, CurrentRoute $currentRoute): Response
+    public function index(Request $request, IAR $iaR, IR $invRepo, IRR $irR, CR $clientRepo, GR $groupRepo, CurrentRoute $currentRoute): \Yiisoft\DataResponse\DataResponse
     {
         $query_params = $request->getQueryParams();
         $page = (int)$currentRoute->getArgument('page', '1');
@@ -1177,7 +1166,10 @@ final class InvController
      * @param IR $iR
      * @param int $status
      * @param Sort $sort
-     * @return \Yiisoft\Data\Reader\SortableDataInterface
+     *
+     * @return \Yiisoft\Data\Reader\SortableDataInterface&\Yiisoft\Data\Reader\DataReaderInterface
+     *
+     * @psalm-return \Yiisoft\Data\Reader\SortableDataInterface&\Yiisoft\Data\Reader\DataReaderInterface<int, Inv>
      */
     private function invs_status_with_sort(IR $iR, int $status, Sort $sort): \Yiisoft\Data\Reader\SortableDataInterface {       
         $invs = $iR->findAllWithStatus($status)
@@ -1190,8 +1182,11 @@ final class InvController
      * @param int $status
      * @param array $user_clients
      * @param Sort $sort
-     * @return \Yiisoft\Data\Reader\SortableDataInterface
-     */    
+     *
+     * @return \Yiisoft\Data\Reader\SortableDataInterface&\Yiisoft\Data\Reader\DataReaderInterface
+     *
+     * @psalm-return \Yiisoft\Data\Reader\SortableDataInterface&\Yiisoft\Data\Reader\DataReaderInterface<int, Inv>
+     */
     private function invs_status_with_sort_guest(IR $iR, int $status,  array $user_clients, Sort $sort): \Yiisoft\Data\Reader\SortableDataInterface {       
         $invs = $iR->repoGuest_Clients_Sent_Viewed_Paid($status, $user_clients)
                    ->withSort($sort);
@@ -1223,9 +1218,8 @@ final class InvController
      * @param ITRR $itrR
      * @param UIR $uiR
      * @param Request $request
-     * @return Response
      */
-    public function pdf(CurrentRoute $currentRoute, CR $cR, CVR $cvR, CFR $cfR, GR $gR, IAR $iaR, ICR $icR, IIR $iiR, IIAR $iiaR, IR $iR, ITRR $itrR, UIR $uiR, Request $request) : Response {
+    public function pdf(CurrentRoute $currentRoute, CR $cR, CVR $cvR, CFR $cfR, GR $gR, IAR $iaR, ICR $icR, IIR $iiR, IIAR $iiaR, IR $iR, ITRR $itrR, UIR $uiR, Request $request) : \Yiisoft\DataResponse\DataResponse {
         // include is a value of 0 or 1 passed from inv.js function inv_to_pdf_with(out)_custom_fields indicating whether the user
         // wants custom fields included on the inv or not.
         $include = $currentRoute->getArgument('include');        
@@ -1502,11 +1496,11 @@ final class InvController
     }
     
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Inv>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function invs(InvRepository $invRepo, int $status): \Yiisoft\Data\Reader\DataReaderInterface 
+    private function invs(InvRepository $invRepo, int $status): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader 
     {
         $invs = $invRepo->findAllWithStatus($status);    
         return $invs;
@@ -1515,7 +1509,10 @@ final class InvController
     /**
      * @param string|null $inv_id
      * @param icR $icR
-     * @return array
+     *
+     * @return InvCustom[]
+     *
+     * @psalm-return array<string, InvCustom>
      */
     public function inv_custom_values(string|null $inv_id, icR $icR) : array
     {
@@ -1570,11 +1567,10 @@ final class InvController
      * @param ITRR $itrR
      * @param TRR $trR
      * @param UNR $unR
-     * @return Response
      */
     public function inv_to_inv_confirm(Request $request, ValidatorInterface $validator, 
                                            GR $gR, IIAS $iiaS, PR $pR, TASKR $taskR, IAR $iaR, ICR $icR,
-                                           IIAR $iiaR, IIR $iiR,IR $iR, ITRR $itrR, TRR $trR, UNR $unR) : Response
+                                           IIAR $iiaR, IIR $iiR,IR $iR, ITRR $itrR, TRR $trR, UNR $unR) : \Yiisoft\DataResponse\DataResponse
     {
         $data_inv_js = $request->getQueryParams() ?? [];
         $inv_id = (string)$data_inv_js['inv_id'];
@@ -1734,9 +1730,8 @@ final class InvController
      * @param ValidatorInterface $validator
      * @param Request $request
      * @param ICR $icR
-     * @return Response
      */
-    public function save_custom(ValidatorInterface $validator, Request $request, ICR $icR) : Response
+    public function save_custom(ValidatorInterface $validator, Request $request, ICR $icR) : \Yiisoft\DataResponse\DataResponse
     {
             $parameters['success'] = 0;
             $js_data = $request->getQueryParams() ?? [];        
@@ -1795,9 +1790,8 @@ final class InvController
     /**
      * @param Request $request
      * @param ValidatorInterface $validator
-     * @return Response
      */
-    public function save_inv_tax_rate(Request $request, ValidatorInterface $validator) : Response {
+    public function save_inv_tax_rate(Request $request, ValidatorInterface $validator) : \Yiisoft\DataResponse\DataResponse {
         $body = $request->getQueryParams() ?? [];
         $ajax_body = [
             'inv_id'=>$body['inv_id'],
@@ -1943,12 +1937,11 @@ final class InvController
      * @param TASKR $taskR
      * @param PRJCTR $prjctR
      * @param UPR $upR
-     * @return Response
      */
     public function view(ViewRenderer $head, CurrentRoute $currentRoute, Request $request,
                          CFR $cfR, CVR $cvR, PR $pR, IAR $iaR, IIAR  $iiaR, IIR $iiR, IR $iR, IRR $irR, ITRR $itrR,PMR $pmR,
                          TRR $trR, FR $fR,  UNR $uR, CR $cR, GR $gR, ICR $icR, PYMR $pymR, TASKR $taskR, PRJCTR $prjctR, UPR $upR)
-                         : Response {
+                         : \Yiisoft\DataResponse\DataResponse {
         $read_only = $this->inv($currentRoute, $iR, false)->getIs_read_only();
         $this->session->set('inv_id',$this->inv($currentRoute, $iR, false)->getId());
         $this->number_helper->calculate_inv($this->session->get('inv_id'), $iiR, $iiaR, $itrR, $iaR, $iR, $pymR); 

@@ -45,7 +45,7 @@ final class CompanyController
         $this->translator = $translator;
     }
     
-    public function index(SessionInterface $session, CompanyRepository $companyRepository, SettingRepository $settingRepository, Request $request, CompanyService $service): Response
+    public function index(SessionInterface $session, CompanyRepository $companyRepository, SettingRepository $settingRepository, Request $request, CompanyService $service): \Yiisoft\DataResponse\DataResponse
     {      
          $canEdit = $this->rbac($session);
          $flash = $this->flash($session, '','');
@@ -129,7 +129,7 @@ final class CompanyController
     
     public function view(CurrentRoute $currentRoute, CompanyRepository $companyRepository,
         SettingRepository $settingRepository,
-        ): Response {
+        ): \Yiisoft\DataResponse\DataResponse {
         $parameters = [
             'title' => $settingRepository->trans('view'),
             'action' => ['company/view', ['id' => $this->company($currentRoute, $companyRepository)->getId()]],
@@ -167,11 +167,11 @@ final class CompanyController
     }
     
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Company>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function companies(CompanyRepository $companyRepository): \Yiisoft\Data\Reader\DataReaderInterface 
+    private function companies(CompanyRepository $companyRepository): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader 
     {
         $companies = $companyRepository->findAllPreloaded();        
         return $companies;

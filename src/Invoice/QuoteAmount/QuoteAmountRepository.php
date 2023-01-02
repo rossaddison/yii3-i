@@ -10,7 +10,6 @@ use App\Invoice\Quote\QuoteRepository as QR;
 use App\Invoice\Setting\SettingRepository as SR;
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -36,18 +35,18 @@ private EntityWriter $entityWriter;
     /**
      * Get quoteamounts  without filter
      *
-     * @psalm-return DataReaderInterface<int,QuoteAmount>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select();
         return $this->prepareDataReader($query);
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, QuoteAmount>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
             ->withSort($this->getSort());
@@ -92,7 +91,12 @@ private EntityWriter $entityWriter;
         return $count;
     }
     
-    public function repoQuoteAmountqueryTest(string $quote_id): object|null {
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
+    public function repoQuoteAmountqueryTest(string $quote_id):object|null {
         $query = $this->select()
                       ->load('quote')
                       ->where(['quote_id' => $quote_id]);
@@ -100,11 +104,13 @@ private EntityWriter $entityWriter;
     }   
     
     /**
-     * 
      * @param string $quote_id
-     * @return object|null
+     *
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
      */
-    public function repoQuoteAmountquery(string $quote_id): object|null {
+    public function repoQuoteAmountquery(string $quote_id):object|null {
         $query = $this->select()
                       ->load('quote')
                       ->where(['quote_id' => $quote_id]);
@@ -112,18 +118,20 @@ private EntityWriter $entityWriter;
     }    
     
     /**
-     * 
      * @param string $quote_id
-     * @return object|null
+     *
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
      */
-    public function repoQuotequery(string $quote_id): object|null {
+    public function repoQuotequery(string $quote_id):object|null {
         $query = $this->select()
                       ->load('quote')
                       ->where(['quote_id' => $quote_id]);
         return  $query->fetchOne() ?: null;        
     }
    
-    public function repoStatusTotals($key, $range, $sR) : DataReaderInterface {        
+    public function repoStatusTotals($key, $range, $sR) : EntityReader {        
         $datehelper = new DateHelper($sR);
         $query = $this->select()
                       ->load('quote')
@@ -133,7 +141,13 @@ private EntityWriter $entityWriter;
         return $this->prepareDataReader($query);
     }
     
-    public function repoStatusTotals_Num_Total($key, $range, $sR) : int {        
+    /**
+     * @param (int|string) $key
+     *
+     * @psalm-param array-key $key
+     * @psalm-param SR<object> $sR
+     */
+    public function repoStatusTotals_Num_Total($key, array $range, SR $sR) : int {        
         $datehelper = new DateHelper($sR);
         $query = $this->select()
                       ->load('quote')                      
@@ -145,14 +159,18 @@ private EntityWriter $entityWriter;
     }
     
     /**
+     * 
+     * @param QR $qR
+     * @param SR $sR
      * @param string $period
+     * @return array
      */
-    public function get_status_totals(QR $qR, SR $sR, $period) : array
+    public function get_status_totals(QR $qR, SR $sR, string $period) : array
     {
         $return = [];
         
         // $period eg. this-month, last-month derived from $sR->get_setting('invoice or quote_overview_period') 
-        $range = $sR->range($period) ?: []; 
+        $range = $sR->range($period); 
         
         // 1 => class: 'draft', href: 1},
         // 2 => class: 'sent', href: 2}, 
@@ -161,7 +179,7 @@ private EntityWriter $entityWriter;
         // 5 => class: 'rejected', href: 5}}
         // 6 => class: 'cancelled', href: 6}}
         foreach ($qR->getStatuses($sR) as $key => $status) {
-            $status_specific_quotes = $this->repoStatusTotals((int)$key, $range, $sR);
+            $status_specific_quotes = $this->repoStatusTotals($key, $range, $sR);
             $total = 0.00;
             foreach ($status_specific_quotes as $quote) {
                 $this_total = $quote->getTotal();

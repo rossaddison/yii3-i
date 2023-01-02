@@ -14,7 +14,7 @@ final class SiteController
         $this->viewRenderer = $viewRenderer->withController($this);
     }
 
-    public function index(): ResponseInterface
+    public function index(): \Yiisoft\DataResponse\DataResponse
     {
         return $this->viewRenderer->render('index');
     }

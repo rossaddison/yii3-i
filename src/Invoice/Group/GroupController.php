@@ -55,15 +55,13 @@ final class GroupController
     }
     
     /**
-     * 
      * @param SessionInterface $session
      * @param GroupRepository $groupRepository
      * @param SettingRepository $settingRepository
      * @param Request $request
      * @param GroupService $service
-     * @return Response
      */
-    public function index(SessionInterface $session, GroupRepository $groupRepository, SettingRepository $settingRepository, Request $request, GroupService $service): Response
+    public function index(SessionInterface $session, GroupRepository $groupRepository, SettingRepository $settingRepository, Request $request, GroupService $service): \Yiisoft\DataResponse\DataResponse
     {    
         $pageNum = (int)$request->getAttribute('page', '1');
         $paginator = (new OffsetPaginator($this->groups($groupRepository)))
@@ -174,15 +172,13 @@ final class GroupController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param GroupRepository $groupRepository
      * @param SettingRepository $settingRepository
-     * @return Response
      */
     public function view(CurrentRoute $currentRoute, GroupRepository $groupRepository,
         SettingRepository $settingRepository
-        ): Response {
+        ): \Yiisoft\DataResponse\DataResponse {
         $parameters = [
             'title' => $settingRepository->trans('view'),
             'action' => ['invoice/edit', ['id' => $this->group($currentRoute, $groupRepository)->getId()]],
@@ -222,11 +218,11 @@ final class GroupController
     }
     
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Group>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function groups(GroupRepository $groupRepository) : \Yiisoft\Data\Reader\DataReaderInterface
+    private function groups(GroupRepository $groupRepository) : \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
     {
         $groups = $groupRepository->findAllPreloaded();        
         return $groups;

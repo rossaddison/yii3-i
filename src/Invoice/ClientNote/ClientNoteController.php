@@ -46,7 +46,7 @@ final class ClientNoteController
         $this->translator = $translator;
     }
     
-    public function index(SessionInterface $session, ClientNoteRepository $clientnoteRepository, DateHelper $dateHelper, SettingRepository $settingRepository, Request $request, ClientNoteService $service): Response
+    public function index(SessionInterface $session, ClientNoteRepository $clientnoteRepository, DateHelper $dateHelper, SettingRepository $settingRepository, Request $request, ClientNoteService $service): \Yiisoft\DataResponse\DataResponse
     {
          $canEdit = $this->rbac($session);
          $flash = $this->flash($session, '','');
@@ -131,7 +131,7 @@ final class ClientNoteController
     
     public function view(CurrentRoute $currentRoute, ClientNoteRepository $clientnoteRepository, DateHelper $dateHelper,
         SettingRepository $settingRepository
-        ): Response {
+        ): \Yiisoft\DataResponse\DataResponse {
         $client_note = $this->clientnote($currentRoute, $clientnoteRepository);
         $parameters = [
             'title' => $settingRepository->trans('view'),
@@ -171,20 +171,20 @@ final class ClientNoteController
     }
     
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, ClientNote>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function clientnotes(ClientNoteRepository $clientnoteRepository): \Yiisoft\Data\Reader\DataReaderInterface 
+    private function clientnotes(ClientNoteRepository $clientnoteRepository): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
     {
         $clientnotes = $clientnoteRepository->findAllPreloaded();        
         return $clientnotes;
     }
     
     /**
-     * @return (\DateTimeImmutable|string)[]
-     *
-     * @psalm-return array{id: string, client_id: string, date: \DateTimeImmutable, note: string}
+     * 
+     * @param ClientNote $clientnote
+     * @return array
      */
     private function body(ClientNote $clientnote): array {
         $body = [

@@ -75,16 +75,14 @@ final class TaskController
     }
     
     /**
-     * 
      * @param Request $request
      * @param SessionInterface $session
      * @param tR $tR
      * @param DateHelper $dateHelper
      * @param prjctR $prjctR
      * @param sR $sR
-     * @return Response
      */
-    public function index(Request $request, SessionInterface $session, tR $tR, DateHelper $dateHelper, prjctR $prjctR, sR $sR) : Response
+    public function index(Request $request, SessionInterface $session, tR $tR, DateHelper $dateHelper, prjctR $prjctR, sR $sR) : \Yiisoft\DataResponse\DataResponse
     {            
         $pageNum = (int)$request->getAttribute('page','1');
         $paginator = (new OffsetPaginator($this->tasks($tR)))
@@ -214,9 +212,11 @@ final class TaskController
     }
     
     /**
-     * @return array
+     * @return string[][]
+     *
+     * @psalm-return array{1: array{label: string, class: 'draft'}, 2: array{label: string, class: 'viewed'}, 3: array{label: string, class: 'sent'}, 4: array{label: string, class: 'paid'}}
      */
-    public function getStatuses(sR $s)
+    public function getStatuses(sR $s): array
     {
         return [
             1 => [
@@ -241,7 +241,6 @@ final class TaskController
     //views/invoice/task/modal-task-lookups-inv.php => modal_task_lookups_inv.js $(document).on('click', '.select-items-confirm-inv', function () 
     
     /**
-     * 
      * @param ValidatorInterface $validator
      * @param Request $request
      * @param SessionInterface $session
@@ -254,11 +253,10 @@ final class TaskController
      * @param iaR $iaR
      * @param iR $iR
      * @param pymR $pymR
-     * @return Response
      */
     public function selection_inv(ValidatorInterface $validator, Request $request, SessionInterface $session,
                                   tR $taskR, sR $sR, trR $trR, iiaR $iiaR, iiR $iiR, itrR $itrR, iaR $iaR, iR $iR, pymR $pymR)
-                                  : Response {        
+                                  : \Yiisoft\DataResponse\DataResponse {        
         $select_items = $request->getQueryParams() ?? [];
         $task_ids = ($select_items['task_ids'] ? $select_items['task_ids'] : []);
         $inv_id = $select_items['inv_id'];
@@ -278,8 +276,9 @@ final class TaskController
     
     /**
      * @psalm-param positive-int $order
+     * @psalm-param sR<object> $sR
      */
-    private function save_task_lookup_item_inv(int $order, Task $task, $inv_id, tR $taskR, trR $trR, iiaR $iiaR, $sR, ValidatorInterface $validator) : void {
+    private function save_task_lookup_item_inv(int $order, Task $task, $inv_id, tR $taskR, trR $trR, iiaR $iiaR, sR $sR, ValidatorInterface $validator) : void {
            $form = new InvItemForm();
            $ajax_content = [
                 'name'=>$task->getName(),        
@@ -302,15 +301,13 @@ final class TaskController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param tR $tR
      * @param sR $sR
-     * @return Response
      */
     public function view(CurrentRoute $currentRoute, tR $tR,
         sR $sR,
-        ): Response {
+        ): \Yiisoft\DataResponse\DataResponse {
         $parameters = [
             'title' => $sR->trans('view'),
             'action' => ['task/view', ['id' => $this->task($currentRoute, $tR)->getId()]],
@@ -348,11 +345,11 @@ final class TaskController
     }
     
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Task>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function tasks(tR $tR): \Yiisoft\Data\Reader\DataReaderInterface
+    private function tasks(tR $tR): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
     {
         $tasks = $tR->findAllPreloaded();        
         return $tasks;

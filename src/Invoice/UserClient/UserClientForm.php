@@ -23,11 +23,21 @@ final class UserClientForm extends FormModel
       return $this->client_id;
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
 
+    /**
+     * @return array
+     *
+     * @psalm-return array<never, never>
+     */
     public function getRules(): array    {
       return [
     ];

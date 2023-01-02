@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Invoice\PaymentInformation;
 
-
+use App\User\UserService;
 //Helpers
 use App\Invoice\Helpers\DateHelper;
 //Entities
@@ -48,6 +48,7 @@ final class PaymentInformationController
     private iR $iR;
     private sR $sR;
     private UrlGenerator $urlGenerator;        
+    private UserService $userService;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     
@@ -60,6 +61,7 @@ final class PaymentInformationController
         iR $iR,
         sR $sR,    
         UrlGenerator $urlGenerator,
+        UserService $userService,
         ViewRenderer $viewRenderer,
         WebControllerService $webService,
     )    
@@ -72,8 +74,15 @@ final class PaymentInformationController
         $this->iR = $iR;
         $this->sR = $sR;
         $this->urlGenerator = $urlGenerator;
-        $this->viewRenderer = $viewRenderer->withControllerName('invoice/paymentinformation')
-                                           ->withLayout('@views/layout/guest.php');
+        $this->userService = $userService;
+        if ($this->userService->hasPermission('viewInv') && !$this->userService->hasPermission('editInv')) {
+            $this->viewRenderer = $viewRenderer->withControllerName('invoice/paymentinformation')
+                                                 ->withLayout('@views/layout/guest.php');
+        }
+        if ($this->userService->hasPermission('viewInv') && $this->userService->hasPermission('editInv')) {
+            $this->viewRenderer = $viewRenderer->withControllerName('invoice/paymentinformation')
+                                                 ->withLayout('@views/layout/invoice.php');
+        }
         $this->webService = $webService;
         $this->crypt = new Crypt();
     }
@@ -98,12 +107,10 @@ final class PaymentInformationController
     // https://developer.amazon.com/docs/amazon-pay-api-v2/checkout-session.html#create-checkout-session
     
     /**
-     * 
      * @param Request $request
      * @param currentRoute $currentRoute
-     * @return Response
      */
-    public function amazon_complete(Request $request, currentRoute $currentRoute) : Response {
+    public function amazon_complete(Request $request, currentRoute $currentRoute) : \Yiisoft\DataResponse\DataResponse {
         // Redirect to the invoice using the url key
         $invoice_url_key = $currentRoute->getArgument('url_key');
         $sandbox_url_array = $this->sR->sandbox_url_array();
@@ -170,11 +177,11 @@ final class PaymentInformationController
     // https://developer.amazon.com/docs/amazon-pay-checkout/add-the-amazon-pay-button.html#2-generate-the-create-checkout-session-payload
     
     /**
-     * 
      * @param string $url_key
-     * @return string
+     *
+     * @return false|string
      */
-    private function amazon_payload_json(string $url_key) : string {
+    private function amazon_payload_json(string $url_key) : string|false {
         $payload_array = [
             'webCheckoutDetails' => [
                 // Input: Setting...Views...Online Payment...Amazon Pay
@@ -352,6 +359,21 @@ final class PaymentInformationController
         && $this->sR->get_setting('gateway_amazon_pay_enabled') === '1' && $client_chosen_gateway === 'Amazon_Pay') {
             $this->flash('warning','Testing: You will need to create a buyer test account under sellercental.');
             // Return the view
+            $aliases = $this->sR->get_amazon_pem_file_folder_aliases();
+            if (!file_exists($aliases->get('@pem_file_unique_folder').'/private.pem')){
+                $this->flash('warning','Amazon_Pay private.pem File Not Downloaded from Amazon and saved in Pem_unique_folder as private.pem'); 
+                return $this->viewRenderer->render('/invoice/setting/payment_message', ['heading' => '',
+                        'message' => 'Amazon_Pay private.pem File Not Downloaded from Amazon and saved in Pem_unique_folder as private.pem',  
+                        'url' =>'inv/url_key',
+                        'url_key' => $url_key, 
+                        'gateway'=>'Amazon_Pay'
+                ]);
+            }
+            if ($this->sR->get_setting('gateway_stripe_enabled') === '1' && ($this->stripe_setApiKey() == false))
+            {
+                $this->flash('warning','Stripe Payment Gateway Secret Key/Api Key needs to be setup.'); 
+                return $this->webService->getNotFoundResponse();    
+            } 
             $amazon_pci_view_data = [
                 'action' => ['paymentinformation/make_payment_amazon_pci', ['url_key' => $url_key]],
                 'alert' => $this->alert(),
@@ -542,12 +564,10 @@ private function stripe_setApiKey() : bool {
 }
 
 /**
- * 
  * @param Request $request
  * @param CurrentRoute $currentRoute
- * @return Response
  */
-public function stripe_complete(Request $request, CurrentRoute $currentRoute) : Response
+public function stripe_complete(Request $request, CurrentRoute $currentRoute) : \Yiisoft\DataResponse\DataResponse
 {
     // Redirect to the invoice using the url key
     $invoice_url_key = $currentRoute->getArgument('url_key');
@@ -931,7 +951,6 @@ private function record_online_payments_and_merchant_for_omnipay(
 }
 
 /**
- * 
  * @param string $reference
  * @param string $invoice_id
  * @param float $balance
@@ -942,7 +961,6 @@ private function record_online_payments_and_merchant_for_omnipay(
  * @param string $invoice_url_key
  * @param bool $response
  * @param array $sandbox_url_array
- * @return Response
  */
 private function record_online_payments_and_merchant_for_non_omnipay(
                                                      string $reference,
@@ -955,7 +973,7 @@ private function record_online_payments_and_merchant_for_non_omnipay(
                                                      string $invoice_url_key,
                                                      bool $response,
                                                      array $sandbox_url_array
-                                                     ) : Response {
+                                                     ) : \Yiisoft\DataResponse\DataResponse {
     if ($response) {
         $payment_note = $this->sR->trans('transaction_reference') . ': ' . $reference . "\n";
         $payment_note .= $this->sR->trans('payment_provider') . ': ' . ucwords(str_replace('_', ' ', $d));
@@ -1195,10 +1213,10 @@ private function omnipay_payment_validate(string $invoice_url_key, string $drive
 }
 
 /**
-* @param $invoice_url_key
-* @param $driver
-*/
-public function omnipay_payment_cancel(string $invoice_url_key, string $driver)
+ * @param $invoice_url_key
+ * @param $driver
+ */
+public function omnipay_payment_cancel(string $invoice_url_key, string $driver): \Yiisoft\DataResponse\DataResponse
 {
    // Validate the response
    $this->omnipay_payment_validate($invoice_url_key, $driver, true);

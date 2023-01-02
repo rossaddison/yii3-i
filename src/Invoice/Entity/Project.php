@@ -33,7 +33,7 @@ class Project
         $this->name = $name;
     }
     
-    public function getId(): ?string
+    public function getId(): string
     {
         return (string)$this->id;
     }

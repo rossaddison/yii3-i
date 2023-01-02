@@ -7,7 +7,6 @@ namespace App\Invoice\ClientNote;
 use App\Invoice\Entity\ClientNote;
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -32,18 +31,18 @@ private EntityWriter $entityWriter;
     /**
      * Get clientnotes  without filter
      *
-     * @psalm-return DataReaderInterface<int,ClientNote>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select();
         return $this->prepareDataReader($query);
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, ClientNote>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
             ->withSort($this->getSort());
@@ -78,15 +77,20 @@ private EntityWriter $entityWriter;
         );
     }
     
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
     public function repoClientNotequery(string $id): object|null    {
         $query = $this->select()->load('client')->where(['id' => $id]);
         return  $query->fetchOne() ?: null;        
     }    
     
     /**
-     * @psalm-return DataReaderInterface<int, ClientNote>
+     * @psalm-return EntityReader
      */
-    public function repoClientquery(string $client_id): DataReaderInterface    {
+    public function repoClientquery(string $client_id): EntityReader    {
         $query = $this->select()->load('client')->where(['client_id' => $client_id]);
         return $this->prepareDataReader($query);
     }

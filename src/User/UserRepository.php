@@ -29,9 +29,9 @@ final class UserRepository extends Select\Repository
     }
 
     /**
-     * @psalm-return DataReaderInterface<int, User>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))->withSort($this->getSort());
     }
@@ -53,16 +53,18 @@ final class UserRepository extends Select\Repository
     }
     
     /**
-     *
-     * @psalm-return DataReaderInterface<int, User>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select();
         return $this->prepareDataReader($query);
     }
 
-    public function findAll(array $scope = [], array $orderBy = []): DataReaderInterface
+    /**
+     * @return EntityReader
+     */
+    public function findAll(array $scope = [], array $orderBy = []): EntityReader
     {
         return new EntityReader($this
             ->select()

@@ -7,7 +7,6 @@ namespace App\Invoice\Product;
 use App\Invoice\Entity\Product;
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Cycle\Database\Injection\Parameter;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
@@ -35,9 +34,9 @@ final class ProductRepository extends Select\Repository
     /**
      * Get products without filter
      *
-     * @psalm-return DataReaderInterface<int, Product>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select()
             ->load('family')
@@ -47,9 +46,9 @@ final class ProductRepository extends Select\Repository
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, Product>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
             ->withSort($this->getSort());
@@ -92,8 +91,10 @@ final class ProductRepository extends Select\Repository
      * @param null|string $product_id
      *
      * @return null|object
+     *
+     * @psalm-return TEntity|null
      */
-    public function repoProductquery(string|null $product_id): object|null
+    public function repoProductquery(string|null $product_id):object|null
     {
         $query = $this
             ->select()
@@ -118,10 +119,10 @@ final class ProductRepository extends Select\Repository
     /**
      * Get products with filter
      *
-     * @psalm-return DataReaderInterface<int, Product>
+     * @psalm-return EntityReader
      */
     
-    public function repoProductwithfamilyquery(string $product_name, string $family_id): DataReaderInterface
+    public function repoProductwithfamilyquery(string $product_name, string $family_id): EntityReader
     {
         $query = $this
             ->select()
@@ -153,10 +154,10 @@ final class ProductRepository extends Select\Repository
      /**
      * Get selection of products from all products
      *
-     * @psalm-return DataReaderInterface<int, Product>
+     * @psalm-return EntityReader
      */
     
-    public function findinProducts($product_ids) : DataReaderInterface {
+    public function findinProducts($product_ids) : EntityReader {
         $query = $this
         ->select()
         ->where(['id'=>['in'=> new Parameter($product_ids)]]);

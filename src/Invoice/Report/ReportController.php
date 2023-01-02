@@ -133,7 +133,10 @@ class ReportController
      * @param ClientRepository $cR
      * @param InvAmountRepository $iaR
      * @param SettingRepository $sR
-     * @return array
+     *
+     * @return (float|null|string)[][]
+     *
+     * @psalm-return list{0?: array{client: string, range_1: float|null|string, range_2: float|null|string, range_3: float|null|string, total_balance: float|null|string},...}
      */
     private function invoice_aging_report($cR, $iaR, $sR) : array {
         $clienthelper = new ClientHelper($sR);
@@ -169,7 +172,7 @@ class ReportController
      * @param SettingRepository $sR
      * @return array
      */
-    private function invoice_aging_due_invoices(InvAmountRepository $iaR, SettingRepository $sR) {
+    private function invoice_aging_due_invoices(InvAmountRepository $iaR, SettingRepository $sR): array {
       
         $numberhelper = new NumberHelper($sR);
         $fifteens = $iaR->AgingCount(1,15)>0 ? $iaR->Aging(1,15): null;
@@ -220,7 +223,10 @@ class ReportController
         return $results;
     }
     
-    private function invoice_aging_sum($invamounts, $client_id) : float {
+    /**
+     * @psalm-param \Yiisoft\Data\Reader\DataReaderInterface<array-key, array|object> $invamounts
+     */
+    private function invoice_aging_sum(\Yiisoft\Data\Reader\DataReaderInterface $invamounts, int|null $client_id) : float {
         $sum = 0.00;
         foreach ($invamounts as $invamount) {
             $sum += ($client_id == $invamount->getInv()->getClient_id()) ? $invamount->getBalance() : 0.00; 
@@ -274,9 +280,11 @@ class ReportController
      * @param string $from
      * @param string $to
      * @param SettingRepository $sR
-     * @return array
+     *
+     * @return (mixed|string)[][]
+     *
+     * @psalm-return list{0?: array{payment_date: mixed, payment_invoice: mixed, payment_client: string, payment_method: mixed, payment_note: mixed, payment_amount: mixed},...}
      */
-        
     private function payment_history_report($pymtR, $from, $to, $sR) : array {
         $clienthelper = new ClientHelper($sR);
         $payments = $pymtR->repoPaymentLoaded_from_to_count($from,$to) > 0 ? $pymtR->repoPaymentLoaded_from_to($from,$to) : [];
@@ -335,8 +343,7 @@ class ReportController
             $data = [
                 'from_date' => $from_date,
                 'to_date' => $to_date,
-                'results' => $this->sales_by_client_report($cR, $iR, $datehelper->date_to_mysql($from_date), $datehelper->date_to_mysql($to_date), $iaR, $sR) 
-                         ?: [],
+                'results' => $this->sales_by_client_report($cR, $iR, $datehelper->date_to_mysql($from_date), $datehelper->date_to_mysql($to_date), $iaR, $sR),
                 'numberhelper' => new NumberHelper($sR),
                 'clienthelper' => new ClientHelper($sR),
             ];
@@ -356,9 +363,11 @@ class ReportController
      * @param string $to
      * @param InvAmountRepository $iaR
      * @param SettingRepository $sR
-     * @return array
+     *
+     * @return (float|int|string)[][]
+     *
+     * @psalm-return list{array{client_name_surname: string, inv_count: int, sales_no_tax: float, item_tax_total: float, tax_total: float, sales_with_tax: float},...}
      */
-    
     private function sales_by_client_report($cR, $iR, $from, $to, $iaR, $sR) : array {
         // Report Heading:  Sales by Client
         // Report Heading2: From To Date
@@ -457,7 +466,10 @@ class ReportController
      * @param string $to
      * @param InvAmountRepository $iaR
      * @param SettingRepository $sR
-     * @return array
+     *
+     * @return array[]
+     *
+     * @psalm-return list{0?: array,...}
      */
     private function sales_by_year_report($cR, $iR, $from, $to, $iaR, $sR) : array {
         $results = [];
@@ -540,8 +552,15 @@ class ReportController
         return $results;
     }
     
-    private function quarters($year, $immutable_from, $current_year, $client, 
-                              $clienthelper, $client_id, $iR, $iaR) : array 
+    /**
+     * @param ((float|string)[][]|float|string)[] $year
+     *
+     * @psalm-param array{year: '', Name: '', VAT_ID: '', period_sales_no_tax: float, period_item_tax_total: float, period_tax_total: float, period_sales_with_tax: float, period_total_paid: float, quarters: array{first: array{beginning: '', end: '', sales_no_tax: float, item_tax_total: float, tax_total: float, sales_with_tax: float, paid: float}, second: array{beginning: '', end: '', sales_no_tax: float, item_tax_total: float, tax_total: float, sales_with_tax: float, paid: float}, third: array{beginning: '', end: '', sales_no_tax: float, item_tax_total: float, tax_total: float, sales_with_tax: float, paid: float}, fourth: array{beginning: '', end: '', sales_no_tax: float, item_tax_total: float, tax_total: float, sales_with_tax: float, paid: float}}} $year
+     * @psalm-param InvRepository<object> $iR
+     * @psalm-param InvAmountRepository<object> $iaR
+     */
+    private function quarters(array $year, \DateTimeImmutable $immutable_from, \DateTimeImmutable $current_year, $client, 
+                              ClientHelper $clienthelper, int $client_id, InvRepository $iR, InvAmountRepository $iaR) : array 
     {
         $quarters = ['first' => 3, 'second' => 6, 'third' => 9, 'fourth' => 12];
         // Develop all the quarters from ONE immutable (unchangeable) start date

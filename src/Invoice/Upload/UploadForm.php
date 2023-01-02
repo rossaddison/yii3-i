@@ -41,11 +41,21 @@ final class UploadForm extends FormModel
        return new DateTime($this->uploaded_date);
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
 
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{url_key: list{Required}, file_name_original: list{Required}, file_name_new: list{Required}, uploaded_date: list{Required}}
+     */
     public function getRules(): array    {
       return [
         'url_key' => [

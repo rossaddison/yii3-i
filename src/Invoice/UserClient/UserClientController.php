@@ -54,15 +54,13 @@ final class UserClientController
     }
     
     /**
-     * 
      * @param SessionInterface $session
      * @param UserClientRepository $userclientRepository
      * @param SettingRepository $settingRepository
      * @param Request $request
      * @param UserClientService $service
-     * @return Response
      */
-    public function index(SessionInterface $session, UserClientRepository $userclientRepository, SettingRepository $settingRepository, Request $request, UserClientService $service): Response
+    public function index(SessionInterface $session, UserClientRepository $userclientRepository, SettingRepository $settingRepository, Request $request, UserClientService $service): \Yiisoft\DataResponse\DataResponse
     {      
         $canEdit = $this->rbac($session);
         $flash = $this->flash($session, '' , '');
@@ -111,16 +109,14 @@ final class UserClientController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param SettingRepository $sR
      * @param UserClientRepository $userclientRepository
      * @param UIR $uiR
-     * @return Response
      */
     public function delete(CurrentRoute $currentRoute,
                            SettingRepository $sR, UserClientRepository $userclientRepository, UIR $uiR
-    ): Response {
+    ): \Yiisoft\DataResponse\DataResponse {
         
             $user_id = ($this->userclient($currentRoute, $userclientRepository))->getUser_Id();
             $this->userclientService->deleteUserClient($this->userclient($currentRoute, $userclientRepository));               
@@ -238,15 +234,13 @@ final class UserClientController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param UserClientRepository $userclientRepository
      * @param SettingRepository $settingRepository
-     * @return Response
      */
     public function view(CurrentRoute $currentRoute, UserClientRepository $userclientRepository,
                          SettingRepository $settingRepository,
-        ): Response {
+        ): \Yiisoft\DataResponse\DataResponse {
         $parameters = [
             'title' => $settingRepository->trans('view'),
             'action' => ['userclient/view', ['id' => $this->userclient($currentRoute, $userclientRepository)->getId()]],
@@ -297,11 +291,11 @@ final class UserClientController
     }
     
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, UserClient>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function userclients(UserClientRepository $userclientRepository): \Yiisoft\Data\Reader\DataReaderInterface 
+    private function userclients(UserClientRepository $userclientRepository): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
     {
         $userclients = $userclientRepository->findAllPreloaded();        
         return $userclients;

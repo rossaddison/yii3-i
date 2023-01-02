@@ -7,7 +7,6 @@ namespace App\Invoice\QuoteCustom;
 use App\Invoice\Entity\QuoteCustom;
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -34,9 +33,9 @@ private EntityWriter $entityWriter;
     /**
      * Get quotecustoms  without filter
      *
-     * @psalm-return DataReaderInterface<int,QuoteCustom>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select()
                       ->load('custom_field')
@@ -45,9 +44,9 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, QuoteCustom>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
             ->withSort($this->getSort());
@@ -114,9 +113,9 @@ private EntityWriter $entityWriter;
     /**
      * Get all fields that have been setup for a particular quote
      *
-     * @psalm-return DataReaderInterface<string,QuoteCustom>
+     * @psalm-return EntityReader
      */
-    public function repoFields(string $quote_id): DataReaderInterface
+    public function repoFields(string $quote_id): EntityReader
     {
         $query = $this->select()
                       ->where(['quote_id'=>$quote_id]);                

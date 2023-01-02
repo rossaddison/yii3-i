@@ -69,7 +69,7 @@ class InvAmount
       return $this->inv;
     }
     
-    public function getId(): ?string
+    public function getId(): string
     {
      return (string)$this->id;
     }

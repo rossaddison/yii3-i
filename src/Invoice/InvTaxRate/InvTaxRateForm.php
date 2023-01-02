@@ -33,11 +33,21 @@ final class InvTaxRateForm extends FormModel
       return $this->inv_tax_rate_amount;
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
 
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{include_item_tax: list{Required}, inv_tax_rate_amount: list{Required}}
+     */
     public function getRules(): array    {
       return [
         'include_item_tax' => [new Required()],

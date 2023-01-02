@@ -48,7 +48,7 @@ final class QuoteItemAmountController
         $this->translator = $translator;
     }
     
-    public function index(SessionInterface $session, QuoteItemAmountRepository $quoteitemamountRepository, SettingRepository $settingRepository, Request $request, QuoteItemAmountService $service): Response
+    public function index(SessionInterface $session, QuoteItemAmountRepository $quoteitemamountRepository, SettingRepository $settingRepository, Request $request, QuoteItemAmountService $service): \Yiisoft\DataResponse\DataResponse
     {      
          $canEdit = $this->rbac($session);
          $flash = $this->flash($session, '','');
@@ -155,15 +155,13 @@ final class QuoteItemAmountController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param QuoteItemAmountRepository $quoteitemamountRepository
      * @param SettingRepository $settingRepository
-     * @return Response
      */
     public function view(CurrentRoute $currentRoute, QuoteItemAmountRepository $quoteitemamountRepository,
         SettingRepository $settingRepository,
-        ): Response {
+        ): \Yiisoft\DataResponse\DataResponse {
         $parameters = [
             'title' => $settingRepository->trans('view'),
             'action' => ['quoteitemamount/view', ['id' => $this->quoteitemamount($currentRoute, $quoteitemamountRepository)->getId()]],
@@ -202,11 +200,11 @@ final class QuoteItemAmountController
     }
     
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, QuoteItemAmount>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function quoteitemamounts(QuoteItemAmountRepository $quoteitemamountRepository): \Yiisoft\Data\Reader\DataReaderInterface 
+    private function quoteitemamounts(QuoteItemAmountRepository $quoteitemamountRepository): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
     {
         $quoteitemamounts = $quoteitemamountRepository->findAllPreloaded();        
         return $quoteitemamounts;

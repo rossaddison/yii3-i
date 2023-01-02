@@ -28,6 +28,11 @@ final class SignupForm extends FormModel
         parent::__construct();
     }
 
+    /**
+     * @return string[]
+     *
+     * @psalm-return array{login: string, password: string, passwordVerify: string}
+     */
     public function getAttributeLabels(): array
     {
         return [
@@ -37,6 +42,11 @@ final class SignupForm extends FormModel
         ];
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return 'Signup'
+     */
     public function getFormName(): string
     {
         return 'Signup';
@@ -64,6 +74,11 @@ final class SignupForm extends FormModel
         return false;
     }
 
+    /**
+     * @return (Equal|HasLength|Required|\Closure)[][]
+     *
+     * @psalm-return array{login: list{Required, HasLength, \Closure(mixed):Result}, password: list{Required, HasLength}, passwordVerify: list{Required, Equal}}
+     */
     public function getRules(): array
     {
         return [

@@ -7,7 +7,6 @@ namespace App\Invoice\QuoteItemAmount;
 use App\Invoice\Entity\QuoteItemAmount;
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -33,18 +32,18 @@ private EntityWriter $entityWriter;
     /**
      * Get quoteitemamounts  without filter
      *
-     * @psalm-return DataReaderInterface<int,QuoteItemAmount>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select()->load('quote_item');
         return $this->prepareDataReader($query);
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, QuoteItemAmount>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
             ->withSort($this->getSort());
@@ -79,7 +78,12 @@ private EntityWriter $entityWriter;
         );
     } 
     
-    public function repoQuoteItemAmountquery(string $quote_item_id): object|null {
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
+    public function repoQuoteItemAmountquery(string $quote_item_id):object|null {
         $query = $this->select()->load(['quote_item'])->where(['quote_item_id' => $quote_item_id]);
         return  $query->fetchOne() ?: null;        
     }

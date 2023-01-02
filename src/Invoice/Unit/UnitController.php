@@ -46,14 +46,12 @@ final class UnitController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param Session $session
      * @param UnitRepository $unitRepository
      * @param SettingRepository $settingRepository
-     * @return Response
      */
-    public function index(CurrentRoute $currentRoute, Session $session, UnitRepository $unitRepository, SettingRepository $settingRepository): Response
+    public function index(CurrentRoute $currentRoute, Session $session, UnitRepository $unitRepository, SettingRepository $settingRepository): \Yiisoft\DataResponse\DataResponse
     {
         $units = $this->units($unitRepository);
         $pageNum = (int)$currentRoute->getArgument('page', '1');
@@ -159,14 +157,12 @@ final class UnitController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param UnitRepository $unitRepository
      * @param SettingRepository $settingRepository
      * @param ValidatorInterface $validator
-     * @return Response
      */
-    public function view(CurrentRoute $currentRoute, UnitRepository $unitRepository,SettingRepository $settingRepository, ValidatorInterface $validator): Response {
+    public function view(CurrentRoute $currentRoute, UnitRepository $unitRepository,SettingRepository $settingRepository, ValidatorInterface $validator): \Yiisoft\DataResponse\DataResponse {
         $unit = $this->unit($currentRoute, $unitRepository);
         $parameters = [
             'title' => $settingRepository->trans('edit_setting'),
@@ -197,11 +193,11 @@ final class UnitController
     
     
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Unit>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function units(UnitRepository $unitRepository): \Yiisoft\Data\Reader\DataReaderInterface{
+    private function units(UnitRepository $unitRepository): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader{
         $units = $unitRepository->findAllPreloaded();
         return $units;
     }

@@ -8,7 +8,6 @@ use App\Invoice\Entity\Client;
 use Cycle\ORM\Select;
 use Cycle\Database\Injection\Parameter;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -40,9 +39,9 @@ private EntityWriter $entityWriter;
     /**
      * Get Client with filter active
      *
-     * @psalm-return DataReaderInterface<int, Client>
+     * @psalm-return EntityReader
      */
-    public function findAllWithActive(int $active) : DataReaderInterface
+    public function findAllWithActive(int $active) : EntityReader
     {
         if (($active) < 2) {
          $query = $this->select()
@@ -56,18 +55,18 @@ private EntityWriter $entityWriter;
     /**
      * Get clients  without filter
      *
-     * @psalm-return DataReaderInterface<int,Client>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select();
         return $this->prepareDataReader($query);
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, Client>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
             ->withSort($this->getSort());
@@ -109,13 +108,18 @@ private EntityWriter $entityWriter;
         return $count; 
     }
     
-    public function repoClientquery(string $id): null|object {
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
+    public function repoClientquery(string $id) : null|object {
         $query = $this->select()
                       ->where(['id' => $id]);
         return  $query->fetchOne() ?: null;        
     }
     
-    public function repoUserClient(array $available_client_id_list) : DataReaderInterface {
+    public function repoUserClient(array $available_client_id_list) : EntityReader {
         $query = $this
         ->select()
         ->where(['id'=>['in'=> new Parameter($available_client_id_list)]]);
@@ -125,14 +129,19 @@ private EntityWriter $entityWriter;
     /**
      * Get clients  without filter
      *
-     * @psalm-return DataReaderInterface<int,Client>
+     * @psalm-return EntityReader
      */
-    public function  repoActivequery(bool $client_active): DataReaderInterface
+    public function  repoActivequery(bool $client_active): EntityReader
     {
         $query = $this->select()->where(['client_active' => $client_active]);
         return $this->prepareDataReader($query);
     }
     
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
     public function withName(string $client_name): null|object
     {
         $query = $this

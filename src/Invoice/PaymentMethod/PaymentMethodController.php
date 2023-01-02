@@ -61,15 +61,13 @@ final class PaymentMethodController
     }
     
     /**
-     * 
      * @param SessionInterface $session
      * @param PaymentMethodRepository $paymentmethodRepository
      * @param SettingRepository $settingRepository
      * @param Request $request
      * @param PaymentMethodService $service
-     * @return Response
      */
-    public function index(SessionInterface $session, PaymentMethodRepository $paymentmethodRepository, SettingRepository $settingRepository, Request $request, PaymentMethodService $service): Response
+    public function index(SessionInterface $session, PaymentMethodRepository $paymentmethodRepository, SettingRepository $settingRepository, Request $request, PaymentMethodService $service): \Yiisoft\DataResponse\DataResponse
     {
          $canEdit = $this->rbac($session);
          $flash = $this->flash($session, '','');
@@ -180,15 +178,13 @@ final class PaymentMethodController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param PaymentMethodRepository $paymentmethodRepository
      * @param SettingRepository $settingRepository
-     * @return Response
      */
     public function view(CurrentRoute $currentRoute, PaymentMethodRepository $paymentmethodRepository,
         SettingRepository $settingRepository
-        ): Response {
+        ): \Yiisoft\DataResponse\DataResponse {
         $parameters = [
             'title' => $settingRepository->trans('view'),
             'action' => ['paymentmethod/edit', ['id' => $this->paymentmethod($currentRoute, $paymentmethodRepository)->getId()]],
@@ -227,11 +223,11 @@ final class PaymentMethodController
     }
     
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, PaymentMethod>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function paymentmethods(PaymentMethodRepository $paymentmethodRepository): \Yiisoft\Data\Reader\DataReaderInterface
+    private function paymentmethods(PaymentMethodRepository $paymentmethodRepository): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
     {
         $paymentmethods = $paymentmethodRepository->findAllPreloaded();        
         return $paymentmethods;

@@ -105,9 +105,11 @@ final class InvRecurringController
     }
     
     /**
-     * 
      * @param InvRecurring $invrecurring
-     * @return array
+     *
+     * @return (\DateTimeImmutable|null|string)[]
+     *
+     * @psalm-return array{id: string, inv_id: string, start: \DateTimeImmutable, end: \DateTimeImmutable, frequency: string, next: \DateTimeImmutable|null}
      */
     private function body(InvRecurring $invrecurring): array {
         $body = [                
@@ -124,12 +126,10 @@ final class InvRecurringController
     //inv.js create_recurring_confirm function calls this function
     
     /**
-     * 
      * @param Request $request
      * @param ValidatorInterface $validator
-     * @return Response
      */
-    public function create_recurring_confirm(Request $request, ValidatorInterface $validator) : Response {
+    public function create_recurring_confirm(Request $request, ValidatorInterface $validator) : \Yiisoft\DataResponse\DataResponse {
         $body = $request->getQueryParams() ?? [];
         $form = new InvRecurringForm();
         $invrecurring = new InvRecurring(); 
@@ -281,11 +281,11 @@ final class InvRecurringController
     }
     
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
-     *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, InvRecurring>
+     * 
+     * @param IRR $invrecurringRepository
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function invrecurrings(IRR $invrecurringRepository): \Yiisoft\Data\Reader\DataReaderInterface
+    private function invrecurrings(IRR $invrecurringRepository): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
     {
         $invrecurrings = $invrecurringRepository->findAllPreloaded();        
         return $invrecurrings;
@@ -305,12 +305,10 @@ final class InvRecurringController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param IRR $invrecurringRepository
-     * @return Response
      */
-    public function view(CurrentRoute $currentRoute,IRR $invrecurringRepository): Response {
+    public function view(CurrentRoute $currentRoute,IRR $invrecurringRepository): \Yiisoft\DataResponse\DataResponse {
         $parameters = [
             'title' => $this->s->trans('view'),
             'action' => ['invrecurring/view', ['id' => $this->invrecurring($currentRoute, $invrecurringRepository)->getId()]],
@@ -323,13 +321,11 @@ final class InvRecurringController
     }
     
     /**
-     * 
      * @param Session $session
      * @param CurrentRoute $currentRoute
      * @param IRR $irR
-     * @return Response
      */
-    public function index(Session $session, CurrentRoute $currentRoute, IRR $irR): Response
+    public function index(Session $session, CurrentRoute $currentRoute, IRR $irR): \Yiisoft\DataResponse\DataResponse
     {
         $pageNum = (int)$currentRoute->getArgument('page', '1');
         $paginator = (new OffsetPaginator($this->invrecurrings($irR)))

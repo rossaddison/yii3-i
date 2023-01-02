@@ -13,6 +13,9 @@ final class PerformanceMetrics extends Widget
     {
     }
 
+    /**
+     * @return string
+     */
     protected function run(): string
     {
         $time = round($this->timer->get('overall'), 4);

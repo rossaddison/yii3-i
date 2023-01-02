@@ -97,13 +97,11 @@ final class GeneratorController
     }
     
     /**
-     * 
      * @param GeneratorRepository $generatorRepository
      * @param GeneratorRelationRepository $grr
      * @param SettingRepository $settingRepository
-     * @return Response
      */
-    public function index(GeneratorRepository $generatorRepository, GeneratorRelationRepository $grr, SettingRepository $settingRepository): Response
+    public function index(GeneratorRepository $generatorRepository, GeneratorRelationRepository $grr, SettingRepository $settingRepository): \Yiisoft\DataResponse\DataResponse
     {
         $canEdit = $this->rbac();
         $generators = $this->generators($generatorRepository);
@@ -206,14 +204,12 @@ final class GeneratorController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param GeneratorRepository $generatorRepository
      * @param SettingRepository $settingRepository
      * @param ValidatorInterface $validator
-     * @return Response
      */
-    public function view(CurrentRoute $currentRoute, GeneratorRepository $generatorRepository, SettingRepository $settingRepository,ValidatorInterface $validator): Response {
+    public function view(CurrentRoute $currentRoute, GeneratorRepository $generatorRepository, SettingRepository $settingRepository,ValidatorInterface $validator): \Yiisoft\DataResponse\DataResponse {
         $generator = $this->generator($currentRoute, $generatorRepository);
         $parameters = [
             'title' => $settingRepository->trans('view'),
@@ -251,11 +247,11 @@ final class GeneratorController
     }
    
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Gentor>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function generators(GeneratorRepository $generatorRepository): \Yiisoft\Data\Reader\DataReaderInterface{
+    private function generators(GeneratorRepository $generatorRepository): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader {
         $generators = $generatorRepository->findAllPreloaded();
         return $generators;
     }
@@ -307,19 +303,17 @@ final class GeneratorController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param GeneratorRepository $gr
      * @param SettingRepository $settingRepository
      * @param GeneratorRelationRepository $grr
      * @param DatabaseManager $dbal
      * @param View $view
-     * @return Response
      */
     public function entity(CurrentRoute $currentRoute, GeneratorRepository $gr, 
                              SettingRepository $settingRepository, GeneratorRelationRepository $grr,
                              DatabaseManager $dbal, View $view
-                            ): Response {
+                            ): \Yiisoft\DataResponse\DataResponse {
         $file = self::ENTITY;
         $path = $this->getAliases();
         $g = $this->generator($currentRoute, $gr);
@@ -345,19 +339,17 @@ final class GeneratorController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param GeneratorRepository $gr
      * @param SettingRepository $settingRepository
      * @param GeneratorRelationRepository $grr
      * @param DatabaseManager $dbal
      * @param View $view
-     * @return Response
      */
     public function repo(CurrentRoute $currentRoute, GeneratorRepository $gr, 
                              SettingRepository $settingRepository, GeneratorRelationRepository $grr,
                              DatabaseManager $dbal, View $view
-                            ): Response {
+                            ): \Yiisoft\DataResponse\DataResponse {
         $file = self::REPO;
         $path = $this->getAliases();
         $g = $this->generator($currentRoute, $gr);
@@ -383,19 +375,17 @@ final class GeneratorController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param GeneratorRepository $gr
      * @param SettingRepository $settingRepository
      * @param GeneratorRelationRepository $grr
      * @param DatabaseManager $dbal
      * @param View $view
-     * @return Response
      */
     public function service(CurrentRoute $currentRoute, GeneratorRepository $gr, 
                              SettingRepository $settingRepository, GeneratorRelationRepository $grr,
                              DatabaseManager $dbal, View $view
-                            ): Response {
+                            ): \Yiisoft\DataResponse\DataResponse {
         $file = self::SERVICE;
         $path = $this->getAliases();
         $g = $this->generator($currentRoute, $gr);
@@ -421,19 +411,17 @@ final class GeneratorController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param GeneratorRepository $gr
      * @param SettingRepository $settingRepository
      * @param GeneratorRelationRepository $grr
      * @param DatabaseManager $dbal
      * @param View $view
-     * @return Response
      */
     public function form(CurrentRoute $currentRoute, GeneratorRepository $gr, 
                              SettingRepository $settingRepository, GeneratorRelationRepository $grr,
                              DatabaseManager $dbal, View $view
-                            ): Response {
+                            ): \Yiisoft\DataResponse\DataResponse {
         $file = self::FORM;
         $path = $this->getAliases();
         $g = $this->generator($currentRoute, $gr);
@@ -459,19 +447,17 @@ final class GeneratorController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param GeneratorRepository $gr
      * @param SettingRepository $settingRepository
      * @param GeneratorRelationRepository $grr
      * @param DatabaseManager $dbal
      * @param View $view
-     * @return Response
-     */            
+     */
     public function mapper(CurrentRoute $currentRoute, GeneratorRepository $gr, 
                              SettingRepository $settingRepository, GeneratorRelationRepository $grr,
                              DatabaseManager $dbal, View $view
-                            ): Response {
+                            ): \Yiisoft\DataResponse\DataResponse {
         $file = self::MAPPER;
         $path = $this->getAliases();
         $g = $this->generator($currentRoute, $gr);
@@ -497,19 +483,17 @@ final class GeneratorController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param GeneratorRepository $gr
      * @param SettingRepository $settingRepository
      * @param GeneratorRelationRepository $grr
      * @param DatabaseManager $dbal
      * @param View $view
-     * @return Response
      */
     public function scope(CurrentRoute $currentRoute, GeneratorRepository $gr, 
                              SettingRepository $settingRepository, GeneratorRelationRepository $grr,
                              DatabaseManager $dbal, View $view
-                            ): Response {
+                            ): \Yiisoft\DataResponse\DataResponse {
         $file = self::SCOPE;
         $path = $this->getAliases();
         $g = $this->generator($currentRoute, $gr);
@@ -535,19 +519,17 @@ final class GeneratorController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param GeneratorRepository $gr
      * @param SettingRepository $settingRepository
      * @param GeneratorRelationRepository $grr
      * @param DatabaseManager $dbal
      * @param View $view
-     * @return Response
      */
     public function controller(CurrentRoute $currentRoute, GeneratorRepository $gr, 
                              SettingRepository $settingRepository, GeneratorRelationRepository $grr,
                              DatabaseManager $dbal, View $view
-                            ): Response {
+                            ): \Yiisoft\DataResponse\DataResponse {
         $file = self::CONTROLLER;
         $path = $this->getAliases();
         $g = $this->generator($currentRoute, $gr);
@@ -573,19 +555,17 @@ final class GeneratorController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param GeneratorRepository $gr
      * @param SettingRepository $settingRepository
      * @param GeneratorRelationRepository $grr
      * @param DatabaseManager $dbal
      * @param View $view
-     * @return Response
-     */            
+     */
     public function _index(CurrentRoute $currentRoute, GeneratorRepository $gr, 
                              SettingRepository $settingRepository, GeneratorRelationRepository $grr,
                              DatabaseManager $dbal, View $view
-                            ): Response {
+                            ): \Yiisoft\DataResponse\DataResponse {
         $file = self::INDEX;
         $path = $this->getAliases();
         $g = $this->generator($currentRoute, $gr);
@@ -611,19 +591,17 @@ final class GeneratorController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param GeneratorRepository $gr
      * @param SettingRepository $settingRepository
      * @param GeneratorRelationRepository $grr
      * @param DatabaseManager $dbal
      * @param View $view
-     * @return Response
      */
     public function _index_adv_paginator(CurrentRoute $currentRoute, GeneratorRepository $gr, 
                              SettingRepository $settingRepository, GeneratorRelationRepository $grr,
                              DatabaseManager $dbal, View $view
-                            ): Response {
+                            ): \Yiisoft\DataResponse\DataResponse {
         $file = self::INDEX_ADV_PAGINATOR;
         $path = $this->getAliases();
         $g = $this->generator($currentRoute, $gr);
@@ -649,19 +627,17 @@ final class GeneratorController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param GeneratorRepository $gr
      * @param SettingRepository $settingRepository
      * @param GeneratorRelationRepository $grr
      * @param DatabaseManager $dbal
      * @param View $view
-     * @return Response
      */
     public function _index_adv_paginator_with_filter(CurrentRoute $currentRoute, GeneratorRepository $gr, 
                              SettingRepository $settingRepository, GeneratorRelationRepository $grr,
                              DatabaseManager $dbal, View $view
-                            ): Response {
+                            ): \Yiisoft\DataResponse\DataResponse {
         $file = self::INDEX_ADV_PAGINATOR_WITH_FILTER;
         $path = $this->getAliases();
         $g = $this->generator($currentRoute, $gr);
@@ -687,19 +663,17 @@ final class GeneratorController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param GeneratorRepository $gr
      * @param SettingRepository $settingRepository
      * @param GeneratorRelationRepository $grr
      * @param DatabaseManager $dbal
      * @param View $view
-     * @return Response
      */
     public function _form(CurrentRoute $currentRoute, GeneratorRepository $gr, 
                              SettingRepository $settingRepository, GeneratorRelationRepository $grr,
                              DatabaseManager $dbal, View $view
-                            ): Response {
+                            ): \Yiisoft\DataResponse\DataResponse {
         $file = self::_FORM;
         $path = $this->getAliases();
         $g = $this->generator($currentRoute, $gr);
@@ -725,19 +699,17 @@ final class GeneratorController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param GeneratorRepository $gr
      * @param SettingRepository $settingRepository
      * @param GeneratorRelationRepository $grr
      * @param DatabaseManager $dbal
      * @param View $view
-     * @return Response
-     */            
+     */
     public function _view(CurrentRoute $currentRoute, GeneratorRepository $gr, 
                              SettingRepository $settingRepository, GeneratorRelationRepository $grr,
                              DatabaseManager $dbal, View $view
-                            ): Response {
+                            ): \Yiisoft\DataResponse\DataResponse {
         $file = self::_VIEW;
         $path = $this->getAliases();
         $g = $this->generator($currentRoute, $gr);
@@ -765,19 +737,17 @@ final class GeneratorController
     //generate this individual route. Append to config/routes file.  
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param GeneratorRepository $gr
      * @param SettingRepository $settingRepository
      * @param GeneratorRelationRepository $grr
      * @param DatabaseManager $dbal
      * @param View $view
-     * @return Response
      */
     public function _route(CurrentRoute $currentRoute, GeneratorRepository $gr, 
                              SettingRepository $settingRepository, GeneratorRelationRepository $grr,
                              DatabaseManager $dbal, View $view
-                           ): Response {
+                           ): \Yiisoft\DataResponse\DataResponse {
         $file = self::_ROUTE;
         $path = $this->getAliases();
         $g = $this->generator($currentRoute, $gr);
@@ -803,12 +773,10 @@ final class GeneratorController
     }
     
     /**
-     * 
      * @param CurrentUser $currentUser
      * @param DatabaseManager $dba
-     * @return Response
      */
-    public function quick_view_schema(CurrentUser $currentUser, DatabaseManager $dba) : Response{
+    public function quick_view_schema(CurrentUser $currentUser, DatabaseManager $dba) : \Yiisoft\DataResponse\DataResponse{
         $parameters = [
             'alerts' => $this->alert(),
             'isGuest' => $currentUser->isGuest(),
@@ -847,15 +815,14 @@ final class GeneratorController
     }
     
     /**
-     * 
      * @param string $type
      * @param SettingRepository $sR
-     * @return Response
+     *
      * @throws CaCertFileNotFoundException
      * @throws GoogleTranslateJsonFileNotFoundException
      * @throws GoogleTranslateLocaleSettingNotFoundException
      */
-    public function google_translate_lang(string $type, SettingRepository $sR) : Response {
+    public function google_translate_lang(string $type, SettingRepository $sR) : \Yiisoft\DataResponse\DataResponse {
         // ? Downloaded https://curl.haxx.se/ca/cacert.pem" into 
         // c:\wamp64\bin\php\{active_php}  
         !empty(\ini_get('curl.cainfo')) ?  $curlcertificate = true : false;
@@ -957,7 +924,7 @@ final class GeneratorController
     /**
      * @param Gentor|Response $generator
      */
-    private function getContent(View $view,Response|Gentor $generator,\Yiisoft\Data\Reader\DataReaderInterface $relations,$orm_schema,string $file): string{
+    private function getContent(View $view,Response|Gentor $generator,\Yiisoft\Data\Reader\DataReaderInterface $relations,\Cycle\Database\TableInterface $orm_schema,string $file): string{
         return $content = $view->render("//invoice/generator/templates_protected/".$file,['generator' => $generator,
                 'relations'=>$relations,
                 'orm_schema'=>$orm_schema,

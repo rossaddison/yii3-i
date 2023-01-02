@@ -7,7 +7,6 @@ namespace App\Invoice\CustomField;
 use App\Invoice\Entity\CustomField;
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -33,18 +32,18 @@ private EntityWriter $entityWriter;
     /**
      * Get customfields  without filter
      *
-     * @psalm-return DataReaderInterface<int,CustomField>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select();
         return $this->prepareDataReader($query);
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, CustomField>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
             ->withSort($this->getSort());
@@ -79,6 +78,11 @@ private EntityWriter $entityWriter;
         );
     }
     
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
     public function repoCustomFieldquery(string $id): object|null    {
         $query = $this->select()
                       ->where(['id' => $id]);
@@ -88,11 +92,11 @@ private EntityWriter $entityWriter;
     /**
      * Get customfields  with table filter
      *
-     * @psalm-return DataReaderInterface<int,CustomField>
+     * @psalm-return EntityReader
      */
     
     // Retrieve all custom fields built for the entity/tabel eg. quote_custom   
-    public function repoTablequery(string $table) : DataReaderInterface {
+    public function repoTablequery(string $table) : EntityReader {
         $query = $this->select()
                       ->where(['table' => $table]);
         return $this->prepareDataReader($query); 

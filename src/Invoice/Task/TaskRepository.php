@@ -7,7 +7,6 @@ namespace App\Invoice\Task;
 use App\Invoice\Entity\Task;
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Cycle\Database\Injection\Parameter;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
@@ -35,18 +34,18 @@ private EntityWriter $entityWriter;
     /**
      * Get tasks  without filter
      *
-     * @psalm-return DataReaderInterface<int,Task>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select()->load('tax_rate');
         return $this->prepareDataReader($query);
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, Task>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
             ->withSort($this->getSort());
@@ -81,7 +80,12 @@ private EntityWriter $entityWriter;
         );
     }
     
-    public function repoTaskquery(string $id): object|null    {
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
+    public function repoTaskquery(string $id):object|null    {
         $query = $this->select()->load('tax_rate')
                                 ->where(['id' =>$id]);
         return  $query->fetchOne() ?: null;        
@@ -91,9 +95,9 @@ private EntityWriter $entityWriter;
     /**
      * Get tasks  with filter
      *
-     * @psalm-return DataReaderInterface<int,Task>
+     * @psalm-return EntityReader
      */
-    public function repoTaskStatusquery(int $status): DataReaderInterface {
+    public function repoTaskStatusquery(int $status): EntityReader {
         $query = $this->select()->load('tax_rate')
                                 ->where(['status' =>$status]);
         return $this->prepareDataReader($query);        
@@ -102,10 +106,10 @@ private EntityWriter $entityWriter;
      /**
      * Get selection of tasks from all tasks
      *
-     * @psalm-return DataReaderInterface<int, Task>
+     * @psalm-return EntityReader
      */
     
-    public function findinTasks($task_ids) : DataReaderInterface {
+    public function findinTasks($task_ids) : EntityReader {
         $query = $this->select()
                       ->where(['id'=>['in'=> new Parameter($task_ids)]]);
         return $this->prepareDataReader($query);    
@@ -119,9 +123,13 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @return array
+     * @return (mixed|string)[][]
+     *
+     * @psalm-param \App\Invoice\Setting\SettingRepository<object> $sR
+     *
+     * @psalm-return array{1: array{label: mixed, class: 'draft'}, 2: array{label: mixed, class: 'viewed'}, 3: array{label: mixed, class: 'sent'}, 4: array{label: mixed, class: 'paid'}}
      */
-    public function getTask_statuses($sR)
+    public function getTask_statuses(\App\Invoice\Setting\SettingRepository $sR): array
     {
         return [
             '1' => [

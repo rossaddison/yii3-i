@@ -26,7 +26,7 @@ final class UserController
         CurrentRoute $currentRoute,
         ServerRequestInterface $request,
         UserRepository $userRepository
-    ): Response {
+    ): \Yiisoft\DataResponse\DataResponse {
          
         /** @var array */
         $body = $request->getParsedBody();
@@ -50,12 +50,14 @@ final class UserController
     }
     
     /**
-     * 
      * @param UserRepository $uR
      * @param Sort $sort
-     * @return \Yiisoft\Data\Reader\SortableDataInterface
-     */    
-    private function users_with_sort(UserRepository $uR, Sort $sort): \Yiisoft\Data\Reader\SortableDataInterface {       
+     *
+     * @return \Yiisoft\Data\Reader\SortableDataInterface&\Yiisoft\Data\Reader\DataReaderInterface
+     *
+     * @psalm-return \Yiisoft\Data\Reader\SortableDataInterface&\Yiisoft\Data\Reader\DataReaderInterface<int, \App\User\User>
+     */
+    private function users_with_sort(UserRepository $uR, Sort $sort): \Yiisoft\Data\Reader\SortableDataInterface&\Yiisoft\Data\Reader\DataReaderInterface {       
         $users = $uR->findAllPreloaded()
                     ->withSort($sort);
         return $users;

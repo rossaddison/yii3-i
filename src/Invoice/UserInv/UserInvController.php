@@ -65,17 +65,15 @@ final class UserInvController
     // using Setting...User Account
     
     /**
-     * 
      * @param Request $request
      * @param CurrentRoute $currentRoute
      * @param SessionInterface $session
      * @param UserInvRepository $uiR
      * @param SettingRepository $sR
      * @param TranslatorInterface $translator
-     * @return Response
-     */   
+     */
     public function index(Request $request, CurrentRoute $currentRoute, SessionInterface $session,
-                          UserInvRepository $uiR, SettingRepository $sR, TranslatorInterface $translator): Response
+                          UserInvRepository $uiR, SettingRepository $sR, TranslatorInterface $translator): \Yiisoft\DataResponse\DataResponse
     {      
         $canEdit = $this->rbac();
         $query_params = $request->getQueryParams() ?? [];$page = (int)$currentRoute->getArgument('page', '1');        
@@ -204,17 +202,15 @@ final class UserInvController
     }
     
     /**
-     * 
      * @param ViewRenderer $head
      * @param CurrentRoute $currentRoute
      * @param ClientRepository $cR
      * @param SettingRepository $sR
      * @param UserClientRepository $ucR
      * @param UserInvRepository $uiR
-     * @return Response
      */
     public function client(ViewRenderer $head, CurrentRoute $currentRoute, ClientRepository $cR,
-                           SettingRepository $sR, UserClientRepository $ucR, UserInvRepository $uiR) : Response {
+                           SettingRepository $sR, UserClientRepository $ucR, UserInvRepository $uiR) : \Yiisoft\DataResponse\DataResponse {
         // Use the primary key 'id' passed in userinv/index's urlGenerator to retrieve the user_id
         $user_id = $this->userinv($currentRoute, $uiR)->getUser_Id();
         $parameters = [
@@ -246,15 +242,13 @@ final class UserInvController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param UserInvRepository $userinvRepository
      * @param SettingRepository $settingRepository
-     * @return Response
      */
     public function view(CurrentRoute $currentRoute,UserInvRepository $userinvRepository,
         SettingRepository $settingRepository,
-        ): Response {
+        ): \Yiisoft\DataResponse\DataResponse {
         $user_inv = $this->userinv($currentRoute, $userinvRepository);
         $parameters = [
             'title' => $settingRepository->trans('view'),
@@ -281,13 +275,15 @@ final class UserInvController
     }
     
     /**
-     * 
      * @param UserInvRepository $uiR
      * @param int $active
      * @param Sort $sort
-     * @return \Yiisoft\Data\Reader\SortableDataInterface
+     *
+     * @return \Yiisoft\Data\Reader\SortableDataInterface|\Yiisoft\Yii\Cycle\Data\Reader\EntityReader
+     *
+     * @psalm-return \Yiisoft\Data\Reader\SortableDataInterface|\Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function userinvs_active_with_sort(UserInvRepository $uiR, int $active, Sort $sort): \Yiisoft\Data\Reader\SortableDataInterface {       
+    private function userinvs_active_with_sort(UserInvRepository $uiR, int $active, Sort $sort): \Yiisoft\Data\Reader\SortableDataInterface|\Yiisoft\Yii\Cycle\Data\Reader\EntityReader {       
         $userinvs = $uiR->findAllWithActive($active)
                         ->withSort($sort);
         return $userinvs;

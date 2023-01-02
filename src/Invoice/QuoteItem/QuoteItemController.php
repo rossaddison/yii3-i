@@ -65,13 +65,11 @@ final class QuoteItemController
     }
     
     /**
-     * 
      * @param SessionInterface $session
      * @param QIR $qiR
      * @param SR $sR
-     * @return Response
      */
-    public function index(SessionInterface $session, QIR $qiR, SR $sR): Response
+    public function index(SessionInterface $session, QIR $qiR, SR $sR): \Yiisoft\DataResponse\DataResponse
     {       
          $canEdit = $this->rbac($session);
          $flash = $this->flash($session, '','');
@@ -90,7 +88,6 @@ final class QuoteItemController
     // Triggered by clicking on the save button on the item view appearing above the quote view
     
     /**
-     * 
      * @param ViewRenderer $head
      * @param SessionInterface $session
      * @param Request $request
@@ -100,7 +97,6 @@ final class QuoteItemController
      * @param UR $uR
      * @param TRR $trR
      * @param QIAR $qiar
-     * @return Response
      */
     public function add(ViewRenderer $head,SessionInterface $session, Request $request,  
                         ValidatorInterface $validator,
@@ -109,7 +105,7 @@ final class QuoteItemController
                         UR $uR,                                                
                         TRR $trR,
                         QIAR $qiar,
-    ) : Response
+    ) : \Yiisoft\DataResponse\DataResponse
     {
         // This function is used 
         $quote_id = $session->get('quote_id');
@@ -140,7 +136,6 @@ final class QuoteItemController
     }
     
     /**
-     * 
      * @param ViewRenderer $head
      * @param SessionInterface $session
      * @param CurrentRoute $currentRoute
@@ -154,10 +149,9 @@ final class QuoteItemController
      * @param QR $qR
      * @param QIAS $qias
      * @param QIAR $qiar
-     * @return Response
      */
     public function edit(ViewRenderer $head, SessionInterface $session, CurrentRoute $currentRoute, Request $request, ValidatorInterface $validator,
-                        QIR $qiR, SR $sR, TRR $trR, PR $pR, UR $uR, QR $qR, QIAS $qias, QIAR $qiar): Response {
+                        QIR $qiR, SR $sR, TRR $trR, PR $pR, UR $uR, QR $qR, QIAS $qias, QIAR $qiar): \Yiisoft\DataResponse\DataResponse {
         $quote_id = $session->get('quote_id');
         $parameters = [
             'title' => 'Edit',
@@ -217,23 +211,19 @@ final class QuoteItemController
     } 
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param QIR $qiR
-     * @return Response
      */
-    public function delete(CurrentRoute $currentRoute, QIR $qiR): Response {
+    public function delete(CurrentRoute $currentRoute, QIR $qiR): \Yiisoft\DataResponse\DataResponse {
         $qiR->repoQuoteItemCount($this->quoteitem($currentRoute, $qiR)->getId()) === 1  ? (($this->quoteitemService->deleteQuoteItem($this->quoteitem($currentRoute, $qiR)))): '';
         return $this->viewRenderer->render('quote/index');
     }
     
     /**
-     * 
      * @param Request $request
      * @param QIR $qiR
-     * @return Response
      */
-    public function multiple(Request $request, QIR $qiR): Response {
+    public function multiple(Request $request, QIR $qiR): \Yiisoft\DataResponse\DataResponse {
         //jQuery parameters from quote.js function delete-items-confirm-quote 'item_ids' and 'quote_id'
         $select_items = $request->getQueryParams() ?? [];
         $result = false;
@@ -248,15 +238,13 @@ final class QuoteItemController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param QIR $qiR
      * @param SR $sR
-     * @return Response
      */
     public function view(CurrentRoute $currentRoute, QIR $qiR,
         SR $sR 
-        ): Response {
+        ): \Yiisoft\DataResponse\DataResponse {
         $parameters = [
             'title' => $sR->trans('view'),
             'action' => ['quoteitem/edit', ['id' => $this->quoteitem($currentRoute, $qiR)->getId()]],
@@ -294,11 +282,11 @@ final class QuoteItemController
     }
     
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, QuoteItem>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function quoteitems(QIR $qiR): \Yiisoft\Data\Reader\DataReaderInterface 
+    private function quoteitems(QIR $qiR): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
     {
         $quoteitems = $qiR->findAllPreloaded();        
         return $quoteitems;

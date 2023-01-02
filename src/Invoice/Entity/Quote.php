@@ -131,7 +131,10 @@ class Quote
         $this->user = $user;
     }
     
-    public function getId(): ?string
+    /**
+     * @return null|numeric-string
+     */
+    public function getId(): string|null
     {
         return $this->id === null ? null : (string)$this->id;
     }
@@ -151,7 +154,7 @@ class Quote
       $this->user_id =  $user_id;
     }
     
-    public function getInv_id(): ?string
+    public function getInv_id(): string
     {
       return (string)$this->inv_id;        
     }
@@ -246,7 +249,7 @@ class Quote
         $this->date_expires = (new \DateTimeImmutable('now'))->add(new \DateInterval('P'.$days.'D'));
     }
     
-    public function getDate_expires(): ?DateTimeImmutable
+    public function getDate_expires(): DateTimeImmutable
     {
        return $this->date_expires;  
     }

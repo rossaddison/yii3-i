@@ -7,7 +7,6 @@ namespace App\Invoice\CustomValue;
 use App\Invoice\Entity\CustomValue;
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -32,18 +31,18 @@ private EntityWriter $entityWriter;
     /**
      * Get customvalues  without filter
      *
-     * @psalm-return DataReaderInterface<int,CustomValue>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select();
         return $this->prepareDataReader($query);
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, CustomValue>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
                     ->withSort($this->getSort());
@@ -78,6 +77,11 @@ private EntityWriter $entityWriter;
         );
     }
     
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
     public function repoCustomValuequery(string $id): object|null {
         $query = $this->select()->where(['id' =>$id]);
         return  $query->fetchOne() ?: null;        
@@ -93,17 +97,19 @@ private EntityWriter $entityWriter;
     /**
      * Get customvalues  with filter
      *
-     * @psalm-return DataReaderInterface<int,CustomValue>
+     * @psalm-return EntityReader
      */
-    public function repoCustomFieldquery(int $custom_field_id): DataReaderInterface    {
+    public function repoCustomFieldquery(int $custom_field_id): EntityReader    {
         $query = $this->select()->where(['custom_field_id' =>$custom_field_id]);
         return $this->prepareDataReader($query);        
     }
     
     /**
-     * @psalm-param DataReaderInterface<int, \App\Invoice\Entity\CustomField> $custom_fields
+     * 
+     * @param EntityReader $custom_fields
+     * @return array
      */
-    public function attach_hard_coded_custom_field_values_to_custom_field(DataReaderInterface $custom_fields) : array{
+    public function attach_hard_coded_custom_field_values_to_custom_field(EntityReader $custom_fields) : array{
         $custom_values  = [];
         foreach ($custom_fields as $custom_field) {
             if (in_array($custom_field->getType(),['SINGLE-CHOICE','MULTIPLE-CHOICE'])) {

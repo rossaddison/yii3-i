@@ -18,6 +18,8 @@
 <p>CompanyPrivate logo will be automatically input on invoice/quotes depending on whether the date of the invoice falls between the start and end date.</p>
 <p>Introducing Paypal.</p>
 <p>Introducing India's PayTm payment gateway's QR code method of payment and comparing this with Stripe's method.</p>
+<p><b>2 January 2023</b></p>
+<p>Psalm Level 7,6,5,4 Testing (0 errors)</p>
 <p><b>30 December 2022</b></p>
 <p><b>12 Post-setup Steps to Introducing Azerbaijani language</b></p>
 <p>1. config/params {locales}</p>
@@ -32,7 +34,8 @@
 <p>10. copy output_overwrite/_ip_lang to src/Invoice/Language/{new language}</p>
 <p>11. copy output_overwrite/_gateway_lang to src/Invoice/Language/{new language}</p>
 <p>12. copy output_overwrite/_app.php to ...resources/messages/{new locale}</p>
-
+<p><a href="https://github.com/yiisoft/demo/issues/559">Issue 559</a>
+<p><code>Psalm level 4 php ./vendor/bin/psalm --alter --issues=InvalidReturnType,MissingReturnType,LessSpecificReturnType,MissingParamType --dry-run</code>     
 <p><b>29 December 2022</b></p>
 <p>Psalm Level 4 Testing (0 errors)</p>
 <p>Using Generator...Translate{language file} and Setting...View...Google Translate...locale,

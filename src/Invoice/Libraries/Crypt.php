@@ -20,10 +20,7 @@ class Crypt
     private const DECRYPT_KEY = 'base64:3iqxXZEG5aR0NPvmE4qubcE/sn6nuzXKLrZVRMP3/Ak=';
     private string $decrypt_key = self::DECRYPT_KEY;
     
-    /**
-     * @return bool|string
-     */
-    public function salt()
+    public function salt(): string
     {
         return substr(sha1((string)mt_rand()), 0, 22);
     }

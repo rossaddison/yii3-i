@@ -243,14 +243,12 @@ class ProductController
     }
     
     /**
-     * 
      * @param pR $pR
      * @param sR $sR
      * @param CurrentRoute $currentRoute
      * @param Request $request
-     * @return Response
      */
-    public function index(pR $pR, sR $sR, CurrentRoute $currentRoute, Request $request): Response
+    public function index(pR $pR, sR $sR, CurrentRoute $currentRoute, Request $request): \Yiisoft\DataResponse\DataResponse
     {
         $canEdit = $this->rbac(); 
         $query_params = $request->getQueryParams();
@@ -277,15 +275,13 @@ class ProductController
     // queryparams coming from modal_product_lookups.js ---> line 165 filter_button_inv
     
     /**
-     * 
      * @param ViewRenderer $head
      * @param Request $request
      * @param fR $fR
      * @param sR $sR
      * @param pR $pR
-     * @return Response
      */
-    public function lookup(ViewRenderer $head, Request $request, fR $fR, sR $sR, pR $pR): Response {
+    public function lookup(ViewRenderer $head, Request $request, fR $fR, sR $sR, pR $pR): \Yiisoft\DataResponse\DataResponse {
         $queryparams = $request->getQueryParams() ?? [];
         $fp = $queryparams[$this->fpc] ?? '';
         $ff = $queryparams[$this->ffc] ?? '';
@@ -305,11 +301,13 @@ class ProductController
     }
     
     /**
-     * 
      * @param ProductRepository $pR
      * @param Sort $sort
-     * @return \Yiisoft\Data\Reader\SortableDataInterface
-     */    
+     *
+     * @return \Yiisoft\Data\Reader\SortableDataInterface&\Yiisoft\Data\Reader\DataReaderInterface
+     *
+     * @psalm-return \Yiisoft\Data\Reader\SortableDataInterface&\Yiisoft\Data\Reader\DataReaderInterface<int, Product>
+     */
     private function products_with_sort(ProductRepository $pR, Sort $sort): \Yiisoft\Data\Reader\SortableDataInterface {       
         $products = $pR->findAllPreloaded()
                        ->withSort($sort);
@@ -335,8 +333,8 @@ class ProductController
            $ajax_content = [
                 'name'=>$product->getProduct_name(),        
                 'quote_id'=>$quote_id,            
-                'tax_rate_id'=>(string)$product->getTax_rate_id(),
-                'product_id'=>(string)$product->getProduct_id(),
+                'tax_rate_id'=>$product->getTax_rate_id(),
+                'product_id'=>$product->getProduct_id(),
                 'date_added'=>new \DateTimeImmutable(),
                 'description'=>$product->getProduct_description(),
                 // A default quantity of 1 is used to initialize the item
@@ -346,8 +344,8 @@ class ProductController
                 'discount_amount'=>floatval(0),
                 'order'=>$order,
                 // The default quantity is 1 so the singular name will be used.
-                'product_unit'=>$unR->singular_or_plural_name((string)$product->getUnit_id(),1),
-                'product_unit_id'=>(string)$product->getUnit_id(),
+                'product_unit'=>$unR->singular_or_plural_name($product->getUnit_id(),1),
+                'product_unit_id'=>$product->getUnit_id(),
            ];
            if ($form->load($ajax_content) && $validator->validate($form)->isValid()) {
                  $this->quoteitemService->addQuoteItem(new QuoteItem(), $form, $quote_id, $pR, $qiaR, $qiaS, $unR, $trR);
@@ -374,8 +372,8 @@ class ProductController
            $ajax_content = [
                 'name'=>$product->getProduct_name(),        
                 'inv_id'=>$inv_id,            
-                'tax_rate_id'=>(string)$product->getTax_rate_id(),
-                'product_id'=>(string)$product->getProduct_id(),
+                'tax_rate_id'=>$product->getTax_rate_id(),
+                'product_id'=>$product->getProduct_id(),
                 'task_id'=>null,
                 'date_added'=>new \DateTimeImmutable(),
                 'description'=>$product->getProduct_description(),
@@ -386,8 +384,8 @@ class ProductController
                 'discount_amount'=>floatval(0),
                 'order'=>$order,
                 // The default quantity is 1 so the singular name will be used.
-                'product_unit'=>$unR->singular_or_plural_name((string)$product->getUnit_id(),1),
-                'product_unit_id'=>(string)$product->getUnit_id(),
+                'product_unit'=>$unR->singular_or_plural_name($product->getUnit_id(),1),
+                'product_unit_id'=>$product->getUnit_id(),
            ];
            if ($form->load($ajax_content) && $validator->validate($form)->isValid()) {
                 $this->invitemService->addInvItem_product(new InvItem(), $form, $inv_id, $pR, $trR, new iiaS($iiaR),$iiaR, $sR, $uR);                 
@@ -397,7 +395,6 @@ class ProductController
     //views/invoice/product/modal-product-lookups-quote.php => modal_product_lookups.js $(document).on('click', '.select-items-confirm-quote', function () => selection_quote
     
     /**
-     * 
      * @param ValidatorInterface $validator
      * @param Request $request
      * @param pR $pR
@@ -410,11 +407,10 @@ class ProductController
      * @param uR $uR
      * @param qiaR $qiaR
      * @param qiaS $qiaS
-     * @return Response
      */
     public function selection_quote(ValidatorInterface $validator, Request $request,
                                    pR $pR, qaR $qaR, qiR $qiR, qR $qR, qtrR $qtrR,
-                                   sR $sR, trR $trR, uR $uR, qiaR $qiaR, qiaS $qiaS) : Response {        
+                                   sR $sR, trR $trR, uR $uR, qiaR $qiaR, qiaS $qiaS) : \Yiisoft\DataResponse\DataResponse {        
         $select_items = $request->getQueryParams() ?? [];
         $product_ids = ($select_items['product_ids'] ? $select_items['product_ids'] : []);
         $quote_id = $select_items['quote_id'];
@@ -435,7 +431,6 @@ class ProductController
     //views/invoice/product/modal-product-lookups-inv.php => modal_product_lookups.js $(document).on('click', '.select-items-confirm-inv', function () 
     
     /**
-     * 
      * @param ValidatorInterface $validator
      * @param Request $request
      * @param pR $pR
@@ -448,9 +443,8 @@ class ProductController
      * @param iaR $iaR
      * @param iR $iR
      * @param pymR $pymR
-     * @return Response
      */
-    public function selection_inv(ValidatorInterface $validator, Request $request, pR $pR, sR $sR, trR $trR, uR $uR, iiaR $iiaR, iiR $iiR, itrR $itrR, iaR $iaR, iR $iR, pymR $pymR) : Response {        
+    public function selection_inv(ValidatorInterface $validator, Request $request, pR $pR, sR $sR, trR $trR, uR $uR, iiaR $iiaR, iiR $iiR, itrR $itrR, iaR $iaR, iR $iR, pymR $pymR) : \Yiisoft\DataResponse\DataResponse {        
         $select_items = $request->getQueryParams() ?? [];
         $product_ids = ($select_items['product_ids'] ? $select_items['product_ids'] : []);
         $inv_id = $select_items['inv_id'];
@@ -480,11 +474,11 @@ class ProductController
     }
     
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Product>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function products(pR $pR): \Yiisoft\Data\Reader\DataReaderInterface {
+    private function products(pR $pR): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader{
         $products = $pR->findAllPreloaded();        
         return $products;
     }
@@ -502,14 +496,12 @@ class ProductController
     }
     
     /**
-     * 
      * @param pR $pR
      * @param sR $sR
      * @param CurrentRoute $currentRoute
-     * @return Response
      */
     public function view(pR $pR,sR $sR, CurrentRoute $currentRoute
-    ): Response {
+    ): \Yiisoft\DataResponse\DataResponse {
         $parameters = [
             'title' => $sR->trans('view'),
             'action' => ['product/view', ['id' => $this->product($currentRoute,$pR)->getProduct_id()]],

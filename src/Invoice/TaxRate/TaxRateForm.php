@@ -29,6 +29,11 @@ final class TaxRateForm extends FormModel
         return $this->tax_rate_default;
     }
     
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
         return '';

@@ -7,7 +7,6 @@ namespace App\Invoice\ClientCustom;
 use App\Invoice\Entity\ClientCustom;
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -32,9 +31,9 @@ private EntityWriter $entityWriter;
     /**
      * Get clientcustoms  without filter
      *
-     * @psalm-return DataReaderInterface<int,ClientCustom>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select()
                 ->load('client')
@@ -43,9 +42,9 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, ClientCustom>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
             ->withSort($this->getSort());
@@ -80,7 +79,12 @@ private EntityWriter $entityWriter;
         );
     }
    
-    public function repoClientCustomquery(string $id): null|object    {
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
+    public function repoClientCustomquery(string $id) : null|object {
         $query = $this->select()
                       ->load('client')
                       ->load('custom_field')
@@ -94,6 +98,11 @@ private EntityWriter $entityWriter;
         return $query->count();
     }
     
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
     public function repoFormValuequery(string $client_id, string $custom_field_id): null|object {
         $query = $this->select()
                       ->where(['client_id' =>$client_id])
@@ -111,9 +120,9 @@ private EntityWriter $entityWriter;
     /**
      * Get all fields that have been setup for a particular client
      *
-     * @psalm-return DataReaderInterface<int,ClientCustom>
+     * @psalm-return EntityReader
      */
-    public function repoFields(string $client_id): DataReaderInterface
+    public function repoFields(string $client_id): EntityReader
     {
         $query = $this->select()->where(['client_id'=>$client_id]);                
         return $this->prepareDataReader($query);

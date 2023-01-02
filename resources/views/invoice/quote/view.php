@@ -287,8 +287,8 @@ use App\Invoice\Helpers\NumberHelper;
         </div>
     </div>
    <div id="partial_item_table_parameters" quote_items="<?php $quote_items; ?>" disabled>
-    <?php
-       echo $partial_item_table;
+    <?=
+       $partial_item_table;
     ?>     
    </div>
     

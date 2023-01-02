@@ -7,7 +7,6 @@ namespace App\Invoice\TaxRate;
 use App\Invoice\Entity\TaxRate;
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -34,9 +33,9 @@ final class TaxRateRepository extends Select\Repository
     /**
      * Get taxrates without filter
      *
-     * @psalm-return DataReaderInterface<int, TaxRate>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select();
         return $this->prepareDataReader($query);
@@ -66,7 +65,12 @@ final class TaxRateRepository extends Select\Repository
         );
     }
     
-    public function repoTaxRatequery(string $tax_rate_id): object|null
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
+    public function repoTaxRatequery(string $tax_rate_id):object|null
     {
         $query = $this
             ->select()

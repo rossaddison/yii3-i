@@ -8,7 +8,6 @@ use App\Invoice\Entity\QuoteItem;
 use Cycle\ORM\Select;
 use Cycle\Database\Injection\Parameter;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -35,9 +34,9 @@ private EntityWriter $entityWriter;
     /**
      * Get quoteitems  without filter
      *
-     * @psalm-return DataReaderInterface<int,QuoteItem>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select()
                       ->load(['tax_rate','product','quote']);
@@ -45,9 +44,9 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, QuoteItem>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
             ->withSort($this->getSort());
@@ -82,7 +81,12 @@ private EntityWriter $entityWriter;
         );
     }
     
-    public function repoQuoteItemquery(string $id): object|null    {
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
+    public function repoQuoteItemquery(string $id):object|null    {
         $query = $this->select()->load(['tax_rate','product','quote'])->where(['id' => $id]);
         return  $query->fetchOne() ?: null;        
     }    
@@ -90,9 +94,9 @@ private EntityWriter $entityWriter;
     /**
      * Get all items id's that belong to a specific quote
      *
-     * @psalm-return DataReaderInterface<int, QuoteItem>
+     * @psalm-return EntityReader
      */
-    public function repoQuoteItemIdquery(string $quote_id):  DataReaderInterface    {
+    public function repoQuoteItemIdquery(string $quote_id):  EntityReader    {
         $query = $this->select()
                       ->load(['tax_rate','product','quote'])
                       ->where(['quote_id' => $quote_id]);
@@ -102,9 +106,9 @@ private EntityWriter $entityWriter;
     /**
      * Get all items belonging to quote
      *
-     * @psalm-return DataReaderInterface<int, QuoteItem>
+     * @psalm-return EntityReader
      */
-    public function repoQuotequery(string $quote_id): DataReaderInterface    {
+    public function repoQuotequery(string $quote_id): EntityReader    {
         $query = $this->select()
                       ->load(['tax_rate','product','quote'])
                       ->where(['quote_id' => $quote_id]);                                
@@ -128,10 +132,10 @@ private EntityWriter $entityWriter;
     /**
      * Get selection of quote items from all quote_items
      *
-     * @psalm-return DataReaderInterface<int, QuoteItem>
+     * @psalm-return EntityReader
      */
      
-    public function findinQuoteItems($item_ids) : DataReaderInterface {
+    public function findinQuoteItems($item_ids) : EntityReader {
         $query = $this->select()->where(['id'=>['in'=> new Parameter($item_ids)]]);
         return $this->prepareDataReader($query);    
     } 

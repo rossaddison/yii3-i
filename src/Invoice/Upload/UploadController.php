@@ -58,9 +58,8 @@ final class UploadController
     
     /**
      * @param UploadRepository $uploadRepository
-     * @return Response
      */
-    public function index(UploadRepository $uploadRepository): Response
+    public function index(UploadRepository $uploadRepository): \Yiisoft\DataResponse\DataResponse
     {      
         $parameters = [
           'uploads' => $this->uploads($uploadRepository),
@@ -179,11 +178,10 @@ final class UploadController
      * @param CurrentRoute $currentRoute
      * @param UploadRepository $uploadRepository
      * @param SettingRepository $settingRepository
-     * @return Response
      */
     public function view(CurrentRoute $currentRoute, UploadRepository $uploadRepository,
         SettingRepository $settingRepository,
-        ): Response {
+        ): \Yiisoft\DataResponse\DataResponse {
         $parameters = [
             'title' => $settingRepository->trans('view'),
             'action' => ['upload/view', ['id' => $this->upload($currentRoute, $uploadRepository)->getId()]],
@@ -209,9 +207,12 @@ final class UploadController
     
     /**
      * @param UploadRepository $uploadRepository
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     *
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
+     *
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function uploads(UploadRepository $uploadRepository) : \Yiisoft\Data\Reader\DataReaderInterface
+    private function uploads(UploadRepository $uploadRepository) : \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
     {
         $uploads = $uploadRepository->findAllPreloaded();        
         return $uploads;
@@ -219,7 +220,10 @@ final class UploadController
     
     /**
      * @param Upload $upload
-     * @return array
+     *
+     * @return (\DateTimeImmutable|string)[]
+     *
+     * @psalm-return array{id: string, client_id: string, url_key: string, file_name_original: string, file_name_new: string, uploaded_date: \DateTimeImmutable}
      */
     private function body(Upload $upload) : array {
         $body = [

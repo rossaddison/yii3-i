@@ -10,7 +10,6 @@ use App\Invoice\Group\GroupRepository as GR;
 use Cycle\ORM\Select;
 use Throwable;
 use Cycle\Database\Injection\Parameter;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -36,9 +35,9 @@ private EntityWriter $entityWriter;
     /**
      * Get Quotes with filter
      *
-     * @psalm-return DataReaderInterface<int, Quote>
+     * @psalm-return EntityReader
      */
-    public function findAllWithStatus(int $status_id) : DataReaderInterface
+    public function findAllWithStatus(int $status_id) : EntityReader
     {
         if (($status_id) > 0) {
         $query = $this->select()
@@ -53,9 +52,9 @@ private EntityWriter $entityWriter;
     /**
      * Get quotes  without filter
      *
-     * @psalm-return DataReaderInterface<int,Quote>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select()
                 ->load(['client','group','user']);
@@ -63,9 +62,9 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, Quote>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
             ->withSort($this->getSort());
@@ -101,13 +100,23 @@ private EntityWriter $entityWriter;
         );
     }
     
-    public function repoQuoteUnLoadedquery(string $id): object|null    {
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
+    public function repoQuoteUnLoadedquery(string $id):object|null    {
         $query = $this->select()
                       ->where(['id' => $id]);
         return  $query->fetchOne() ?: null;        
     }
     
-    public function repoQuoteLoadedquery(string $id): object|null    {
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
+    public function repoQuoteLoadedquery(string $id):object|null    {
         $query = $this->select()
                       ->load(['client','group','user']) 
                       ->where(['id' => $id]);
@@ -167,9 +176,9 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, Quote>
+     * @psalm-return EntityReader
      */
-    public function repoGuest_Clients_Sent_Viewed_Approved_Rejected_Cancelled(int $status_id, array $user_client = []) : DataReaderInterface {
+    public function repoGuest_Clients_Sent_Viewed_Approved_Rejected_Cancelled(int $status_id, array $user_client = []) : EntityReader {
         // Get specific statuses
         if ($status_id > 0) {
             $query = $this->select()
@@ -188,9 +197,11 @@ private EntityWriter $entityWriter;
     }
         
     /**
-     * @return array
+     * @return (int|string)[][]
+     *
+     * @psalm-return array{1: array{label: string, class: 'draft', href: 1}, 2: array{label: string, class: 'sent', href: 2}, 3: array{label: string, class: 'viewed', href: 3}, 4: array{label: string, class: 'approved', href: 4}, 5: array{label: string, class: 'rejected', href: 5}, 6: array{label: string, class: 'canceled', href: 6}}
      */
-    public function getStatuses(SR $s)
+    public function getStatuses(SR $s): array
     {
         return array(
             '1' => array(
@@ -236,7 +247,7 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @psalm-return Select<object>
+     * @psalm-return Select<TEntity>
      */
     public function is_draft(): Select
     {
@@ -245,7 +256,7 @@ private EntityWriter $entityWriter;
     }
    
     /**
-     * @psalm-return Select<object>
+     * @psalm-return Select<TEntity>
      */
     public function is_sent(): Select
     {
@@ -254,7 +265,7 @@ private EntityWriter $entityWriter;
     }
 
     /**
-     * @psalm-return Select<object>
+     * @psalm-return Select<TEntity>
      */
     public function is_viewed(): Select
     {
@@ -263,7 +274,7 @@ private EntityWriter $entityWriter;
     }
 
     /**
-     * @psalm-return Select<object>
+     * @psalm-return Select<TEntity>
      */
     public function is_approved(): Select
     {
@@ -272,7 +283,7 @@ private EntityWriter $entityWriter;
     }
 
     /**
-     * @psalm-return Select<object>
+     * @psalm-return Select<TEntity>
      */
     public function is_rejected(): Select
     {
@@ -281,7 +292,7 @@ private EntityWriter $entityWriter;
     }
 
     /**
-     * @psalm-return Select<object>
+     * @psalm-return Select<TEntity>
      */
     public function is_canceled(): Select
     {
@@ -292,7 +303,7 @@ private EntityWriter $entityWriter;
     /**
      * Used by guest; includes only sent and viewed
      *
-     * @psalm-return Select<object>
+     * @psalm-return Select<TEntity>
      */
     public function is_open(): Select
     {
@@ -301,7 +312,7 @@ private EntityWriter $entityWriter;
     }
 
     /**
-     * @psalm-return Select<object>
+     * @psalm-return Select<TEntity>
      */
     public function guest_visible(): Select
     {
@@ -312,7 +323,7 @@ private EntityWriter $entityWriter;
     /**
      * @param $client_id
      *
-     * @psalm-return Select<object>
+     * @psalm-return Select<TEntity>
      */
     public function by_client($client_id): Select
     {
@@ -324,9 +335,10 @@ private EntityWriter $entityWriter;
     /**
      * @param $client_id
      * @param $status_id
-     * @psalm-return DataReaderInterface<int, Quote>
+     *
+     * @psalm-return EntityReader
      */
-    public function by_client_quote_status(int $client_id, int $status_id): DataReaderInterface
+    public function by_client_quote_status(int $client_id, int $status_id): EntityReader
     {
         $query = $this->select()
                       ->where(['client_id' => $client_id])
@@ -352,7 +364,7 @@ private EntityWriter $entityWriter;
     /**
      * @param $url_key
      *
-     * @psalm-return Select<object>
+     * @psalm-return Select<TEntity>
      */
     public function approve_or_reject_quote_by_key($url_key): Select{
         $query = $this->select()
@@ -364,7 +376,7 @@ private EntityWriter $entityWriter;
     /**
      * @param $id
      *
-     * @psalm-return Select<object>
+     * @psalm-return Select<TEntity>
      */
     public function approve_or_reject_quote_by_id($id): Select{
         $query = $this->select()
@@ -401,10 +413,10 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @psalm-return DataReaderInterface<int,Quote>
+     * @psalm-return EntityReader
      */
         
-    public function repoClient($client_id) : DataReaderInterface { 
+    public function repoClient($client_id) : EntityReader { 
         $query = $this->select()
                       ->where(['client_id' => $client_id]); 
         return $this->prepareDataReader($query);

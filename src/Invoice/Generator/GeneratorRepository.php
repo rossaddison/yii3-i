@@ -7,7 +7,6 @@ namespace App\Invoice\Generator;
 use App\Invoice\Entity\Gentor;
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -33,9 +32,9 @@ final class GeneratorRepository extends Select\Repository
     /**
      * Get generators without filter
      *
-     * @psalm-return DataReaderInterface<int, Gentor>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select();
         return $this->prepareDataReader($query);
@@ -65,7 +64,12 @@ final class GeneratorRepository extends Select\Repository
         );
     }
     
-    public function repoGentorQuery(string $id): object|null
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
+    public function repoGentorQuery(string $id) : object|null
     {
         $query = $this
             ->select()

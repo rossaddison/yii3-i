@@ -46,13 +46,11 @@ final class GeneratorRelationController
     }
     
     /**
-     * 
      * @param Session $session
      * @param GeneratorRelationRepository $generatorrelationRepository
      * @param SettingRepository $settingRepository
-     * @return Response
      */
-    public function index(Session $session,GeneratorRelationRepository $generatorrelationRepository, SettingRepository $settingRepository): Response
+    public function index(Session $session,GeneratorRelationRepository $generatorrelationRepository, SettingRepository $settingRepository): \Yiisoft\DataResponse\DataResponse
     {
         $canEdit = $this->rbac($session);
         $generatorrelations = $this->generatorrelations($generatorrelationRepository);
@@ -150,14 +148,12 @@ final class GeneratorRelationController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param GeneratorRelationRepository $generatorrelationRepository
      * @param SettingRepository $settingRepository
      * @param ValidatorInterface $validator
-     * @return Response
      */
-    public function view(CurrentRoute $currentRoute, GeneratorRelationRepository $generatorrelationRepository,SettingRepository $settingRepository,ValidatorInterface $validator): Response {
+    public function view(CurrentRoute $currentRoute, GeneratorRelationRepository $generatorrelationRepository,SettingRepository $settingRepository,ValidatorInterface $validator): \Yiisoft\DataResponse\DataResponse {
         $generatorrelation = $this->generatorrelation($currentRoute, $generatorrelationRepository);
         $parameters = [
             'title' => $settingRepository->trans('view'),
@@ -202,12 +198,13 @@ final class GeneratorRelationController
     }
     
     //$generatorrelations = $this->generatorrelations();
+    
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, GentorRelation>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function generatorrelations(GeneratorRelationRepository $generatorrelationRepository): \Yiisoft\Data\Reader\DataReaderInterface{
+    private function generatorrelations(GeneratorRelationRepository $generatorrelationRepository): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader {
         $generatorrelations = $generatorrelationRepository->findAllPreloaded();
         return $generatorrelations;
     }

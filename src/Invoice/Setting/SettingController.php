@@ -75,9 +75,8 @@ final class SettingController
     
     /**
      * @param CurrentRoute $currentRoute
-     * @return Response
      */
-    public function debug_index(CurrentRoute $currentRoute): Response
+    public function debug_index(CurrentRoute $currentRoute): \Yiisoft\DataResponse\DataResponse
     {  
         $pageNum = (int)$currentRoute->getArgument('page', '1');
         $paginator = (new OffsetPaginator($this->settings($this->s)))
@@ -434,11 +433,9 @@ final class SettingController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
-     * @return Response
      */
-    public function view(CurrentRoute $currentRoute): Response {
+    public function view(CurrentRoute $currentRoute): \Yiisoft\DataResponse\DataResponse {
         $setting = $this->setting($currentRoute, $this->s);
         $parameters = [
             'title' => $this->s->trans('view'),
@@ -483,20 +480,16 @@ final class SettingController
     //$settings = $this->settings();
     
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Setting>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function settings(SettingRepository $settingRepository): \Yiisoft\Data\Reader\DataReaderInterface{
+    private function settings(SettingRepository $settingRepository): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader{
         $settings = $settingRepository->findAllPreloaded();
         return $settings;
     }
     
-    /**
-     * 
-     * @return Response
-     */
-    public function clear() : Response
+    public function clear() : \Yiisoft\DataResponse\DataResponse
     {
         $directory = dirname(dirname(dirname(__DIR__))).DIRECTORY_SEPARATOR.'public'.DIRECTORY_SEPARATOR. 'assets';
         try {
@@ -512,11 +505,7 @@ final class SettingController
         }
     }
     
-    /**
-     * 
-     * @return Response
-     */
-    public function get_cron_key() : Response
+    public function get_cron_key() : \Yiisoft\DataResponse\DataResponse
     {       
         $parameters = [
                'success'=>1,

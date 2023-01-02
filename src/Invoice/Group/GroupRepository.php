@@ -7,7 +7,6 @@ namespace App\Invoice\Group;
 use App\Invoice\Entity\Group;
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -32,18 +31,18 @@ private EntityWriter $entityWriter;
     /**
      * Get groups  without filter
      *
-     * @psalm-return DataReaderInterface<int,Group>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select();
         return $this->prepareDataReader($query);
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, Group>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
             ->withSort($this->getSort());
@@ -100,11 +99,11 @@ private EntityWriter $entityWriter;
     }
     
    /**
-    * @param string $identifier_format
-    * @param int $next_id
-    * @param int $left_pad
-    * @return string|null
-    */
+     * @param string $identifier_format
+     * @param int $next_id
+     * @param int $left_pad
+     * @return string|null
+     */
     private function parse_identifier_format(string $identifier_format = '', int $next_id = 1, int  $left_pad = 1): string|null
     {
         $template_vars = [];
@@ -136,6 +135,11 @@ private EntityWriter $entityWriter;
         return $identifier_format;
     }
     
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
     public function repoGroupquery(string $id): object|null    {
         $query = $this->select()
                       ->where(['id' => $id]);

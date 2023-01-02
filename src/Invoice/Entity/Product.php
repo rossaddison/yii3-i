@@ -115,12 +115,12 @@ class Product
         $this->unit = $unit;
     }
     
-    public function getProduct_id(): ?string
+    public function getProduct_id(): string
     {
         return (string)$this->id;
     }
     
-    public function getFamily_id(): ?string
+    public function getFamily_id(): string
     {
         return (string)$this->family_id;
     }
@@ -195,7 +195,7 @@ class Product
         $this->tax_rate_id = $tax_rate_id;
     }
 
-    public function getTax_rate_id(): ?string
+    public function getTax_rate_id(): string
     {
         return (string)$this->tax_rate_id;
     }
@@ -205,7 +205,7 @@ class Product
         $this->unit_id = $unit_id;
     }
 
-    public function getUnit_id(): ?string
+    public function getUnit_id(): string
     {
         return (string)$this->unit_id;
     }    

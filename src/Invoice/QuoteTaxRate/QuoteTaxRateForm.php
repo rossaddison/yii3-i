@@ -35,11 +35,21 @@ final class QuoteTaxRateForm extends FormModel
       return $this->quote_tax_rate_amount ?? 0.00;
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
 
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{tax_rate_id: list{Required}}
+     */
     public function getRules(): array  {
       return [
          'tax_rate_id'=> [new Required()],

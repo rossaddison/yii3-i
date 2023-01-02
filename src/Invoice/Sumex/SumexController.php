@@ -48,15 +48,13 @@ final class SumexController
     }
     
     /**
-     * 
      * @param SessionInterface $session
      * @param SumexRepository $sumexRepository
      * @param SettingRepository $settingRepository
      * @param Request $request
      * @param SumexService $service
-     * @return Response
      */
-    public function index(SessionInterface $session, SumexRepository $sumexRepository, SettingRepository $settingRepository, Request $request, SumexService $service): Response
+    public function index(SessionInterface $session, SumexRepository $sumexRepository, SettingRepository $settingRepository, Request $request, SumexService $service): \Yiisoft\DataResponse\DataResponse
     {
          $canEdit = $this->rbac($session);
          $flash = $this->flash($session, '','');
@@ -157,15 +155,13 @@ final class SumexController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param SumexRepository $sumexRepository
      * @param SettingRepository $settingRepository
-     * @return Response
      */
     public function view(CurrentRoute $currentRoute, SumexRepository $sumexRepository,
         SettingRepository $settingRepository
-        ): Response {
+        ): \Yiisoft\DataResponse\DataResponse {
         $parameters = [
             'title' => $settingRepository->trans('view'),
             'action' => ['sumex/edit', ['id' => $this->sumex($currentRoute, $sumexRepository)->getId()]],
@@ -203,11 +199,11 @@ final class SumexController
     }
     
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Sumex>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function sumexs(SumexRepository $sumexRepository): \Yiisoft\Data\Reader\DataReaderInterface 
+    private function sumexs(SumexRepository $sumexRepository): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
     {
         $sumexs = $sumexRepository->findAllPreloaded();        
         return $sumexs;

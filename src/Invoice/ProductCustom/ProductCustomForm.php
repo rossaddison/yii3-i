@@ -29,11 +29,21 @@ final class ProductCustomForm extends FormModel
       return $this->value;
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
 
+    /**
+     * @return Required[][]
+     *
+     * @psalm-return array{value: list{Required}}
+     */
     public function getRules(): array    {
       return [
         'value' => [new Required()],

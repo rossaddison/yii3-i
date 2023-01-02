@@ -9,7 +9,6 @@ use App\Invoice\Inv\InvRepository as IR;
 use App\Invoice\Setting\SettingRepository as SR;
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
@@ -34,18 +33,18 @@ private EntityWriter $entityWriter;
     }
 
     /**
-     * @psalm-return DataReaderInterface<int, InvAmount>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select();
         return $this->prepareDataReader($query);
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, InvAmount>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
             ->withSort($this->getSort());
@@ -102,7 +101,11 @@ private EntityWriter $entityWriter;
         return  $query->fetchOne() ?: null;        
     }
 
-    public function AgingCount($interval_end, $interval_start) : int {        
+    /**
+     * @psalm-param 1|16|31 $interval_end
+     * @psalm-param 15|30|365 $interval_start
+     */
+    public function AgingCount(int $interval_end, int $interval_start) : int {        
         $end = (new \DateTimeImmutable('now'))->sub(new \DateInterval('P'.$interval_end.'D'))
                                               ->format('Y-m-d');
         $start = (new \DateTimeImmutable('now'))->sub(new \DateInterval('P'.$interval_start. 'D'))
@@ -116,7 +119,7 @@ private EntityWriter $entityWriter;
         return $count;
     }
     
-    public function Aging($interval_end, $interval_start) : DataReaderInterface {
+    public function Aging(int $interval_end, int $interval_start) : EntityReader {
         $end = (new \DateTimeImmutable('now'))->sub(new \DateInterval('P'.$interval_end.'D'))
                                               ->format('Y-m-d');
         
@@ -141,21 +144,24 @@ private EntityWriter $entityWriter;
         return  $query->fetchOne() ?: null;    
     } 
     
-    public function repoStatusTotals($key, $range, $sR) : DataReaderInterface {        
+    public function repoStatusTotals(int $key, array $range, SR $sR) : EntityReader {        
         $datehelper = new DateHelper($sR);
         $query = $this->select()
                       ->load('inv')
-                      ->where(['inv.status_id' => (int)$key])
+                      ->where(['inv.status_id' => $key])
                       ->andWhere('inv.date_created', '>=' ,$datehelper->date_from_mysql_without_style($range['lower']))
                       ->andWhere('inv.date_created', '<=' ,$datehelper->date_from_mysql_without_style($range['upper']));
          return $this->prepareDataReader($query);
     }
     
-    public function repoStatusTotals_Num_Total($key, $range, $sR) : int {        
+    /**
+     * @psalm-param SR<object> $sR
+     */
+    public function repoStatusTotals_Num_Total(int $key, array $range, SR $sR) : int {        
         $datehelper = new DateHelper($sR);
         $query = $this->select()
                       ->load('inv')                
-                      ->where(['inv.status_id' => (int)$key])
+                      ->where(['inv.status_id' => $key])
                       ->andWhere('inv.date_created', '>=' ,$datehelper->date_from_mysql_without_style($range['lower']))
                       ->andWhere('inv.date_created', '<=' ,$datehelper->date_from_mysql_without_style($range['upper']))
                       ->count();
@@ -163,9 +169,13 @@ private EntityWriter $entityWriter;
     }
     
     /**
+     * 
+     * @param IR $iR
+     * @param SR $sR
      * @param string $period
+     * @return array
      */
-    public function get_status_totals(IR $iR, SR $sR, $period) : array
+    public function get_status_totals(IR $iR, SR $sR, string $period) : array
     {
         $return = [];
         $range = $sR->range($period);        

@@ -7,7 +7,6 @@ namespace App\Invoice\InvItemAmount;
 use App\Invoice\Entity\InvItemAmount;
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -33,18 +32,18 @@ private EntityWriter $entityWriter;
     /**
      * Get invitemamounts  without filter
      *
-     * @psalm-return DataReaderInterface<int,InvItemAmount>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         $query = $this->select()->load('inv_item');
         return $this->prepareDataReader($query);
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, InvItemAmount>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
             ->withSort($this->getSort());
@@ -79,6 +78,11 @@ private EntityWriter $entityWriter;
         );
     } 
     
+    /**
+     * @return null|object
+     *
+     * @psalm-return TEntity|null
+     */
     public function repoInvItemAmountquery(string $inv_item_id): object|null {
         $query = $this->select()->load(['inv_item'])->where(['inv_item_id' => $inv_item_id]);
         return  $query->fetchOne() ?: null;        

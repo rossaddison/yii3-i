@@ -132,7 +132,7 @@ class Gentor
       $this->flash_include = $flash_include;
       $this->headerline_include = $headerline_include;
     }
-    public function getGentor_id(): ?string
+    public function getGentor_id(): string
     {
         return (string)$this->id;
     }    

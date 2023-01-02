@@ -155,7 +155,7 @@ class QuoteItem
       $this->tax_rate_id =  $tax_rate_id;
     }
     
-    public function getProduct_id(): ?string
+    public function getProduct_id(): string
     {
      return (string)$this->product_id;
     }
@@ -245,7 +245,7 @@ class QuoteItem
       $this->product_unit =  $product_unit;
     }
     
-    public function getProduct_unit_id(): ?string
+    public function getProduct_unit_id(): string
     {
      return (string)$this->product_unit_id;
     }

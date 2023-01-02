@@ -46,14 +46,12 @@ final class TaxRateController
     }
     
     /**
-     * 
      * @param Session $session
      * @param TaxRateRepository $taxrateRepository
      * @param SettingRepository $settingRepository
      * @param Request $request
-     * @return Response
      */
-    public function index(Session $session, TaxRateRepository $taxrateRepository, SettingRepository $settingRepository, Request $request): Response
+    public function index(Session $session, TaxRateRepository $taxrateRepository, SettingRepository $settingRepository, Request $request): \Yiisoft\DataResponse\DataResponse
     {      
         $pageNum = (int)$request->getAttribute('page', '1');
         $paginator = (new OffsetPaginator($this->taxrates($taxrateRepository)))
@@ -167,14 +165,12 @@ final class TaxRateController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param TaxRateRepository $taxrateRepository
      * @param SettingRepository $settingRepository
      * @param ValidatorInterface $validator
-     * @return Response
      */
-    public function view(CurrentRoute $currentRoute, TaxRateRepository $taxrateRepository,SettingRepository $settingRepository,ValidatorInterface $validator): Response {
+    public function view(CurrentRoute $currentRoute, TaxRateRepository $taxrateRepository,SettingRepository $settingRepository,ValidatorInterface $validator): \Yiisoft\DataResponse\DataResponse {
         $taxrate = $this->taxrate($currentRoute, $taxrateRepository);
         $parameters = [
             'title' => 'Edit Tax Rate',
@@ -220,11 +216,11 @@ final class TaxRateController
     //$taxrates = $this->taxrates();
     
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, TaxRate>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function taxrates(TaxRateRepository $taxrateRepository): \Yiisoft\Data\Reader\DataReaderInterface{
+    private function taxrates(TaxRateRepository $taxrateRepository): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader{
         $taxrates = $taxrateRepository->findAllPreloaded();
         return $taxrates;
     }

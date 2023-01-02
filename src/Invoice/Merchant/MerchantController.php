@@ -48,15 +48,13 @@ final class MerchantController
     }
     
     /**
-     * 
      * @param SessionInterface $session
      * @param MerchantRepository $merchantRepository
      * @param SettingRepository $settingRepository
      * @param Request $request
      * @param MerchantService $service
-     * @return Response
      */
-    public function index(SessionInterface $session, MerchantRepository $merchantRepository, SettingRepository $settingRepository, Request $request, MerchantService $service): Response
+    public function index(SessionInterface $session, MerchantRepository $merchantRepository, SettingRepository $settingRepository, Request $request, MerchantService $service): \Yiisoft\DataResponse\DataResponse
     {
          $canEdit = $this->rbac($session);
          $flash = $this->flash($session, '','');
@@ -159,15 +157,13 @@ final class MerchantController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param MerchantRepository $merchantRepository
      * @param SettingRepository $settingRepository
-     * @return Response
      */
     public function view(CurrentRoute $currentRoute, MerchantRepository $merchantRepository,
         SettingRepository $settingRepository
-        ): Response {
+        ): \Yiisoft\DataResponse\DataResponse {
         $parameters = [
             'title' => $settingRepository->trans('view'),
             'action' => ['merchant/edit', ['id' => $this->merchant($currentRoute, $merchantRepository)->getId()]],
@@ -182,9 +178,8 @@ final class MerchantController
     /**
      * @param MerchantRepository $mR
      * @param SettingRepository $sR
-     * @return Response
      */
-    public function online_log(MerchantRepository $mR, SettingRepository $sR): Response {
+    public function online_log(MerchantRepository $mR, SettingRepository $sR): \Yiisoft\DataResponse\DataResponse {
         $parameters = [
             's'=>$sR,
             'payment_logs'=>$mR->findAllPreloaded(),
@@ -218,11 +213,11 @@ final class MerchantController
     }
     
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, Merchant>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function merchants(MerchantRepository $merchantRepository): \Yiisoft\Data\Reader\DataReaderInterface 
+    private function merchants(MerchantRepository $merchantRepository): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader 
     {
         $merchants = $merchantRepository->findAllPreloaded();        
         return $merchants;

@@ -84,7 +84,7 @@ class Task
       $this->id =  $id;
     }
     
-    public function getProject_id(): ?string
+    public function getProject_id(): string
     {
      return (string)$this->project_id;
     }

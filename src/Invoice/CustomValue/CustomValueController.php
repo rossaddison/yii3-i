@@ -46,16 +46,14 @@ final class CustomValueController
     }
     
     /**
-     * 
      * @param SessionInterface $session
      * @param CustomValueRepository $customvalueRepository
      * @param CustomFieldRepository $customfieldRepository
      * @param SettingRepository $settingRepository
      * @param Request $request
      * @param CustomValueService $service
-     * @return Response
      */
-    public function index(SessionInterface $session, CustomValueRepository $customvalueRepository, CustomFieldRepository $customfieldRepository, SettingRepository $settingRepository, Request $request, CustomValueService $service): Response
+    public function index(SessionInterface $session, CustomValueRepository $customvalueRepository, CustomFieldRepository $customfieldRepository, SettingRepository $settingRepository, Request $request, CustomValueService $service): \Yiisoft\DataResponse\DataResponse
     {
          $canEdit = $this->rbac($session);
          $flash = $this->flash($session, '','');
@@ -74,16 +72,14 @@ final class CustomValueController
     }
      
     /**
-     * 
      * @param SessionInterface $session
      * @param CustomFieldRepository $customfieldRepository
      * @param CustomValueRepository $customvalueRepository
      * @param SettingRepository $settingRepository
      * @param CurrentRoute $currentRoute
      * @param CustomValueService $service
-     * @return Response
      */
-    public function field(SessionInterface $session, CustomFieldRepository $customfieldRepository, CustomValueRepository $customvalueRepository, SettingRepository $settingRepository, CurrentRoute $currentRoute, CustomValueService $service): Response
+    public function field(SessionInterface $session, CustomFieldRepository $customfieldRepository, CustomValueRepository $customvalueRepository, SettingRepository $settingRepository, CurrentRoute $currentRoute, CustomValueService $service): \Yiisoft\DataResponse\DataResponse
     {      
         $canEdit = $this->rbac($session);
         $flash = $this->flash($session, '','');
@@ -215,15 +211,13 @@ final class CustomValueController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param CustomValueRepository $customvalueRepository
      * @param SettingRepository $settingRepository
-     * @return Response
      */
     public function view(CurrentRoute $currentRoute, CustomValueRepository $customvalueRepository,
         SettingRepository $settingRepository,
-        ): Response {
+        ): \Yiisoft\DataResponse\DataResponse {
         $parameters = [
             'title' => $settingRepository->trans('view'),
             'action' => ['customvalue/view', ['id' => $this->customvalue($currentRoute, $customvalueRepository)->getId()]],
@@ -261,11 +255,11 @@ final class CustomValueController
     }  
     
     /**
-     * @return \Yiisoft\Data\Reader\DataReaderInterface
+     * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      *
-     * @psalm-return \Yiisoft\Data\Reader\DataReaderInterface<int, CustomValue>
+     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
-    private function customvalues(CustomValueRepository $customvalueRepository): \Yiisoft\Data\Reader\DataReaderInterface 
+    private function customvalues(CustomValueRepository $customvalueRepository): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader 
     {
         $customvalues = $customvalueRepository->findAllPreloaded();        
         return $customvalues;
@@ -293,6 +287,8 @@ final class CustomValueController
     
     /**
      * @return string[]
+     *
+     * @psalm-return list{'TEXT', 'DATE', 'BOOLEAN'}
      */
     public function user_input_types() : array
     {
@@ -305,6 +301,8 @@ final class CustomValueController
 
     /**
      * @return string[]
+     *
+     * @psalm-return list{'SINGLE-CHOICE', 'MULTIPLE-CHOICE'}
      */
     public function custom_value_fields() : array
     {
