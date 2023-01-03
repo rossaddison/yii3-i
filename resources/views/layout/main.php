@@ -143,6 +143,10 @@ $this->beginPage();
                         'url' => $urlGenerator->generateFromCurrent(['_language' => 'uk'], fallbackRouteName: 'site/index'),
                     ],
                     [
+                        'label' => 'Uzbek / o'."'".'zbek',
+                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'uz'], fallbackRouteName: 'site/index'),
+                    ],        
+                    [
                         'label' => 'Vietnamese / Tiếng Việt',
                         'url' => $urlGenerator->generateFromCurrent(['_language' => 'vi'], fallbackRouteName: 'site/index'),
                     ],

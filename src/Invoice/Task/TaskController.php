@@ -278,7 +278,7 @@ final class TaskController
      * @psalm-param positive-int $order
      * @psalm-param sR<object> $sR
      */
-    private function save_task_lookup_item_inv(int $order, Task $task, $inv_id, tR $taskR, trR $trR, iiaR $iiaR, sR $sR, ValidatorInterface $validator) : void {
+private function save_task_lookup_item_inv(int $order, array|object|null $task, $inv_id, tR $taskR, trR $trR, iiaR $iiaR, sR $sR, ValidatorInterface $validator) : void {
            $form = new InvItemForm();
            $ajax_content = [
                 'name'=>$task->getName(),        

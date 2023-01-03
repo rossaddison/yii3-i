@@ -317,7 +317,7 @@ class ProductController
     /**
      * 
      * @param int $order
-     * @param Product $product
+     * @param array|object|null $product
      * @param string $quote_id
      * @param pR $pR
      * @param trR $trR
@@ -327,8 +327,7 @@ class ProductController
      * @param ValidatorInterface $validator
      * @return void
      */
-    
-     private function save_product_lookup_item_quote(int $order, Product $product, string $quote_id, pR $pR, trR $trR, uR $unR, QIAR $qiaR, QIAS $qiaS, ValidatorInterface $validator) : void {
+    private function save_product_lookup_item_quote(int $order, array|object|null $product, string $quote_id, pR $pR, trR $trR, uR $unR, QIAR $qiaR, QIAS $qiaS, ValidatorInterface $validator) : void {
            $form = new QuoteItemForm();
            $ajax_content = [
                 'name'=>$product->getProduct_name(),        
@@ -355,7 +354,7 @@ class ProductController
     /**
      * 
      * @param int $order
-     * @param Product $product
+     * @param array|object|null $product
      * @param string $inv_id
      * @param pR $pR
      * @param sR $sR
@@ -364,10 +363,9 @@ class ProductController
      * @param iiaR $iiaR
      * @param uR $uR
      * @param ValidatorInterface $validator
-     * @psalm-param positive-int $order
      * @return void
      */
-    private function save_product_lookup_item_inv(int $order, Product $product, string $inv_id, pR $pR, sR $sR, trR $trR, uR $unR, iiaR $iiaR, uR $uR, ValidatorInterface $validator) : void {
+    private function save_product_lookup_item_inv(int $order, array|object|null $product, string $inv_id, pR $pR, sR $sR, trR $trR, uR $unR, iiaR $iiaR, uR $uR, ValidatorInterface $validator) : void {
            $form = new InvItemForm();
            $ajax_content = [
                 'name'=>$product->getProduct_name(),        

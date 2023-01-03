@@ -18,6 +18,10 @@
 <p>CompanyPrivate logo will be automatically input on invoice/quotes depending on whether the date of the invoice falls between the start and end date.</p>
 <p>Introducing Paypal.</p>
 <p>Introducing India's PayTm payment gateway's QR code method of payment and comparing this with Stripe's method.</p>
+<p><b>3 January 2023</b></p>
+<p><a href="https://github.com/yiisoft/demo/issues/559"><s>Issue 559</s></a></p>
+<p>Uzbek Introduced</p>
+<p>Psalm Level 7,6,5,4 Testing (0 errors)</p>
 <p><b>2 January 2023</b></p>
 <p>Psalm Level 7,6,5,4 Testing (0 errors)</p>
 <p><b>30 December 2022</b></p>
@@ -64,7 +68,7 @@
 <p><b>Steps to generate eg. ip_lang.php</b></p>
 <p>1: Generator ...Translate English\ip_lang.php</p>
 <p>2: Either copy the array from off the screen or move it from ..resources/views/generator/output_overwrite into the appropriate folder</p>
-<P>3. The separator ie. 'YYYY' will enable you to do a search and replace ie search 'YYYY' and replace ', to provide a comma separating each array item from the screen outputted array with a comma.</p>
+<P><s>3. The separator ie. 'YYYY' will enable you to do a search and replace ie search 'YYYY' and replace ', to provide a comma separating each array item from the screen outputted array with a comma.</s></p>
 <p>4. Dont forget to restart Netbeans 16 after adjusting C:\Program Files\NetBeans-16\netbeans\etc\netbeans.conf and inserting <code>"-J-Dfile.encoding=UTF-8"</code>  to parameter "netbeans_default_options". when dealing with languages with special characters.</p>
 <p><b>26th December 2022</b></p>
 <p>Include additional demo languages</p>

@@ -42,17 +42,23 @@ final class TaxRateRepository extends Select\Repository
     }
             
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $taxrate
+     * @throws Throwable 
+     * @return void
      */
-    public function save(TaxRate $taxrate): void
+    public function save(array|object|null $taxrate): void
     {
         $this->entityWriter->write([$taxrate]);
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $taxrate
+     * @throws Throwable 
+     * @return void
      */
-    public function delete(TaxRate $taxrate): void
+    public function delete(array|object|null $taxrate): void
     {
         $this->entityWriter->delete([$taxrate]);
     }

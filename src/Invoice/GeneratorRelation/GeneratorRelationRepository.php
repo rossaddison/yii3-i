@@ -48,17 +48,23 @@ final class GeneratorRelationRepository extends Select\Repository
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $generatorrelation
+     * @throws Throwable 
+     * @return void
      */
-    public function save(GentorRelation $generatorrelation): void
+    public function save(array|object|null $generatorrelation): void
     {
         $this->entityWriter->write([$generatorrelation]);
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $generatorrelation
+     * @throws Throwable 
+     * @return void
      */
-    public function delete(GentorRelation $generatorrelation): void
+    public function delete(array|object|null $generatorrelation): void
     {
         $this->entityWriter->delete([$generatorrelation]);
     }

@@ -41,17 +41,23 @@ final class GeneratorRepository extends Select\Repository
     }
             
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $generator
+     * @throws Throwable 
+     * @return void
      */
-    public function save(Gentor $generator): void
+    public function save(array|object|null $generator): void
     {
         $this->entityWriter->write([$generator]);
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $generator
+     * @throws Throwable 
+     * @return void
      */
-    public function delete(Gentor $generator): void
+    public function delete(array|object|null $generator): void
     {
         $this->entityWriter->delete([$generator]);
     }

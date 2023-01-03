@@ -84,17 +84,23 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $upload
+     * @throws Throwable 
+     * @return void
      */
-    public function save(Upload $upload): void
+    public function save(array|object|null $upload): void
     {
         $this->entityWriter->write([$upload]);
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $upload
+     * @throws Throwable 
+     * @return void
      */
-    public function delete(Upload $upload): void
+    public function delete(array|object|null $upload): void
     {
         $this->entityWriter->delete([$upload]);
     }

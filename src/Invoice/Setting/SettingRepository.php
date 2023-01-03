@@ -12,7 +12,6 @@ use Cycle\ORM\Select;
 use Throwable;
 use Yiisoft\Aliases\Aliases;
 use Yiisoft\Config\ConfigPaths;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Files\FileHelper;
 use Yiisoft\Files\PathMatcher\PathMatcher;
@@ -70,9 +69,12 @@ final class SettingRepository extends Select\Repository
     }
             
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $setting
+     * @throws Throwable 
+     * @return void
      */
-    public function save(Setting $setting): void
+    public function save(array|object|null $setting): void
     {
         if ($setting->getSetting_key() === 'default_language') {
             $this->session->set('_language', $setting->getSetting_value());            
@@ -81,9 +83,12 @@ final class SettingRepository extends Select\Repository
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $setting
+     * @throws Throwable 
+     * @return void
      */
-    public function delete(Setting $setting): void
+    public function delete(array|object|null $setting): void
     {
         $this->entityWriter->delete([$setting]);
     }
@@ -291,9 +296,8 @@ final class SettingRepository extends Select\Repository
     }
     
     /**
-     * @return string[]
-     *
-     * @psalm-return array{af: 'Afrikaans', ar: 'Arabic', az: 'Azerbaijani', de: 'German', en: 'English', es: 'Spanish', id: 'Indonesian', ja: 'Japanese', nl: 'Dutch', ru: 'Russian', uk: 'Ukrainian', sk: 'Slovakian', vi: 'Vietnamese', zh: 'ChineseSimplified'}
+     * 
+     * @return array
      */
     public function locale_language_array() : array {
     // locale => src/Invoice/Language/{language folder name}    
@@ -307,13 +311,13 @@ final class SettingRepository extends Select\Repository
             'id'=>'Indonesian',            
             'ja'=>'Japanese',
             'nl'=>'Dutch',
-            // There is currently no russian language folder under invoiceplane. Substitute English here with Russian when it becomes available
             'ru'=>'Russian',
+            'sk'=>'Slovakian',            
             'uk'=>'Ukrainian',
-            'sk'=>'Slovakian',
+            'uz'=>'Uzbek',
+            'vi'=>'Vietnamese',
             // Use camelcase here => remove the space between Chinese and Simplified and in the original folder otherwise it will not be 
             // retrieved
-            'vi'=>'Vietnamese',
             'zh'=>'ChineseSimplified',                
         ];
         return $language_list;

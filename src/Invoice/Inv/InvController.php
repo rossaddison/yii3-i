@@ -498,12 +498,12 @@ final class InvController
     
     /**
      * 
-     * @param \App\Invoice\Entity\TaxRate $taxrate
+     * @param array|object|null $taxrate
      * @param Inv $inv
      * @param ValidatorInterface $validator
      * @return void
      */
-    public function default_tax_inv(\App\Invoice\Entity\TaxRate $taxrate, Inv $inv, ValidatorInterface $validator) : void {
+    public function default_tax_inv(array|object|null $taxrate, Inv $inv, ValidatorInterface $validator) : void {
         $inv_tax_rate_form = new InvTaxRateForm();
         $inv_tax_rate = [];
         $inv_tax_rate['inv_id'] = $inv->getId();
@@ -1507,12 +1507,10 @@ final class InvController
     }
     
     /**
+     * 
      * @param string|null $inv_id
      * @param icR $icR
-     *
-     * @return InvCustom[]
-     *
-     * @psalm-return array<string, InvCustom>
+     * @return array
      */
     public function inv_custom_values(string|null $inv_id, icR $icR) : array
     {

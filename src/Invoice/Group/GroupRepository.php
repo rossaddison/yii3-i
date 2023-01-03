@@ -54,17 +54,23 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $group
+     * @throws Throwable 
+     * @return void
      */
-    public function save(Group $group): void
+    public function save(array|object|null $group): void
     {
         $this->entityWriter->write([$group]);
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $group
+     * @throws Throwable 
+     * @return void
      */
-    public function delete(Group $group): void
+    public function delete(array|object|null $group): void
     {
         $this->entityWriter->delete([$group]);
     }

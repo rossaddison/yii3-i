@@ -24,7 +24,12 @@ final class InvCustomService
        $this->repository->save($model);
     }
     
-    public function deleteInvCustom(InvCustom $model): void
+    /**
+     * 
+     * @param array|object|null $model
+     * @return void
+     */
+    public function deleteInvCustom(array|object|null $model): void
     {
         $this->repository->delete($model);
     }

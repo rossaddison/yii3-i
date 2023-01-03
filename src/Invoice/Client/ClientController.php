@@ -166,9 +166,10 @@ final class ClientController
     }
     
     /**
-     * @return ClientCustom[]
-     *
-     * @psalm-return array<string, ClientCustom>
+     * 
+     * @param string $client_id
+     * @param ccR $ccR
+     * @return array
      */
     public function client_custom_values(string $client_id, ccR $ccR) : array
     {

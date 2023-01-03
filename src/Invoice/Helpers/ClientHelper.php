@@ -3,8 +3,6 @@
 declare(strict_types=1);
 
 Namespace App\Invoice\Helpers;
-
-use App\Invoice\Entity\Client;
 use App\Invoice\Setting\SettingRepository; 
 
 Class ClientHelper 
@@ -15,7 +13,7 @@ Class ClientHelper
         $this->s = $s;
     }
     
-    public function format_client(Client $client): string
+    public function format_client(array|object|null $client): string
     {
         return (null!==$client->getClient_surname()) ? $client->getClient_name() . " " . $client->getClient_surname() 
                                                                       : ($client->getClient_name() ?: '');        

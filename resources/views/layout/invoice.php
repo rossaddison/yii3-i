@@ -17,6 +17,7 @@ use App\Invoice\Asset\i18nAsset\nl_Asset;
 use App\Invoice\Asset\i18nAsset\ru_Asset;
 use App\Invoice\Asset\i18nAsset\sk_Asset;
 use App\Invoice\Asset\i18nAsset\uk_UA_Asset;
+use App\Invoice\Asset\i18nAsset\uz_UZ_Asset;
 use App\Invoice\Asset\i18nAsset\zh_CN_Asset;
 // PCI Compliant Payment Gateway Assets
 use App\Invoice\Asset\pciAsset\stripe_v10_Asset;
@@ -76,6 +77,7 @@ switch ($session->get('_language') ?? $session->set('_language','en')) {
     case 'sk' : $assetManager->register(sk_Asset::class); $locale = 'Slovensky'; break;    
     case 'es' : $assetManager->register(es_ES_Asset::class); $locale = 'Spanish'; break;
     case 'uk' : $assetManager->register(uk_UA_Asset::class); $locale = 'Ukrainian'; break;
+    case 'uz' : $assetManager->register(uz_UZ_Asset::class); $locale = 'Uzbek'; break;
     case 'zh' : $assetManager->register(zh_CN_Asset::class); $locale = 'Chinese Simplified'; break;
     default   : $assetManager->register(en_GB_Asset::class); $locale = 'English'; break;
 }
@@ -353,6 +355,10 @@ echo Nav::widget()
                     [
                         'label' => 'Ukrainian / українська',
                         'url' => $urlGenerator->generateFromCurrent(['_language' => 'uk'], fallbackRouteName: 'site/index'),
+                    ],
+                    [
+                        'label' => 'Uzbek / o'."'".'zbek',
+                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'uz'], fallbackRouteName: 'site/index'),
                     ],
                     [
                         'label' => 'Vietnamese / Tiếng Việt',

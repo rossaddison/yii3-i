@@ -24,7 +24,12 @@ final class QuoteCustomService
        $this->repository->save($model);
     }
     
-    public function deleteQuoteCustom(QuoteCustom $model): void
+    /**
+     * 
+     * @param array|object|null $model
+     * @return void
+     */
+    public function deleteQuoteCustom(array|object|null $model): void
     {
         $this->repository->delete($model);
     }

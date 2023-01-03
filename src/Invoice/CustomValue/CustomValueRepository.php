@@ -54,17 +54,23 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $customvalue
+     * @throws Throwable 
+     * @return void
      */
-    public function save(CustomValue $customvalue): void
+    public function save(array|object|null $customvalue): void
     {
         $this->entityWriter->write([$customvalue]);
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $customvalue
+     * @throws Throwable 
+     * @return void
      */
-    public function delete(CustomValue $customvalue): void
+    public function delete(array|object|null $customvalue): void
     {
         $this->entityWriter->delete([$customvalue]);
     }

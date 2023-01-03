@@ -143,10 +143,10 @@ final class QuoteItemService
     
     /**
      * 
-     * @param QuoteItem $model
+     * @param array|object|null $model
      * @return void
      */
-    public function deleteQuoteItem(QuoteItem $model): void 
+    public function deleteQuoteItem(array|object|null $model): void 
     {
         $this->repository->delete($model);
     }

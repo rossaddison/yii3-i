@@ -28,7 +28,12 @@ final class QuoteTaxRateService
         $this->repository->save($model);
     }
     
-    public function deleteQuoteTaxRate(QuoteTaxRate $model): void
+    /**
+     * 
+     * @param array|object|null $model
+     * @return void
+     */
+    public function deleteQuoteTaxRate(array|object|null $model): void
     {
         $this->repository->delete($model);
     }

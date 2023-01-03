@@ -57,17 +57,23 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $task
+     * @throws Throwable 
+     * @return void
      */
-    public function save(Task $task): void
+    public function save(array|object|null $task): void
     {
         $this->entityWriter->write([$task]);
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $task
+     * @throws Throwable 
+     * @return void
      */
-    public function delete(Task $task): void
+    public function delete(array|object|null $task): void
     {
         $this->entityWriter->delete([$task]);
     }

@@ -61,9 +61,6 @@ final class UserRepository extends Select\Repository
         return $this->prepareDataReader($query);
     }
 
-    /**
-     * @return EntityReader
-     */
     public function findAll(array $scope = [], array $orderBy = []): EntityReader
     {
         return new EntityReader($this

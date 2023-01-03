@@ -60,21 +60,26 @@ final class ProductRepository extends Select\Repository
     }
 
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $product
+     * @throws Throwable 
+     * @return void
      */
-    public function save(Product $product): void
+    public function save(array|object|null $product): void
     {
         $this->entityWriter->write([$product]);
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $product
+     * @throws Throwable 
+     * @return void
      */
-    public function delete(Product $product): void
+    public function delete(array|object|null $product): void
     {
         $this->entityWriter->delete([$product]);
     }
-    
 
     private function prepareDataReader(Select $query): EntityReader
     {

@@ -41,17 +41,23 @@ final class EmailTemplateRepository extends Select\Repository
     }
 
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $emailtemplate
+     * @throws Throwable 
+     * @return void
      */
-    public function save(EmailTemplate $emailtemplate): void
+    public function save(array|object|null $emailtemplate): void
     {
         $this->entityWriter->write([$emailtemplate]);
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $emailtemplate
+     * @throws Throwable 
+     * @return void
      */
-    public function delete(EmailTemplate $emailtemplate): void
+    public function delete(array|object|null $emailtemplate): void
     {
         $this->entityWriter->delete([$emailtemplate]);
     }

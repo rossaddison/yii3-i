@@ -56,17 +56,23 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $quotetaxrate
+     * @throws Throwable 
+     * @return void
      */
-    public function save(QuoteTaxRate $quotetaxrate): void
+    public function save(array|object|null $quotetaxrate): void
     {
         $this->entityWriter->write([$quotetaxrate]);
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $quotetaxrate
+     * @throws Throwable 
+     * @return void
      */
-    public function delete(QuoteTaxRate $quotetaxrate): void
+    public function delete(array|object|null $quotetaxrate): void
     {
         $this->entityWriter->delete([$quotetaxrate]);
     }

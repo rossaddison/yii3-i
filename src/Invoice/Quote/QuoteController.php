@@ -420,12 +420,12 @@ final class QuoteController
     
     /**
      * 
-     * @param \App\Invoice\Entity\TaxRate $taxrate
+     * @param array|object|null $taxrate
      * @param Quote $quote
      * @param ValidatorInterface $validator
      * @return void
      */
-    public function default_tax_quote(\App\Invoice\Entity\TaxRate $taxrate, Quote $quote, ValidatorInterface $validator) : void {
+    public function default_tax_quote(array|object|null $taxrate, Quote $quote, ValidatorInterface $validator) : void {
         $quote_tax_rate_form = new QuoteTaxRateForm();
         $quote_tax_rate = [];
         $quote_tax_rate['quote_id'] = $quote->getId();
@@ -1352,12 +1352,10 @@ final class QuoteController
     }
     
     /**
+     * 
      * @param string|null $quote_id
      * @param qcR $qcR
-     *
-     * @return QuoteCustom[]
-     *
-     * @psalm-return array<string, QuoteCustom>
+     * @return array
      */
     public function quote_custom_values(string|null $quote_id, qcR $qcR) : array
     {

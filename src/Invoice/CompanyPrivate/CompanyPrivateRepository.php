@@ -53,18 +53,24 @@ private EntityWriter $entityWriter;
         return Sort::only(['id'])->withOrder(['id' => 'asc']);
     }
     
-    /**
-     * @throws Throwable
+     /**
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $companyprivate
+     * @throws Throwable 
+     * @return void
      */
-    public function save(CompanyPrivate $companyprivate): void
+    public function save(array|object|null $companyprivate): void
     {
         $this->entityWriter->write([$companyprivate]);
     }
     
-    /**
-     * @throws Throwable
+     /**
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $companyprivate
+     * @throws Throwable 
+     * @return void
      */
-    public function delete(CompanyPrivate $companyprivate): void
+    public function delete(array|object|null $companyprivate): void
     {
         $this->entityWriter->delete([$companyprivate]);
     }

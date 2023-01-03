@@ -60,17 +60,23 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $userclient
+     * @throws Throwable 
+     * @return void
      */
-    public function save(UserClient $userclient): void
+    public function save(array|object|null $userclient): void
     {
         $this->entityWriter->write([$userclient]);
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $userclient
+     * @throws Throwable 
+     * @return void
      */
-    public function delete(UserClient $userclient): void
+    public function delete(array|object|null $userclient): void
     {
         $this->entityWriter->delete([$userclient]);
     }
@@ -210,9 +216,9 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @param null|string $user_id
+     * @param string $user_id
      */
-    public function unassign_to_user_client(string|null $user_id) : void {
+    public function unassign_to_user_client(string $user_id) : void {
         $clients = $this->repoClientquery($user_id);        
         foreach ($clients as $client) {
             $this->delete($client);

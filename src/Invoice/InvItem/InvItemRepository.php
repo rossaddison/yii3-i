@@ -56,17 +56,23 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $invitem
+     * @throws Throwable 
+     * @return void
      */
-    public function save(InvItem $invitem): void
+    public function save(array|object|null $invitem): void
     {
         $this->entityWriter->write([$invitem]);
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $invitem
+     * @throws Throwable 
+     * @return void
      */
-    public function delete(InvItem $invitem): void
+    public function delete(array|object|null $invitem): void
     {
         $this->entityWriter->delete([$invitem]);
     }

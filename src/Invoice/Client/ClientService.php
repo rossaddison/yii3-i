@@ -48,7 +48,12 @@ final class ClientService
         $this->repository->save($model);
     }
     
-    public function deleteClient(Client $model): void
+    /**
+     * 
+     * @param array|object|null $model
+     * @return void
+     */
+    public function deleteClient(array|object|null $model): void
     {
         $this->repository->delete($model);
     }

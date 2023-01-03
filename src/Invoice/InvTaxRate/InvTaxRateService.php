@@ -45,7 +45,12 @@ final class InvTaxRateService
         }
     }
     
-    public function deleteInvTaxRate(InvTaxRate $model): void
+    /**
+     * 
+     * @param array|object|null $model
+     * @return void
+     */
+    public function deleteInvTaxRate(array|object|null $model): void
     {
         $this->repository->delete($model);
     }

@@ -55,17 +55,23 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $invitemamount
+     * @throws Throwable 
+     * @return void
      */
-    public function save(InvItemAmount $invitemamount): void
+    public function save(array|object|null $invitemamount): void
     {
         $this->entityWriter->write([$invitemamount]);
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $invitemamount
+     * @throws Throwable 
+     * @return void
      */
-    public function delete(InvItemAmount $invitemamount): void
+    public function delete(array|object|null $invitemamount): void
     {
         $this->entityWriter->delete([$invitemamount]);
     }

@@ -54,17 +54,23 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $clientnote
+     * @throws Throwable 
+     * @return void
      */
-    public function save(ClientNote $clientnote): void
+    public function save(array|object|null $clientnote): void
     {
         $this->entityWriter->write([$clientnote]);
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $clientnote
+     * @throws Throwable 
+     * @return void
      */
-    public function delete(ClientNote $clientnote): void
+    public function delete(array|object|null $clientnote): void
     {
         $this->entityWriter->delete([$clientnote]);
     }

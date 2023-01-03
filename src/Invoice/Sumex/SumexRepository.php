@@ -55,17 +55,23 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $sumex
+     * @throws Throwable 
+     * @return void
      */
-    public function save(Sumex $sumex): void
+    public function save(array|object|null $sumex): void
     {
         $this->entityWriter->write([$sumex]);
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $sumex
+     * @throws Throwable 
+     * @return void
      */
-    public function delete(Sumex $sumex): void
+    public function delete(array|object|null $sumex): void
     {
         $this->entityWriter->delete([$sumex]);
     }

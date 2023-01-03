@@ -42,17 +42,23 @@ final class UnitRepository extends Select\Repository
     }
             
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $unit
+     * @throws Throwable 
+     * @return void
      */
-    public function save(Unit $unit): void
+    public function save(array|object|null $unit): void
     {
         $this->entityWriter->write([$unit]);
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $unit
+     * @throws Throwable 
+     * @return void
      */
-    public function delete(Unit $unit): void
+    public function delete(array|object|null $unit): void
     {
         $this->entityWriter->delete([$unit]);
     }

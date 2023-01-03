@@ -252,10 +252,10 @@ final class InvItemService
     
     /**
      * 
-     * @param InvItem $model
+     * @param array|object|null $model
      * @return void
      */
-    public function deleteInvItem(InvItem $model): void 
+    public function deleteInvItem(array|object|null $model): void 
     {
         $this->repository->delete($model);
     }

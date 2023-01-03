@@ -765,12 +765,10 @@ final class PaymentController
     }
     
     /**
+     * 
      * @param string $payment_id
      * @param PaymentCustomRepository $pcR
-     *
-     * @return PaymentCustom[]
-     *
-     * @psalm-return array<string, PaymentCustom>
+     * @return array
      */
     private function payment_custom_values(string $payment_id, PaymentCustomRepository $pcR) : array
     {

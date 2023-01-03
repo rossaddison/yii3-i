@@ -76,17 +76,23 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $payment
+     * @throws Throwable 
+     * @return void
      */
-    public function save(Payment $payment): void
+    public function save(array|object|null $payment): void
     {
         $this->entityWriter->write([$payment]);
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $payment
+     * @throws Throwable 
+     * @return void
      */
-    public function delete(Payment $payment): void
+    public function delete(array|object|null $payment): void
     {
         $this->entityWriter->delete([$payment]);
     }

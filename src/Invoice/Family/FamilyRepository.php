@@ -42,17 +42,23 @@ final class FamilyRepository extends Select\Repository
     }
             
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $family
+     * @throws Throwable 
+     * @return void
      */
-    public function save(Family $family): void
+    public function save(array|object|null $family): void
     {
         $this->entityWriter->write([$family]);
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $family
+     * @throws Throwable 
+     * @return void
      */
-    public function delete(Family $family): void
+    public function delete(array|object|null $family): void
     {
         $this->entityWriter->delete([$family]);
     }

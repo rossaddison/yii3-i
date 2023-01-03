@@ -54,17 +54,23 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $itemlookup
+     * @throws Throwable 
+     * @return void
      */
-    public function save(ItemLookup $itemlookup): void
+    public function save(array|object|null $itemlookup): void
     {
         $this->entityWriter->write([$itemlookup]);
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|object|null $itemlookup
+     * @throws Throwable 
+     * @return void
      */
-    public function delete(ItemLookup $itemlookup): void
+    public function delete(array|object|null $itemlookup): void
     {
         $this->entityWriter->delete([$itemlookup]);
     }
