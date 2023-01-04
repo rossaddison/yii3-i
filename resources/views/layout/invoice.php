@@ -205,7 +205,7 @@ echo Nav::widget()
                                  ['options'=>['class'=>'nav fs-4'],'label' => $s->trans('invoice_archive'),'url'=>$urlGenerator->generate('inv/archive')],
                                  ['options'=>['class'=>'nav fs-4'],'label' => $s->trans('payment_method'),'url'=>$urlGenerator->generate('paymentmethod/index')],   
                                  ['options'=>['class'=>'nav fs-4'],'label' => $s->trans('invoice_tax_rate'),'url'=>$urlGenerator->generate('taxrate/index')],
-                                 ['options'=>['class'=>'nav fs-4'],'label' => $s->trans('invoice_user_account'),'url'=>$urlGenerator->generate('userinv/index')],
+                                 ['options'=>['class'=>'nav fs-4'],'label' => $translator->translate('invoice.user.account'),'url'=>$urlGenerator->generate('userinv/index')],
                                  ['options'=>['class'=>'nav fs-4'],'label' => $translator->translate('invoice.setting.company'),'url'=>$urlGenerator->generate('company/index')],
                                  ['options'=>['class'=>'nav fs-4'],'label' => $translator->translate('invoice.setting.company.private'),'url'=>$urlGenerator->generate('companyprivate/index')],
                                  ['options'=>['class'=>'nav fs-4'],'label' => $translator->translate('invoice.setting.company.profile'),'url'=>$urlGenerator->generate('profile/index')],
