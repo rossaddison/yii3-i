@@ -20,18 +20,30 @@ final class ClientNoteService
     
     public function addClientNote(ClientNote $model, ClientNoteForm $form, SettingRepository $s): void
     {
-       $model->setClient_id($form->getClient_id());
+       null!==$form->getClient_id() ? $model->setClient_id($form->getClient_id()) : '';
        $model->setDate($form->getDate($s));
-       $model->setNote($form->getNote());
+       null!==$form->getNote() ? $model->setNote($form->getNote()) : '';
        $this->repository->save($model);
     }
 
     public function saveClientNote(ClientNote $model, ClientNoteForm $form, SettingRepository $s): void
     {
-       $model->setClient_id($form->getClient_id());
-       null!==$form->getClient_id() ? $model->setClient($model->getClient()->getClient_id() == $form->getClient_id() ? $model->getClient() : null): '';
+       //Psalm Level 3: ERROR: PossiblyNullReference - src/Invoice/ClientNote/ClientNoteService.php:58:33 - Cannot call method getClient_id on possibly null value (see https://psalm.dev/083)
+       //&& $model->getClient()->getClient_id() == $form->getClient_id()
+       // https://stackoverflow.com/questions/12351737/is-there-a-nullsafe-operator-in-php
+       // Use the null safe operator to remove this error instead of psalm-suppress
+
+       // if the dropdown value has changed,
+       // reset the relation to null before using setter of individual field
+        
+       null!==$form->getClient_id() 
+       && $model->getClient()?->getClient_id() == $form->getClient_id()
+       ? $model->setClient($model->getClient()) : $model->setClient(null);
+       
+       null!==$form->getClient_id() ? $model->setClient_id($form->getClient_id()) : '';
+       
        $model->setDate($form->getDate($s));
-       $model->setNote($form->getNote());
+       null!==$form->getNote() ? $model->setNote($form->getNote()) : '';
        $this->repository->save($model);
     }
     
