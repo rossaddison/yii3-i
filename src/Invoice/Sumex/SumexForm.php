@@ -45,7 +45,7 @@ final class SumexForm extends FormModel
         $datetime = new \DateTime();
         $datetime->setTimezone(new \DateTimeZone($s->get_setting('time_zone') ? $s->get_setting('time_zone') : 'Europe/London')); 
         $datetime->format($datehelper->style());
-        $date = $datehelper->date_to_mysql(null!==$this->treatmentstart ? $this->treatmentstart : \Date('Y-m-d'));
+        $date = $datehelper->date_to_mysql(null!==$this->treatmentstart ? $this->treatmentstart : date('Y-m-d'));
         $str_replace = str_replace($datehelper->separator(), '-', $date);
         $datetime->modify($str_replace);
         return $datetime;
@@ -57,7 +57,7 @@ final class SumexForm extends FormModel
         $datetime = new \DateTime();
         $datetime->setTimezone(new \DateTimeZone($s->get_setting('time_zone') ? $s->get_setting('time_zone') : 'Europe/London')); 
         $datetime->format($datehelper->style());
-        $date = $datehelper->date_to_mysql(null!==$this->treatmentend ? $this->treatmentend : \Date('Y-m-d'));
+        $date = $datehelper->date_to_mysql(null!==$this->treatmentend ? $this->treatmentend : date('Y-m-d'));
         $str_replace = str_replace($datehelper->separator(), '-', $date);
         $datetime->modify($str_replace);
         return $datetime;
@@ -69,7 +69,7 @@ final class SumexForm extends FormModel
         $datetime = new \DateTime();
         $datetime->setTimezone(new \DateTimeZone($s->get_setting('time_zone') ? $s->get_setting('time_zone') : 'Europe/London')); 
         $datetime->format($datehelper->style());
-        $date = $datehelper->date_to_mysql(null!==$this->casedate ? $this->casedate : \Date('Y-m-d'));
+        $date = $datehelper->date_to_mysql(null!==$this->casedate ? $this->casedate : date('Y-m-d'));
         $str_replace = str_replace($datehelper->separator(), '-', $date);
         $datetime->modify($str_replace);
         return $datetime;
