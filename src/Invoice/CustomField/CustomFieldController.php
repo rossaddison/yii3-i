@@ -124,7 +124,6 @@ final class CustomFieldController
     /**
      * 
      * @param ViewRenderer $head
-     * @param SessionInterface $session
      * @param Request $request
      * @param CurrentRoute $currentRoute
      * @param ValidatorInterface $validator
@@ -132,41 +131,45 @@ final class CustomFieldController
      * @param SettingRepository $settingRepository
      * @return Response
      */
-    public function edit(ViewRenderer $head, SessionInterface $session, Request $request, CurrentRoute $currentRoute,
+    public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute,
                         ValidatorInterface $validator,
                         CustomFieldRepository $customfieldRepository, 
                         SettingRepository $settingRepository                        
 
     ): Response {
-        $parameters = [
-            'title' => 'Edit',
-            'action' => ['customfield/edit', ['id' => $this->customfield($currentRoute, $customfieldRepository)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->customfield($currentRoute, $customfieldRepository)),
-            's'=>$settingRepository,
-            'head'=>$head,
-            'tables' => $this->custom_tables(),
-            'user_input_types'=>['NUMBER','TEXT','DATE','BOOLEAN'],
-            'custom_value_fields'=>['SINGLE-CHOICE','MULTIPLE-CHOICE'],
-            'layout_header_buttons'=>$this->viewRenderer->renderPartialAsString('/invoice/layout/header_buttons',
-            [
-                     'hide_submit_button'=>false,
-                     'hide_cancel_button'=>false,
-                     's'=>$settingRepository   
-            ]),
-            'positions'=>$this->positions($settingRepository)    
-        ];
-        if ($request->getMethod() === Method::POST) {
-            $form = new CustomFieldForm();
-            $body = $request->getParsedBody();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
-                $this->customfieldService->saveCustomField($this->customfield($currentRoute,$customfieldRepository), $form);
-                return $this->webService->getRedirectResponse('customfield/index');
+        $custom_field = $this->customfield($currentRoute, $customfieldRepository);
+        if ($custom_field) {
+            $parameters = [
+                'title' => 'Edit',
+                'action' => ['customfield/edit', ['id' => $custom_field->getId()]],
+                'errors' => [],
+                'body' => $this->body($custom_field),
+                's'=>$settingRepository,
+                'head'=>$head,
+                'tables' => $this->custom_tables(),
+                'user_input_types'=>['NUMBER','TEXT','DATE','BOOLEAN'],
+                'custom_value_fields'=>['SINGLE-CHOICE','MULTIPLE-CHOICE'],
+                'layout_header_buttons'=>$this->viewRenderer->renderPartialAsString('/invoice/layout/header_buttons',
+                [
+                         'hide_submit_button'=>false,
+                         'hide_cancel_button'=>false,
+                         's'=>$settingRepository   
+                ]),
+                'positions'=>$this->positions($settingRepository)    
+            ];
+            if ($request->getMethod() === Method::POST) {
+                $form = new CustomFieldForm();
+                $body = $request->getParsedBody();
+                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                    $this->customfieldService->saveCustomField($custom_field, $form);
+                    return $this->webService->getRedirectResponse('customfield/index');
+                }
+                $parameters['body'] = $body;
+                $parameters['errors'] = $form->getFormErrors();
             }
-            $parameters['body'] = $body;
-            $parameters['errors'] = $form->getFormErrors();
+            return $this->viewRenderer->render('_form', $parameters);
         }
-        return $this->viewRenderer->render('_form', $parameters);
+        return $this->webService->getRedirectResponse('customfield/index');   
     }
     
     /**
@@ -176,9 +179,13 @@ final class CustomFieldController
      * @return Response
      */
     public function delete(CurrentRoute $currentRoute, CustomFieldRepository $customfieldRepository 
-    ): Response {    
-        $this->customfieldService->deleteCustomField($this->customfield($currentRoute, $customfieldRepository));               
-        return $this->webService->getRedirectResponse('customfield/index');        
+    ): Response {
+        $custom_field = $this->customfield($currentRoute, $customfieldRepository);
+        if ($custom_field) {
+            $this->customfieldService->deleteCustomField($custom_field);               
+            return $this->webService->getRedirectResponse('customfield/index');        
+        }
+        return $this->webService->getRedirectResponse('customfield/index');
     }
     
     /**
@@ -188,16 +195,21 @@ final class CustomFieldController
      */
     public function view(CurrentRoute $currentRoute,CustomFieldRepository $customfieldRepository,
         SettingRepository $settingRepository
-        ): \Yiisoft\DataResponse\DataResponse {
-        $parameters = [
-            'title' => $settingRepository->trans('view'),
-            'action' => ['customfield/edit', ['id' => $this->customfield($currentRoute, $customfieldRepository)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->customfield($currentRoute, $customfieldRepository)),
-            's'=>$settingRepository,             
-            'customfield'=>$customfieldRepository->repoCustomFieldquery($this->customfield($currentRoute, $customfieldRepository)->getId()),
-        ];
-        return $this->viewRenderer->render('_view', $parameters);
+        ): Response {
+        $custom_field = $this->customfield($currentRoute, $customfieldRepository);
+        if ($custom_field) {
+            $parameters = [
+                'title' => $settingRepository->trans('view'),
+                'action' => ['customfield/edit', ['id' => $custom_field->getId()]],
+                'errors' => [],
+                'body' => $this->body($custom_field),
+                's'=>$settingRepository,             
+                'customfield'=>$custom_field->getId(),
+            ];
+            return $this->viewRenderer->render('_view', $parameters);
+        } else {
+            return $this->webService->getRedirectResponse('customfield/index');
+        }
     }
     
     /**
@@ -216,13 +228,16 @@ final class CustomFieldController
     /**
      * @param CurrentRoute $currentRoute
      * @param CustomFieldRepository $customfieldRepository
-     * @return CustomField|null
+     * @return object|null
      */
-    private function customfield(CurrentRoute $currentRoute, CustomFieldRepository $customfieldRepository): CustomField|null 
+    private function customfield(CurrentRoute $currentRoute, CustomFieldRepository $customfieldRepository): object|null 
     {
         $id = $currentRoute->getArgument('id');       
-        $customfield = $customfieldRepository->repoCustomFieldquery($id);
-        return $customfield;
+        if (null!==$id) {
+            $customfield = $customfieldRepository->repoCustomFieldquery($id);
+            return $customfield;
+        }
+        return null;
     }
     
     /**
@@ -237,17 +252,17 @@ final class CustomFieldController
     }
     
     /**
-     * @return (int|null|string)[]
-     *
-     * @psalm-return array{table: null|string, label: null|string, type: string, location: int|null, order: int|null}
+     * 
+     * @param object $customfield
+     * @return array
      */
-    private function body(CustomField $customfield): array {
+    private function body(object $customfield): array {
         $body = [
-          'table'=>$customfield->getTable(),
-          'label'=>$customfield->getLabel(),
-          'type'=>$customfield->getType(),
-          'location'=>$customfield->getLocation(),
-          'order'=>$customfield->getOrder()
+          'table' => $customfield->getTable(),
+          'label' => $customfield->getLabel(),
+          'type' => $customfield->getType(),
+          'location' => $customfield->getLocation(),
+          'order' => $customfield->getOrder()
         ];
         return $body;
     }

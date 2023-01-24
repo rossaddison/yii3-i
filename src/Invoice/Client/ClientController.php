@@ -7,6 +7,7 @@ use App\Invoice\Entity\Client;
 use App\Invoice\Entity\ClientNote;
 use App\Invoice\Entity\UserClient;
 use App\Invoice\Entity\ClientCustom;
+use App\Invoice\Entity\CustomField;
 // Services
 use App\Service\WebControllerService;
 use App\Invoice\ClientCustom\ClientCustomService;
@@ -99,12 +100,8 @@ final class ClientController
         ]);
     }
     
-    /**
-     * @return (\DateTimeImmutable|bool|int|null|string)[]
-     *
-     * @psalm-return array{client_date_created: \DateTimeImmutable, client_date_modified: \DateTimeImmutable, client_name: string, client_address_1: null|string, client_address_2: null|string, client_city: null|string, client_state: null|string, client_zip: null|string, client_country: null|string, client_phone: null|string, client_fax: null|string, client_mobile: null|string, client_email: string, client_web: null|string, client_vat_id: null|string, client_tax_code: null|string, client_language: null|string, client_active: int, client_surname: null|string, client_avs: null|string, client_insurednumber: null|string, client_veka: null|string, client_birthdate: \DateTimeImmutable|null, client_gender: int}
-     */
-    private function body(Client $client): array {        
+    
+    private function body(object $client): array {        
         $body = [
             'client_date_created'=>$client->getClient_date_created(),
             'client_date_modified'=>$client->getClient_date_modified(),
@@ -147,12 +144,15 @@ final class ClientController
     /**
      * @param CurrentRoute $currentRoute
      * @param cR $cR
-     * @return Client|null
+     * @return object|null
      */
-    private function client(CurrentRoute $currentRoute,cR $cR): Client|null {
+    private function client(CurrentRoute $currentRoute,cR $cR): object|null {
         $client_id = $currentRoute->getArgument('id');
-        $client = $cR->repoClientquery($client_id);
-        return $client;
+        if (null!==$client_id) {
+            $client = $cR->repoClientquery($client_id);
+            return $client;
+        }
+        return null;
     }
     
     /**
@@ -214,17 +214,20 @@ final class ClientController
                 }
                 // Get the custom fields that are mandatory for a client and initialise the first client with an empty value for each custom field
                 $custom_fields = $cfR->repoTablequery('client_custom');
+                
                 foreach($custom_fields as $custom_field){
                     $init_client_custom = new ClientCustomForm();
                     $client_custom = [];
                     $client_custom['client_id'] = $client_id;
-                    $client_custom['custom_field_id'] = $custom_field->getId();
+                    if ($custom_field instanceof CustomField) { 
+                        $client_custom['custom_field_id'] = $custom_field->getId();
+                    }
                     // Note: There are no Required rules for value under ClientCustomForm
                     $client_custom['value'] = '';                    
                     if ($init_client_custom->load($client_custom) && $validator->validate($init_client_custom)->isValid()) {
                         $this->clientCustomService->saveClientCustom(new ClientCustom(), $init_client_custom);
                     }
-                }                
+                }
                 $parameters = [
                    'success'=>1,                
                 ];
@@ -298,71 +301,89 @@ final class ClientController
     } 
     
     public function edit(ViewRenderer $head, SessionInterface $session, Request $request, cR $cR, ccR $ccR, cfR $cfR, cvR $cvR, 
-            ValidatorInterface $validator,sR $sR, CurrentRoute $currentRoute
+            ValidatorInterface $validator, sR $sR, CurrentRoute $currentRoute
     ): Response {
-        $client = $this->client($currentRoute, $cR);
+     $client = null!==$this->client($currentRoute, $cR) ? $this->client($currentRoute, $cR) : null;
+     if ($client) {
         $selected_country =  $client->getClient_country(); 
         $selected_language = $client->getClient_language();
         $countries = new CountryHelper();
         $client_id = $client->getClient_id();
-        $parameters = [
-            'title' => $sR->trans('edit'),
-            'action' => ['client/edit', ['id' => $client_id]],
-            'errors' => [],
-            'head'=>$head,
-            'datehelper'=> new DateHelper($sR),
-            'client'=>$this->client($currentRoute, $cR),
-            'body' => $this->body($this->client($currentRoute, $cR)),
-            'aliases'=> new Aliases(['@invoice' => dirname(__DIR__), '@language' => '@invoice/Language']),
-            'selected_country' => $selected_country ?: $sR->get_setting('default_country'),            
-            'selected_language' => $selected_language ?: $sR->get_setting('default_language'),
-            'datepicker_dropdown_locale_cldr' => $session->get('_language') ?? 'en',
-            'countries'=> $countries->get_country_list($sR->get_setting('cldr')),
-            'custom_fields'=>$cfR->repoTablequery('client_custom'),
-            'custom_values'=>$cvR->attach_hard_coded_custom_field_values_to_custom_field($cfR->repoTablequery('client_custom')),
-            'cvH'=> new CVH($sR),
-            'client_custom_values'=>$this->client_custom_values((string)$client_id, $ccR)
-        ];
-        if ($request->getMethod() === Method::POST) {            
-            $edited_body = $request->getParsedBody();
-            $returned_form = $this->edit_save_form_fields($edited_body, $currentRoute, $validator, $cR, $sR);
-            $parameters['body'] = $edited_body;
-            $parameters['errors']=$returned_form->getFormErrors(); 
-            // Only save custom fields if they exist
-            $ccR->repoClientCount((string)$client_id) > 0 ? $this->edit_save_custom_fields($edited_body, $validator, $ccR, (string)$client_id) : '';
-            $this->flash($session, 'info', $sR->trans('record_successfully_updated'));
-            return $this->webService->getRedirectResponse('client/index');
-        }
-        return $this->viewRenderer->render('__form', $parameters);
-    }
+        if (null!==$client_id) {
+            $parameters = [
+                'title' => $sR->trans('edit'),
+                'action' => ['client/edit', ['id' => $client_id]],
+                'errors' => [],
+                'head'=>$head,
+                'datehelper'=> new DateHelper($sR),
+                'client'=>$client,
+                'body' => $this->body($client),
+                'aliases'=> new Aliases(['@invoice' => dirname(__DIR__), '@language' => '@invoice/Language']),
+                'selected_country' => $selected_country ?: $sR->get_setting('default_country'),            
+                'selected_language' => $selected_language ?: $sR->get_setting('default_language'),
+                'datepicker_dropdown_locale_cldr' => $session->get('_language') ?? 'en',
+                'countries'=> $countries->get_country_list($sR->get_setting('cldr')),
+                'custom_fields'=>$cfR->repoTablequery('client_custom'),
+                'custom_values'=>$cvR->attach_hard_coded_custom_field_values_to_custom_field($cfR->repoTablequery('client_custom')),
+                'cvH'=> new CVH($sR),
+                'client_custom_values'=>$this->client_custom_values((string)$client_id, $ccR)
+            ];
+            if ($request->getMethod() === Method::POST) {            
+                $edited_body = $request->getParsedBody();
+                if (is_array($edited_body)) {
+                    $returned_form = $this->edit_save_form_fields($edited_body, $client, $validator, $sR);
+                    $parameters['body'] = $edited_body;
+                    $parameters['errors']=$returned_form->getFormErrors(); 
+                    // Only save custom fields if they exist
+                    if ($ccR->repoClientCount((string)$client_id) > 0) { 
+                      $this->edit_save_custom_fields($edited_body, $validator, $ccR, (string)$client_id); 
+                    }
+                }    
+                $this->flash($session, 'info', $sR->trans('record_successfully_updated'));
+                return $this->webService->getRedirectResponse('client/index');
+            }
+            return $this->viewRenderer->render('__form', $parameters);
+        } // null!==client_id
+    } // $client
+    return $this->webService->getRedirectResponse('client/index');   
+}
     
     /**
-     * @param array|null|object $edited_body
+     * @param array $edited_body
      */
-    public function edit_save_form_fields(array|object|null $edited_body, CurrentRoute $currentRoute, ValidatorInterface $validator, cR $cR, sR $sR) : ClientForm {
+    public function edit_save_form_fields(array $edited_body, object $client, ValidatorInterface $validator, sR $sR) : ClientForm {
         $form = new ClientForm();
         if ($form->load($edited_body) && $validator->validate($form)->isValid()) {
-                $this->clientService->saveClient($this->client($currentRoute, $cR), $form, $sR);
+           $this->clientService->saveClient($client, $form, $sR);
         }
         return $form;
     }
     
     /**
-     * @param array $parse
+     * 
+     * @param array $edited_body
+     * @param ValidatorInterface $validator
+     * @param ccR $ccR
+     * @param string $client_id
+     * @return void
      */
-    public function edit_save_custom_fields(array $parse, ValidatorInterface $validator, ccR $ccR, string $client_id): void {
-        $custom = $parse['custom'];
-        foreach ($custom as $custom_field_id => $value) {
-            $client_custom = $ccR->repoFormValuequery($client_id, (string)$custom_field_id);
-            $client_custom_input = [
-                'client_id'=>(int)$client_id,
-                'custom_field_id'=>(int)$custom_field_id,
-                'value'=>(string)$value
-            ];
-            $form = new ClientCustomForm();
-            if ($form->load($client_custom_input) && $validator->validate($form)->isValid())
-            {
-                $this->clientCustomService->saveClientCustom($client_custom, $form);     
+    public function edit_save_custom_fields(array $edited_body, ValidatorInterface $validator, ccR $ccR, string $client_id): void {
+        $custom = $edited_body['custom'];
+        if (null!==$custom) {
+            foreach ($custom as $custom_field_id => $value) {
+                $client_custom = $ccR->repoFormValuequery($client_id, (string)$custom_field_id);
+                if (null!==$client_custom) {
+                    $client_custom_input = [
+                        'client_id'=>(int)$client_id,
+                        'custom_field_id'=>(int)$custom_field_id,
+                        'value'=>(string)$value
+                    ];
+                    $form = new ClientCustomForm();
+                    if ($form->load($client_custom_input) && $validator->validate($form)->isValid())
+                    {
+                        $this->clientCustomService->saveClientCustom($client_custom, $form);     
+                    }
+                }
             }
         }
     }
@@ -454,8 +475,9 @@ final class ClientController
                 $client_custom['custom_field_id']=$key;
                 $client_custom['value']=$value; 
                 $model = ($ccR->repoClientCustomCount($client_id,$key) == 1 ? $ccR->repoFormValuequery($client_id, $key) : new ClientCustom());
-                ($ajax_custom->load($client_custom) && $validator->validate($ajax_custom)->isValid()) ? 
-                        $this->clientCustomService->saveClientCustom($model, $ajax_custom) : '';                
+                if (null!==$model && $ajax_custom->load($client_custom) && $validator->validate($ajax_custom)->isValid()) {
+                    $this->clientCustomService->saveClientCustom($model, $ajax_custom);
+                }           
             }
             $parameters = [
                 'success'=>1,
@@ -505,8 +527,9 @@ final class ClientController
                 $client_custom['custom_field_id']=$key;
                 $client_custom['value']=$value; 
                 $model = ($ccR->repoClientCustomCount($client_id, $key) == 1 ? $ccR->repoFormValuequery($client_id, $key) : new ClientCustom());
-                ($ajax_custom->load($client_custom) && $validator->validate($ajax_custom)->isValid()) ? 
-                        $this->clientCustomService->saveClientCustom($model, $ajax_custom) : '';                
+                if (null!==$model && $ajax_custom->load($client_custom) && $validator->validate($ajax_custom)->isValid()) {
+                    $this->clientCustomService->saveClientCustom($model, $ajax_custom);                
+                }
             }
             $parameters = [
                 'success'=>1,                
@@ -549,8 +572,9 @@ final class ClientController
     }
         
     public function view(SessionInterface $session, CurrentRoute $currentRoute, cR $cR, cfR $cfR, cnR $cnR, cvR $cvR, ccR $ccR, gR $gR, iR $iR, iaR $iaR, irR $irR, qR $qR, pymtR $pymtR, qaR $qaR, sR $sR   
-    ): \Yiisoft\DataResponse\DataResponse {
-        $client = $this->client($currentRoute, $cR);
+    ): Response {
+      $client = $this->client($currentRoute, $cR);
+      if (null!==$client) {
         $parameters = [
             'title' => $sR->trans('client'),
             'alert' => $this->alert($session),
@@ -691,5 +715,8 @@ final class ClientController
             ]),    
         ];
         return $this->viewRenderer->render('view', $parameters);
-    } 
+   } else {
+        return $this->webService->getRedirectResponse('client/index');
+   } 
+}
 }

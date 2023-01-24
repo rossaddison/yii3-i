@@ -125,6 +125,11 @@ final class SettingController
         $numberhelper = new NumberHelper($this->s);
         $countries = new CountryHelper();
         $crypt = new Crypt();
+        $matrix = $this->s->expandDirectoriesMatrix($aliases->get('@language'), 0);
+        /**
+         * @psalm-suppress PossiblyInvalidArgument $matrix
+         */
+        $languages = ArrayHelper::map($matrix,'name','name');      
         $parameters = [
             'defat'=> $sR->withKey('default_language'),
             'action'=>['setting/tab_index'],
@@ -137,7 +142,10 @@ final class SettingController
             'body'=> $request->getParsedBody(),
             'general'=>$this->viewRenderer->renderPartialAsString('/invoice/setting/views/partial_settings_general',[
                 's'=>$this->s,
-                'languages'=> ArrayHelper::map($this->s->expandDirectoriesMatrix($aliases->get('@language'), 0),'name','name'),     
+                /**
+                 * @psalm-suppress PossiblyInvalidArgument
+                 */
+                'languages'=> $languages,
                 'first_days_of_weeks'=>['0' => $this->s->lang('sunday'), '1' => $this->s->lang('monday')],
                 'date_formats'=>$datehelper->date_formats(),
                 // Used in ClientForm
@@ -190,54 +198,59 @@ final class SettingController
         ];
         if ($request->getMethod() === Method::POST) {
             $body = $parameters['body'];
-            $settings = $body['settings'];
-            foreach ($settings as $key => $value) {
-                $key === 'tax_rate_decimal_places' && $value !== 2 ? $this->tab_index_change_decimal_column((int)$value) : '';
-                // Deal with existing keys after first installation
-                if ($sR->repoCount((string)$key) > 0) {
-                    if (strpos($key, 'field_is_password') !== false || strpos($key, 'field_is_amount') !== false) {
-                        // Skip all meta fields
-                        continue;
-                    }                    
-                    if (isset($settings[$key . '_field_is_password']) && empty($value)) {
-                        // Password field, but empty value, let's skip it
-                        continue;
+            if (is_array($body)) {
+                $settings = $body['settings'];
+                foreach ($settings as $key => $value) {
+                    $key === 'tax_rate_decimal_places' && $value !== 2 ? $this->tab_index_change_decimal_column((int)$value) : '';
+                    // Deal with existing keys after first installation
+                    if ($sR->repoCount((string)$key) > 0) {
+                        if (strpos($key, 'field_is_password') !== false || strpos($key, 'field_is_amount') !== false) {
+                            // Skip all meta fields
+                            continue;
+                        }                    
+                        if (isset($settings[$key . '_field_is_password']) && empty($value)) {
+                            // Password field, but empty value, let's skip it
+                            continue;
+                        }
+                        if (isset($settings[$key . '_field_is_password']) && $value !=='') {
+                            // Encrypt passwords but don't save empty passwords
+                            $this->tab_index_settings_save($key, $crypt->encode(trim($value)), $sR);
+                        } elseif (isset($settings[$key . '_field_is_amount'])) {
+                            // Format amount inputs
+                            $this->tab_index_settings_save($key, $numberhelper->standardize_amount($value), $sR);
+                        } else {
+                            $this->tab_index_settings_save($key, $value, $sR);
+                        }  
+
+                        if ($key == 'number_format') {
+                            // Set thousands_separator and decimal_point according to number_format
+                            // Derive the 'decimal_point' and 'thousands_separator' setting from the chosen ..number format eg. 1000,000.00 if it has a value
+                            $this->tab_index_number_format($value, $sR);
+                        }
                     }
-                    if (isset($settings[$key . '_field_is_password']) && $value !=='') {
-                        // Encrypt passwords but don't save empty passwords
-                        $this->tab_index_settings_save($key, $crypt->encode(trim($value)), $sR);
-                    } elseif (isset($settings[$key . '_field_is_amount'])) {
-                        // Format amount inputs
-                        $this->tab_index_settings_save($key, $numberhelper->standardize_amount($value), $sR);
-                    } else {
-                        $this->tab_index_settings_save($key, $value, $sR);
-                    }  
-                    
-                    if ($key == 'number_format') {
-                        // Set thousands_separator and decimal_point according to number_format
-                        // Derive the 'decimal_point' and 'thousands_separator' setting from the chosen ..number format eg. 1000,000.00 if it has a value
-                        $this->tab_index_number_format($value, $sR);
-                    }
+                    else {
+                       // The key does not exist because the repoCount is not greater than zero => add
+                       // Note:
+                       // The settings 'decimal_point' and 'thousands_separator' which are derived from number_format array
+                       // and were installed on the first run in InvoiceController 
+                       // will be derived automatically => their repoCount will be greater than zero and will not cause this to run
+                       $this->tab_index_debug_mode_ensure_all_settings_included(true, $key, $value, $validator);
+                    }                
                 }
-                else {
-                   // The key does not exist because the repoCount is not greater than zero => add
-                   // Note:
-                   // The settings 'decimal_point' and 'thousands_separator' which are derived from number_format array
-                   // and were installed on the first run in InvoiceController 
-                   // will be derived automatically => their repoCount will be greater than zero and will not cause this to run
-                   $this->tab_index_debug_mode_ensure_all_settings_included(true, $key, $value, $validator);
-                }                
+                $this->flash($this->session, 'info', $this->s->trans('settings_successfully_saved'));
+                return $this->webService->getRedirectResponse('setting/tab_index');
             }
-            $this->flash($this->session, 'info', $this->s->trans('settings_successfully_saved'));
-            return $this->webService->getRedirectResponse('setting/tab_index');
+            return $this->viewRenderer->render('tab_index', $parameters);        
         }
-        return $this->viewRenderer->render('tab_index', $parameters);        
+                return $this->webService->getRedirectResponse('setting/tab_index');
     }
     
     public function tab_index_settings_save(string $key, string $value, SettingRepository $sR) : void {
         $setting = $sR->withKey($key);
-        $setting->setSetting_value($value);
-        $sR->save($setting);
+        if ($setting) {
+            $setting->setSetting_value($value);
+            $sR->save($setting);
+        }
     }
     
     /**
@@ -333,28 +346,31 @@ final class SettingController
               ValidatorInterface $validator): Response 
     {
         $setting = $this->setting($currentRoute, $this->s);
-        $parameters = [
-            'title' => $this->s->trans('edit'),
-            'action' => ['setting/edit', ['setting_id' => $setting->getSetting_id()]],
-            'errors' => [],
-            'body' => [
-                'setting_key' => $this->setting($currentRoute, $this->s)->getSetting_key(),
-                'setting_value' => $this->setting($currentRoute, $this->s)->getSetting_value(),                
-            ],
-            's'=>$this->s,
-        ];
-        if ($request->getMethod() === Method::POST) {
-            $form = new SettingForm();
-            $body = $request->getParsedBody();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
-                $this->settingService->saveSetting($setting, $form);
-                $this->flash($this->session, 'info', $this->s->trans('record_successfully_updated'));
-                return $this->webService->getRedirectResponse('setting/debug_index');
+        if ($setting) {
+            $parameters = [
+                'title' => $this->s->trans('edit'),
+                'action' => ['setting/edit', ['setting_id' => $setting->getSetting_id()]],
+                'errors' => [],
+                'body' => [
+                    'setting_key' => $setting->getSetting_key(),
+                    'setting_value' => $setting->getSetting_value(),                
+                ],
+                's'=>$this->s,
+            ];
+            if ($request->getMethod() === Method::POST) {
+                $form = new SettingForm();
+                $body = $request->getParsedBody();
+                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                    $this->settingService->saveSetting($setting, $form);
+                    $this->flash($this->session, 'info', $this->s->trans('record_successfully_updated'));
+                    return $this->webService->getRedirectResponse('setting/debug_index');
+                }
+                $parameters['body'] = $body;
+                $parameters['errors'] = $form->getFormErrors();
             }
-            $parameters['body'] = $body;
-            $parameters['errors'] = $form->getFormErrors();
+            return $this->viewRenderer->render('__form', $parameters);
         }
-        return $this->viewRenderer->render('__form', $parameters);
+        return $this->webService->getRedirectResponse('setting/debug_index');
     }
     
     /**
@@ -379,8 +395,10 @@ final class SettingController
     public function delete(CurrentRoute $currentRoute): Response 
     {
         $setting = $this->setting($currentRoute,$this->s);
-        $this->flash($this->session,'info','This record has been deleted.');
-        $this->settingService->deleteSetting($setting);               
+        if ($setting) {
+            $this->flash($this->session,'info','This record has been deleted.');
+            $this->settingService->deleteSetting($setting);               
+        }
         return $this->webService->getRedirectResponse('setting/debug_index');        
     }
     
@@ -409,47 +427,54 @@ final class SettingController
               ValidatorInterface $validator): Response 
     {
         $setting = $this->setting($currentRoute, $this->s);
-        $parameters = [
-            'title' => $this->s->trans('edit'),
-            'action' => ['setting/edit', ['setting_id' => $setting->getSetting_id()]],
-            'errors' => [],
-            'body' => [
-                'setting_key' => $this->setting($currentRoute, $this->s)->getSetting_key(),
-                'setting_value' => $this->setting($currentRoute, $this->s)->getSetting_value(),
-            ],
-            's'=>$this->s,
-        ];
-        if ($request->getMethod() === Method::POST) {
-            $form = new SettingForm();
-            $body = $request->getParsedBody();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
-                $this->settingService->saveSetting($setting, $form);
-                return $this->webService->getRedirectResponse('setting/index');
+        if ($setting) {
+            $parameters = [
+                'title' => $this->s->trans('edit'),
+                'action' => ['setting/edit', ['setting_id' => $setting->getSetting_id()]],
+                'errors' => [],
+                'body' => [
+                    'setting_key' => $setting->getSetting_key(),
+                    'setting_value' => $setting->getSetting_value(),
+                ],
+                's'=>$this->s,
+            ];
+            if ($request->getMethod() === Method::POST) {
+                $form = new SettingForm();
+                $body = $request->getParsedBody();
+                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                    $this->settingService->saveSetting($setting, $form);
+                    return $this->webService->getRedirectResponse('setting/index');
+                }
+                $parameters['body'] = $body;
+                $parameters['errors'] = $form->getFormErrors();
             }
-            $parameters['body'] = $body;
-            $parameters['errors'] = $form->getFormErrors();
+            return $this->viewRenderer->render('__form', $parameters);
         }
-        return $this->viewRenderer->render('__form', $parameters);
+        return $this->webService->getRedirectResponse('setting/index');
     }
     
     /**
      * @param CurrentRoute $currentRoute
      */
-    public function view(CurrentRoute $currentRoute): \Yiisoft\DataResponse\DataResponse {
+    public function view(CurrentRoute $currentRoute)
+        : \Yiisoft\DataResponse\DataResponse|Response {
         $setting = $this->setting($currentRoute, $this->s);
-        $parameters = [
-            'title' => $this->s->trans('view'),
-            'action' => ['setting/edit', ['setting_id' => $setting->getSetting_id()]],
-            'errors' => [],
-            'setting'=>$this->setting($currentRoute, $this->s),
-            's'=>$this->s,     
-            'body' => [
-                'setting_id'=>$setting->getSetting_id(),
-                'setting_key'=>$setting->getSetting_key(),
-                'setting_value'=>$setting->getSetting_value(),
-            ],            
-        ];
-        return $this->viewRenderer->render('__view', $parameters);
+        if ($setting) {
+            $parameters = [
+                'title' => $this->s->trans('view'),
+                'action' => ['setting/edit', ['setting_id' => $setting->getSetting_id()]],
+                'errors' => [],
+                'setting'=>$setting,
+                's'=>$this->s,     
+                'body' => [
+                    'setting_id'=>$setting->getSetting_id(),
+                    'setting_key'=>$setting->getSetting_key(),
+                    'setting_value'=>$setting->getSetting_value(),
+                ],            
+            ];
+            return $this->viewRenderer->render('__view', $parameters);
+        }
+        return $this->webService->getRedirectResponse('setting/index');
     }
     
     /**
@@ -467,14 +492,17 @@ final class SettingController
     /**
      * @param CurrentRoute $currentRoute
      * @param SettingRepository $settingRepository
-     * @return Setting|null
+     * @return object|null
      */
     private function setting(CurrentRoute $currentRoute, 
-                             SettingRepository $settingRepository): Setting|null 
+                             SettingRepository $settingRepository): object|null 
     {
         $setting_id = $currentRoute->getArgument('setting_id');
-        $setting = $settingRepository->repoSettingquery($setting_id);
-        return $setting; 
+        if (null!==$setting_id) {
+            $setting = $settingRepository->repoSettingquery($setting_id);
+            return $setting; 
+        }
+        return null;
     }
     
     //$settings = $this->settings();

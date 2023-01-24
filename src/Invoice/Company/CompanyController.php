@@ -93,52 +93,63 @@ final class CompanyController
                         CurrentRoute $currentRoute
 
     ): Response {
-        $parameters = [
-            'title' => 'Edit',
-            'action' => ['company/edit', ['id' => $this->company($currentRoute, $companyRepository)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->company($currentRoute, $companyRepository)),
-            'head'=>$head,
-            'company_public'=>$this->translator->translate('invoice.company.public'),
-            's'=>$settingRepository,
-            
-        ];
-        if ($request->getMethod() === Method::POST) {
-            $form = new CompanyForm();
-            $body = $request->getParsedBody();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
-                $this->companyService->saveCompany($this->company($currentRoute,$companyRepository), $form);
-                return $this->webService->getRedirectResponse('company/index');
+        $company = $this->company($currentRoute, $companyRepository);
+        if ($company) {
+            $parameters = [
+                'title' => 'Edit',
+                'action' => ['company/edit', ['id' => $company->getId()]],
+                'errors' => [],
+                'body' => $this->body($company),
+                'head'=>$head,
+                'company_public'=>$this->translator->translate('invoice.company.public'),
+                's'=>$settingRepository,
+
+            ];
+            if ($request->getMethod() === Method::POST) {
+                $form = new CompanyForm();
+                $body = $request->getParsedBody();
+                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                    $this->companyService->saveCompany($company, $form);
+                    return $this->webService->getRedirectResponse('company/index');
+                }
+                $parameters['body'] = $body;
+                $parameters['errors'] = $form->getFormErrors();
             }
-            $parameters['body'] = $body;
-            $parameters['errors'] = $form->getFormErrors();
+            return $this->viewRenderer->render('_form', $parameters);
         }
-        return $this->viewRenderer->render('_form', $parameters);
+        return $this->webService->getRedirectResponse('company/index');
     }
     
     public function delete(SessionInterface $session,CurrentRoute $currentRoute, CompanyRepository $companyRepository 
     ): Response {
-        if ($this->companyService->deleteCompany($this->company($currentRoute, $companyRepository))) {               
-            $this->flash($session, 'info', 'Deleted.'); 
-            return $this->webService->getRedirectResponse('company/index'); 
-        } else {
-            $this->flash($session, 'warning', 'Not deleted because you have a profile attached.');
-            return $this->webService->getRedirectResponse('company/index');   
-        } 
+        $company = $this->company($currentRoute, $companyRepository);
+        if ($company) {
+            if ($this->companyService->deleteCompany($company)) {               
+                $this->flash($session, 'info', 'Deleted.'); 
+            } else {
+                $this->flash($session, 'warning', 'Not deleted because you have a profile attached.');
+            } 
+        }
+        return $this->webService->getRedirectResponse('company/index');
     }
     
     public function view(CurrentRoute $currentRoute, CompanyRepository $companyRepository,
         SettingRepository $settingRepository,
-        ): \Yiisoft\DataResponse\DataResponse {
-        $parameters = [
-            'title' => $settingRepository->trans('view'),
-            'action' => ['company/view', ['id' => $this->company($currentRoute, $companyRepository)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->company($currentRoute, $companyRepository)),
-            's'=>$settingRepository,             
-            'company'=>$companyRepository->repoCompanyquery((string)$this->company($currentRoute, $companyRepository)->getId()),
-        ];
-        return $this->viewRenderer->render('_view', $parameters);
+        ): Response {
+        $company = $this->company($currentRoute, $companyRepository);
+        if ($company) {
+            $parameters = [
+                'title' => $settingRepository->trans('view'),
+                'action' => ['company/view', ['id' => $company->getId()]],
+                'errors' => [],
+                'body' => $this->body($company),
+                's'=>$settingRepository,             
+                'company'=>$companyRepository->repoCompanyquery((string)$company->getId()),
+            ];
+            return $this->viewRenderer->render('_view', $parameters);
+        } else {
+            return $this->webService->getRedirectResponse('company/index');
+        }
     }
         
     /**
@@ -155,15 +166,19 @@ final class CompanyController
     }
     
     /**
+     * 
      * @param CurrentRoute $currentRoute
      * @param CompanyRepository $companyRepository
-     * @return Company|null
+     * @return object|null
      */
-    private function company(CurrentRoute $currentRoute, CompanyRepository $companyRepository): Company|null 
+    private function company(CurrentRoute $currentRoute, CompanyRepository $companyRepository): object|null 
     {
-        $id = $currentRoute->getArgument('id');       
-        $company = $companyRepository->repoCompanyquery($id);
-        return $company;
+        $id = $currentRoute->getArgument('id');
+        if (null!==$id) { 
+            $company = $companyRepository->repoCompanyquery($id);
+            return $company;
+        }
+        return null;
     }
     
     /**
@@ -178,11 +193,11 @@ final class CompanyController
     }
     
     /**
-     * @return (\DateTimeImmutable|int|string)[]
-     *
-     * @psalm-return array{id: string, current: int, name: string, address_1: string, address_2: string, city: string, state: string, zip: string, country: string, phone: string, fax: string, email: string, web: string, date_created: \DateTimeImmutable, date_modified: \DateTimeImmutable}
+     * 
+     * @param object $company
+     * @return array
      */
-    private function body(Company $company): array {
+    private function body(object $company): array {
         $body = [
                 
           'id'=>$company->getId(),

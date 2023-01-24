@@ -194,6 +194,7 @@ class Quote
     
     public function getStatus(int $status_id): string
     {
+        $status = '';
         switch ($status_id) {
             case 1:
                 $status =  'draft'; 
@@ -239,12 +240,15 @@ class Quote
     
     public function setDate_expires(sR $sR) : void
     {
+        $days = 30;
         if (($sR->repoCount('quotes_expire_after')) == 0) { 
           $days = 30;        
         } else
         {
-          $setting = $sR->withKey('quotes_expire_after');          
-          $days = $setting->getSetting_value() ?: 30;
+          $setting = $sR->withKey('quotes_expire_after');
+          if ($setting) {
+            $days = $setting->getSetting_value() ?: 30;
+          }
         }
         $this->date_expires = (new \DateTimeImmutable('now'))->add(new \DateInterval('P'.$days.'D'));
     }

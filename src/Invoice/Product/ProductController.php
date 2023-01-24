@@ -145,11 +145,11 @@ class ProductController
     }
     
     /**
-     * @return (float|int|null|string)[]
-     *
-     * @psalm-return array{id: null|string, product_sku: string, product_name: string, product_description: string, product_price: float, purchase_price: float, provider_name: string, tax_rate_id: null|string, unit_id: null|string, family_id: null|string, product_tariff: int}
+     * 
+     * @param object $product
+     * @return array
      */
-    private function body(Product $product): array {
+    private function body(object $product): array {
         $body = [
                 'id'=>$product->getProduct_id(),
                 'product_sku'=>$product->getProduct_sku(),
@@ -176,9 +176,12 @@ class ProductController
     public function delete(pR $pR, CurrentRoute $currentRoute, sR $sR
     ): Response {
         try {
-            $this->productService->deleteProduct($this->product($currentRoute, $pR));  
-            $this->flash('info', $sR->trans('record_successfully_deleted'));
-            return $this->webService->getRedirectResponse('product/index');   
+            $product = $this->product($currentRoute, $pR);
+            if ($product) { 
+                $this->productService->deleteProduct($product);  
+                $this->flash('info', $sR->trans('record_successfully_deleted'));
+            }
+            return $this->webService->getRedirectResponse('product/index');
 	} catch (\Exception $e) {
            unset($e);
            $this->flash('danger', 'Cannot delete. This product is on an invoice or quote.');
@@ -214,11 +217,13 @@ class ProductController
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute, ValidatorInterface $validator,
                     pR $pR, sR $sR, fR $fR, uR $uR, trR $trR, 
     ): Response {
+        $product = $this->product($currentRoute, $pR);
+        if ($product) {
         $parameters = [
             'title' => $sR->trans('edit'),
-            'action' => ['product/edit', ['id' => $this->product($currentRoute, $pR)->getProduct_id()]],
+            'action' => ['product/edit', ['id' => $product->getProduct_id()]],
             'errors' => [],
-            'body' => $this->body($this->product($currentRoute, $pR)),
+            'body' => $this->body($product),
             's'=>$sR,
             'head'=>$head,
             'families'=>$fR->findAllPreloaded(),
@@ -229,10 +234,10 @@ class ProductController
             $form = new ProductForm();
             $body = $request->getParsedBody();
             if ($form->load($body) && $validator->validate($form)->isValid()) {
-                $this->productService->editProduct($this->product($currentRoute, $pR), $form); 
+                $this->productService->editProduct($product, $form); 
                 return $this->responseFactory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
                 ['heading'=>'','message'=>$sR->trans('record_successfully_updated'),'url'=>'product/view',
-                    'id'=>$this->product($currentRoute, $pR)->getProduct_id()]));  
+                    'id'=>$product->getProduct_id()]));  
             } else {            
                 return $this->webService->getRedirectResponse('product/index');   
             }
@@ -240,7 +245,9 @@ class ProductController
             $parameters['errors'] = $form->getFormErrors();
         }
         return $this->viewRenderer->render('_form_edit', $parameters);
-    }
+    } //if $product 
+    return $this->webService->getRedirectResponse('product/index');   
+}
     
     /**
      * @param pR $pR
@@ -317,7 +324,7 @@ class ProductController
     /**
      * 
      * @param int $order
-     * @param array|object|null $product
+     * @param object $product
      * @param string $quote_id
      * @param pR $pR
      * @param trR $trR
@@ -327,7 +334,7 @@ class ProductController
      * @param ValidatorInterface $validator
      * @return void
      */
-    private function save_product_lookup_item_quote(int $order, array|object|null $product, string $quote_id, pR $pR, trR $trR, uR $unR, QIAR $qiaR, QIAS $qiaS, ValidatorInterface $validator) : void {
+    private function save_product_lookup_item_quote(int $order, object $product, string $quote_id, pR $pR, trR $trR, uR $unR, QIAR $qiaR, QIAS $qiaS, ValidatorInterface $validator) : void {
            $form = new QuoteItemForm();
            $ajax_content = [
                 'name'=>$product->getProduct_name(),        
@@ -354,7 +361,7 @@ class ProductController
     /**
      * 
      * @param int $order
-     * @param array|object|null $product
+     * @param object $product
      * @param string $inv_id
      * @param pR $pR
      * @param sR $sR
@@ -365,10 +372,10 @@ class ProductController
      * @param ValidatorInterface $validator
      * @return void
      */
-    private function save_product_lookup_item_inv(int $order, array|object|null $product, string $inv_id, pR $pR, sR $sR, trR $trR, uR $unR, iiaR $iiaR, uR $uR, ValidatorInterface $validator) : void {
+    private function save_product_lookup_item_inv(int $order, object $product, string $inv_id, pR $pR, sR $sR, trR $trR, uR $unR, iiaR $iiaR, uR $uR, ValidatorInterface $validator) : void {
            $form = new InvItemForm();
            $ajax_content = [
-                'name'=>$product->getProduct_name(),        
+                'name'=> $product->getProduct_name(),        
                 'inv_id'=>$inv_id,            
                 'tax_rate_id'=>$product->getTax_rate_id(),
                 'product_id'=>$product->getProduct_id(),
@@ -418,8 +425,10 @@ class ProductController
         // Format the product prices according to comma or point or other setting choice.
         $order = 1;
         foreach ($products as $product) {
-            $product->setProduct_price((float)$numberHelper->format_amount($product->getProduct_price()));
-            $this->save_product_lookup_item_quote($order, $product, $quote_id, $pR, $trR, $uR, $qiaR, $qiaS, $validator);            
+            if ($product instanceof Product) {
+                $product->setProduct_price((float)$numberHelper->format_amount($product->getProduct_price()));
+                $this->save_product_lookup_item_quote($order, $product, $quote_id, $pR, $trR, $uR, $qiaR, $qiaS, $validator);            
+            }
             $order++;          
         } 
         $numberHelper->calculate_quote($this->session->get('quote_id'), $qiR, $qiaR, $qtrR, $qaR, $qR); 
@@ -452,9 +461,11 @@ class ProductController
         // Format the product prices according to comma or point or other setting choice.
         $order = 1;
         foreach ($products as $product) {
-            $product->setProduct_price((float)$numberHelper->format_amount($product->getProduct_price()));
-            $this->save_product_lookup_item_inv($order, $product, $inv_id, $pR, $sR, $trR, $uR, $iiaR, $uR, $validator);
-            $order++;          
+            if ($product instanceof Product) {
+                $product->setProduct_price((float)$numberHelper->format_amount($product->getProduct_price()));
+                $this->save_product_lookup_item_inv($order, $product, $inv_id, $pR, $sR, $trR, $uR, $iiaR, $uR, $validator);
+                $order++;          
+            }
         }
         $numberHelper->calculate_inv($this->session->get('inv_id'), $iiR, $iiaR, $itrR, $iaR, $iR, $pymR);
         return $this->responseFactory->createResponse(Json::encode($products));        
@@ -463,12 +474,15 @@ class ProductController
     /**
      * @param CurrentRoute $currentRoute
      * @param pR $pR
-     * @return Product|null
+     * @return object|null
      */
-    private function product(CurrentRoute $currentRoute, pR $pR): Product|null {        
+    private function product(CurrentRoute $currentRoute, pR $pR): object|null {        
         $id = $currentRoute->getArgument('id');
-        $product = $pR->repoProductquery($id);
-        return $product;
+        if (null!==$id) {
+            $product = $pR->repoProductquery($id);
+            return $product;
+        }
+        return null;
     }
     
     /**
@@ -499,16 +513,20 @@ class ProductController
      * @param CurrentRoute $currentRoute
      */
     public function view(pR $pR,sR $sR, CurrentRoute $currentRoute
-    ): \Yiisoft\DataResponse\DataResponse {
+    ): \Yiisoft\DataResponse\DataResponse|Response {
+        $product = $this->product($currentRoute,$pR);
+        if ($product) {
         $parameters = [
             'title' => $sR->trans('view'),
-            'action' => ['product/view', ['id' => $this->product($currentRoute,$pR)->getProduct_id()]],
+            'action' => ['product/view', ['id' =>$product->getProduct_id()]],
             'errors' => [],
-            'body' => $this->body($this->product($currentRoute,$pR)),
+            'body' => $this->body($product),
             's'=>$sR,
             //load Entity\Product BelongTo relations ie. $family, $tax_rate, $unit by means of repoProductQuery             
-            'product'=>$pR->repoProductquery($this->product($currentRoute, $pR)->getProduct_id()),
-        ];
+            'product'=>$pR->repoProductquery($product->getProduct_id()),
+        ];        
         return $this->viewRenderer->render('_view', $parameters);
+        }
+        return $this->webService->getRedirectResponse('product/index');
     }
 }

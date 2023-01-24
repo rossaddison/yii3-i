@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Invoice\QuoteCustom;
 
-use App\Invoice\Entity\QuoteCustom;
-
 
 final class QuoteCustomService
 {
@@ -16,7 +14,7 @@ final class QuoteCustomService
         $this->repository = $repository;
     }
 
-    public function saveQuoteCustom(QuoteCustom $model, QuoteCustomForm $form): void
+    public function saveQuoteCustom(object $model, QuoteCustomForm $form): void
     { 
        $model->setQuote_id($form->getQuote_id());
        $model->setCustom_field_id($form->getCustom_field_id());

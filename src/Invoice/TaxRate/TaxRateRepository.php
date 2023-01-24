@@ -71,12 +71,8 @@ final class TaxRateRepository extends Select\Repository
         );
     }
     
-    /**
-     * @return null|object
-     *
-     * @psalm-return TEntity|null
-     */
-    public function repoTaxRatequery(string $tax_rate_id):object|null
+    
+    public function repoTaxRatequery(string $tax_rate_id): null|object
     {
         $query = $this
             ->select()
@@ -84,7 +80,7 @@ final class TaxRateRepository extends Select\Repository
         return  $query->fetchOne() ?: null;        
     }
     
-    public function withName(string $tax_rate_name): ?TaxRate
+    public function withName(string $tax_rate_name): object|null
     {
         $query = $this
             ->select()

@@ -9,8 +9,6 @@ use App\Invoice\Entity\Quote;
 use Yiisoft\Aliases\Aliases;
 use Yiisoft\Files\FileHelper;
 
-use App\Invoice\Helpers\Mpdf\Mpdf;
-
 // ********************************************************
 // \Mpdf\Output\Destination::INLINE, or "I"
 // send the file inline to the browser. The plug-in is used if available. 
@@ -152,7 +150,7 @@ Class MpdfHelper
          * @param null|string $password
          * @param sR $sR
          * @param bool $isInvoice
-         * @param $quote_or_invoice
+         * @param object|null $quote_or_invoice
          */
         public function pdf_create(string $html,
                                    string $filename, 
@@ -160,7 +158,7 @@ Class MpdfHelper
                                    null|string $password , 
                                    sR $sR, 
                                    bool $isInvoice = false, 
-                                   Inv|Quote|null $quote_or_invoice = null) 
+                                   object|null $quote_or_invoice = null) 
         {
             $sR->load_settings();
             $invoice_array = [];            
@@ -232,11 +230,11 @@ Class MpdfHelper
         * @param string|null $password
         * @param SR $sR
         * @param string $title
-        * @param Inv|Quote|null $quote_or_invoice
+        * @param object|null $quote_or_invoice
         * @param Aliases $aliases
         * @return \Mpdf\Mpdf
         */
-        private function initialize_pdf(string|null $password, SR $sR, string $title, Inv|Quote|null $quote_or_invoice, Aliases $aliases): \Mpdf\Mpdf{
+        private function initialize_pdf(string|null $password, SR $sR, string $title, object|null $quote_or_invoice, Aliases $aliases): \Mpdf\Mpdf{
             $temp_mpdf_folder = $aliases->get('@uploads').$sR::getTempMpdffolderRelativeUrl();
             $mpdf = new \Mpdf\Mpdf(array_merge($this->options,['tempDir'=>$temp_mpdf_folder]));
             // mPDF configuration
@@ -264,10 +262,11 @@ Class MpdfHelper
                 $mpdf->showWatermarkText = true;
             }
             
-            
-            if ((null!==$quote_or_invoice) && (null!==$quote_or_invoice->getClient()->getClient_language())) {
-                if (($sR->get_folder_language() === "Arabic") || $quote_or_invoice->getClient()->getClient_language() === "Arabic") {
-                    $mpdf->SetDirectionality('rtl');         
+            if (($quote_or_invoice instanceof Quote) || ($quote_or_invoice instanceof Inv)) { 
+                if ((null!==$quote_or_invoice->getClient()?->getClient_language())) {
+                    if (($sR->get_folder_language() === "Arabic") || $quote_or_invoice->getClient()?->getClient_language() === "Arabic") {
+                        $mpdf->SetDirectionality('rtl');         
+                    }        
                 }
             }
             // Set a password if set for the voucher
@@ -286,10 +285,16 @@ Class MpdfHelper
         }
         
         /**
-         * @param false|string $css
+         * 
+         * @param string|false $css
+         * @param string $html
+         * @param \Mpdf\Mpdf $mpdf
+         * @return \Mpdf\Mpdf
          */
         private function write_html_to_pdf(string|false $css,string $html,\Mpdf\Mpdf $mpdf): \Mpdf\Mpdf{
-            $mpdf->writeHtml($css,1);
+            if (is_string($css)) {
+                $mpdf->writeHtml($css,1);
+            }
             $mpdf->WriteHTML($html,2);
             return $mpdf;
         }

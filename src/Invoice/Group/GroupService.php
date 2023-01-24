@@ -17,7 +17,7 @@ final class GroupService
         $this->repository = $repository;
     }
 
-    public function saveGroup(Group $model, GroupForm $form): void
+    public function saveGroup(object $model, GroupForm $form): void
     {
        $model->setName($form->getName() ?: 'Name');
        $model->setIdentifier_format($form->getIdentifier_format() ?: 'AAA{{{id}}}');
@@ -27,7 +27,7 @@ final class GroupService
        $this->repository->save($model);
     }
     
-    public function deleteGroup(Group $model): void
+    public function deleteGroup(object $model): void
     {
        $this->repository->delete($model);
     }

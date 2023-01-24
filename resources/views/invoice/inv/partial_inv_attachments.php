@@ -43,7 +43,7 @@ $this->setTitle($s->trans('add_files'));
                     </div>
                     <div>
                         <?= Field::buttonGroup()
-                            ->addContainerClass('btn-group btn-toolbar float-end')
+                            ->addContainerClass('btn-group')
                             ->buttonsData([
                                 [
                                     $translator->translate('Reset'),

@@ -130,26 +130,30 @@ final class GroupController
                         SettingRepository $settingRepository                       
 
     ): Response {
-        $parameters = [
-            'title' => 'Edit',
-            'action' => ['group/edit', ['id' => $this->group($currentRoute, $groupRepository)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->group($currentRoute, $groupRepository)),
-            's'=>$settingRepository,
-            'head'=>$head
-            
-        ];
-        if ($request->getMethod() === Method::POST) {
-            $form = new GroupForm();
-            $body = $request->getParsedBody();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
-                $this->groupService->saveGroup($this->group($currentRoute,$groupRepository), $form);
-                return $this->webService->getRedirectResponse('group/index');
+        $group = $this->group($currentRoute, $groupRepository);
+        if ($group) {
+            $parameters = [
+                'title' => 'Edit',
+                'action' => ['group/edit', ['id' => $group->getId()]],
+                'errors' => [],
+                'body' => $this->body($group),
+                's'=>$settingRepository,
+                'head'=>$head
+
+            ];
+            if ($request->getMethod() === Method::POST) {
+                $form = new GroupForm();
+                $body = $request->getParsedBody();
+                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                    $this->groupService->saveGroup($group, $form);
+                    return $this->webService->getRedirectResponse('group/index');
+                }
+                $parameters['body'] = $body;
+                $parameters['errors'] = $form->getFormErrors();
             }
-            $parameters['body'] = $body;
-            $parameters['errors'] = $form->getFormErrors();
+            return $this->viewRenderer->render('/invoice/group/_form', $parameters);
         }
-        return $this->viewRenderer->render('/invoice/group/_form', $parameters);
+        return $this->webService->getRedirectResponse('group/index');
     }
     
     /**
@@ -159,10 +163,14 @@ final class GroupController
      * @param GroupRepository $groupRepository
      * @return Response
      */
-    public function delete(SessionInterface $session,CurrentRoute $currentRoute, GroupRepository $groupRepository 
+    public function delete(SessionInterface $session, CurrentRoute $currentRoute, GroupRepository $groupRepository 
     ): Response {
         try {
-              $this->groupService->deleteGroup($this->group($currentRoute, $groupRepository));               
+              $group = $this->group($currentRoute, $groupRepository);
+              if ($group) {
+                $this->groupService->deleteGroup($group);               
+                return $this->webService->getRedirectResponse('group/index'); 
+              }
               return $this->webService->getRedirectResponse('group/index'); 
 	} catch (\Exception $e) {
               unset($e);
@@ -172,22 +180,28 @@ final class GroupController
     }
     
     /**
+     * 
      * @param CurrentRoute $currentRoute
      * @param GroupRepository $groupRepository
      * @param SettingRepository $settingRepository
+     * @return \Yiisoft\DataResponse\DataResponse|Response
      */
     public function view(CurrentRoute $currentRoute, GroupRepository $groupRepository,
         SettingRepository $settingRepository
-        ): \Yiisoft\DataResponse\DataResponse {
-        $parameters = [
-            'title' => $settingRepository->trans('view'),
-            'action' => ['invoice/edit', ['id' => $this->group($currentRoute, $groupRepository)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->group($currentRoute, $groupRepository)),
-            's'=>$settingRepository,            
-            'group'=>$groupRepository->repoGroupquery($this->group($currentRoute, $groupRepository)->getId()),
-        ];
-        return $this->viewRenderer->render('_view', $parameters);
+        ): \Yiisoft\DataResponse\DataResponse|Response {
+        $group = $this->group($currentRoute, $groupRepository);
+        if ($group) {
+            $parameters = [
+                'title' => $settingRepository->trans('view'),
+                'action' => ['invoice/edit', ['id' => $group->getId()]],
+                'errors' => [],
+                'body' => $this->body($group),
+                's'=>$settingRepository,            
+                'group'=>$groupRepository->repoGroupquery($group->getId()),
+            ];
+            return $this->viewRenderer->render('_view', $parameters);
+        }
+        return $this->webService->getRedirectResponse('group/index');  
     }
     
     /**
@@ -208,13 +222,16 @@ final class GroupController
     /**
      * @param CurrentRoute $currentRoute
      * @param GroupRepository $groupRepository
-     * @return Group|null
+     * @return object|null
      */
-    private function group(CurrentRoute $currentRoute, GroupRepository $groupRepository) : Group|null
+    private function group(CurrentRoute $currentRoute, GroupRepository $groupRepository) : object|null
     {
         $id = $currentRoute->getArgument('id');       
-        $group = $groupRepository->repoGroupquery($id);
-        return $group;
+        if (null!==$id) {
+            $group = $groupRepository->repoGroupquery($id);
+            return $group;
+        }
+        return $this->webService->getRedirectResponse('group/index');
     }
     
     /**
@@ -229,19 +246,18 @@ final class GroupController
     }
     
     /**
-     * @return (int|null|string)[]
-     *
-     * @psalm-return array{id: string, name: string, identifier_format: null|string, next_id: null|string, left_pad: int|null}
+     * 
+     * @param object $group
+     * @return array
      */
-    private function body(Group $group): array {
+    private function body(object $group): array {
         $body = [
-                
           'id'=>$group->getId(),
           'name'=>$group->getName(),
           'identifier_format'=>$group->getIdentifier_format(),
           'next_id'=>$group->getNext_id(),
           'left_pad'=>$group->getLeft_pad()
-                ];
+        ];
         return $body;
     }
     

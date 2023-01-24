@@ -121,25 +121,29 @@ final class ItemLookupController
                         SettingRepository $settingRepository,                        
 
     ): Response {
-        $parameters = [
-            'title' => 'Edit',
-            'action' => ['itemlookup/edit', ['id' => $this->itemlookup($currentRoute, $itemlookupRepository)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->itemlookup($currentRoute, $itemlookupRepository)),
-            'head'=>$head,
-            's'=>$settingRepository,            
-        ];
-        if ($request->getMethod() === Method::POST) {
-            $form = new ItemLookupForm();
-            $body = $request->getParsedBody();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
-                $this->itemlookupService->saveItemLookup($this->itemlookup($currentRoute, $itemlookupRepository), $form);
-                return $this->webService->getRedirectResponse('itemlookup/index');
+        $lookup = $this->itemlookup($currentRoute, $itemlookupRepository);
+        if ($lookup) {
+            $parameters = [
+                    'title' => 'Edit',
+                    'action' => ['itemlookup/edit', ['id' => $lookup->getId()]],
+                    'errors' => [],
+                    'body' => $this->body($lookup),
+                    'head'=>$head,
+                    's'=>$settingRepository,            
+            ];
+            if ($request->getMethod() === Method::POST) {
+                $form = new ItemLookupForm();
+                $body = $request->getParsedBody();
+                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                    $this->itemlookupService->saveItemLookup($lookup, $form);
+                    return $this->webService->getRedirectResponse('itemlookup/index');
+                }
+                $parameters['body'] = $body;
+                $parameters['errors'] = $form->getFormErrors();
             }
-            $parameters['body'] = $body;
-            $parameters['errors'] = $form->getFormErrors();
+            return $this->viewRenderer->render('_form', $parameters);
         }
-        return $this->viewRenderer->render('_form', $parameters);
+        return $this->webService->getNotFoundResponse();
     }
     
     /**
@@ -150,28 +154,38 @@ final class ItemLookupController
      */
     public function delete(CurrentRoute $currentRoute, ItemLookupRepository $itemlookupRepository 
     ): Response {    
-        $this->itemlookupService->deleteItemLookup($this->itemlookup($currentRoute, $itemlookupRepository));               
-        return $this->webService->getRedirectResponse('itemlookup/index');        
+        $lookup = $this->itemlookup($currentRoute, $itemlookupRepository);
+        if ($lookup) {
+            $this->itemlookupService->deleteItemLookup($lookup);               
+            return $this->webService->getRedirectResponse('itemlookup/index');                
+        }
+        return $this->webService->getNotFoundResponse();
     }
     
     /**
+     * 
      * @param CurrentRoute $currentRoute
      * @param ItemLookupRepository $itemlookupRepository
      * @param SettingRepository $settingRepository
+     * @return \Yiisoft\DataResponse\DataResponse|Response
      */
     public function view(CurrentRoute $currentRoute, ItemLookupRepository $itemlookupRepository,
         SettingRepository $settingRepository,
-        ): \Yiisoft\DataResponse\DataResponse {
-        $parameters = [
-            'title' => $settingRepository->trans('view'),
-            'action' => ['itemlookup/edit', ['id' => $this->itemlookup($currentRoute, $itemlookupRepository)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->itemlookup($currentRoute, $itemlookupRepository)),
-            's'=>$settingRepository,             
-            'itemlookup'=>$itemlookupRepository->repoItemLookupquery($this->itemlookup($currentRoute, $itemlookupRepository)->getId()),
-        ];
-        return $this->viewRenderer->render('_view', $parameters);
-    }
+        ): \Yiisoft\DataResponse\DataResponse|Response {
+        $lookup = $this->itemlookup($currentRoute, $itemlookupRepository);
+        if ($lookup) {
+            $parameters = [
+                    'title' => $settingRepository->trans('view'),
+                    'action' => ['itemlookup/edit', ['id' => $lookup->getId()]],
+                    'errors' => [],
+                    'body' => $this->body($lookup),
+                    's'=>$settingRepository,             
+                    'itemlookup'=>$itemlookupRepository->repoItemLookupquery($lookup->getId()),
+            ];
+            return $this->viewRenderer->render('_view', $parameters);
+        }
+        return $this->webService->getNotFoundResponse();
+        }
     
     /**
      * @return Response|true
@@ -189,12 +203,16 @@ final class ItemLookupController
     /**
      * @param CurrentRoute $currentRoute
      * @param ItemLookupRepository $itemlookupRepository
-     * @return ItemLookup|null
+     * @return object|null
      */
-    private function itemlookup(CurrentRoute $currentRoute, ItemLookupRepository $itemlookupRepository): ItemLookup|null 
+    private function itemlookup(CurrentRoute $currentRoute, ItemLookupRepository $itemlookupRepository): object|null 
     {
+        $itemlookup = new ItemLookup();
         $id = $currentRoute->getArgument('id');       
-        $itemlookup = $itemlookupRepository->repoItemLookupquery($id);
+        if (null!==$id) {
+            $itemlookup = $itemlookupRepository->repoItemLookupquery($id);
+            return $itemlookup;
+        }
         return $itemlookup;
     }
     
@@ -210,18 +228,17 @@ final class ItemLookupController
     }
     
     /**
-     * @return (float|string)[]
-     *
-     * @psalm-return array{id: string, name: string, description: string, price: float}
+     * 
+     * @param object $itemlookup
+     * @return array
      */
-    private function body(ItemLookup $itemlookup): array {
+    private function body(object $itemlookup): array {
         $body = [
-                
           'id'=>$itemlookup->getId(),
           'name'=>$itemlookup->getName(),
           'description'=>$itemlookup->getDescription(),
           'price'=>$itemlookup->getPrice()
-                ];
+        ];
         return $body;
     }
     

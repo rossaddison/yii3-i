@@ -15,16 +15,15 @@ final class UserService
         private AccessCheckerInterface $accessChecker
     ) {
     }
-
-    public function getUser(): ?User
+    
+    public function getUser(): object|null
     {
         $userId = $this->currentUser->getId();
-
-        if ($userId === null) {
-            return null;
-        }
-
-        return $this->repository->findById($this->currentUser->getId());
+        if (null!==$userId) {
+           return $this->repository->findById($userId); 
+        } else {
+           return null;
+        } 
     }
 
     public function hasPermission(string $permission): bool

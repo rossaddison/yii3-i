@@ -121,7 +121,10 @@ Class CustomValuesHelper {
                     break;
                 case 'MULTIPLE-CHOICE':
                     $choices = $custom_value[$custom_field->getId()];
-                    $selChoices = explode(',', $fieldValue);
+                    $selChoices = [];
+                    if (is_string($fieldValue)) {
+                        $selChoices = explode(',', $fieldValue);
+                    }
                     ?>
                         <select id="<?= $custom_field->getId(); ?>" name="view[<?= $custom_field->getId(); ?>]" class="form-control" disabled>
                             <option value=""><?= $this->s->trans('none'); ?></option>
@@ -206,7 +209,7 @@ Class CustomValuesHelper {
                     break;
                 case 'MULTIPLE-CHOICE':
                     $choices = $custom_value[$custom_field->getId()];
-                    $selChoices = explode(',', $fieldValue);
+                    $selChoices = explode(',', is_string($fieldValue) ? $fieldValue : '');
                     ?>
                     <div class="<?php echo $class_input; ?>">
                         <select id="<?= $custom_field->getId(); ?>" name="custom[<?= $custom_field->getId(); ?>]" class="form-control" required>
@@ -316,7 +319,7 @@ Class CustomValuesHelper {
             if ($entity_custom_value->getCustom_field_id() === $custom_field_id) {
                 return $entity_custom_value->getValue();
             }
-        }
+        }        
     }
     
     /**
@@ -326,11 +329,13 @@ Class CustomValuesHelper {
      * @param CVR $cvR
      * @return string|int|null
      */           
-    public function selected_value(array $entity_custom_values, string $custom_field_id, CVR $cvR){
+    public function selected_value(array $entity_custom_values, string $custom_field_id, CVR $cvR) : string|int|null {
         $quote_custom_value = $this->form_value($entity_custom_values,$custom_field_id);
         if (($quote_custom_value !== '') && !empty($quote_custom_value)) {
           $custom_value = $cvR->repoCustomValuequery((string)$quote_custom_value);
-          return $selected_value = $custom_value->getValue();
+          if ($custom_value) {
+            return $selected_value = $custom_value->getValue();
+          }
         } 
         return $selected_value = '';
     }

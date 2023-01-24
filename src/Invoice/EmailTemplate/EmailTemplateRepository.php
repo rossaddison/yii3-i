@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace App\Invoice\EmailTemplate;
 
-use App\Invoice\Entity\EmailTemplate;
 use App\Invoice\Setting\SettingRepository;
 use Cycle\ORM\Select;
 use Throwable;
@@ -115,6 +114,7 @@ final class EmailTemplateRepository extends Select\Repository
     {
         $pdf_template_directory = dirname(dirname(dirname(__DIR__))).'/resources/views/invoice/template/invoice/pdf'; 
         $public_template_directory = dirname(dirname(dirname(__DIR__))).'/resources/views/invoice/template/invoice/public';
+        $templates = [];
         $php_only = (new PathMatcher())
         ->doNotCheckFilesystem()
         ->only('*.php');
@@ -129,8 +129,11 @@ final class EmailTemplateRepository extends Select\Repository
                                         'recursive' => false,
                                 ]);
         }
-        $extension_remove= $this->remove_extension($templates);
-        $templates = $this->remove_path($extension_remove);
+        if (!empty($templates)) {
+            $extension_remove = $this->remove_extension($templates);
+            $templates = $this->remove_path($extension_remove);
+            return $templates;
+        }
         return $templates;
     }
     
@@ -141,6 +144,7 @@ final class EmailTemplateRepository extends Select\Repository
     {
         $pdf_template_directory = dirname(dirname(dirname(__DIR__))).'/resources/views/invoice/template/quote/pdf'; 
         $public_template_directory = dirname(dirname(dirname(__DIR__))).'/resources/views/invoice/template/quote/public';
+        $templates = [];
         $pdf_only = (new PathMatcher())
         ->doNotCheckFilesystem()
         ->only('*.pdf');
@@ -155,8 +159,11 @@ final class EmailTemplateRepository extends Select\Repository
                                         'recursive' => false,
                                 ]);
         }
-        $extension_remove = $this->remove_extension($templates);
-        $templates = $this->remove_path($extension_remove);
+        if (!empty($templates)) {
+            $extension_remove = $this->remove_extension($templates);
+            $templates = $this->remove_path($extension_remove);
+            return $templates;
+        }
         return $templates;
     }
 
@@ -175,19 +182,5 @@ final class EmailTemplateRepository extends Select\Repository
             $files[$key] = basename($file);
         }
         return $files;
-    }
-            
-    private function flat_an_array(array $a) : array
-    {
-        foreach($a as $i)
-        {
-            if(is_array($i)) 
-            {
-                if($na) $na = array_merge($na, $this->flat_an_array($i));
-                else $na = $this->flat_an_array($i);
-            }
-            else $na[] = $i;
-        }
-        return $na;
     }
 }

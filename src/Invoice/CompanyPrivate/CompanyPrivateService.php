@@ -18,16 +18,16 @@ final class CompanyPrivateService
         $this->repository = $repository;
     }
 
-    public function saveCompanyPrivate(CompanyPrivate $model, CompanyPrivateForm $form, SettingRepository $s): void
+    public function saveCompanyPrivate(object $model, CompanyPrivateForm $form, SettingRepository $s): void
     {
        //null!==$form->getCompany_id() ? $model->setCompany($model->getCompany()->getId() == $form->getCompany_id() ? $model->getCompany() : null): ''; 
-       $model->setCompany_id($form->getCompany_id());
-       $model->setVat_id($form->getVat_id());
-       $model->setTax_code($form->getTax_code());
-       $model->setIban($form->getIban());
-       $model->setGln($form->getGln());
-       $model->setRcc($form->getRcc());
-       $model->setLogo_filename($form->getLogo_filename());
+       null!==$form->getCompany_id() ? $model->setCompany_id($form->getCompany_id()) : '';
+       null!==$form->getVat_id() ? $model->setVat_id($form->getVat_id()) : '';
+       null!==$form->getTax_code() ? $model->setTax_code($form->getTax_code()) : '';
+       null!==$form->getIban() ? $model->setIban($form->getIban()) : '';
+       null!==$form->getGln() ? $model->setGln($form->getGln()) : '';
+       null!==$form->getRcc() ? $model->setRcc($form->getRcc()) : '';
+       null!==$form->getLogo_filename() ? $model->setLogo_filename($form->getLogo_filename()) : '';
        $model->setStart_date($form->getStart_date($s));
        $model->setEnd_date($form->getEnd_date($s));
        $this->repository->save($model);
@@ -35,19 +35,19 @@ final class CompanyPrivateService
     
     public function addCompanyPrivate(CompanyPrivate $model, CompanyPrivateForm $form, SettingRepository $s): void
     {
-       $model->setCompany_id($form->getCompany_id());
-       $model->setVat_id($form->getVat_id());
-       $model->setTax_code($form->getTax_code());
-       $model->setIban($form->getIban());
-       $model->setGln($form->getGln());
-       $model->setRcc($form->getRcc());
-       $model->setLogo_filename($form->getLogo_filename());
+       null!==$form->getCompany_id() ? $model->setCompany_id($form->getCompany_id()) : '';
+       null!==$form->getVat_id() ? $model->setVat_id($form->getVat_id()) : '';
+       null!==$form->getTax_code() ? $model->setTax_code($form->getTax_code()) : '';
+       null!==$form->getIban() ? $model->setIban($form->getIban()) : '';
+       null!==$form->getGln() ? $model->setGln($form->getGln()) : '';
+       null!==$form->getRcc() ? $model->setRcc($form->getRcc()) : '';
+       null!==$form->getLogo_filename() ? $model->setLogo_filename($form->getLogo_filename()) : '';
        $model->setStart_date($form->getStart_date($s));
        $model->setEnd_date($form->getEnd_date($s));
        $this->repository->save($model);
     }
     
-    public function deleteCompanyPrivate(CompanyPrivate $model): void
+    public function deleteCompanyPrivate(array|object|null $model): void
     {
         $this->repository->delete($model);
     }

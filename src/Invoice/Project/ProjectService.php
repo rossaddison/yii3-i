@@ -17,16 +17,14 @@ final class ProjectService
         $this->repository = $repository;
     }
 
-    public function saveProject(Project $model, ProjectForm $form): void
+    public function saveProject(object $model, ProjectForm $form): void
     {
-        
-       $model->setClient_id($form->getClient_id());
-       $model->setName($form->getName());
- 
-        $this->repository->save($model);
+       $form->getClient_id() ? $model->setClient_id($form->getClient_id()) : '';
+       $form->getName() ? $model->setName($form->getName()) : ''; 
+       $this->repository->save($model);
     }
     
-    public function deleteProject(Project $model): void
+    public function deleteProject(object $model): void
     {
         $this->repository->delete($model);
     }

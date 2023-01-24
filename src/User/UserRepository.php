@@ -72,9 +72,9 @@ final class UserRepository extends Select\Repository
     /**
      * @param string $id
      *
-     * @return User|null
+     * @return object|null
      */
-    public function findById(string $id): ?User
+    public function findById(string $id): object|null
     {
         return $this->findByPK($id);
     }
@@ -84,8 +84,16 @@ final class UserRepository extends Select\Repository
         return $this->findBy('login', $login);
     }
 
+    /**
+     * @psalm-suppress MoreSpecificReturnType ?User
+     * @param string $login
+     * @return User|null
+     */
     public function findByLoginWithAuthIdentity(string $login): ?User
     {
+        /**
+         * @psalm-suppress LessSpecificReturnStatement
+         */
         return $this
             ->select()
             ->where(['login' => $login])
@@ -100,9 +108,18 @@ final class UserRepository extends Select\Repository
     {
         $this->entityWriter->write([$user]);
     }
-
+    
+    /**
+     * @psalm-suppress MoreSpecificReturnType ?User
+     * @param string $field
+     * @param string $value
+     * @return User|null
+     */
     private function findBy(string $field, string $value): ?User
     {
+        /**
+         * @psalm-suppress LessSpecificReturnStatement 
+         */
         return $this->findOne([$field => $value]);
     }
 }

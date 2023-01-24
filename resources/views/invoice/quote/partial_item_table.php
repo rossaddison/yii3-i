@@ -219,25 +219,25 @@ use Yiisoft\Html\Html;
                     <td class="td-amount td-vert-middle">
                         <span><?= $s->trans('subtotal'); ?></span><br/>                        
                         <span name="subtotal" class="amount" data-toggle="tooltip" title="quote_item_amount->subtotal">
-                            <?= $numberhelper->format_currency($quote_item_amount->repoQuoteItemAmountquery((string)$item->getId())->getSubtotal() ?? 0.00); ?>
+                            <?= $numberhelper->format_currency($quote_item_amount->repoQuoteItemAmountquery((string)$item->getId())?->getSubtotal() ?? 0.00); ?>
                         </span>
                     </td>
                     <td class="td-amount td-vert-middle">
                         <span><?= $s->trans('discount'); ?></span><br/>
                         <span name="item_discount_total" class="amount" data-toggle="tooltip" title="quote_item_amount->discount">
-                            <?= $numberhelper->format_currency($quote_item_amount->repoQuoteItemAmountquery((string)$item->getId())->getDiscount() ?? 0.00); ?>
+                            <?= $numberhelper->format_currency($quote_item_amount->repoQuoteItemAmountquery((string)$item->getId())?->getDiscount() ?? 0.00); ?>
                         </span>
                     </td>
                     <td class="td-amount td-vert-middle">
                         <span><?= $s->trans('tax'); ?></span><br/>
                         <span name="item_tax_total" class="amount" data-toggle="tooltip" title="quote_item_amount->tax_total">
-                            <?= $numberhelper->format_currency($quote_item_amount->repoQuoteItemAmountquery((string)$item->getId())->getTax_total() ?? 0.00); ?>
+                            <?= $numberhelper->format_currency($quote_item_amount->repoQuoteItemAmountquery((string)$item->getId())?->getTax_total() ?? 0.00); ?>
                         </span>
                     </td>
                     <td class="td-amount td-vert-middle">
                         <span><?= $s->trans('total'); ?></span><br/>
                         <span name="item_total" class="amount" data-toggle="tooltip" title="quote_item_amount->total">
-                            <?= $numberhelper->format_currency($quote_item_amount->repoQuoteItemAmountquery((string)$item->getId())->getTotal() ?? 0.00); ?>
+                            <?= $numberhelper->format_currency($quote_item_amount->repoQuoteItemAmountquery((string)$item->getId())?->getTotal() ?? 0.00); ?>
                         </span>
                     </td>                   
                 </tr>
@@ -272,21 +272,19 @@ use Yiisoft\Html\Html;
                     </td>
                     <td>
                         <?php if ($quote_tax_rates) {
-                            foreach ($quote_tax_rates as $index => $quote_tax_rate) { ?>
-                                <form method="POST" class="form-inline" action="<?= $urlGenerator->generate('quote/delete_quote_tax_rate',['id'=>$quote_tax_rate->getId()]) ?>">
+                            foreach ($quote_tax_rates as $quote_tax_rate) { ?>
                                     <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                                     <?php if ($invEdit) { ?>
-                                    <button type="submit" class="btn btn-xs btn-link" onclick="return confirm('<?= $s->trans('delete_tax_warning'); ?>');">
-                                        <i class="fa fa-trash"></i>
-                                    </button>
+                                    <span type="submit" class="btn btn-xs btn-link" onclick="return confirm('<?= $s->trans('delete_tax_warning'); ?>');">
+                                        <a href="<?= $urlGenerator->generate('quote/delete_quote_tax_rate',['id'=>$quote_tax_rate->getId()]) ?>"><i class="fa fa-trash"></i></a>
+                                    </span>
                                     <?php } ?>
                                     <span class="text-muted">
                                         <?= Html::encode($quote_tax_rate->getTaxRate()->getTax_rate_name()) . ' ' . $numberhelper->format_amount($quote_tax_rate->getTaxRate()->getTax_rate_percent()) . '%' ?>
                                     </span>
                                     <span class="amount" data-toggle="tooltip" title="quote_tax_rate->quote_tax_rate_amount">
                                         <?php echo $numberhelper->format_currency($quote_tax_rate->getQuote_tax_rate_amount()); ?>
-                                    </span>
-                                </form>
+                                    </span>                                
                             <?php }
                         } else {
                             echo $numberhelper->format_currency('0');
@@ -302,7 +300,8 @@ use Yiisoft\Html\Html;
                                        class="discount-option form-control input-sm amount" data-toggle="tooltip" title="quote->discount_amount" disabled
                                        value="<?= $numberhelper->format_amount($quote->getDiscount_amount() != 0 ? $quote->getDiscount_amount() : 0.00); ?>">
                                 <div
-                                    class="input-group-text"><?= $s->get_setting('currency_symbol'); ?></div>
+                                    class="input-group-text"><?= $s->get_setting('currency_symbol'); ?>
+                                </div>
                             </div>
                         </div>
                         <div class="discount-field">

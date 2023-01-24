@@ -107,6 +107,9 @@ final class CompanyPrivateController
             $modified_original_file_name = Random::string(4).'_'.preg_replace('/\s+/', '_', $_FILES['file']['name']);
             // Build a target file name
             $target_file_name = $targetPath . '/'.$modified_original_file_name;
+            /** 
+             * @psalm-suppress PossiblyInvalidArrayAssignment 
+             */
             $parameters['body']['logo_filename'] = $modified_original_file_name;
             if (!$this->file_uploading_errors($tmp, $target_file_name, $settingRepository)) {
                 if ($form->load($parameters['body']) 
@@ -175,59 +178,62 @@ final class CompanyPrivateController
     ): Response {
         $form = new CompanyPrivateForm();
         $company_private = $this->companyprivate($currentRoute, $companyprivateRepository);
-        $parameters = [
-            'title' => $settingRepository->trans('edit'),
-            'action' => ['companyprivate/edit', ['id' => $company_private->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->companyprivate($currentRoute, $companyprivateRepository)),
-            'head'=>$head,
-            'companies'=>$companyRepository->findAllPreloaded(),
-            'company_public'=>$this->translator->translate('invoice.setting.company'),
-        ];
-        $aliases = $settingRepository->get_company_private_logos_folder_aliases();
-        $targetPath = $aliases->get('@company_private_logos');
-        if (!is_writable($targetPath)) { 
-            $this->flash('warning', $settingRepository->trans('is_not_writable'));
-            return $this->webService->getRedirectResponse('companyprivate/index');
-        }   
-        if ($request->getMethod() === Method::POST) {
-            
-            $body = $request->getParsedBody();
-            if ($form->load($body) 
-                && $validator->validate($form)->isValid()
-            ) {
-                // Replace filename's spaces with underscore and add random string preventing overwrites
-                $modified_original_file_name = Random::string(4).'_'.preg_replace('/\s+/', '_', $_FILES['file']['name']);
-                // Build a unique target file name
-                $target_file_name = $targetPath . '/'. $modified_original_file_name; 
-                
-                // Save the body excluding the logo_filename field
-                $this->companyprivateService->saveCompanyPrivate($company_private, $form, $settingRepository);
-                
-                // Prepare the after save for the logo_filename field
-                $after_save = $companyprivateRepository->repoCompanyPrivatequery((string)$company_private->getId());
-                
-                // A new file upload must replace the previous one or keep existing file 
-                $after_save->setLogo_filename(
-                    // 1. tmp is an uploaded file and not a security risk
-                    // 2. the target file name does not exist
-                    // 3. tmp has been moved into the target destination   
-                    !$this->file_uploading_errors($_FILES['file']['tmp_name'], $target_file_name, $settingRepository)
-                
-                    // New file upload
-                    ? $modified_original_file_name 
-
-                    // or Existing database file name        
-                    :  $parameters['body']['logo_filename']
-                );                
-                $companyprivateRepository->save($after_save);
-                
-                $this->flash('info',$settingRepository->trans('record_successfully_updated'));
+        if ($company_private) {
+            $parameters = [
+                'title' => $settingRepository->trans('edit'),
+                'action' => ['companyprivate/edit', ['id' => $company_private->getId()]],
+                'errors' => [],
+                'body' => $this->body($company_private),
+                'head'=>$head,
+                'companies'=>$companyRepository->findAllPreloaded(),
+                'company_public'=>$this->translator->translate('invoice.setting.company'),
+            ];
+            $aliases = $settingRepository->get_company_private_logos_folder_aliases();
+            $targetPath = $aliases->get('@company_private_logos');
+            if (!is_writable($targetPath)) { 
+                $this->flash('warning', $settingRepository->trans('is_not_writable'));
                 return $this->webService->getRedirectResponse('companyprivate/index');
+            }   
+            if ($request->getMethod() === Method::POST) {
+                $body = $request->getParsedBody();
+                if ($form->load($body) 
+                    && $validator->validate($form)->isValid()
+                ) {
+                    // Replace filename's spaces with underscore and add random string preventing overwrites
+                    $modified_original_file_name = Random::string(4).'_'.preg_replace('/\s+/', '_', $_FILES['file']['name']);
+                    // Build a unique target file name
+                    $target_file_name = $targetPath . '/'. $modified_original_file_name; 
+
+                    // Save the body excluding the logo_filename field
+                    $this->companyprivateService->saveCompanyPrivate($company_private, $form, $settingRepository);
+
+                    // Prepare the after save for the logo_filename field
+                    $after_save = $companyprivateRepository->repoCompanyPrivatequery((string)$company_private->getId());
+                    if ($after_save) {
+                        // A new file upload must replace the previous one or keep existing file 
+                        $after_save->setLogo_filename(
+                            // 1. tmp is an uploaded file and not a security risk
+                            // 2. the target file name does not exist
+                            // 3. tmp has been moved into the target destination   
+                            !$this->file_uploading_errors($_FILES['file']['tmp_name'], $target_file_name, $settingRepository)
+
+                            // New file upload
+                            ? $modified_original_file_name 
+
+                            // or Existing database file name        
+                            :  $parameters['body']['logo_filename']
+                        );                
+                        $companyprivateRepository->save($after_save);
+
+                        $this->flash('info',$settingRepository->trans('record_successfully_updated'));
+                        return $this->webService->getRedirectResponse('companyprivate/index');
+                    } // after  save
+                }
+                $parameters['errors'] = $form->getFormErrors();
             }
-            $parameters['errors'] = $form->getFormErrors();
-        }
-        return $this->viewRenderer->render('_form', $parameters);
+            return $this->viewRenderer->render('_form', $parameters);
+        } 
+        return $this->webService->getRedirectResponse('companyprivate/index');   
     }
     
     /**
@@ -241,11 +247,14 @@ final class CompanyPrivateController
                            CompanyPrivateRepository $companyprivateRepository,
                            SettingRepository $sR ): Response 
     {
-        $this->companyprivateService->deleteCompanyPrivate($this->companyprivate($currentRoute, $companyprivateRepository)); 
-        $this->flash('info', $sR->trans('record_successfully_deleted'));
-        return $this->webService->getRedirectResponse('companyprivate/index'); 
+        $company_private = $this->companyprivate($currentRoute, $companyprivateRepository);
+        if ($company_private) {
+            $this->companyprivateService->deleteCompanyPrivate($company_private);
+            $this->flash('info', $sR->trans('record_successfully_deleted'));
+            return $this->webService->getRedirectResponse('companyprivate/index'); 
+        }
+        return $this->webService->getRedirectResponse('companyprivate/index');
     }  
-    
     
     /**
      * @param CurrentRoute $currentRoute
@@ -254,17 +263,21 @@ final class CompanyPrivateController
      */
     public function view(CurrentRoute $currentRoute, CompanyPrivateRepository $companyprivateRepository,
         SettingRepository $settingRepository,
-        ): \Yiisoft\DataResponse\DataResponse {
+        ): Response {
         $company_private = $this->companyprivate($currentRoute, $companyprivateRepository);
-        $parameters = [
-            'title' => $settingRepository->trans('view'),
-            'action' => ['companyprivate/view', ['id' => $company_private->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->companyprivate($currentRoute, $companyprivateRepository)),
-            's'=>$settingRepository,             
-            'companyprivate'=>$companyprivateRepository->repoCompanyPrivatequery((string)$company_private->getId()),
-        ];
-        return $this->viewRenderer->render('_view', $parameters);
+        if ($company_private) {
+            $parameters = [
+                'title' => $settingRepository->trans('view'),
+                'action' => ['companyprivate/view', ['id' => $company_private->getId()]],
+                'errors' => [],
+                'body' => $this->body($company_private),
+                's'=>$settingRepository,             
+                'companyprivate'=>$company_private->getId(),
+            ];
+            return $this->viewRenderer->render('_view', $parameters);
+        } else {
+            return $this->webService->getRedirectResponse('companyprivate/index');
+        }
     }
         
     /**
@@ -283,13 +296,16 @@ final class CompanyPrivateController
     /**
      * @param CurrentRoute $currentRoute
      * @param CompanyPrivateRepository $companyprivateRepository
-     * @return CompanyPrivate|null
+     * @return object|null
      */
-    private function companyprivate(CurrentRoute $currentRoute, CompanyPrivateRepository $companyprivateRepository): CompanyPrivate|null
+    private function companyprivate(CurrentRoute $currentRoute, CompanyPrivateRepository $companyprivateRepository): object|null
     {
-        $id = $currentRoute->getArgument('id');       
-        $companyprivate = $companyprivateRepository->repoCompanyPrivatequery($id);
-        return $companyprivate;
+        $id = $currentRoute->getArgument('id');
+        if (null!==$id) {
+            $companyprivate = $companyprivateRepository->repoCompanyPrivatequery($id);
+            return $companyprivate;
+        }
+        return null;
     }
     
     /**
@@ -304,11 +320,11 @@ final class CompanyPrivateController
     }
     
     /**
-     * @return (int|string)[]
-     *
-     * @psalm-return array{id: string, company_id: string, vat_id: string, tax_code: string, iban: string, gln: int, rcc: string, logo_filename: string, start_date: \DateTimeImmutable|null, end_date: \DateTimeImmutable|null}
+     * 
+     * @param object $companyprivate
+     * @return array
      */
-    private function body(CompanyPrivate $companyprivate): array {
+    private function body(object $companyprivate): array {
         $body = [                
                     'id'=>$companyprivate->getId(),
                     'company_id'=>$companyprivate->getCompany_id(),

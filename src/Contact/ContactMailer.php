@@ -63,14 +63,6 @@ final class ContactMailer
         } catch (Exception $e) {
             $flashMsg = $e->getMessage();
             $this->logger->error($flashMsg);
-        } finally {
-            $this->flash->add(
-                isset($e) ? 'danger' : 'success',
-                [
-                    'body' => $flashMsg,
-                ],
-                true
-            );
-        }
+        } 
     }
 }

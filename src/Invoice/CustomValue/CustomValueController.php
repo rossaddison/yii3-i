@@ -79,23 +79,28 @@ final class CustomValueController
      * @param CurrentRoute $currentRoute
      * @param CustomValueService $service
      */
-    public function field(SessionInterface $session, CustomFieldRepository $customfieldRepository, CustomValueRepository $customvalueRepository, SettingRepository $settingRepository, CurrentRoute $currentRoute, CustomValueService $service): \Yiisoft\DataResponse\DataResponse
+    public function field(SessionInterface $session, CustomFieldRepository $customfieldRepository, CustomValueRepository $customvalueRepository, SettingRepository $settingRepository, CurrentRoute $currentRoute, CustomValueService $service): Response
     {      
         $canEdit = $this->rbac($session);
         $flash = $this->flash($session, '','');
         $id = $currentRoute->getArgument('id');
-        null!==($session->get('custom_field_id')) ?: $session->set('custom_field_id', $id);
-        $custom_field = $customfieldRepository->repoCustomFieldquery($id);
-        $customvalues = $customvalueRepository->repoCustomFieldquery((int)$id);    
-        $parameters = [
-            's'=>$settingRepository,
-            'canEdit' => $canEdit,
-            'custom_field' => $custom_field,
-            'custom_values_types' => array_merge($this->user_input_types(), $this->custom_value_fields()), 
-            'custom_values'=> $customvalues,
-            'flash'=> $flash
-        ];
-        return $this->viewRenderer->render('field', $parameters);
+        if (null!==$id) {
+            null!==($session->get('custom_field_id')) ?: $session->set('custom_field_id', $id);
+            $custom_field = $customfieldRepository->repoCustomFieldquery($id);
+            $customvalues = $customvalueRepository->repoCustomFieldquery((int)$id);    
+            if ($custom_field) {
+                $parameters = [
+                    's'=>$settingRepository,
+                    'canEdit' => $canEdit,
+                    'custom_field' => $custom_field,
+                    'custom_values_types' => array_merge($this->user_input_types(), $this->custom_value_fields()), 
+                    'custom_values'=> $customvalues,
+                    'flash'=> $flash
+                ];
+                return $this->viewRenderer->render('field', $parameters);
+            }
+        }
+        return $this->webService->getRedirectResponse('customvalue/index');   
     }
     
     /**
@@ -116,30 +121,35 @@ final class CustomValueController
     ): Response
     {
         $field_id = $currentRoute->getArgument('id');        
-        $session->set('custom_field_id', $field_id);
-        $custom_field = $custom_fieldRepository->repoCustomFieldquery($field_id);
-        $parameters = [
-            'title' => $this->translator->translate('invoice.add'),
-            'action' => ['customvalue/add'],
-            'errors' => [],
-            'body' => $request->getParsedBody(),
-            's'=>$settingRepository,
-            'custom_field'=>$custom_field, 
-            'header_buttons'=>$this->viewRenderer->renderPartialAsString('/invoice/layout/header_buttons',['hide_submit_button'=>false, 
-                                                                                 'hide_cancel_button'=>false,'s'=>$settingRepository]),
-            'head'=>$head,
-            'custom_fields'=>$custom_fieldRepository->findAllPreloaded(),
-        ];
-        
-        if ($request->getMethod() === Method::POST) {            
-            $form = new CustomValueForm();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
-                $this->customvalueService->saveCustomValue(new CustomValue(),$form);
-                return $this->webService->getRedirectResponse('customvalue/index');
-            }
-            $parameters['errors'] = $form->getFormErrors();
-        }
-        return $this->viewRenderer->render('new', $parameters);
+        if (null!==$field_id) {
+            $session->set('custom_field_id', $field_id);
+            $custom_field = $custom_fieldRepository->repoCustomFieldquery($field_id);
+            if ($custom_field){
+                $parameters = [
+                    'title' => $this->translator->translate('invoice.add'),
+                    'action' => ['customvalue/add'],
+                    'errors' => [],
+                    'body' => $request->getParsedBody(),
+                    's'=>$settingRepository,
+                    'custom_field'=>$custom_field, 
+                    'header_buttons'=>$this->viewRenderer->renderPartialAsString('/invoice/layout/header_buttons',['hide_submit_button'=>false, 
+                                                                                         'hide_cancel_button'=>false,'s'=>$settingRepository]),
+                    'head'=>$head,
+                    'custom_fields'=>$custom_fieldRepository->findAllPreloaded(),
+                ];
+
+                if ($request->getMethod() === Method::POST) {            
+                    $form = new CustomValueForm();
+                    if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+                        $this->customvalueService->saveCustomValue(new CustomValue(),$form);
+                        return $this->webService->getRedirectResponse('customvalue/index');
+                    }
+                    $parameters['errors'] = $form->getFormErrors();
+                }
+                return $this->viewRenderer->render('new', $parameters);
+            }            
+        } //if custom_fiedl
+        return $this->webService->getRedirectResponse('customvalue/index');
     }
     
     /**
@@ -162,29 +172,33 @@ final class CustomValueController
     ): Response {
         $custom_field_id = $session->get('custom_field_id');
         $custom_field = $custom_fieldRepository->repoCustomFieldquery($custom_field_id);
-        $parameters = [
-            'title' => 'Edit',
-            'action' => ['customvalue/edit', ['id' => $this->customvalue($currentRoute, $customvalueRepository)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->customvalue($currentRoute, $customvalueRepository)),
-            'header_buttons'=>$this->viewRenderer->renderPartialAsString('/invoice/layout/header_buttons',
-                      ['hide_submit_button'=>false, 'hide_cancel_button'=>false,'s'=>$settingRepository]),
-            'head'=>$head,
-            's'=>$settingRepository,
-            'custom_field' => $custom_field,
-            'custom_fields'=>$custom_fieldRepository->findAllPreloaded()
-        ];
-        if ($request->getMethod() === Method::POST) {
-            $form = new CustomValueForm();
-            $body = $request->getParsedBody();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
-                $this->customvalueService->saveCustomValue($this->customvalue($currentRoute,$customvalueRepository), $form);
-                return $this->webService->getRedirectResponse('customvalue/index');                 
+        $custom_value = $this->customvalue($currentRoute, $customvalueRepository);
+        if ($custom_field && $custom_value) {
+            $parameters = [
+                'title' => 'Edit',
+                'action' => ['customvalue/edit', ['id' => $custom_value->getId()]],
+                'errors' => [],
+                'body' => $this->body($custom_value),
+                'header_buttons'=>$this->viewRenderer->renderPartialAsString('/invoice/layout/header_buttons',
+                          ['hide_submit_button'=>false, 'hide_cancel_button'=>false,'s'=>$settingRepository]),
+                'head'=>$head,
+                's'=>$settingRepository,
+                'custom_field' => $custom_field,
+                'custom_fields'=>$custom_fieldRepository->findAllPreloaded()
+            ];
+            if ($request->getMethod() === Method::POST) {
+                $form = new CustomValueForm();
+                $body = $request->getParsedBody();
+                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                    $this->customvalueService->saveCustomValue($custom_value, $form);
+                    return $this->webService->getRedirectResponse('customvalue/index');                 
+                }
+                $parameters['body'] = $body;
+                $parameters['errors'] = $form->getFormErrors();
             }
-            $parameters['body'] = $body;
-            $parameters['errors'] = $form->getFormErrors();
+            return $this->viewRenderer->render('edit', $parameters);
         }
-        return $this->viewRenderer->render('edit', $parameters);
+        return $this->webService->getRedirectResponse('customvalue/index');   
     }
     
     /**
@@ -200,9 +214,13 @@ final class CustomValueController
                            SettingRepository $sR
     ): Response {
         try {
-            $this->customvalueService->deleteCustomValue($this->customvalue($currentRoute,$customvalueRepository));               
-            $this->flash($session, 'info', $sR->trans('record_successfully_deleted'));
-            return $this->webService->getRedirectResponse('customvalue/index'); 
+            $custom_value = $this->customvalue($currentRoute,$customvalueRepository);
+            if ($custom_value) {
+                $this->customvalueService->deleteCustomValue($custom_value);               
+                $this->flash($session, 'info', $sR->trans('record_successfully_deleted'));
+                return $this->webService->getRedirectResponse('customvalue/index');
+            }
+            return $this->webService->getRedirectResponse('customvalue/index');
 	} catch (\Exception $e) {
             $this->flash($session, 'danger', $e->getMessage());
             unset($e);
@@ -217,16 +235,20 @@ final class CustomValueController
      */
     public function view(CurrentRoute $currentRoute, CustomValueRepository $customvalueRepository,
         SettingRepository $settingRepository,
-        ): \Yiisoft\DataResponse\DataResponse {
-        $parameters = [
-            'title' => $settingRepository->trans('view'),
-            'action' => ['customvalue/view', ['id' => $this->customvalue($currentRoute, $customvalueRepository)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->customvalue($currentRoute, $customvalueRepository)),
-            's'=>$settingRepository,             
-            'customvalue'=>$customvalueRepository->repoCustomValuequery($this->customvalue($currentRoute, $customvalueRepository)->getId()),
-        ];
-        return $this->viewRenderer->render('_view', $parameters);
+        ): Response {
+        $custom_value = $this->customvalue($currentRoute, $customvalueRepository);
+        if ($custom_value) {
+            $parameters = [
+                'title' => $settingRepository->trans('view'),
+                'action' => ['customvalue/view', ['id' => $custom_value->getId()]],
+                'errors' => [],
+                'body' => $this->body($custom_value),
+                's'=>$settingRepository,             
+                'customvalue'=>$custom_value->getId(),
+            ];
+            return $this->viewRenderer->render('_view', $parameters);
+        }
+        return $this->webService->getRedirectResponse('customvalue/index'); 
     }
         
     /**
@@ -245,13 +267,16 @@ final class CustomValueController
     /**
      * @param CurrentRoute $currentRoute
      * @param CustomValueRepository $customvalueRepository
-     * @return CustomValue|null
+     * @return object|null
      */
-    private function customvalue(CurrentRoute $currentRoute,CustomValueRepository $customvalueRepository): CustomValue|null
+    private function customvalue(CurrentRoute $currentRoute,CustomValueRepository $customvalueRepository): object|null
     {
-        $id = $currentRoute->getArgument('id');       
-        $customvalue = $customvalueRepository->repoCustomValuequery($id);
-        return $customvalue;
+        $id = $currentRoute->getArgument('id');
+        if (null!==$id) {
+            $customvalue = $customvalueRepository->repoCustomValuequery($id);
+            return $customvalue;
+        }
+        return null;
     }  
     
     /**
@@ -266,11 +291,11 @@ final class CustomValueController
     }
     
     /**
-     * @return (int|string)[]
-     *
-     * @psalm-return array{id: string, custom_field_id: int, value: string}
+     * 
+     * @param object $customvalue
+     * @return array
      */
-    private function body(CustomValue $customvalue): array {
+    private function body(object $customvalue): array {
         $body = [                
           'id'=>$customvalue->getId(),             
           'custom_field_id'=>$customvalue->getCustom_field_id(),

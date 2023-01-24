@@ -117,32 +117,36 @@ final class TaxRateController
             SettingRepository $settingRepository, TaxRateRepository $taxrateRepository, ValidatorInterface $validator): Response 
     {
         $taxrate = $this->taxrate($currentRoute, $taxrateRepository);
-        $parameters = [
-            'title' => $settingRepository->trans('edit'),
-            'action' => ['taxrate/edit', ['tax_rate_id' => $taxrate->getTax_rate_id()]],
-            'errors' => [],
-            'head'=>$head,
-            'translator'=>$this->translator,
-            'body' => [
-                'tax_rate_name' => $taxrate->getTax_rate_name(),
-                'tax_rate_percent'=>$taxrate->getTax_rate_percent(),
-                'tax_rate_default'=>$taxrate->getTax_rate_default(),
-            ],
-            's'=>$settingRepository,
-        ];
-        if ($request->getMethod() === Method::POST) {
-            $form = new TaxRateForm();
-            $body = $request->getParsedBody();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
-                $this->taxrateService->saveTaxRate($taxrate, $form);                
-                $this->flash($session, 'success', $settingRepository->trans('record_successfully_updated'));
-                return $this->webService->getRedirectResponse('taxrate/index');
+        if ($taxrate) {
+            $parameters = [
+                'title' => $settingRepository->trans('edit'),
+                'action' => ['taxrate/edit', ['tax_rate_id' => $taxrate->getTax_rate_id()]],
+                'errors' => [],
+                'head'=>$head,
+                'translator'=>$this->translator,
+                'body' => [
+                    'tax_rate_name' => $taxrate->getTax_rate_name(),
+                    'tax_rate_percent'=>$taxrate->getTax_rate_percent(),
+                    'tax_rate_default'=>$taxrate->getTax_rate_default(),
+                ],
+                's'=>$settingRepository,
+            ];
+            if ($request->getMethod() === Method::POST) {
+                $form = new TaxRateForm();
+                $body = $request->getParsedBody();
+                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                    $this->taxrateService->saveTaxRate($taxrate, $form);                
+                    $this->flash($session, 'success', $settingRepository->trans('record_successfully_updated'));
+                    return $this->webService->getRedirectResponse('taxrate/index');
+                }
+                $parameters['body'] = $body;
+                $parameters['errors'] = $form->getFormErrors();
             }
-            $parameters['body'] = $body;
-            $parameters['errors'] = $form->getFormErrors();
+            return $this->viewRenderer->render('__form', $parameters);
         }
-        return $this->viewRenderer->render('__form', $parameters);
+        return $this->webService->getRedirectResponse('taxrate/index'); 
     }
+    
     
     /**
      * 
@@ -155,7 +159,9 @@ final class TaxRateController
     {
         try {
             $taxrate = $this->taxrate($currentRoute, $taxrateRepository);
-            $this->taxrateService->deleteTaxRate($taxrate);               
+            if ($taxrate) {
+                $this->taxrateService->deleteTaxRate($taxrate);               
+            }
             return $this->webService->getRedirectResponse('taxrate/index'); 
 	} catch (\Exception $e) {
             unset($e);
@@ -170,23 +176,27 @@ final class TaxRateController
      * @param SettingRepository $settingRepository
      * @param ValidatorInterface $validator
      */
-    public function view(CurrentRoute $currentRoute, TaxRateRepository $taxrateRepository,SettingRepository $settingRepository,ValidatorInterface $validator): \Yiisoft\DataResponse\DataResponse {
+    public function view(CurrentRoute $currentRoute, TaxRateRepository $taxrateRepository,SettingRepository $settingRepository,ValidatorInterface $validator)
+        : \Yiisoft\DataResponse\DataResponse|Response {
         $taxrate = $this->taxrate($currentRoute, $taxrateRepository);
-        $parameters = [
-            'title' => 'Edit Tax Rate',
-            'action' => ['taxrate/edit', ['tax_rate_id' => $taxrate->getTax_rate_id()]],
-            'errors' => [],
-            'taxrate'=>$taxrate,
-            's'=>$settingRepository,
-            'translator'=>$this->translator,
-            'body' => [
-                'tax_rate_id'=>$taxrate->getTax_rate_id(),
-                'tax_rate_name'=>$taxrate->getTax_rate_name(),
-                'tax_rate_percent'=>$taxrate->getTax_rate_percent(),
-                'default'=>$taxrate->getTax_rate_default()
-            ],            
-        ];
-        return $this->viewRenderer->render('__view', $parameters);
+        if ($taxrate) {
+            $parameters = [
+                'title' => 'Edit Tax Rate',
+                'action' => ['taxrate/edit', ['tax_rate_id' => $taxrate->getTax_rate_id()]],
+                'errors' => [],
+                'taxrate'=>$taxrate,
+                's'=>$settingRepository,
+                'translator'=>$this->translator,
+                'body' => [
+                    'tax_rate_id'=>$taxrate->getTax_rate_id(),
+                    'tax_rate_name'=>$taxrate->getTax_rate_name(),
+                    'tax_rate_percent'=>$taxrate->getTax_rate_percent(),
+                    'default'=>$taxrate->getTax_rate_default()
+                ],            
+            ];
+            return $this->viewRenderer->render('__view', $parameters);
+        }
+        return $this->webService->getRedirectResponse('taxrate/index');     
     }
     
     /**
@@ -204,13 +214,16 @@ final class TaxRateController
     /**
      * @param CurrentRoute $currentRoute
      * @param TaxRateRepository $taxrateRepository
-     * @return TaxRate|null
+     * @return object|null
      */
-    private function taxrate(CurrentRoute $currentRoute, TaxRateRepository $taxrateRepository): TaxRate|null
+    private function taxrate(CurrentRoute $currentRoute, TaxRateRepository $taxrateRepository): object|null
     {
         $tax_rate_id = $currentRoute->getArgument('tax_rate_id');
-        $taxrate = $taxrateRepository->repoTaxRatequery($tax_rate_id);
-        return $taxrate; 
+        if (null!==$tax_rate_id) {
+            $taxrate = $taxrateRepository->repoTaxRatequery($tax_rate_id);
+            return $taxrate; 
+        }
+        return null;
     }
     
     //$taxrates = $this->taxrates();

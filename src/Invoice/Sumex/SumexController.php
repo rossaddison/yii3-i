@@ -1,5 +1,4 @@
 <?php
-
 declare(strict_types=1); 
 
 namespace App\Invoice\Sumex;
@@ -97,7 +96,7 @@ final class SumexController
             
             $form = new SumexForm();
             if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
-                $this->sumexService->saveSumex(new Sumex(),$form);
+                $this->sumexService->saveSumex(new Sumex(),$form, $settingRepository);
                 return $this->webService->getRedirectResponse('sumex/index');
             }
             $parameters['errors'] = $form->getFormErrors();
@@ -120,26 +119,30 @@ final class SumexController
                         SumexRepository $sumexRepository, 
                         SettingRepository $settingRepository
     ): Response {
-        $parameters = [
-            'title' => 'Edit',
-            'action' => ['sumex/edit', ['id' => $this->sumex($currentRoute, $sumexRepository)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->sumex($currentRoute, $sumexRepository)),
-            's'=>$settingRepository,
-            'head'=>$head,
-            
-        ];
-        if ($request->getMethod() === Method::POST) {
-            $form = new SumexForm();
-            $body = $request->getParsedBody();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
-                $this->sumexService->saveSumex($this->sumex($currentRoute, $sumexRepository), $form);
-                return $this->webService->getRedirectResponse('sumex/index');
+        $sumex = $this->sumex($currentRoute, $sumexRepository);
+        if ($sumex) {
+            $parameters = [
+                'title' => 'Edit',
+                'action' => ['sumex/edit', ['id' => $sumex->getId()]],
+                'errors' => [],
+                'body' => $this->body($sumex),
+                's'=>$settingRepository,
+                'head'=>$head,
+
+            ];
+            if ($request->getMethod() === Method::POST) {
+                $form = new SumexForm();
+                $body = $request->getParsedBody();
+                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                $this->sumexService->saveSumex($sumex, $form, $settingRepository);
+                    return $this->webService->getRedirectResponse('sumex/index');
+                }
+                $parameters['body'] = $body;
+                $parameters['errors'] = $form->getFormErrors();
             }
-            $parameters['body'] = $body;
-            $parameters['errors'] = $form->getFormErrors();
+            return $this->viewRenderer->render('_form', $parameters);
         }
-        return $this->viewRenderer->render('_form', $parameters);
+        return $this->webService->getRedirectResponse('sumex/index');
     }
     
     /**
@@ -150,27 +153,36 @@ final class SumexController
      */
     public function delete(CurrentRoute $currentRoute, SumexRepository $sumexRepository 
     ): Response {
-        $this->sumexService->deleteSumex($this->sumex($currentRoute, $sumexRepository));               
+        $sumex = $this->sumex($currentRoute, $sumexRepository);
+        if ($sumex) {
+            $this->sumexService->deleteSumex($sumex);               
+        }
         return $this->webService->getRedirectResponse('sumex/index');        
     }
     
     /**
+     * 
      * @param CurrentRoute $currentRoute
      * @param SumexRepository $sumexRepository
      * @param SettingRepository $settingRepository
+     * @return \Yiisoft\DataResponse\DataResponse|Response
      */
     public function view(CurrentRoute $currentRoute, SumexRepository $sumexRepository,
         SettingRepository $settingRepository
-        ): \Yiisoft\DataResponse\DataResponse {
-        $parameters = [
-            'title' => $settingRepository->trans('view'),
-            'action' => ['sumex/edit', ['id' => $this->sumex($currentRoute, $sumexRepository)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->sumex($currentRoute, $sumexRepository)),
-            's'=>$settingRepository,             
-            'sumex'=>$sumexRepository->repoSumexquery($this->sumex($currentRoute, $sumexRepository)->getId()),
-        ];
-        return $this->viewRenderer->render('_view', $parameters);
+        ): \Yiisoft\DataResponse\DataResponse|Response {
+        $sumex = $this->sumex($currentRoute, $sumexRepository);
+        if ($sumex) {        
+            $parameters = [
+                'title' => $settingRepository->trans('view'),
+                'action' => ['sumex/edit', ['id' => $sumex->getId()]],
+                'errors' => [],
+                'body' => $this->body($sumex),
+                's'=>$settingRepository,             
+                'sumex'=>$sumexRepository->repoSumexquery($sumex->getId()),
+            ];
+            return $this->viewRenderer->render('_view', $parameters);
+        }
+        return $this->webService->getRedirectResponse('sumex/index');         
     }
     
     /**
@@ -189,13 +201,16 @@ final class SumexController
     /**
      * @param CurrentRoute $currentRoute
      * @param SumexRepository $sumexRepository
-     * @return Sumex|null
+     * @return object|null
      */
-    private function sumex(CurrentRoute $currentRoute, SumexRepository $sumexRepository): Sumex|null
+    private function sumex(CurrentRoute $currentRoute, SumexRepository $sumexRepository): object|null
     {
         $id = $currentRoute->getArgument('id');       
-        $sumex = $sumexRepository->repoSumexquery($id);
-        return $sumex;
+        if (null!==$id) {
+            $sumex = $sumexRepository->repoSumexquery($id);
+            return $sumex;            
+        }
+        return null;
     }
     
     /**
@@ -210,11 +225,11 @@ final class SumexController
     }
     
     /**
-     * @return (\DateTimeImmutable|int|null|string)[]
-     *
-     * @psalm-return array{invoice: int, reason: int, diagnosis: string, observations: string, treatmentstart: \DateTimeImmutable|null, treatmentend: \DateTimeImmutable, casedate: \DateTimeImmutable, casenumber: null|string}
+     * 
+     * @param object $sumex
+     * @return array
      */
-    private function body(Sumex $sumex): array {
+    private function body(object $sumex): array {
         $body = [
           'invoice'=>$sumex->getInvoice(),
           'reason'=>$sumex->getReason(),

@@ -130,26 +130,30 @@ final class ProjectController
                         SettingRepository $settingRepository,                        
                         ClientRepository $clientRepository
     ): Response {
-        $parameters = [
-            'title' => 'Edit',
-            'action' => ['project/edit', ['id' => $this->project($currentRoute, $projectRepository)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->project($currentRoute, $projectRepository)),
-            'head'=>$head,
-            's'=>$settingRepository,
-            'clients'=>$clientRepository->findAllPreloaded()
-        ];
-        if ($request->getMethod() === Method::POST) {
-            $form = new ProjectForm();
-            $body = $request->getParsedBody();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
-                $this->projectService->saveProject($this->project($currentRoute, $projectRepository), $form);
-                return $this->webService->getRedirectResponse('project/index');
+        $project = $this->project($currentRoute, $projectRepository);
+        if ($project) {
+            $parameters = [
+                'title' => 'Edit',
+                'action' => ['project/edit', ['id' =>$project->getId()]],
+                'errors' => [],
+                'body' => $this->body($project),
+                'head'=>$head,
+                's'=>$settingRepository,
+                'clients'=>$clientRepository->findAllPreloaded()
+            ];
+            if ($request->getMethod() === Method::POST) {
+                $form = new ProjectForm();
+                $body = $request->getParsedBody();
+                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                $this->projectService->saveProject($project, $form);
+                    return $this->webService->getRedirectResponse('project/index');
+                }
+                $parameters['body'] = $body;
+                $parameters['errors'] = $form->getFormErrors();
             }
-            $parameters['body'] = $body;
-            $parameters['errors'] = $form->getFormErrors();
+            return $this->viewRenderer->render('_form', $parameters);
         }
-        return $this->viewRenderer->render('_form', $parameters);
+        return $this->webService->getRedirectResponse('project/index');
     }
     
     /**
@@ -163,8 +167,11 @@ final class ProjectController
     public function delete(SessionInterface $session, CurrentRoute $currentRoute, 
                            ProjectRepository $projectRepository,
                            SettingRepository $sR): Response {
-        $this->projectService->deleteProject($this->project($currentRoute, $projectRepository));               
-        $this->flash($session, 'success', $sR->trans('record_successfully_deleted'));
+        $project = $this->project($currentRoute, $projectRepository);
+        if ($project) {
+            $this->projectService->deleteProject($project);               
+            $this->flash($session, 'success', $sR->trans('record_successfully_deleted'));
+        }
         return $this->webService->getRedirectResponse('project/index'); 
     }
     
@@ -175,16 +182,20 @@ final class ProjectController
      */
     public function view(CurrentRoute $currentRoute, ProjectRepository $projectRepository,
         SettingRepository $settingRepository,
-        ): \Yiisoft\DataResponse\DataResponse {
-        $parameters = [
-            'title' => $settingRepository->trans('view'),
-            'action' => ['project/view', ['id' => $this->project($currentRoute, $projectRepository)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->project($currentRoute, $projectRepository)),
-            's'=>$settingRepository,             
-            'project'=>$projectRepository->repoProjectquery($this->project($currentRoute, $projectRepository)->getId()),
-        ];
-        return $this->viewRenderer->render('_view', $parameters);
+        ): \Yiisoft\DataResponse\DataResponse|Response {
+        $project = $this->project($currentRoute, $projectRepository);
+        if ($project) {
+            $parameters = [
+                'title' => $settingRepository->trans('view'),
+                'action' => ['project/view', ['id' =>$project->getId()]],
+                'errors' => [],
+                'body' => $this->body($project),
+                's'=>$settingRepository,             
+                'project'=>$projectRepository->repoProjectquery($project->getId()),
+            ];
+            return $this->viewRenderer->render('_view', $parameters);
+        }
+        return $this->webService->getRedirectResponse('project/index'); 
     }
         
     /**
@@ -203,13 +214,16 @@ final class ProjectController
     /**
      * @param CurrentRoute $currentRoute
      * @param ProjectRepository $projectRepository
-     * @return Project|null
+     * @return object|null
      */
-    private function project(CurrentRoute $currentRoute, ProjectRepository $projectRepository): Project|null
+    private function project(CurrentRoute $currentRoute, ProjectRepository $projectRepository): object|null
     {
-        $id = $currentRoute->getArgument('id');       
-        $project = $projectRepository->repoProjectquery($id);
-        return $project;
+        $id = $currentRoute->getArgument('id');  
+        if (null!==$id) {
+            $project = $projectRepository->repoProjectquery($id);
+            return $project;
+        }
+        return null;
     }
     
     /**
@@ -224,11 +238,11 @@ final class ProjectController
     }
     
     /**
-     * @return (int|null|string)[]
-     *
-     * @psalm-return array{id: null|string, client_id: int|null, name: string}
+     * 
+     * @param object $project
+     * @return array
      */
-    private function body(Project $project): array {
+    private function body(object $project): array {
         $body = [                
           'id'=>$project->getId(),
           'client_id'=>$project->getClient_id(),

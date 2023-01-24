@@ -151,72 +151,96 @@ final class QuoteItemController
      * @param QIAR $qiar
      */
     public function edit(ViewRenderer $head, SessionInterface $session, CurrentRoute $currentRoute, Request $request, ValidatorInterface $validator,
-                        QIR $qiR, SR $sR, TRR $trR, PR $pR, UR $uR, QR $qR, QIAS $qias, QIAR $qiar): \Yiisoft\DataResponse\DataResponse {
+                        QIR $qiR, SR $sR, TRR $trR, PR $pR, UR $uR, QR $qR, QIAS $qias, QIAR $qiar): \Yiisoft\DataResponse\DataResponse|Response {
         $quote_id = $session->get('quote_id');
+        $quote_item = $this->quoteitem($currentRoute, $qiR);
         $parameters = [
-            'title' => 'Edit',
-            'action' => ['quoteitem/edit', ['id' => $this->quoteitem($currentRoute, $qiR)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->quoteitem($currentRoute, $qiR)),
-            'quote_id'=>$quote_id,
-            'head'=>$head,
-            's'=>$sR,
-            'tax_rates'=>$trR->findAllPreloaded(),
-            'products'=>$pR->findAllPreloaded(),
-            'quotes'=>$qR->findAllPreloaded(),            
-            'units'=>$uR->findAllPreloaded(),
-            'numberhelper'=>new NumberHelper($sR)
-        ];
-        if ($request->getMethod() === Method::POST) {
-            $form = new QuoteItemForm();            
-            $body = $request->getParsedBody();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
-                $quantity = $form->getQuantity() ?? 0.00;
-                $price = $form->getPrice() ?? 0.00;
-                $discount = $form->getDiscount_amount() ?? 0.00;
-                $tax_rate_id = $this->quoteitemService->saveQuoteItem($this->quoteitem($currentRoute, $qiR), $form, $quote_id, $pR, $uR) ?: 1;
-                $tax_rate_percentage = $this->taxrate_percentage($tax_rate_id, $trR);
-                $this->saveQuoteItemAmount((int)$this->quoteitem($currentRoute, $qiR)->getId(), 
-                                           $quantity, $price, $discount, $tax_rate_percentage, $qias, $qiar);    
-                return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/quote_successful',
-                ['heading'=>'Successful', 'message'=>$sR->trans('record_successfully_updated'),'url'=>'quote/view','id'=>$quote_id])); 
-            }
-            $parameters['body'] = $body;
-            $parameters['errors'] = $form->getFormErrors();
-        } 
-        return $this->viewRenderer->render('_item_edit_form', $parameters);
+                'title' => 'Edit',
+                'action' => ['quoteitem/edit', ['id' => $currentRoute->getArgument('id')]],
+                'errors' => [],
+                'body' => $this->body($quote_item ?: new QuoteItem()),
+                'quote_id'=>$quote_id,
+                'head'=>$head,
+                's'=>$sR,
+                'tax_rates'=>$trR->findAllPreloaded(),
+                'products'=>$pR->findAllPreloaded(),
+                'quotes'=>$qR->findAllPreloaded(),            
+                'units'=>$uR->findAllPreloaded(),
+                'numberhelper'=>new NumberHelper($sR)
+            ];
+            if ($request->getMethod() === Method::POST) {
+                $form = new QuoteItemForm();            
+                $body = $request->getParsedBody();
+                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                    $quantity = $form->getQuantity() ?? 0.00;
+                    $price = $form->getPrice() ?? 0.00;
+                    $discount = $form->getDiscount_amount() ?? 0.00;
+                    $tax_rate_id = $this->quoteitemService->saveQuoteItem($quote_item ?: new QuoteItem(), $form, $quote_id, $pR, $uR) ?: 1;
+                    $tax_rate_percentage = $this->taxrate_percentage($tax_rate_id, $trR);
+                    if (null!==$tax_rate_percentage) {
+                        /**
+                         * @psalm-suppress PossiblyNullReference getId
+                         */
+                        $request_quote_item = (int)$this->quoteitem($currentRoute, $qiR)->getId();
+                        $this->saveQuoteItemAmount($request_quote_item, 
+                                                   $quantity, $price, $discount, $tax_rate_percentage, $qias, $qiar);    
+                        return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/quote_successful',
+                        ['heading'=>'Successful', 'message'=>$sR->trans('record_successfully_updated'),'url'=>'quote/view','id'=>$quote_id])); 
+                    }
+                }
+                $parameters['body'] = $body;
+                $parameters['errors'] = $form->getFormErrors();
+            } 
+            return $this->viewRenderer->render('_item_edit_form', $parameters);
+            //quote_item
     }
     
     public function taxrate_percentage(int $id, TRR $trr): float|null
     {
         $taxrate = $trr->repoTaxRatequery((string)$id);
-        $percentage = $taxrate->getTax_rate_percent();        
-        return $percentage;
+        if ($taxrate) {
+            $percentage = $taxrate->getTax_rate_percent();        
+            return $percentage;
+        }
+        return null;
     }
     
     public function saveQuoteItemAmount(int $quote_item_id, float $quantity, float $price, float $discount, float|null $tax_rate_percentage, QIAS $qias, QIAR $qiar): void
     {  
-       $qias_array['quote_item_id'] = $quote_item_id;
-       $sub_total = $quantity * $price;
-       $tax_total = ($sub_total * ($tax_rate_percentage/100));
-       $discount_total = $quantity*$discount;
-       $qias_array['discount'] = $discount_total;
-       $qias_array['subtotal'] = $sub_total;
-       $qias_array['taxtotal'] = $tax_total;
-       $qias_array['total'] = $sub_total - $discount_total + $tax_total;       
-       if ($qiar->repoCount((string)$quote_item_id) === 0) {
-         $qias->saveQuoteItemAmountNoForm(new QuoteItemAmount() , $qias_array);} else {
-         $qias->saveQuoteItemAmountNoForm($qiar->repoQuoteItemAmountquery((string)$quote_item_id) , $qias_array);     
-       }                      
+       $qias_array = [];
+       if ($quote_item_id) {
+            $qias_array['quote_item_id'] = $quote_item_id;
+            $sub_total = $quantity * $price;
+            $tax_total = ($sub_total * ($tax_rate_percentage/100));
+            $discount_total = $quantity*$discount;
+            $qias_array['discount'] = $discount_total;
+            $qias_array['subtotal'] = $sub_total;
+            $qias_array['taxtotal'] = $tax_total;
+            $qias_array['total'] = $sub_total - $discount_total + $tax_total;       
+            if ($qiar->repoCount((string)$quote_item_id) === 0) {
+              $qias->saveQuoteItemAmountNoForm(new QuoteItemAmount() , $qias_array);
+            } else {
+                $quote_item_amount = $qiar->repoQuoteItemAmountquery((string)$quote_item_id);
+                if ($quote_item_amount) {
+                    $qias->saveQuoteItemAmountNoForm($quote_item_amount , $qias_array);  
+                }    
+            }
+        } // $quote_item_id    
     } 
     
     /**
      * @param CurrentRoute $currentRoute
      * @param QIR $qiR
      */
-    public function delete(CurrentRoute $currentRoute, QIR $qiR): \Yiisoft\DataResponse\DataResponse {
-        $qiR->repoQuoteItemCount($this->quoteitem($currentRoute, $qiR)->getId()) === 1  ? (($this->quoteitemService->deleteQuoteItem($this->quoteitem($currentRoute, $qiR)))): '';
-        return $this->viewRenderer->render('quote/index');
+    public function delete(CurrentRoute $currentRoute, QIR $qiR): \Yiisoft\DataResponse\DataResponse|Response {
+        $quote_item = $this->quoteitem($currentRoute, $qiR);
+        if ($quote_item) {
+            if ($qiR->repoQuoteItemCount($quote_item->getId()) === 1) { 
+                $this->quoteitemService->deleteQuoteItem($quote_item);
+            }
+            return $this->viewRenderer->render('quote/index');
+        }
+        return $this->webService->getNotFoundResponse();
     }
     
     /**
@@ -244,16 +268,20 @@ final class QuoteItemController
      */
     public function view(CurrentRoute $currentRoute, QIR $qiR,
         SR $sR 
-        ): \Yiisoft\DataResponse\DataResponse {
-        $parameters = [
-            'title' => $sR->trans('view'),
-            'action' => ['quoteitem/edit', ['id' => $this->quoteitem($currentRoute, $qiR)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->quoteitem($currentRoute, $qiR)),
-            's'=>$sR,             
-            'quoteitem'=>$qiR->repoQuoteItemquery($this->quoteitem($currentRoute, $qiR)->getId()),
-        ];
-        return $this->viewRenderer->render('_view', $parameters);
+        ): \Yiisoft\DataResponse\DataResponse|Response {
+        $quote_item = $this->quoteitem($currentRoute, $qiR);
+        if ($quote_item) {
+            $parameters = [
+                'title' => $sR->trans('view'),
+                'action' => ['quoteitem/edit', ['id' => $quote_item->getId()]],
+                'errors' => [],
+                'body' => $this->body($quote_item),
+                's'=>$sR,             
+                'quoteitem'=>$qiR->repoQuoteItemquery($quote_item->getId()),
+            ];
+            return $this->viewRenderer->render('_view', $parameters);
+        }
+        return $this->webService->getNotFoundResponse();
     }
     
     /**
@@ -272,13 +300,18 @@ final class QuoteItemController
     /**
      * @param CurrentRoute $currentRoute
      * @param QIR $qiR
-     * @return QuoteItem|null
+     * @return object|null
      */
-    private function quoteitem(CurrentRoute $currentRoute, QIR $qiR): QuoteItem|null
+    private function quoteitem(CurrentRoute $currentRoute, QIR $qiR): object|null
     {
         $id = $currentRoute->getArgument('id'); 
-        $quoteitem = $qiR->repoQuoteItemquery($id);
-        return $quoteitem;
+        if (null!==$id) {
+            $quoteitem = $qiR->repoQuoteItemquery($id);
+            if ($quoteitem) {
+              return $quoteitem;
+            }  
+        }
+        return null;
     }
     
     /**
@@ -293,11 +326,11 @@ final class QuoteItemController
     }
     
     /**
-     * @return (float|int|null|string)[]
-     *
-     * @psalm-return array{id: string, quote_id: string, tax_rate_id: string, product_id: null|string, name: null|string, description: null|string, quantity: float|null, price: float|null, discount_amount: float|null, order: int, product_unit: null|string, product_unit_id: null|string}
+     * 
+     * @param object $quoteitem
+     * @return array
      */
-    private function body(QuoteItem $quoteitem): array {
+    private function body(object $quoteitem): array {
         $body = [
           'id'=>$quoteitem->getId(),
           'quote_id'=>$quoteitem->getQuote_id(),

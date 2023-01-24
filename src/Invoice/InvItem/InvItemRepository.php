@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace App\Invoice\InvItem;
 
-use App\Invoice\Entity\InvItem;
 use Cycle\ORM\Select;
 use Cycle\Database\Injection\Parameter;
-use Throwable;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -30,8 +28,6 @@ private EntityWriter $entityWriter;
     }
 
     /**
-     * Get invitems  without filter
-     *
      * @psalm-return EntityReader
      */
     public function findAllPreloaded(): EntityReader
@@ -55,23 +51,12 @@ private EntityWriter $entityWriter;
         return Sort::only(['id'])->withOrder(['id' => 'asc']);
     }
     
-    /**
-     * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $invitem
-     * @throws Throwable 
-     * @return void
-     */
+    
     public function save(array|object|null $invitem): void
     {
         $this->entityWriter->write([$invitem]);
     }
     
-    /**
-     * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $invitem
-     * @throws Throwable 
-     * @return void
-     */
     public function delete(array|object|null $invitem): void
     {
         $this->entityWriter->delete([$invitem]);
@@ -85,22 +70,12 @@ private EntityWriter $entityWriter;
         );
     }
     
-    /**
-     * @return null|object
-     *
-     * @psalm-return TEntity|null
-     */
-    public function repoInvItemquery(string $id):object|null    {
+    public function repoInvItemquery(string $id): ?object    {
         $query = $this->select()->load(['tax_rate','product','inv'])->where(['id' => $id]);
-        return  $query->fetchOne() ?: null;        
+        return  $query->fetchOne();        
     }
     
     
-    /**
-     * Get all items id's that belong to a specific inv
-     *
-     * @psalm-return EntityReader
-     */
     public function repoInvItemIdquery(string $inv_id):  EntityReader {
         $query = $this->select()
                       ->load(['tax_rate','product','inv'])
@@ -108,11 +83,6 @@ private EntityWriter $entityWriter;
         return $this->prepareDataReader($query); 
     }
     
-    /**
-     * Get all items belonging to inv
-     *
-     * @psalm-return EntityReader
-     */
     public function repoInvquery(string $inv_id): EntityReader { 
         $query = $this->select()
                       ->load(['tax_rate','product','inv'])
@@ -134,12 +104,6 @@ private EntityWriter $entityWriter;
         return $count; 
     }
         
-    /**
-     * Get selection of inv items from all inv_items
-     *
-     * @psalm-return EntityReader
-     */
-     
     public function findinInvItems(array $item_ids) : EntityReader {
         $query = $this->select()->where(['id'=>['in'=> new Parameter($item_ids)]]);
         return $this->prepareDataReader($query);    

@@ -16,20 +16,20 @@ final class InvCustomService
         $this->repository = $repository;
     }
 
-    public function saveInvCustom(InvCustom $model, InvCustomForm $form): void
+    public function saveInvCustom(object $model, InvCustomForm $form): void
     { 
-       $model->setInv_id($form->getInv_id());
-       $model->setCustom_field_id($form->getCustom_field_id());
-       $model->setValue($form->getValue());
+       $form->getInv_id() ? $model->setInv_id($form->getInv_id()) : '';
+       $form->getCustom_field_id() ? $model->setCustom_field_id($form->getCustom_field_id()) : '';
+       $form->getValue() ? $model->setValue($form->getValue()) : '';
        $this->repository->save($model);
     }
     
     /**
      * 
-     * @param array|object|null $model
+     * @param object $model
      * @return void
      */
-    public function deleteInvCustom(array|object|null $model): void
+    public function deleteInvCustom(object $model): void
     {
         $this->repository->delete($model);
     }

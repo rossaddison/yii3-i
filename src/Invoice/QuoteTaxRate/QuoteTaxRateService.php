@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Invoice\QuoteTaxRate;
 
-use App\Invoice\Entity\QuoteTaxRate;
-
 
 final class QuoteTaxRateService
 {
@@ -17,7 +15,7 @@ final class QuoteTaxRateService
         $this->repository = $repository;
     }
 
-    public function saveQuoteTaxRate(QuoteTaxRate $model, QuoteTaxRateForm $form): void
+    public function saveQuoteTaxRate(object $model, QuoteTaxRateForm $form): void
     {
         
        $model->setQuote_id($form->getQuote_id());

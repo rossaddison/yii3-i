@@ -5,16 +5,12 @@ declare(strict_types=1);
 namespace App\User;
 
 use App\Auth\Identity;
-use App\Blog\Entity\Comment;
-use App\Blog\Entity\Post;
 use Cycle\Annotated\Annotation\Column;
 use Cycle\Annotated\Annotation\Entity;
-use Cycle\Annotated\Annotation\Relation\HasMany;
 use Cycle\Annotated\Annotation\Relation\HasOne;
 use Cycle\Annotated\Annotation\Table\Index;
 use Cycle\ORM\Entity\Behavior;
 use DateTimeImmutable;
-use Doctrine\Common\Collections\ArrayCollection;
 use Yiisoft\Security\PasswordHasher;
 
 #[Entity(repository: UserRepository::class)]
@@ -41,18 +37,6 @@ class User
     #[HasOne(target: Identity::class)]
     private Identity $identity;
 
-    ///**
-    /// * @var ArrayCollection<array-key, Post>
-    // //*/
-    //#[HasMany(target: Post::class)]
-    //private ArrayCollection $posts;
-
-    ///**
-    // * @var ArrayCollection<array-key, Comment>
-    // */
-    //#[HasMany(target: Comment::class)]
-    private ArrayCollection $comments;
-
     public function __construct(string $login, string $password)
     {
         $this->login = $login;
@@ -60,8 +44,6 @@ class User
         $this->updated_at = new DateTimeImmutable();
         $this->setPassword($password);
         $this->identity = new Identity();
-        ///$this->posts = new ArrayCollection();
-        ///$this->comments = new ArrayCollection();
     }
 
     /**
@@ -106,30 +88,4 @@ class User
     {
         return $this->identity;
     }
-
-    ////**
-    /// * @return Post[]
-    /// */
-    ///public function getPosts(): array
-    ///{
-    ///    return $this->posts->toArray();
-    ////}
-
-    ///public function addPost(Post $post): void
-    ////{
-    ////    $this->posts->add($post);
-    ///}
-
-    /////**
-    //// * @return Comment[]
-    //// */
-    ////public function getComments(): array
-    ////{
-   /////     return $this->comments->toArray();
-    ////}
-////
-   //// public function addComment(Comment $post): void
-   //// {
-   ////     $this->comments->add($post);
-   /// }
 }

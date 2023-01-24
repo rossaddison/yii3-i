@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Invoice\Sumex;
 
-use App\Invoice\Entity\Sumex;
+use App\Invoice\Setting\SettingRepository;
 use App\Invoice\Sumex\SumexRepository;
 use App\Invoice\Sumex\SumexForm;
 
@@ -18,21 +18,21 @@ final class SumexService
         $this->repository = $repository;
     }
 
-    public function saveSumex(Sumex $model, SumexForm $form): void
+    public function saveSumex(object $model, SumexForm $form, SettingRepository $s): void
     {
-       $model->setInvoice($form->getInvoice());
-       $model->setReason($form->getReason());
-       $model->setDiagnosis($form->getDiagnosis());
-       $model->setObservations($form->getObservations());
-       $model->setTreatmentstart($form->getTreatmentstart());
-       $model->setTreatmentend($form->getTreatmentend());
-       $model->setCasedate($form->getCasedate());
-       $model->setCasenumber($form->getCasenumber());
+       $form->getInvoice() ? $model->setInvoice($form->getInvoice()) : '';
+       $form->getReason() ? $model->setReason($form->getReason()) : '';
+       $form->getDiagnosis() ? $model->setDiagnosis($form->getDiagnosis()) : '';
+       $form->getObservations() ? $model->setObservations($form->getObservations()) : '';
+       $model->setTreatmentstart($form->getTreatmentstart($s));
+       $model->setTreatmentend($form->getTreatmentend($s));
+       $model->setCasedate($form->getCasedate($s));
+       $form->getCasenumber() ? $model->setCasenumber($form->getCasenumber()) : '';
  
        $this->repository->save($model);
     }
     
-    public function deleteSumex(Sumex $model): void
+    public function deleteSumex(object $model): void
     {
         $this->repository->delete($model);
     }

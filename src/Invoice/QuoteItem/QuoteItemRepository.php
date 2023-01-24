@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Invoice\QuoteItem;
 
-use App\Invoice\Entity\QuoteItem;
 use Cycle\ORM\Select;
 use Cycle\Database\Injection\Parameter;
 use Throwable;

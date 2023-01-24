@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Invoice\Merchant;
 
-use App\Invoice\Entity\Merchant;
-
 // Cycle
 use Cycle\Database\Injection\Parameter;
 use Cycle\ORM\Select;

@@ -40,10 +40,10 @@ class InvItem
     #[Column(type: 'decimal(20,2)', nullable: false, default: 0.00)]
     private ?float $discount_amount =  0.00;
     
-    #[Column(type: 'integer(2)', nullable: false, default:0)]
+    #[Column(type: 'integer(2)', nullable: true, default:0)]
     private ?int $order =  null;
      
-    #[Column(type: 'boolean', nullable: true)]
+    #[Column(type: 'boolean', nullable: false)]
     private ?bool $is_recurring =  false;
      
    #[Column(type: 'string(50)', nullable: true)]
@@ -283,7 +283,7 @@ class InvItem
         return $this->date;
     }    
     
-    public function setDate(?DateTimeImmutable $date): void
+    public function setDate(DateTimeImmutable $date): void
     {
       $this->date = $date;
     }

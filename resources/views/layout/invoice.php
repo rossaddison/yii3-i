@@ -11,6 +11,7 @@ use App\Invoice\Asset\i18nAsset\az_Asset;
 use App\Invoice\Asset\i18nAsset\de_DE_Asset;
 use App\Invoice\Asset\i18nAsset\en_GB_Asset;
 use App\Invoice\Asset\i18nAsset\es_ES_Asset;
+use App\Invoice\Asset\i18nAsset\fr_FR_Asset;
 use App\Invoice\Asset\i18nAsset\id_Asset;
 use App\Invoice\Asset\i18nAsset\ja_Asset;
 use App\Invoice\Asset\i18nAsset\nl_Asset;
@@ -70,6 +71,7 @@ switch ($session->get('_language') ?? $session->set('_language','en')) {
     case 'az' : $assetManager->register(az_Asset::class); $locale = 'Azerbaijani'; break;
     case 'de' : $assetManager->register(de_DE_Asset::class); $locale = 'German'; break;
     case 'en' : $assetManager->register(en_GB_Asset::class); $locale = 'English'; break;
+    case 'fr' : $assetManager->register(fr_FR_Asset::class); $locale = 'French'; break;
     case 'id' : $assetManager->register(id_Asset::class); $locale = 'Indonesian'; break;
     case 'ja' : $assetManager->register(ja_Asset::class); $locale = 'Japanese'; break;
     case 'nl' : $assetManager->register(nl_Asset::class); $locale = 'Dutch'; break;
@@ -262,9 +264,9 @@ echo Nav::widget()
                                    // ..resources/views/generator/templates_protected
                                    // Your Json file must be located in src/Invoice/google_translate_unique folder
                                    // Get your downloaded Json file from 
-                                   ['options'=>['class'=>'nav fs-4','data-toggle'=>'tooltip','title'=>$s->where('google_translate_json_filename')],'label' => $translator->translate('invoice.generator.google.translate.ip'),'url'=>$urlGenerator->generate('generator/google_translate',['type'=>'ip'])],
-                                   ['options'=>['class'=>'nav fs-4'],'label' => $translator->translate('invoice.generator.google.translate.gateway'),'url'=>$urlGenerator->generate('generator/google_translate',['type'=>'gateway'])],                                   
-                                   ['options'=>['class'=>'nav fs-4','data-toggle'=>'tooltip','title'=>$s->where('google_translate_en_app_php')],'label' => $translator->translate('invoice.generator.google.translate.app'),'url'=>$urlGenerator->generate('generator/google_translate',['type'=>'app'])],
+                                   ['options'=>['class'=>'nav fs-4','data-toggle'=>'tooltip','title'=>$s->where('google_translate_json_filename')],'label' => $translator->translate('invoice.generator.google.translate.ip'),'url'=>$urlGenerator->generate('generator/google_translate_lang',['type'=>'ip'])],
+                                   ['options'=>['class'=>'nav fs-4'],'label' => $translator->translate('invoice.generator.google.translate.gateway'),'url'=>$urlGenerator->generate('generator/google_translate_lang',['type'=>'gateway'])],                                   
+                                   ['options'=>['class'=>'nav fs-4','data-toggle'=>'tooltip','title'=>$s->where('google_translate_en_app_php')],'label' => $translator->translate('invoice.generator.google.translate.app'),'url'=>$urlGenerator->generate('generator/google_translate_lang',['type'=>'app'])],
                                    ['label' => $translator->translate('invoice.test.reset.setting'),'url'=>$urlGenerator->generate('invoice/setting_reset'),
                                     'options'=>['class'=>'nav fs-4','data-toggle'=>'tooltip','title'=>$translator->translate('invoice.test.reset.setting.tooltip')]],
                                    ['label' => $translator->translate('invoice.test.reset'),'url'=>$urlGenerator->generate('invoice/test_data_reset'),
@@ -323,7 +325,11 @@ echo Nav::widget()
                     [
                         'label' => 'English',
                         'url' => $urlGenerator->generateFromCurrent(['_language' => 'en'], fallbackRouteName: 'site/index'),
-                    ],                    
+                    ],
+                    [
+                        'label' => 'French / Français',
+                        'url' => $urlGenerator->generateFromCurrent(['_language' => 'fr'], fallbackRouteName: 'site/index'),
+                    ],
                     [
                         'label' => 'Dutch / Nederlands',
                         'url' => $urlGenerator->generateFromCurrent(['_language' => 'nl'], fallbackRouteName: 'site/index'),

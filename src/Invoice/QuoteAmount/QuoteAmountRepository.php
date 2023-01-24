@@ -188,8 +188,10 @@ private EntityWriter $entityWriter;
             $status_specific_quotes = $this->repoStatusTotals($key, $range, $sR);
             $total = 0.00;
             foreach ($status_specific_quotes as $quote) {
+               if ($quote instanceof QuoteAmount) { 
                 $this_total = $quote->getTotal();
                 $total += $this_total;
+               } 
             }
             $return[$key] = [
                 'quote_status_id' => $key,

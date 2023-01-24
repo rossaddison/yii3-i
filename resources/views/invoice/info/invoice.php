@@ -18,6 +18,19 @@
 <p>CompanyPrivate logo will be automatically input on invoice/quotes depending on whether the date of the invoice falls between the start and end date.</p>
 <p>Introducing Paypal.</p>
 <p>Introducing India's PayTm payment gateway's QR code method of payment and comparing this with Stripe's method.</p>
+<p><b>23 January 2023</b></p>
+<p>Psalm Level 3 Testing (0 errors)</p>
+<p>Improve security of client viewing their quotes/invoices online with following code in InvController/url_key function</p>
+<p><code>
+// After signup the user was included in the userinv using Settings...User Account...+
+$user_inv = $uiR->repoUserInvUserIdquery($currentUser_getId);
+// The client has been assigned to the user id using Setting...User Account...Assigned Clients
+$user_client = $ucR->repoUserClientqueryCount($currentUser_getId, $inv->getClient_id()) === 1 ? true : false;
+if ($user_inv && $user_client) {  
+</code></p>
+<p>If the currentUser getId returns a null value they are a guest. See documentation. Yiisoft/CurrentUser</p>
+<p>Note: The Psalm PossiblyNullArgument has to be suppressed here to allow for a possible null value here for validation of Yiisoft guest status. </p>
+<p>No user with Yiisoft guest status is allowed in.</p>
 <p><b>3 January 2023</b></p>
 <p><a href="https://github.com/yiisoft/demo/issues/559"><s>Issue 559</s></a></p>
 <p>Uzbek Introduced</p>

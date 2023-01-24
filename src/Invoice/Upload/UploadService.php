@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Invoice\Upload;
 
-use App\Invoice\Entity\Upload;
 use App\Invoice\Setting\SettingRepository;
 
 use Yiisoft\Files\FileHelper;
@@ -20,11 +19,11 @@ final class UploadService
     }
 
     /**
-     * @param Upload $model
+     * @param object $model
      * @param UploadForm $form
      * @return void
      */
-    public function saveUpload(Upload $model, UploadForm $form): void
+    public function saveUpload(object $model, UploadForm $form): void
     {
        $model->setClient_id($form->getClient_id());
        $model->setUrl_key($form->getUrl_key());
@@ -35,11 +34,11 @@ final class UploadService
     }
     
     /**
-     * @param Upload $model
+     * @param object $model
      * @param SettingRepository $sR
      * @return void
      */
-    public function deleteUpload(Upload $model, SettingRepository $sR): void    
+    public function deleteUpload(object $model, SettingRepository $sR): void    
     {
         $aliases = $sR->get_customer_files_folder_aliases();
         $targetPath = $aliases->get('@customer_files');

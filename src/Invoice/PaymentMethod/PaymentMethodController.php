@@ -137,25 +137,29 @@ final class PaymentMethodController
                         SettingRepository $settingRepository                        
 
     ): Response {
-        $parameters = [
-            'title' => 'Edit',
-            'action' => ['paymentmethod/edit', ['id' => $this->paymentmethod($currentRoute, $paymentmethodRepository)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->paymentmethod($currentRoute, $paymentmethodRepository)),
-            'head'=>$head,
-            's'=>$settingRepository,            
-        ];
-        if ($request->getMethod() === Method::POST) {
-            $form = new PaymentMethodForm();
-            $body = $request->getParsedBody();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
-                $this->paymentmethodService->savePaymentMethod($this->paymentmethod($currentRoute, $paymentmethodRepository), $form);
-                return $this->webService->getRedirectResponse('paymentmethod/index');
+        $payment_method = $this->paymentmethod($currentRoute, $paymentmethodRepository);
+        if ($payment_method) {
+            $parameters = [
+                'title' => 'Edit',
+                'action' => ['paymentmethod/edit', ['id' => $payment_method->getId()]],
+                'errors' => [],
+                'body' => $this->body($payment_method),
+                'head'=>$head,
+                's'=>$settingRepository,            
+            ];
+            if ($request->getMethod() === Method::POST) {
+                $form = new PaymentMethodForm();
+                $body = $request->getParsedBody();
+                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                    $this->paymentmethodService->savePaymentMethod($payment_method, $form);
+                    return $this->webService->getRedirectResponse('paymentmethod/index');
+                }
+                $parameters['body'] = $body;
+                $parameters['errors'] = $form->getFormErrors();
             }
-            $parameters['body'] = $body;
-            $parameters['errors'] = $form->getFormErrors();
-        }
-        return $this->viewRenderer->render('_form', $parameters);
+            return $this->viewRenderer->render('_form', $parameters);
+        } // if payment_method
+        return $this->webService->getRedirectResponse('paymentmethod/index');
     }
     
     /**
@@ -165,10 +169,14 @@ final class PaymentMethodController
      * @param PaymentMethodRepository $paymentmethodRepository
      * @return Response
      */
-    public function delete(SessionInterface $session,CurrentRoute $currentRoute, PaymentMethodRepository $paymentmethodRepository 
+    public function delete(SessionInterface $session, CurrentRoute $currentRoute, PaymentMethodRepository $paymentmethodRepository 
     ): Response {
         try {
-            $this->paymentmethodService->deletePaymentMethod($this->paymentmethod($currentRoute, $paymentmethodRepository));               
+            $payment_method = $this->paymentmethod($currentRoute, $paymentmethodRepository);
+            if ($payment_method) {
+                $this->paymentmethodService->deletePaymentMethod($payment_method);               
+                return $this->webService->getRedirectResponse('paymentmethod/index'); 
+            }
             return $this->webService->getRedirectResponse('paymentmethod/index'); 
 	} catch (\Exception $e) {
             unset($e);
@@ -178,22 +186,29 @@ final class PaymentMethodController
     }
     
     /**
+     * 
      * @param CurrentRoute $currentRoute
      * @param PaymentMethodRepository $paymentmethodRepository
      * @param SettingRepository $settingRepository
+     * @return \Yiisoft\DataResponse\DataResponse|Response
      */
     public function view(CurrentRoute $currentRoute, PaymentMethodRepository $paymentmethodRepository,
         SettingRepository $settingRepository
-        ): \Yiisoft\DataResponse\DataResponse {
-        $parameters = [
-            'title' => $settingRepository->trans('view'),
-            'action' => ['paymentmethod/edit', ['id' => $this->paymentmethod($currentRoute, $paymentmethodRepository)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->paymentmethod($currentRoute, $paymentmethodRepository)),
-            's'=>$settingRepository,             
-            'paymentmethod'=>$paymentmethodRepository->repoPaymentMethodquery($this->paymentmethod($currentRoute, $paymentmethodRepository)->getId()),
-        ];
-        return $this->viewRenderer->render('_view', $parameters);
+        ): \Yiisoft\DataResponse\DataResponse|Response {
+        $payment_method = $this->paymentmethod($currentRoute, $paymentmethodRepository);
+        $parameters = [];
+        if ($payment_method) {
+            $parameters = [
+                'title' => $settingRepository->trans('view'),
+                'action' => ['paymentmethod/edit', ['id' => $payment_method->getId()]],
+                'errors' => [],
+                'body' => $this->body($payment_method),
+                's'=>$settingRepository,             
+                'paymentmethod'=>$paymentmethodRepository->repoPaymentMethodquery($payment_method->getId()),
+            ];
+            return $this->viewRenderer->render('_view', $parameters);
+        }
+        return $this->webService->getRedirectResponse('paymentmethod/index'); 
     }
     
     /**
@@ -212,14 +227,17 @@ final class PaymentMethodController
     /**
      * @param CurrentRoute $currentRoute
      * @param PaymentMethodRepository $paymentmethodRepository
-     * @return PaymentMethod|null
+     * @return object|null
      */
     private function paymentmethod(CurrentRoute $currentRoute, 
-                                   PaymentMethodRepository $paymentmethodRepository) : PaymentMethod|null 
+                                   PaymentMethodRepository $paymentmethodRepository) : object|null 
     {
         $id = $currentRoute->getArgument('id');       
-        $paymentmethod = $paymentmethodRepository->repoPaymentMethodquery($id);
-        return $paymentmethod;
+        if (null!==$id) {
+            $paymentmethod = $paymentmethodRepository->repoPaymentMethodquery($id);
+            return $paymentmethod;
+        }
+        return null;
     }
     
     /**
@@ -234,16 +252,15 @@ final class PaymentMethodController
     }
     
     /**
-     * @return (null|string)[]
-     *
-     * @psalm-return array{id: string, name: null|string}
+     * 
+     * @param object $paymentmethod
+     * @return array
      */
-    private function body(PaymentMethod $paymentmethod): array {
-        $body = [
-                
+    private function body(object $paymentmethod): array {
+        $body = [                
           'id'=>$paymentmethod->getId(),
           'name'=>$paymentmethod->getName()
-                ];
+        ];
         return $body;
     }
     

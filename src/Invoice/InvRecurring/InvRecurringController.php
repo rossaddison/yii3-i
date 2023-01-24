@@ -105,13 +105,11 @@ final class InvRecurringController
     }
     
     /**
-     * @param InvRecurring $invrecurring
-     *
-     * @return (\DateTimeImmutable|null|string)[]
-     *
-     * @psalm-return array{id: string, inv_id: string, start: \DateTimeImmutable, end: \DateTimeImmutable, frequency: string, next: \DateTimeImmutable|null}
+     * 
+     * @param object $invrecurring
+     * @return array
      */
-    private function body(InvRecurring $invrecurring): array {
+    private function body(object $invrecurring): array {
         $body = [                
           'id'=>$invrecurring->getId(),
           'inv_id'=>$invrecurring->getInv_id(),
@@ -161,13 +159,19 @@ final class InvRecurringController
     public function set_next_recur_date(string $invoice_recurring_id, IRR $irR) : void
     {
         $invoice_recurring = $irR->repoInvRecurringquery($invoice_recurring_id);
-        
         $datehelper = new DateHelper($this->s);
-
-        $recur_next_date = $datehelper->increment_date(($invoice_recurring->getNext())->format($datehelper->style()), $invoice_recurring->getFrequency());       
-        
-        $invoice_recurring->setNext($recur_next_date);
-        $irR->save($invoice_recurring);
+        if ($invoice_recurring) {
+            $inv_recur_next = $invoice_recurring->getNext();
+            if (null!==$inv_recur_next) {
+                $recur_next_date = 
+                $datehelper->increment_date(
+                            $inv_recur_next->format($datehelper->style()),
+                             $invoice_recurring->getFrequency()
+                            );       
+                $invoice_recurring->setNext($recur_next_date);
+                $irR->save($invoice_recurring);
+            }
+        }
     }
     
     /**
@@ -177,11 +181,18 @@ final class InvRecurringController
      * @return Response
      */
     public function stop(CurrentRoute $currentRoute, IRR $iR): Response {
-        $ivr = $iR->repoInvRecurringquery($this->invrecurring($currentRoute, $iR)->getId());
-        $ivr->setEnd(date('Y-m-d'));
-        $ivr->setNext('0000-00-00');
-        $iR->save($ivr);
-        return $this->webService->getRedirectResponse('invrecurring/index');
+        $inv_recurring = $this->invrecurring($currentRoute, $iR);
+        if ($inv_recurring) {
+            $ivr = $iR->repoInvRecurringquery($inv_recurring->getId());
+            if ($ivr) {
+                $ivr->setEnd(date('Y-m-d'));
+                $ivr->setNext('0000-00-00');
+                $iR->save($ivr);
+                return $this->webService->getRedirectResponse('invrecurring/index');
+            }
+            return $this->webService->getNotFoundResponse();
+        }
+        return $this->webService->getNotFoundResponse();
     }
     
     // Used in inv.js get_recur_start_date to pass the frequency determined start date back to the modal 
@@ -227,25 +238,29 @@ final class InvRecurringController
                         IRR $invrecurringRepository    
 
     ): Response {
-        $parameters = [
-            'title' => 'Edit',
-            'action' => ['invrecurring/edit', ['id' => $this->invrecurring($currentRoute, $invrecurringRepository)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->invrecurring($currentRoute, $invrecurringRepository)),
-            'head'=>$head,
-            's'=>$this->s,
-        ];
-        if ($request->getMethod() === Method::POST) {
-            $form = new InvRecurringForm();
-            $body = $request->getParsedBody();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
-                $this->invrecurringService->saveInvRecurring($this->invrecurring($currentRoute,$invrecurringRepository), $form);
-                return $this->webService->getRedirectResponse('invrecurring/index');
+        $inv_recurring = $this->invrecurring($currentRoute, $invrecurringRepository);
+        if ($inv_recurring) {
+            $parameters = [
+                'title' => 'Edit',
+                'action' => ['invrecurring/edit', ['id' => $inv_recurring->getId()]],
+                'errors' => [],
+                'body' => $this->body($inv_recurring),
+                'head'=>$head,
+                's'=>$this->s,
+            ];
+            if ($request->getMethod() === Method::POST) {
+                $form = new InvRecurringForm();
+                $body = $request->getParsedBody();
+                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                    $this->invrecurringService->saveInvRecurring($inv_recurring, $form);
+                    return $this->webService->getRedirectResponse('invrecurring/index');
+                }
+                $parameters['body'] = $body;
+                $parameters['errors'] = $form->getFormErrors();
             }
-            $parameters['body'] = $body;
-            $parameters['errors'] = $form->getFormErrors();
+            return $this->viewRenderer->render('_form', $parameters);
         }
-        return $this->viewRenderer->render('_form', $parameters);
+        return $this->webService->getNotFoundResponse();
     }
     
     /**
@@ -258,9 +273,13 @@ final class InvRecurringController
     public function delete(Session $session, CurrentRoute $currentRoute,IRR $invrecurringRepository 
     ): Response {
         try {
-            $this->invrecurringService->deleteInvRecurring($this->invrecurring($currentRoute,$invrecurringRepository));               
-            $this->flash($session, 'info', 'Deleted.');
-            return $this->webService->getRedirectResponse('invrecurring/index'); 
+            $inv_recurring = $this->invrecurring($currentRoute,$invrecurringRepository);
+            if ($inv_recurring) {
+                $this->invrecurringService->deleteInvRecurring($inv_recurring);               
+                $this->flash($session, 'info', 'Deleted.');
+                return $this->webService->getRedirectResponse('invrecurring/index'); 
+            }
+            return $this->webService->getNotFoundResponse();
 	} catch (\Exception $e) {
             $this->flash($session, 'danger', $e->getMessage());
             unset($e);
@@ -271,12 +290,17 @@ final class InvRecurringController
     /**
      * @param CurrentRoute $currentRoute
      * @param IRR $invrecurringRepository
-     * @return InvRecurring|null
+     * @return object|null
      */
-    private function invrecurring(CurrentRoute $currentRoute,IRR $invrecurringRepository): InvRecurring|null
+    private function invrecurring(CurrentRoute $currentRoute,IRR $invrecurringRepository): ?object
     {
+        $invrecurring = new InvRecurring();        
         $id = $currentRoute->getArgument('id');       
-        $invrecurring = $invrecurringRepository->repoInvRecurringquery($id);
+        if (null!==$id) {    
+            $invrecurring = $invrecurringRepository->repoInvRecurringquery($id);
+            // object/null can be returned here
+            return $invrecurring;
+        }
         return $invrecurring;
     }
     
@@ -305,19 +329,25 @@ final class InvRecurringController
     }
     
     /**
+     * 
      * @param CurrentRoute $currentRoute
      * @param IRR $invrecurringRepository
+     * @return \Yiisoft\DataResponse\DataResponse|Response
      */
-    public function view(CurrentRoute $currentRoute,IRR $invrecurringRepository): \Yiisoft\DataResponse\DataResponse {
-        $parameters = [
-            'title' => $this->s->trans('view'),
-            'action' => ['invrecurring/view', ['id' => $this->invrecurring($currentRoute, $invrecurringRepository)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->invrecurring($currentRoute, $invrecurringRepository)),
-            's'=>$this->s,             
-            'invrecurring'=>$invrecurringRepository->repoInvRecurringquery($this->invrecurring($currentRoute, $invrecurringRepository)->getId()),
-        ];
-        return $this->viewRenderer->render('_view', $parameters);
+    public function view(CurrentRoute $currentRoute,IRR $invrecurringRepository): \Yiisoft\DataResponse\DataResponse|Response {
+        $inv_recurring = $this->invrecurring($currentRoute, $invrecurringRepository);
+        if ($inv_recurring) {
+            $parameters = [
+                'title' => $this->s->trans('view'),
+                'action' => ['invrecurring/view', ['id' => $inv_recurring->getId()]],
+                'errors' => [],
+                'body' => $this->body($inv_recurring),
+                's'=>$this->s,             
+                'invrecurring'=>$invrecurringRepository->repoInvRecurringquery($inv_recurring->getId()),
+            ];
+            return $this->viewRenderer->render('_view', $parameters);
+        }
+        return $this->webService->getNotFoundResponse();
     }
     
     /**

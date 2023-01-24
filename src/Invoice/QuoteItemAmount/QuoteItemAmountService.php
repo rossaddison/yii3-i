@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Invoice\QuoteItemAmount;
 
-use App\Invoice\Entity\QuoteItemAmount;
-
-
 final class QuoteItemAmountService
 {
 
@@ -17,7 +14,7 @@ final class QuoteItemAmountService
         $this->repository = $repository;
     }
 
-    public function saveQuoteItemAmount(QuoteItemAmount $model, QuoteItemAmountForm $form): void
+    public function saveQuoteItemAmount(object $model, QuoteItemAmountForm $form): void
     { 
        $model->setQuote_item_id($form->getQuote_item_id());
        $model->setSubtotal($form->getSubtotal());
@@ -27,7 +24,7 @@ final class QuoteItemAmountService
        $this->repository->save($model);
     }
     
-    public function saveQuoteItemAmountNoForm(QuoteItemAmount $model, array $quoteitem): void
+    public function saveQuoteItemAmountNoForm(object $model, array $quoteitem): void
     {        
        $model->setQuote_item_id((int)$quoteitem['quote_item_id']);
        $model->setSubtotal($quoteitem['subtotal']);
@@ -37,7 +34,7 @@ final class QuoteItemAmountService
        $this->repository->save($model);
     }
     
-    public function deleteQuoteItemAmount(QuoteItemAmount $model): void
+    public function deleteQuoteItemAmount(object $model): void
     {
        $this->repository->delete($model);
     }

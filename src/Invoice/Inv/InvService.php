@@ -4,6 +4,9 @@ declare(strict_types=1);
 namespace App\Invoice\Inv;
 // Entities
 use App\Invoice\Entity\Inv;
+use App\Invoice\Entity\InvItem;
+use App\Invoice\Entity\InvTaxRate;
+use App\Invoice\Entity\InvCustom;
 use App\User\User;
 // Repositories
 use App\Invoice\Group\GroupRepository as GR;
@@ -37,36 +40,37 @@ final class InvService
     }
     
     /**
-     * @param User $user
-     * @param Inv $model
+     * 
+     * @param object $currentUser
+     * @param object $model
      * @param InvForm $form
      * @param SR $s
-     * @return void
-     */ 
-    public function addInv(User $user, Inv $model, InvForm $form, SR $s): void
+     * @return object $model
+     */
+    public function addInv(object $currentUser, object $model, InvForm $form, SR $s): object
     {        
        $datehelper = new DateHelper($s);
-       $datetime = $datehelper->get_or_set_with_style($form->getDate_created());
-       $datetimeimmutable = new \DateTimeImmutable(!empty($datetime) ? $datetime->format('Y-m-d H:i:s') : 'now');
+       $datetime = $datehelper->get_or_set_with_style(null!==$form->getDate_created()? $form->getDate_created() : new \DateTime());
+       $datetimeimmutable = new \DateTimeImmutable($datetime instanceof \DateTime ? $datetime->format('Y-m-d H:i:s') : 'now');
        $model->setDate_created($datetimeimmutable);
        $model->setDate_due($s);
-       $model->setClient_id((int)$form->getClient_id());       
-       $model->setGroup_id((int)$form->getGroup_id());
-       $model->setStatus_id($form->getStatus_id()); 
-       $model->setDiscount_amount($form->getDiscount_amount());
-       $model->setDiscount_percent($form->getDiscount_percent());
-       $model->setUrl_key($form->getUrl_key());
-       $model->setPassword($form->getPassword());
-       $model->setPayment_method($form->getPayment_method());
-       $model->setTerms($form->getTerms()); 
-       $model->setCreditinvoice_parent_id($form->getCreditinvoice_parent_id() ?? 0);
+       null!==$form->getClient_id() ? $model->setClient_id((int)$form->getClient_id()) : '';       
+       null!==$form->getGroup_id() ? $model->setGroup_id((int)$form->getGroup_id()) : '';
+       null!==$form->getStatus_id() ? $model->setStatus_id($form->getStatus_id()) : ''; 
+       null!==$form->getDiscount_amount() ? $model->setDiscount_amount($form->getDiscount_amount()) : '';
+       null!==$form->getDiscount_percent() ? $model->setDiscount_percent($form->getDiscount_percent()) : '';
+       null!==$form->getUrl_key() ? $model->setUrl_key($form->getUrl_key()) : '';
+       null!==$form->getPassword() ? $model->setPassword($form->getPassword()) : '';
+       null!==$form->getPayment_method() ? $model->setPayment_method($form->getPayment_method()) : '';
+       null!==$form->getTerms() ? $model->setTerms($form->getTerms()) : ''; 
+       null!==$form->getCreditinvoice_parent_id() ? $model->setCreditinvoice_parent_id($form->getCreditinvoice_parent_id() ?: 0) : '';
        if ($model->isNewRecord()) {
             // Draft invoices cannot be viewed by Clients. 
             // Mark the invoices as 'sent' so that clients can view their invoices when logged in
             // Draft => 1, Sent => 2
             $model->setStatus_id($s->get_setting('mark_invoices_sent_copy') === '1' ? 2 : 1 );            
-            $model->setNumber($form->getNumber());
-            $model->setUser($user);
+            null!==$form->getNumber() ? $model->setNumber($form->getNumber()) : '';
+            $model->setUser_id((int)$currentUser->getId());
             $model->setUrl_key(Random::string(32));            
             $model->setDate_created(new \DateTimeImmutable('now'));
             $model->setTime_created((new \DateTimeImmutable('now'))->format('H:i:s'));
@@ -74,41 +78,45 @@ final class InvService
             $model->setDate_due($s);            
        }
        $this->repository->save($model);
+       return $model;
     }
     
     /**
      * 
-     * @param User $user
-     * @param Inv $model
+     * @param object $user
+     * @param object $model
      * @param InvForm $form
      * @param SR $s
      * @param GR $gR
-     * @return void
+     * @return object $model
      */
-    public function saveInv(User $user, Inv $model, InvForm $form, SR $s, GR $gR): void
+    public function saveInv(object $user, object $model, InvForm $form, SR $s, GR $gR): object 
     {  
        //$before_save = $model; 
        $datehelper = new DateHelper($s);
-       $datetime = $datehelper->get_or_set_with_style($form->getDate_created());
-       $datetimeimmutable = new \DateTimeImmutable($datetime->format('Y-m-d H:i:s'));
+       $datetime = $datehelper->get_or_set_with_style(null!==$form->getDate_created()? $form->getDate_created() : new \DateTime());
+       $datetimeimmutable = new \DateTimeImmutable($datetime instanceof \DateTime ? $datetime->format('Y-m-d H:i:s') : 'now');
        $model->setDate_created($datetimeimmutable);
        $model->setDate_due($s);
-       null!==$form->getClient_id() ? $model->setClient($model->getClient()->getClient_id() == $form->getClient_id() ? $model->getClient() : null): '';
+       
+       null!==$form->getClient_id() ? $model->setClient($model->getClient()?->getClient_id() == $form->getClient_id() ? $model->getClient() : null): '';
        $model->setClient_id((int)$form->getClient_id());
-       null!==$form->getGroup_id() ? $model->setGroup($model->getGroup()->getId() == $form->getGroup_id() ? $model->getGroup() : null): '';
+       
+       null!==$form->getGroup_id() ? $model->setGroup($model->getGroup()?->getId() == $form->getGroup_id() ? $model->getGroup() : null): '';
        $model->setGroup_id((int)$form->getGroup_id());       
-       $model->setStatus_id($form->getStatus_id());
-       $model->setDiscount_percent($form->getDiscount_percent());
-       $model->setDiscount_amount($form->getDiscount_amount());
-       $model->setUrl_key($form->getUrl_key());
-       $model->setPassword($form->getPassword());
-       $model->setPayment_method($form->getPayment_method());
-       $model->setTerms($form->getTerms()); 
-       $model->setCreditinvoice_parent_id($form->getCreditinvoice_parent_id() ?? 0);
+       
+       null!==$form->getStatus_id() ? $model->setStatus_id($form->getStatus_id()) : '';
+       null!==$form->getDiscount_percent() ? $model->setDiscount_percent($form->getDiscount_percent()) : '';
+       null!==$form->getDiscount_amount() ? $model->setDiscount_amount($form->getDiscount_amount()) : '';
+       null!==$form->getUrl_key() ? $model->setUrl_key($form->getUrl_key()) : '';
+       null!==$form->getPassword() ? $model->setPassword($form->getPassword()) : '';
+       null!==$form->getPayment_method() ? $model->setPayment_method($form->getPayment_method()) : '';
+       null!==$form->getTerms() ? $model->setTerms($form->getTerms()) : ''; 
+       null!==$form->getCreditinvoice_parent_id() ? $model->setCreditinvoice_parent_id($form->getCreditinvoice_parent_id() ?: 0) : '';
        if ($model->isNewRecord()) {
             $model->setStatus_id(1);            
-            $model->setNumber($form->getNumber());
-            $model->setUser($user);
+            null!==$form->getNumber() ? $model->setNumber($form->getNumber()) : '';
+            $model->setUser_id($user->getId());
             $model->setUrl_key(Random::string(32));            
             $model->setDate_created(new \DateTimeImmutable('now'));
             $model->setTime_created((new \DateTimeImmutable('now'))->format('H:i:s'));
@@ -121,10 +129,11 @@ final class InvService
             $model->setNumber($gR->generate_number((int)$form->getGroup_id(), true));  
        }
        $this->repository->save($model);
+       return $model;
     }
     
     /**
-     * @param Inv $model
+     * @param object $model
      * @param ICR $icR
      * @param ICS $icS
      * @param IIR $iiR
@@ -135,24 +144,32 @@ final class InvService
      * @param IAS $iaS
      * @return void
      */
-    public function deleteInv(Inv $model, ICR $icR, ICS $icS, IIR $iiR, IIS $iiS, ITRR $itrR, ITRS $itrS, IAR $iaR, IAS $iaS): void
+    public function deleteInv(object $model, ICR $icR, ICS $icS, IIR $iiR, IIS $iiS, ITRR $itrR, ITRS $itrS, IAR $iaR, IAS $iaS): void
     {
         $inv_id = $model->getId();
         // Invs with no items: If there are no invoice items there will be no invoice amount record
         // so check if there is a invoice amount otherwise null error will occur.
-        $count = $iaR->repoInvAmountCount((int)$inv_id);        
-        if ($count > 0) {
-            $inv_amount = $iaR->repoInvquery((int)$inv_id);
-            $iaS->deleteInvAmount($inv_amount);            
-        }
-        foreach ($iiR->repoInvItemIdquery((string)$inv_id) as $item) {
-                 $iiS->deleteInvItem($item);
-        }        
-        foreach ($itrR->repoInvquery((string)$inv_id) as $inv_tax_rate) {
-                 $itrS->deleteInvTaxRate($inv_tax_rate);
-        }
-        foreach ($icR->repoFields((string)$inv_id) as $inv_custom) {
-                 $icS->deleteInvCustom($inv_custom);
+        if (null!==$inv_id){
+            $count = $iaR->repoInvAmountCount((int)$inv_id);        
+            if ($count > 0) {
+                $inv_amount = $iaR->repoInvquery((int)$inv_id);
+                null!==$inv_amount ? $iaS->deleteInvAmount($inv_amount) : '';            
+            }
+            foreach ($iiR->repoInvItemIdquery($inv_id) as $item) {
+                if ($item instanceof InvItem) {
+                    $iiS->deleteInvItem($item);
+                }     
+            }        
+            foreach ($itrR->repoInvquery($inv_id) as $inv_tax_rate) {
+                if ($inv_tax_rate instanceof InvTaxRate) {
+                    $itrS->deleteInvTaxRate($inv_tax_rate);
+                }     
+            }
+            foreach ($icR->repoFields($inv_id) as $inv_custom) {
+                if ($inv_custom instanceof InvCustom) {
+                    $icS->deleteInvCustom($inv_custom);
+                }     
+            }
         }
         $this->repository->delete($model);
     }
@@ -165,10 +182,10 @@ final class InvService
      * @return void
      */
     public function saveInv_from_recurring(User $user, Inv $model, array $details, SR $s): void
-    {        
+    {  
        $datehelper = new DateHelper($s);
-       $datetime = $datehelper->get_or_set_with_style($details['date_created']);
-       $datetimeimmutable = new \DateTimeImmutable(!empty($datetime) ? $datetime->format('Y-m-d H:i:s') : 'now');
+       $datetime = $datehelper->get_or_set_with_style(null!==$details['date_created'] ? $details['date_created'] : new \DateTime());
+       $datetimeimmutable = new \DateTimeImmutable($datetime instanceof \DateTime ? $datetime->format('Y-m-d H:i:s') : 'now');
        $model->setDate_created($datetimeimmutable);
        $model->setDate_due($s);
        //$model->setDate_created($form->getDate_created());

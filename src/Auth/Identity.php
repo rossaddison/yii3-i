@@ -31,7 +31,10 @@ class Identity implements CookieLoginIdentityInterface
 
     public function getId(): ?string
     {
-        return $this->user->getId();
+        if ($this->user) {
+          return $this->user->getId();
+        }
+        return null;
     }
 
     public function getCookieLoginKey(): string

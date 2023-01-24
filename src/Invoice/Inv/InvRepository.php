@@ -10,10 +10,8 @@ use App\Invoice\Setting\SettingRepository as SR;
 use App\Invoice\InvAmount\InvAmountRepository as IAR;
 
 use Cycle\ORM\Select;
-use Throwable;
 use Cycle\Database\Injection\Parameter;
 
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -38,11 +36,11 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * Get Invoices with filter
-     *
-     * @psalm-return DataReaderInterface<int, Inv>|EntityReader
+     * 
+     * @param int $status_id
+     * @return EntityReader
      */
-    public function findAllWithStatus(int $status_id) : DataReaderInterface|EntityReader
+    public function findAllWithStatus(int $status_id) : EntityReader
     {
         if (($status_id) > 0) {
         $query = $this->select()
@@ -96,18 +94,12 @@ private EntityWriter $entityWriter;
         return Sort::only(['id', 'status'])->withOrder(['id' => 'desc', 'status' => 'asc']);
     }
     
-    /**
-     * @throws Throwable
-     */
-    public function save(Inv $inv): void
+    public function save(array|object|null $inv): void
     {
         $this->entityWriter->write([$inv]);
     }
     
-    /**
-     * @throws Throwable
-     */
-    public function delete(Inv $inv): void
+    public function delete(array|object|null $inv): void
     {
         $this->entityWriter->delete([$inv]);
     }
@@ -146,9 +138,9 @@ private EntityWriter $entityWriter;
      * 
      * @param int $invoice_id
      * @param int $status_id
-     * @return Inv|null
+     * @return object|null
      */
-    public function repoInvStatusquery(int $invoice_id, int $status_id) : Inv|null {
+    public function repoInvStatusquery(int $invoice_id, int $status_id) : object|null {
         $query = $this->select()
                       ->where(['id' => $invoice_id])
                       ->where(['status_id'=>$status_id]);
@@ -158,9 +150,9 @@ private EntityWriter $entityWriter;
     /**
      * 
      * @param string $id
-     * @return Inv|null
+     * @return object|null
      */
-    public function repoInvUnLoadedquery(string $id): Inv|null {
+    public function repoInvUnLoadedquery(string $id): object|null {
         $query = $this->select()
                       ->where(['id' => $id]);
         return  $query->fetchOne() ?: null;
@@ -169,9 +161,9 @@ private EntityWriter $entityWriter;
     /**
      * 
      * @param string $id
-     * @return Inv|null
+     * @return object|null
      */
-    public function repoInvLoadedquery(string $id): Inv|null {
+    public function repoInvLoadedquery(string $id): object|null {
         $query = $this->select()
                       ->load(['client','group','user']) 
                       ->where(['id' => $id]);
@@ -181,9 +173,9 @@ private EntityWriter $entityWriter;
     /**
      * 
      * @param string $url_key
-     * @return Inv|null
+     * @return object|null
      */
-    public function repoUrl_key_guest_loaded(string $url_key) : Inv|null {
+    public function repoUrl_key_guest_loaded(string $url_key) : object|null {
         $query = $this->select()
                        ->load('client') 
                        ->where(['url_key' => $url_key])
@@ -425,8 +417,10 @@ private EntityWriter $entityWriter;
         $invoices = $this->findAllWithClient($client_id);
         $sum = 0.00;
         foreach ($invoices as $invoice) {
+           if ($invoice instanceof Inv) { 
             $invoice_amount = ($iaR->repoInvAmountCount((int)$invoice->getId())> 0 ? $iaR->repoInvquery((int)$invoice->getId()) : null);            
             $sum += (null!==$invoice_amount ? $invoice_amount->getTotal() : 0.00);
+           } 
         }
         return $sum;
     }
@@ -437,8 +431,10 @@ private EntityWriter $entityWriter;
         $invoices = $this->findAllWithClient($client_id);
         $sum = 0.00;
         foreach ($invoices as $invoice) {
+           if ($invoice instanceof Inv) { 
             $invoice_amount = ($iaR->repoInvAmountCount((int)$invoice->getId())> 0 ? $iaR->repoInvquery((int)$invoice->getId()) : null);            
             $sum += (null!==$invoice_amount ? $invoice_amount->getItem_subtotal() : 0.00);
+           } 
         }
         return $sum;
     }
@@ -450,8 +446,10 @@ private EntityWriter $entityWriter;
         $invoices = $this->repoClientLoadedFromToDate($client_id, $from, $to);
         $sum = 0.00;
         foreach ($invoices as $invoice) {
+           if ($invoice instanceof Inv) {  
             $invoice_amount = ($iaR->repoInvAmountCount((int)$invoice->getId())> 0 ? $iaR->repoInvquery((int)$invoice->getId()) : null);            
             $sum += (null!==$invoice_amount ? $invoice_amount->getTotal() : 0.00);
+           } 
         }
         return $sum;
     }
@@ -462,8 +460,10 @@ private EntityWriter $entityWriter;
         $invoices = $this->repoClientLoadedFromToDate($client_id, $from, $to);
         $sum = 0.00;
         foreach ($invoices as $invoice) {
+           if ($invoice instanceof Inv) {  
             $invoice_amount = ($iaR->repoInvAmountCount((int)$invoice->getId())> 0 ? $iaR->repoInvquery((int)$invoice->getId()) : null);            
             $sum += (null!==$invoice_amount ? $invoice_amount->getItem_subtotal() : 0.00);
+           } 
         }
         return $sum;
     }
@@ -474,8 +474,10 @@ private EntityWriter $entityWriter;
         $invoices = $this->repoClientLoadedFromToDate($client_id, $from, $to);
         $sum = 0.00;
         foreach ($invoices as $invoice) {
+           if ($invoice instanceof Inv) {  
             $invoice_amount = ($iaR->repoInvAmountCount((int)$invoice->getId())> 0 ? $iaR->repoInvquery((int)$invoice->getId()) : null);            
             $sum += (null!==$invoice_amount ? $invoice_amount->getItem_tax_total() : 0.00);
+           } 
         }
         return $sum;
     }
@@ -486,8 +488,10 @@ private EntityWriter $entityWriter;
         $invoices = $this->repoClientLoadedFromToDate($client_id, $from, $to);
         $sum = 0.00;
         foreach ($invoices as $invoice) {
+           if ($invoice instanceof Inv) {  
             $invoice_amount = ($iaR->repoInvAmountCount((int)$invoice->getId())> 0 ? $iaR->repoInvquery((int)$invoice->getId()) : null);            
             $sum += (null!==$invoice_amount ? $invoice_amount->getTax_total() : 0.00);
+           } 
         }
         return $sum;
     }
@@ -497,8 +501,10 @@ private EntityWriter $entityWriter;
         $invoices = $this->repoClientLoadedFromToDate($client_id, $from, $to);
         $sum = 0.00;
         foreach ($invoices as $invoice) {
+           if ($invoice instanceof Inv) {  
             $invoice_amount = ($iaR->repoInvAmountCount((int)$invoice->getId())> 0 ? $iaR->repoInvquery((int)$invoice->getId()) : null);            
             $sum += (null!==$invoice_amount ? $invoice_amount->getPaid() : 0.00);
+           } 
         }
         return $sum;
     }
@@ -508,8 +514,10 @@ private EntityWriter $entityWriter;
         $invoices = $this->findAllWithClient($client_id);
         $sum = 0.00;
         foreach ($invoices as $invoice) {
+           if ($invoice instanceof Inv) {  
             $invoice_amount = ($iaR->repoInvAmountCount((int)$invoice->getId())> 0 ? $iaR->repoInvquery((int)$invoice->getId()) : null); 
             $sum += (null!==$invoice_amount ? $invoice_amount->getPaid() : 0.00);
+           } 
         }
         return $sum;
     }
@@ -519,8 +527,10 @@ private EntityWriter $entityWriter;
         $invoices = $this->findAllWithClient($client_id);
         $sum = 0.00;
         foreach ($invoices as $invoice) {
+           if ($invoice instanceof Inv) {  
             $invoice_amount = ($iaR->repoInvAmountCount((int)$invoice->getId())> 0 ? $iaR->repoInvquery((int)$invoice->getId()) : null); 
             $sum += (null!==$invoice_amount ? $invoice_amount->getBalance() : 0.00);
+           } 
         }
         return $sum;
     }

@@ -56,18 +56,12 @@ private EntityWriter $entityWriter;
         return Sort::only(['id'])->withOrder(['id' => 'asc']);
     }
     
-    /**
-     * @throws Throwable
-     */
-    public function save(InvRecurring $invrecurring): void
+    public function save(array|object|null $invrecurring): void
     {
         $this->entityWriter->write([$invrecurring]);
     }
     
-    /**
-     * @throws Throwable
-     */
-    public function delete(InvRecurring $invrecurring): void
+    public function delete(array|object|null $invrecurring): void
     {
         $this->entityWriter->delete([$invrecurring]);
     }
@@ -80,14 +74,16 @@ private EntityWriter $entityWriter;
         );
     }
     
+    // cycle/ORM/src/Select fetchOne
     /**
      * 
      * @param string $id
-     * @return InvRecurring|null
+     * @return TEntity|null
      */
-    public function repoInvRecurringquery(string $id): ?InvRecurring {
-        $query = $this->select()->where(['id' =>$id]);
-        return  $query->fetchOne() ?: null;        
+    public function repoInvRecurringquery(string $id): ?object {
+        $query = $this->select()
+                      ->where(['id' =>$id]);
+        return  $query->fetchOne();        
     }
     
     // The invoice is recurring if at least one id is found 

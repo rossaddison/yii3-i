@@ -87,7 +87,7 @@ private EntityWriter $entityWriter;
         );
     }
     
-    public function repoQuoteCustomquery(string $id): ?QuoteCustom {
+    public function repoQuoteCustomquery(string $id): object|null {
         $query = $this->select()
                       ->load('custom_field')
                       ->load('quote')
@@ -96,7 +96,7 @@ private EntityWriter $entityWriter;
     }
     
     
-    public function repoFormValuequery(string $quote_id, string $custom_field_id): ?QuoteCustom {
+    public function repoFormValuequery(string $quote_id, string $custom_field_id): object|null {
         $query = $this->select()
                       ->where(['quote_id' =>$quote_id])
                       ->andWhere(['custom_field_id' =>$custom_field_id]);

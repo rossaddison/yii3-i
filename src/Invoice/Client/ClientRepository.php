@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Invoice\Client;
 
-use App\Invoice\Entity\Client;
 use Cycle\ORM\Select;
 use Cycle\Database\Injection\Parameter;
 use Throwable;
@@ -119,10 +118,21 @@ private EntityWriter $entityWriter;
      *
      * @psalm-return TEntity|null
      */
-    public function repoClientquery(string $id) : null|object {
+    public function repoClientquery_orig(string $id) : null|object {
         $query = $this->select()
                       ->where(['id' => $id]);
         return  $query->fetchOne() ?: null;        
+    }
+    
+    /**
+     * @return object
+     *
+     * @psalm-return TEntity
+     */
+    public function repoClientquery(string $id) : object {
+        $query = $this->select()
+                      ->where(['id' => $id]);
+        return  $query->fetchOne();        
     }
     
     public function repoUserClient(array $available_client_id_list) : EntityReader {

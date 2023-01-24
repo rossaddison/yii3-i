@@ -97,7 +97,7 @@ final class MerchantController
             
             $form = new MerchantForm();
             if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
-                $this->merchantService->saveMerchant(new Merchant(),$form);
+                $this->merchantService->saveMerchant(new Merchant(), $form, $settingRepository);
                 return $this->webService->getRedirectResponse('merchant/index');
             }
             $parameters['errors'] = $form->getFormErrors();
@@ -122,26 +122,30 @@ final class MerchantController
                         SettingRepository $settingRepository,                        
                         InvRepository $invRepository
     ): Response {
-        $parameters = [
-            'title' => 'Edit',
-            'action' => ['merchant/edit', ['id' => $this->merchant($currentRoute, $merchantRepository)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->merchant($currentRoute, $merchantRepository)),
-            'head'=>$head,
-            's'=>$settingRepository,
-            'invs'=>$invRepository->findAllPreloaded()
-        ];
-        if ($request->getMethod() === Method::POST) {
-            $form = new MerchantForm();
-            $body = $request->getParsedBody();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
-                $this->merchantService->saveMerchant($this->merchant($currentRoute, $merchantRepository), $form);
-                return $this->webService->getRedirectResponse('merchant/index');
+        $merchant = $this->merchant($currentRoute, $merchantRepository);
+        if ($merchant) {
+            $parameters = [
+                'title' => 'Edit',
+                'action' => ['merchant/edit', ['id' => $merchant->getId()]],
+                'errors' => [],
+                'body' => $this->body($merchant),
+                'head'=>$head,
+                's'=>$settingRepository,
+                'invs'=>$invRepository->findAllPreloaded()
+            ];
+            if ($request->getMethod() === Method::POST) {
+                $form = new MerchantForm();
+                $body = $request->getParsedBody();
+                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                    $this->merchantService->saveMerchant($merchant, $form, $settingRepository);
+                    return $this->webService->getRedirectResponse('merchant/index');
+                }
+                $parameters['body'] = $body;
+                $parameters['errors'] = $form->getFormErrors();
             }
-            $parameters['body'] = $body;
-            $parameters['errors'] = $form->getFormErrors();
+            return $this->viewRenderer->render('_form', $parameters);
         }
-        return $this->viewRenderer->render('_form', $parameters);
+        return $this->webService->getRedirectResponse('merchant/index');
     }
     
     /**
@@ -152,7 +156,11 @@ final class MerchantController
      */
     public function delete(CurrentRoute $currentRoute, MerchantRepository $merchantRepository 
     ): Response {
-        $this->merchantService->deleteMerchant($this->merchant($currentRoute, $merchantRepository));               
+        $merchant = $this->merchant($currentRoute, $merchantRepository);
+        if ($merchant) {
+            $this->merchantService->deleteMerchant($merchant);               
+            return $this->webService->getRedirectResponse('merchant/index');        
+        }
         return $this->webService->getRedirectResponse('merchant/index');        
     }
     
@@ -163,16 +171,20 @@ final class MerchantController
      */
     public function view(CurrentRoute $currentRoute, MerchantRepository $merchantRepository,
         SettingRepository $settingRepository
-        ): \Yiisoft\DataResponse\DataResponse {
-        $parameters = [
-            'title' => $settingRepository->trans('view'),
-            'action' => ['merchant/edit', ['id' => $this->merchant($currentRoute, $merchantRepository)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->merchant($currentRoute, $merchantRepository)),
-            's'=>$settingRepository,             
-            'merchant'=>$merchantRepository->repoMerchantquery($this->merchant($currentRoute, $merchantRepository)->getId()),
-        ];
-        return $this->viewRenderer->render('_view', $parameters);
+        ): \Yiisoft\DataResponse\DataResponse|Response {
+        $merchant = $this->merchant($currentRoute, $merchantRepository);
+        if ($merchant) {
+            $parameters = [
+                'title' => $settingRepository->trans('view'),
+                'action' => ['merchant/edit', ['id' =>$merchant->getId()]],
+                'errors' => [],
+                'body' => $this->body($merchant),
+                's'=>$settingRepository,             
+                'merchant'=>$merchantRepository->repoMerchantquery($merchant->getId()),
+            ];
+            return $this->viewRenderer->render('_view', $parameters);
+        }
+        return $this->webService->getRedirectResponse('merchant/index');        
     }
     
     /**
@@ -203,13 +215,16 @@ final class MerchantController
     /**
      * @param CurrentRoute $currentRoute
      * @param MerchantRepository $merchantRepository
-     * @return Merchant|null
+     * @return object|null
      */
-    private function merchant(CurrentRoute $currentRoute, MerchantRepository $merchantRepository): Merchant|null
+    private function merchant(CurrentRoute $currentRoute, MerchantRepository $merchantRepository): object|null
     {
         $id = $currentRoute->getArgument('id');       
-        $merchant = $merchantRepository->repoMerchantquery($id);
-        return $merchant;
+        if (null!==$id) {
+            $merchant = $merchantRepository->repoMerchantquery($id);
+            return $merchant;
+        }
+        return null;
     }
     
     /**
@@ -224,11 +239,11 @@ final class MerchantController
     }
     
     /**
-     * @return (\DateTimeImmutable|bool|string)[]
-     *
-     * @psalm-return array{inv_id: string, successful: bool, date: \DateTimeImmutable, driver: string, response: string, reference: string}
+     * 
+     * @param object $merchant
+     * @return array
      */
-    private function body(Merchant $merchant): array {
+    private function body(object $merchant): array {
         $body = [
           'inv_id'=>$merchant->getInv_id(),
           'successful'=>$merchant->getSuccessful(),
@@ -236,7 +251,7 @@ final class MerchantController
           'driver'=>$merchant->getDriver(),
           'response'=>$merchant->getResponse(),
           'reference'=>$merchant->getReference()
-                ];
+        ];
         return $body;
     }
     

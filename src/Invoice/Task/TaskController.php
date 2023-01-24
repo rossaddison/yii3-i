@@ -169,31 +169,35 @@ final class TaskController
                         prjctR $projectRepository,
                         trR $tax_rateRepository
     ): Response {
-        $parameters = [
-            'title' => 'Edit',
-            'action' => ['task/edit', ['id' => $this->task($currentRoute, $tR)->getId()]],
-            'body' => $this->body($this->task($currentRoute, $tR)),
-            'errors'=>[],
-            'numberhelper'=>new NumberHelper($sR),
-            'datehelper'=>new DateHelper($sR),
-            'statuses'=>$this->getStatuses($sR),
-            's'=>$sR,
-            'head'=>$head,            
-            'projects'=>$projectRepository->findAllPreloaded(),
-            'tax_rates'=>$tax_rateRepository->findAllPreloaded(),
-        ];
-        if ($request->getMethod() === Method::POST) {
-            $form = new TaskForm();
-            $body = $request->getParsedBody();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
-                $this->taskService->saveTask($this->task($currentRoute, $tR), $form, $sR);
-                $this->flash($session, 'info', $sR->trans('record_successfully_updated'));
-                return $this->webService->getRedirectResponse('task/index');
+        $task = $this->task($currentRoute, $tR);
+            if ($task) {
+            $parameters = [
+                'title' => 'Edit',
+                'action' => ['task/edit', ['id' => $task->getId()]],
+                'body' => $this->body($task),
+                'errors'=>[],
+                'numberhelper'=>new NumberHelper($sR),
+                'datehelper'=>new DateHelper($sR),
+                'statuses'=>$this->getStatuses($sR),
+                's'=>$sR,
+                'head'=>$head,            
+                'projects'=>$projectRepository->findAllPreloaded(),
+                'tax_rates'=>$tax_rateRepository->findAllPreloaded(),
+            ];
+            if ($request->getMethod() === Method::POST) {
+                $form = new TaskForm();
+                $body = $request->getParsedBody();
+                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                    $this->taskService->saveTask($task, $form, $sR);
+                    $this->flash($session, 'info', $sR->trans('record_successfully_updated'));
+                    return $this->webService->getRedirectResponse('task/index');
+                }
+                $parameters['body'] = $body;
+                $parameters['errors'] = $form->getFormErrors();
             }
-            $parameters['body'] = $body;
-            $parameters['errors'] = $form->getFormErrors();
-        }
-        return $this->viewRenderer->render('_form', $parameters);
+            return $this->viewRenderer->render('_form', $parameters);
+        }    
+        return $this->webService->getRedirectResponse('task/index');
     }
     
     /**
@@ -206,8 +210,11 @@ final class TaskController
      */
     public function delete(SessionInterface $session, CurrentRoute $currentRoute, sR $sR, tR $tR 
     ): Response {
-            $this->taskService->deleteTask($this->task($currentRoute, $tR)); 
-            $this->flash($session, 'info', $sR->trans('record_successfully_deleted'));
+            $task = $this->task($currentRoute, $tR);
+            if ($task) {
+                $this->taskService->deleteTask($task); 
+                $this->flash($session, 'info', $sR->trans('record_successfully_deleted'));
+            }
             return $this->webService->getRedirectResponse('task/index'); 	
     }
     
@@ -266,8 +273,10 @@ final class TaskController
         // Format the task prices according to comma or point or other setting choice.
         $order = 1;
         foreach ($tasks as $task) {
+           if ($task instanceof Task) { 
             $task->setPrice((float)$numberHelper->format_amount($task->getPrice()));
             $this->save_task_lookup_item_inv($order, $task, $inv_id, $taskR, $trR, $iiaR, $sR, $validator);
+           } 
             $order++;          
         }
         $numberHelper->calculate_inv($session->get('inv_id'), $iiR, $iiaR, $itrR, $iaR, $iR, $pymR);
@@ -278,7 +287,7 @@ final class TaskController
      * @psalm-param positive-int $order
      * @psalm-param sR<object> $sR
      */
-private function save_task_lookup_item_inv(int $order, array|object|null $task, $inv_id, tR $taskR, trR $trR, iiaR $iiaR, sR $sR, ValidatorInterface $validator) : void {
+private function save_task_lookup_item_inv(int $order, object $task, $inv_id, tR $taskR, trR $trR, iiaR $iiaR, sR $sR, ValidatorInterface $validator) : void {
            $form = new InvItemForm();
            $ajax_content = [
                 'name'=>$task->getName(),        
@@ -297,26 +306,25 @@ private function save_task_lookup_item_inv(int $order, array|object|null $task, 
            ];
            if ($form->load($ajax_content) && $validator->validate($form)->isValid()) {
                 $this->invitemService->addInvItem_task(new InvItem(), $form, $inv_id, $taskR, $trR, new iiaS($iiaR), $iiaR, $sR);                 
-           }      
+           }
     }
     
-    /**
-     * @param CurrentRoute $currentRoute
-     * @param tR $tR
-     * @param sR $sR
-     */
     public function view(CurrentRoute $currentRoute, tR $tR,
         sR $sR,
-        ): \Yiisoft\DataResponse\DataResponse {
-        $parameters = [
-            'title' => $sR->trans('view'),
-            'action' => ['task/view', ['id' => $this->task($currentRoute, $tR)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->task($currentRoute, $tR)),
-            's'=>$sR,             
-            'task'=>$tR->repoTaskquery($this->task($currentRoute, $tR)->getId()),
-        ];
-        return $this->viewRenderer->render('_view', $parameters);
+        ): \Yiisoft\DataResponse\DataResponse|Response {
+        $task = $this->task($currentRoute, $tR);
+        if ($task) {
+            $parameters = [
+                'title' => $sR->trans('view'),
+                'action' => ['task/view', ['id' => $task->getId()]],
+                'errors' => [],
+                'body' => $this->body($task),
+                's'=>$sR,             
+                'task'=>$tR->repoTaskquery($task->getId()),
+            ];
+            return $this->viewRenderer->render('_view', $parameters);
+        }
+        return $this->webService->getRedirectResponse('task/index'); 	
     }
         
     /**
@@ -335,13 +343,16 @@ private function save_task_lookup_item_inv(int $order, array|object|null $task, 
     /**
      * @param CurrentRoute $currentRoute
      * @param tR $tR
-     * @return Task|null
+     * @return object|null
      */
-    private function task(CurrentRoute $currentRoute, tR $tR): Task|null
+    private function task(CurrentRoute $currentRoute, tR $tR): object|null
     {
         $id = $currentRoute->getArgument('id');       
-        $task = $tR->repoTaskquery($id);
-        return $task;
+        if (null!==$id) {
+            $task = $tR->repoTaskquery($id);
+            return $task;
+        }
+        return null;
     }
     
     /**
@@ -356,19 +367,11 @@ private function save_task_lookup_item_inv(int $order, array|object|null $task, 
     }
     
     /**
-     * @return (\DateTimeImmutable|float|int|null|string)[]
-     *
-     * @psalm-return array{
-     * id: string, 
-     * project_id: null|string, 
-     * name: null|string, 
-     * description: string, 
-     * price: float|null, 
-     * finish_date: \DateTimeImmutable, 
-     * status: int|null, 
-     * tax_rate_id: string}
+     * 
+     * @param object $task
+     * @return array
      */
-    private function body(Task $task): array {
+    private function body(object $task): array {
         $body = [                
           'id'=>$task->getId(),
           'project_id'=>$task->getProject_id(),

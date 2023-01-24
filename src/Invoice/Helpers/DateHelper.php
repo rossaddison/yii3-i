@@ -269,12 +269,12 @@ public function is_date(string $date): bool
 }
 
 /**
- * @param null|string $string_date
+ * @param string $string_date
  */
-public function datetime_zone_style(string|null $string_date): DateTime|false {
+public function datetime_zone_style(string $string_date): DateTime|false {
     $datetime = new \DateTime();
     $datetime->setTimezone(new \DateTimeZone($this->s->get_setting('time_zone') ? $this->s->get_setting('time_zone') : 'Europe/London')); 
-    $datetime->format($this->style());
+    $datetime->format($this->style());    
     $date = $this->date_to_mysql($string_date);
     // Prevent Failed to parse time string at position 0 error
     $str_replace = str_replace($this->separator(), '-', $date);

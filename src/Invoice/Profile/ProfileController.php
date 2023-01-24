@@ -120,11 +120,12 @@ final class ProfileController
                         CompanyRepository $companyRepository
     ): Response {
         $profile = $this->profile($currentRoute, $profileRepository);
+        if ($profile) {
         $parameters = [
             'title' => 'Edit',
             'action' => ['profile/edit', ['id' => $profile->getId()]],
             'errors' => [],
-            'body' => $this->body($this->profile($currentRoute, $profileRepository)),
+            'body' => $this->body($profile),
             'head'=>$head,
             's'=>$settingRepository,
             'companies'=>$companyRepository->findAllPreloaded()
@@ -133,7 +134,7 @@ final class ProfileController
             $form = new ProfileForm();
             $body = $request->getParsedBody();
             if ($form->load($body) && $validator->validate($form)->isValid()) {
-                $this->profileService->saveProfile($this->profile($currentRoute, $profileRepository), $form);
+                $this->profileService->saveProfile($profile, $form);
                 return $this->webService->getRedirectResponse('profile/index');
             }
             $parameters['body'] = $body;
@@ -141,6 +142,8 @@ final class ProfileController
         }
         return $this->viewRenderer->render('_form', $parameters);
     }
+    return $this->webService->getRedirectResponse('profile/index');    
+}
     
     /**
      * @param SessionInterface $session
@@ -151,13 +154,15 @@ final class ProfileController
     public function delete(SessionInterface $session, CurrentRoute $currentRoute, ProfileRepository $profileRepository 
     ): Response {
         try {
-            if ($this->profileService->deleteProfile($this->profile($currentRoute, $profileRepository))) {               
-                $this->flash($session, 'info', 'Deleted.');
-                return $this->webService->getRedirectResponse('profile/index');
-            } else {
-                $this->flash($session, 'info', 'Profile has not been deleted.');
-                return $this->webService->getRedirectResponse('profile/index');
-            }    
+            $profile = $this->profile($currentRoute, $profileRepository);
+            if ($profile) {
+                if ($this->profileService->deleteProfile($profile)) {               
+                    $this->flash($session, 'info', 'Deleted.');
+                } else {
+                    $this->flash($session, 'info', 'Profile has not been deleted.');
+                }    
+            }
+            return $this->webService->getRedirectResponse('profile/index');
 	} catch (\Exception $e) {
             unset($e);
             $this->flash($session, 'danger', 'Cannot delete. Profile history exists.');
@@ -172,17 +177,20 @@ final class ProfileController
      */
     public function view(CurrentRoute $currentRoute, ProfileRepository $profileRepository,
         SettingRepository $settingRepository,
-        ): \Yiisoft\DataResponse\DataResponse {
+        ): \Yiisoft\DataResponse\DataResponse|Response {
         $profile = $this->profile($currentRoute, $profileRepository);
-        $parameters = [
-            'title' => $settingRepository->trans('view'),
-            'action' => ['profile/view', ['id' => $profile->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->profile($currentRoute, $profileRepository)),
-            's'=>$settingRepository,             
-            'profile'=>$profileRepository->repoProfilequery((string)$profile->getId()),
-        ];
-        return $this->viewRenderer->render('_view', $parameters);
+        if ($profile) {
+            $parameters = [
+                'title' => $settingRepository->trans('view'),
+                'action' => ['profile/view', ['id' => $profile->getId()]],
+                'errors' => [],
+                'body' => $this->body($profile),
+                's'=>$settingRepository,             
+                'profile'=>$profileRepository->repoProfilequery((string)$profile->getId()),
+            ];
+            return $this->viewRenderer->render('_view', $parameters);
+        }
+        return $this->webService->getRedirectResponse('profile/index'); 
     }
         
     /**
@@ -201,13 +209,16 @@ final class ProfileController
     /**
      * @param CurrentRoute $currentRoute
      * @param ProfileRepository $profileRepository
-     * @return Profile|null
+     * @return object|null
      */
-    private function profile(CurrentRoute $currentRoute, ProfileRepository $profileRepository): Profile|null
+    private function profile(CurrentRoute $currentRoute, ProfileRepository $profileRepository): object|null
     {
         $id = $currentRoute->getArgument('id');       
-        $profile = $profileRepository->repoProfilequery($id);
-        return $profile;
+        if (null!==$id) {
+            $profile = $profileRepository->repoProfilequery($id);
+            return $profile;
+        }
+        return null;
     }
     
     /**
@@ -222,11 +233,11 @@ final class ProfileController
     }
     
     /**
-     * @return (\DateTimeImmutable|int|string)[]
-     *
-     * @psalm-return array{id: string, company_id: string, current: int, mobile: string, email: string, description: string, date_created: \DateTimeImmutable, date_modified: \DateTimeImmutable}
+     * 
+     * @param object $profile
+     * @return array
      */
-    private function body(Profile $profile): array {
+    private function body(object $profile): array {
         $body = [                
           'id'=>$profile->getId(),
           'company_id'=>$profile->getCompany_id(),

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Invoice\CustomValue;
 
-use App\Invoice\Entity\CustomValue;
+use App\Invoice\Entity\CustomField;
 use Cycle\ORM\Select;
 use Throwable;
 use Yiisoft\Data\Reader\Sort;
@@ -118,10 +118,12 @@ private EntityWriter $entityWriter;
     public function attach_hard_coded_custom_field_values_to_custom_field(EntityReader $custom_fields) : array{
         $custom_values  = [];
         foreach ($custom_fields as $custom_field) {
-            if (in_array($custom_field->getType(),['SINGLE-CHOICE','MULTIPLE-CHOICE'])) {
-                // build the $custom_values array with the eg. dropdown values for the field whether it be a multiple-choice field or a single-choice field
-                $custom_values[$custom_field->getId()] = $this->repoCustomFieldquery((integer)$custom_field->getId());
-            }
+            if ($custom_field instanceof CustomField) {
+                if (in_array($custom_field->getType(),['SINGLE-CHOICE','MULTIPLE-CHOICE'])) {
+                    // build the $custom_values array with the eg. dropdown values for the field whether it be a multiple-choice field or a single-choice field
+                    $custom_values[$custom_field->getId()] = $this->repoCustomFieldquery((integer)$custom_field->getId());
+                }
+            }    
         }
         return $custom_values;
     }

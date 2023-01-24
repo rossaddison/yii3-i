@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Invoice\UserCustom;
 
-use App\Invoice\Entity\UserCustom;
-
-
 final class UserCustomService
 {
 
@@ -17,7 +14,7 @@ final class UserCustomService
         $this->repository = $repository;
     }
 
-    public function saveUserCustom(UserCustom $model, UserCustomForm $form): void
+    public function saveUserCustom(object $model, UserCustomForm $form): void
     {
         
        $model->setUser_id($form->getUser_id());
@@ -27,7 +24,7 @@ final class UserCustomService
         $this->repository->save($model);
     }
     
-    public function deleteUserCustom(UserCustom $model): void
+    public function deleteUserCustom(object $model): void
     {
         $this->repository->delete($model);
     }

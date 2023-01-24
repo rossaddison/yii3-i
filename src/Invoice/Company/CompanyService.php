@@ -16,27 +16,36 @@ final class CompanyService
     {
         $this->repository = $repository;
     }
-
-    public function saveCompany(Company $model, CompanyForm $form): void
+    
+    /**
+     * 
+     * @param object $model
+     * @param CompanyForm $form
+     * @return void
+     */
+    public function saveCompany(object $model, CompanyForm $form): void
     {
-        
-       $model->setCurrent($form->getCurrent());
-       $model->setName($form->getName());
-       $model->setAddress_1($form->getAddress_1());
-       $model->setAddress_2($form->getAddress_2());
-       $model->setCity($form->getCity());
-       $model->setState($form->getState());
-       $model->setZip($form->getZip());
-       $model->setCountry($form->getCountry());
-       $model->setPhone($form->getPhone());
-       $model->setFax($form->getFax());
-       $model->setEmail($form->getEmail());
-       $model->setWeb($form->getWeb());       
- 
+       null!==$form->getCurrent() ? $model->setCurrent($form->getCurrent()) : '';
+       null!==$form->getName() ? $model->setName($form->getName()) : '';
+       null!==$form->getAddress_1() ? $model->setAddress_1($form->getAddress_1()) : '';
+       null!==$form->getAddress_2() ? $model->setAddress_2($form->getAddress_2()) : '';
+       null!==$form->getCity() ? $model->setCity($form->getCity()) : '';
+       null!==$form->getState() ? $model->setState($form->getState()) : '';
+       null!==$form->getZip() ? $model->setZip($form->getZip()) : '';
+       null!==$form->getCountry() ? $model->setCountry($form->getCountry()) : '';
+       null!==$form->getPhone() ? $model->setPhone($form->getPhone()) : '';
+       null!==$form->getFax() ? $model->setFax($form->getFax()) : '';
+       null!==$form->getEmail() ? $model->setEmail($form->getEmail()) : '';
+       null!==$form->getWeb() ? $model->setWeb($form->getWeb()) : '';       
        $this->repository->save($model);
     }
     
-    public function deleteCompany(Company $model): void
+    /**
+     * 
+     * @param array|object|null $model
+     * @return void
+     */
+    public function deleteCompany(array|object|null $model): void
     {
         $this->repository->delete($model);
     }

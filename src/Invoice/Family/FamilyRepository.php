@@ -84,7 +84,7 @@ final class FamilyRepository extends Select\Repository
         return  $query->fetchOne() ?: null;        
     }
     
-    public function withName(string $family_name): ?Family
+    public function withName(string $family_name): object|null
     {
         $query = $this
             ->select()

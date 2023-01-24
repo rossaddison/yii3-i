@@ -124,11 +124,15 @@ final class UploadController
                            SettingRepository $settingRepository
     ): Response {
         try {
-            $this->uploadService->deleteUpload($this->upload($currentRoute, $uploadRepository), $settingRepository);
-            $inv_id = $this->session->get('inv_id');
-            $this->flash('info', $settingRepository->trans('record_successfully_deleted'));
-             return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
-            ['heading'=>'','message'=>$settingRepository->trans('record_successfully_deleted'),'url'=>'inv/view','id'=>$inv_id]));  
+            $upload = $this->upload($currentRoute, $uploadRepository);
+            if ($upload) {
+                $this->uploadService->deleteUpload($upload, $settingRepository);
+                $inv_id = $this->session->get('inv_id');
+                $this->flash('info', $settingRepository->trans('record_successfully_deleted'));
+                 return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
+                ['heading'=>'','message'=>$settingRepository->trans('record_successfully_deleted'),'url'=>'inv/view','id'=>$inv_id]));  
+            }
+            return $this->webService->getRedirectResponse('upload/index'); 
         } catch (Exception $e) {
             $this->flash('danger', $e->getMessage());
             return $this->webService->getRedirectResponse('upload/index'); 
@@ -152,25 +156,29 @@ final class UploadController
                         SettingRepository $settingRepository,                        
                         ClientRepository $clientRepository
     ): Response {
-        $parameters = [
-            'title' => $settingRepository->trans('edit'),
-            'action' => ['upload/edit', ['id' => $this->upload($currentRoute, $uploadRepository)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->upload($currentRoute, $uploadRepository)),
-            'head'=>$head,
-            'clients'=>$clientRepository->findAllPreloaded()
-        ];
-        if ($request->getMethod() === Method::POST) {
-            $form = new UploadForm();
-            $body = $request->getParsedBody();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
-                $this->uploadService->saveUpload($this->upload($currentRoute,$uploadRepository), $form);
-                return $this->webService->getRedirectResponse('upload/index');
+        $upload = $this->upload($currentRoute, $uploadRepository); 
+        if ($upload) {
+            $parameters = [
+                'title' => $settingRepository->trans('edit'),
+                'action' => ['upload/edit', ['id' => $upload->getId()]],
+                'errors' => [],
+                'body' => $this->body($upload),
+                'head'=>$head,
+                'clients'=>$clientRepository->findAllPreloaded()
+            ];
+            if ($request->getMethod() === Method::POST) {
+                $form = new UploadForm();
+                $body = $request->getParsedBody();
+                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                    $this->uploadService->saveUpload($upload, $form);
+                    return $this->webService->getRedirectResponse('upload/index');
+                }
+                $parameters['body'] = $body;
+                $parameters['errors'] = $form->getFormErrors();
             }
-            $parameters['body'] = $body;
-            $parameters['errors'] = $form->getFormErrors();
+            return $this->viewRenderer->render('_form', $parameters);
         }
-        return $this->viewRenderer->render('_form', $parameters);
+        return $this->webService->getRedirectResponse('upload/index');
     }
     
     /**
@@ -181,28 +189,35 @@ final class UploadController
      */
     public function view(CurrentRoute $currentRoute, UploadRepository $uploadRepository,
         SettingRepository $settingRepository,
-        ): \Yiisoft\DataResponse\DataResponse {
-        $parameters = [
-            'title' => $settingRepository->trans('view'),
-            'action' => ['upload/view', ['id' => $this->upload($currentRoute, $uploadRepository)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->upload($currentRoute, $uploadRepository)),
-            's'=>$settingRepository,             
-            'upload'=>$uploadRepository->repoUploadquery($this->upload($currentRoute, $uploadRepository)->getId()),
-        ];
-        return $this->viewRenderer->render('_view', $parameters);
+        ): \Yiisoft\DataResponse\DataResponse|Response {
+        $upload = $this->upload($currentRoute, $uploadRepository);
+        if ($upload) {
+            $parameters = [
+                'title' => $settingRepository->trans('view'),
+                'action' => ['upload/view', ['id' => $upload->getId()]],
+                'errors' => [],
+                'body' => $this->body($upload),
+                's'=>$settingRepository,             
+                'upload'=>$uploadRepository->repoUploadquery($upload->getId()),
+            ];
+            return $this->viewRenderer->render('_view', $parameters);
+        }
+        return $this->webService->getRedirectResponse('upload/index');
     }
     
     /**
      * @param CurrentRoute $currentRoute
      * @param UploadRepository $uploadRepository
-     * @return Upload|null
+     * @return object|null
      */
-    public function upload(CurrentRoute $currentRoute,UploadRepository $uploadRepository) : Upload|null
+    public function upload(CurrentRoute $currentRoute, UploadRepository $uploadRepository) : object|null
     {
         $id = $currentRoute->getArgument('id');       
-        $upload = $uploadRepository->repoUploadquery($id);
-        return $upload;
+        if (null!==$id) {
+            $upload = $uploadRepository->repoUploadquery($id);
+            return $upload;
+        }
+        return null;
     }
     
     /**
@@ -219,13 +234,11 @@ final class UploadController
     }
     
     /**
-     * @param Upload $upload
-     *
-     * @return (\DateTimeImmutable|string)[]
-     *
-     * @psalm-return array{id: string, client_id: string, url_key: string, file_name_original: string, file_name_new: string, uploaded_date: \DateTimeImmutable}
+     * 
+     * @param object $upload
+     * @return array
      */
-    private function body(Upload $upload) : array {
+    private function body(object $upload) : array {
         $body = [
           'id'=>$upload->getId(),
           'client_id'=>$upload->getClient_id(),

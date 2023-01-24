@@ -106,32 +106,35 @@ final class GeneratorRelationController
     public function edit(Request $request, CurrentRoute $currentRoute,GeneratorRelationRepository $generatorrelationRepository, GeneratorRepository $generatorRepository, SettingRepository $settingRepository, ValidatorInterface $validator): Response 
     {
         $generatorrelation = $this->generatorrelation($currentRoute, $generatorrelationRepository);
-        $parameters = [
-            'title' => $settingRepository->trans('edit'),
-            'action' => ['generatorrelation/edit', ['id' => $generatorrelation->getRelation_id()]],
-            'errors' => [],
-            'body' => [
-                'id'=>$generatorrelation->getRelation_id(),
-                'lowercasename'=>$generatorrelation->getLowercase_name(),               
-                'camelcasename'=>$generatorrelation->getCamelcase_name(),
-                'view_field_name'=>$generatorrelation->getView_field_name(),
-                'gentor_id'=>$generatorrelation->getGentor_id(),
-            ],
-            //relation generator
-            'generators'=>$generatorRepository->findAllPreloaded(),
-            's'=>$settingRepository,
-        ];
-        if ($request->getMethod() === Method::POST) {
-            $form = new GeneratorRelationForm();
-            $body = $request->getParsedBody();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
-                $this->generatorrelationService->saveGeneratorRelation($generatorrelation, $form);
-                return $this->webService->getRedirectResponse('generatorrelation/index');
+        if ($generatorrelation) {
+            $parameters = [
+                'title' => $settingRepository->trans('edit'),
+                'action' => ['generatorrelation/edit', ['id' => $generatorrelation->getRelation_id()]],
+                'errors' => [],
+                'body' => [
+                    'id'=>$generatorrelation->getRelation_id(),
+                    'lowercasename'=>$generatorrelation->getLowercase_name(),               
+                    'camelcasename'=>$generatorrelation->getCamelcase_name(),
+                    'view_field_name'=>$generatorrelation->getView_field_name(),
+                    'gentor_id'=>$generatorrelation->getGentor_id(),
+                ],
+                //relation generator
+                'generators'=>$generatorRepository->findAllPreloaded(),
+                's'=>$settingRepository,
+            ];
+            if ($request->getMethod() === Method::POST) {
+                $form = new GeneratorRelationForm();
+                $body = $request->getParsedBody();
+                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                    $this->generatorrelationService->saveGeneratorRelation($generatorrelation, $form);
+                    return $this->webService->getRedirectResponse('generatorrelation/index');
+                }
+                $parameters['body'] = $body;
+                $parameters['errors'] = $form->getFormErrors();
             }
-            $parameters['body'] = $body;
-            $parameters['errors'] = $form->getFormErrors();
+            return $this->viewRenderer->render('__form', $parameters);
         }
-        return $this->viewRenderer->render('__form', $parameters);
+        return $this->webService->getRedirectResponse('generatorrelation/index');
     }
     
     /**
@@ -143,34 +146,42 @@ final class GeneratorRelationController
     public function delete(CurrentRoute $currentRoute, GeneratorRelationRepository $generatorrelationRepository): Response 
     {
         $generatorrelation = $this->generatorrelation($currentRoute, $generatorrelationRepository);
-        $this->generatorrelationService->deleteGeneratorRelation($generatorrelation);               
+        if ($generatorrelation) {
+            $this->generatorrelationService->deleteGeneratorRelation($generatorrelation);
+            return $this->webService->getRedirectResponse('generatorrelation/index');        
+        }    
         return $this->webService->getRedirectResponse('generatorrelation/index');        
     }
     
     /**
+     * 
      * @param CurrentRoute $currentRoute
      * @param GeneratorRelationRepository $generatorrelationRepository
      * @param SettingRepository $settingRepository
      * @param ValidatorInterface $validator
+     * @return \Yiisoft\DataResponse\DataResponse|Response
      */
-    public function view(CurrentRoute $currentRoute, GeneratorRelationRepository $generatorrelationRepository,SettingRepository $settingRepository,ValidatorInterface $validator): \Yiisoft\DataResponse\DataResponse {
+    public function view(CurrentRoute $currentRoute, GeneratorRelationRepository $generatorrelationRepository,SettingRepository $settingRepository,ValidatorInterface $validator): \Yiisoft\DataResponse\DataResponse|Response {
         $generatorrelation = $this->generatorrelation($currentRoute, $generatorrelationRepository);
-        $parameters = [
-            'title' => $settingRepository->trans('view'),
-            'action' => ['generatorrelation/view', ['id' => $generatorrelation->getRelation_id()]],
-            'errors' => [],
-            'generatorrelation'=>$this->generatorrelation($currentRoute, $generatorrelationRepository),
-            's'=>$settingRepository,     
-            'body' => [
-                'id'=>$generatorrelation->getRelation_id(),
-                'lowercasename'=>$generatorrelation->getLowercase_name(),               
-                'camelcasename'=>$generatorrelation->getCamelcase_name(),
-                'view_field_name'=>$generatorrelation->getView_field_name(),
-                'gentor_id'=>$generatorrelation->getGentor_id()                
-            ],
-            'egrs'=>$generatorrelationRepository->repoGeneratorRelationquery($this->generatorrelation($currentRoute, $generatorrelationRepository)->getRelation_id()),
-        ];
-        return $this->viewRenderer->render('__view', $parameters);
+        if ($generatorrelation) {
+            $parameters = [
+                'title' => $settingRepository->trans('view'),
+                'action' => ['generatorrelation/view', ['id' => $generatorrelation->getRelation_id()]],
+                'errors' => [],
+                'generatorrelation'=>$generatorrelation,
+                's'=>$settingRepository,     
+                'body' => [
+                    'id'=>$generatorrelation->getRelation_id(),
+                    'lowercasename'=>$generatorrelation->getLowercase_name(),               
+                    'camelcasename'=>$generatorrelation->getCamelcase_name(),
+                    'view_field_name'=>$generatorrelation->getView_field_name(),
+                    'gentor_id'=>$generatorrelation->getGentor_id()                
+                ],
+                'egrs'=>$generatorrelationRepository->repoGeneratorRelationquery($generatorrelation->getRelation_id()),
+            ];
+            return $this->viewRenderer->render('__view', $parameters);
+        }
+        return $this->webService->getRedirectResponse('generatorrelation/index');        
     }
     
     /**
@@ -188,13 +199,16 @@ final class GeneratorRelationController
     /**
      * @param CurrentRoute $currentRoute
      * @param GeneratorRelationRepository $generatorrelationRepository
-     * @return GentorRelation|null
+     * @return object|null
      */
-    private function generatorrelation(CurrentRoute $currentRoute, GeneratorRelationRepository $generatorrelationRepository): GentorRelation|null
+    private function generatorrelation(CurrentRoute $currentRoute, GeneratorRelationRepository $generatorrelationRepository): object|null
     {
         $generatorrelation_id = $currentRoute->getArgument('id');
-        $generatorrelation = $generatorrelationRepository->repoGeneratorRelationquery($generatorrelation_id);
-        return $generatorrelation; 
+        if (null!==$generatorrelation_id) {
+            $generatorrelation = $generatorrelationRepository->repoGeneratorRelationquery($generatorrelation_id);
+            return $generatorrelation;             
+        }
+        return null;
     }
     
     //$generatorrelations = $this->generatorrelations();

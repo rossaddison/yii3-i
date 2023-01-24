@@ -437,6 +437,7 @@ $lang = array(
     'quote_status_email_body'                      => 'The client %1$s has %2$s the quote %3$s.' . "\n\n" . 'Link to Quote: %4$s',
     'quote_status_email_subject'                   => 'Client %1$s %2$s quote %3$s',
     'quote_tax'                                    => 'Quote Tax',
+    'quote_tax_rate'                               => 'Quote Tax Rate', 
     'quote_template'                               => 'Quote Template',
     'quote_templates'                              => 'Quote Templates',
     'quote_to_invoice'                             => 'Quote to Invoice',

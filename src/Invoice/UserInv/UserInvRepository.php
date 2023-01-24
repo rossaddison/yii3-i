@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Invoice\UserInv;
 
-use App\Invoice\Entity\UserInv;
 use Cycle\ORM\Select;
 use Throwable;
 use Yiisoft\Data\Reader\Sort;
@@ -86,7 +85,7 @@ private EntityWriter $entityWriter;
         );
     }
     
-    public function repoUserInvquery(string $id): ?UserInv {
+    public function repoUserInvquery(string $id): object|null {
         $query = $this->select()
                       ->where(['id'=>$id]);
         return  $query->fetchOne() ?: null;        
@@ -98,7 +97,7 @@ private EntityWriter $entityWriter;
         return  $query->count();
     }
     
-    public function repoUserInvUserIdquery(string $user_id): ?UserInv    {
+    public function repoUserInvUserIdquery(string $user_id): object|null    {
         $query = $this->select()
                       ->where(['user_id'=>$user_id]);
         return  $query->fetchOne() ?: null;        

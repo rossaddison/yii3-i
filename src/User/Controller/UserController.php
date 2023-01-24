@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\User\Controller;
 
 use App\User\UserRepository;
+use App\Service\WebControllerService;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface;
@@ -17,9 +18,13 @@ final class UserController
 {
     private const PAGINATION_INDEX = 5;
 
-    public function __construct(private ViewRenderer $viewRenderer)
+    public function __construct(
+            private ViewRenderer $viewRenderer,
+            private WebControllerService $webService
+    )
     {
         $this->viewRenderer = $viewRenderer->withControllerName('user');
+        $this->webService = $webService;
     }
 
     public function index(
@@ -69,12 +74,13 @@ final class UserController
         UserRepository $userRepository
     ): Response {
         $login = $currentRoute->getArgument('login');
-        $item = $userRepository->findByLogin($login);
-
-        if ($item === null) {
-            return $responseFactory->createResponse(404);
+        if (null!==$login){
+            $item = $userRepository->findByLogin($login);
+            if ($item === null) {
+                return $responseFactory->createResponse(404);
+            }
+            return $this->viewRenderer->render('profile', ['item' => $item]);
         }
-
-        return $this->viewRenderer->render('profile', ['item' => $item]);
+        return $this->webService->getNotFoundResponse();
     }
 }

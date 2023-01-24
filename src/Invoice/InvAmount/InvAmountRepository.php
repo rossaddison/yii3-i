@@ -8,7 +8,6 @@ use App\Invoice\Helpers\DateHelper;
 use App\Invoice\Inv\InvRepository as IR;
 use App\Invoice\Setting\SettingRepository as SR;
 use Cycle\ORM\Select;
-use Throwable;
 use Yiisoft\Data\Reader\Sort;
 
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
@@ -56,17 +55,21 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @throws Throwable
+     * 
+     * @param array|object|null $invamount
+     * @return void
      */
-    public function save(InvAmount $invamount): void
+    public function save(array|object|null $invamount): void
     {
         $this->entityWriter->write([$invamount]);
     }
     
     /**
-     * @throws Throwable
+     * 
+     * @param array|object|null $invamount
+     * @return void
      */
-    public function delete(InvAmount $invamount): void
+    public function delete(array|object|null $invamount): void
     {
         $this->entityWriter->delete([$invamount]);
     }
@@ -86,7 +89,7 @@ private EntityWriter $entityWriter;
         return $count;
     }
     
-    public function repoCreditInvoicequery(string $inv_id): ?InvAmount {
+    public function repoCreditInvoicequery(string $inv_id): null|object {
         $query = $this->select()
                       ->load('inv')
                       ->where(['inv_id' => $inv_id])
@@ -94,7 +97,7 @@ private EntityWriter $entityWriter;
         return  $query->fetchOne() ?: null;        
     }
     
-    public function repoInvAmountquery(int $id): ?InvAmount {
+    public function repoInvAmountquery(int $id): null|object {
         $query = $this->select()
                       ->load('inv')
                       ->where(['id' => $id]);
@@ -136,9 +139,9 @@ private EntityWriter $entityWriter;
     /**
      * 
      * @param int $inv_id
-     * @return InvAmount|null
+     * @return object|null
      */
-    public function repoInvquery(int $inv_id): InvAmount|null {
+    public function repoInvquery(int $inv_id): object|null {
         $query = $this->select()
                       ->where(['inv_id' => $inv_id]);
         return  $query->fetchOne() ?: null;    
@@ -178,7 +181,8 @@ private EntityWriter $entityWriter;
     public function get_status_totals(IR $iR, SR $sR, string $period) : array
     {
         $return = [];
-        $range = $sR->range($period);        
+        $range = $sR->range($period);  
+        $this_total = 0;
         
         // 1 => class: 'draft', href: 1},
         // 2 => class: 'sent', href: 2}, 
@@ -188,6 +192,7 @@ private EntityWriter $entityWriter;
             $status_specific_invoices = $this->repoStatusTotals($key, $range, $sR);
             $total = 0.00;
             foreach ($status_specific_invoices as $invoice) {
+              if ($invoice instanceof InvAmount)  
                 $this_total = $invoice->getTotal();
                 $total += $this_total;
             }

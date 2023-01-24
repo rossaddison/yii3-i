@@ -25,7 +25,7 @@ final class InvItemService
     
     /**
      * 
-     * @param InvItem $model
+     * @param object $model
      * @param InvItemForm $form
      * @param string $inv_id
      * @param PR $pr
@@ -36,7 +36,7 @@ final class InvItemService
      * @param UNR $unR
      * @return void
      */
-    public function addInvItem_product(InvItem $model, InvItemForm $form, string $inv_id,PR $pr, TRR $trr , IIAS $iias, IIAR $iiar, SR $s, UNR $unR): void
+    public function addInvItem_product(object $model, InvItemForm $form, string $inv_id,PR $pr, TRR $trr , IIAS $iias, IIAR $iiar, SR $s, UNR $unR): void
     {        
        // This function is used in product/save_product_lookup_item_product when adding a product using the modal 
        $tax_rate_id = ((null !==($form->getTax_rate_id())) ? $form->getTax_rate_id() : '');
@@ -45,39 +45,45 @@ final class InvItemService
        $model->setInv_id((int)$inv_id);       
        $product_id = ((null !==($form->getProduct_id())) ? $form->getProduct_id() : '');
        $model->setProduct_id((int)$product_id);       
-       $name = (( (null !==($form->getProduct_id())) && ($pr->repoCount($product_id)> 0) ) ? $pr->repoProductquery($form->getProduct_id())->getProduct_name() : '');  
-       $model->setName($name);
-       
-       // If the user has changed the description on the form => override default product description
-       $description = ((null !==($form->getDescription())) ? 
-                                 $form->getDescription() : 
-                                 $pr->repoProductquery((string)$form->getProduct_id())->getProduct_description());
-       
-       $model->setDescription($description);
-       
+       $product = $pr->repoProductquery($form->getProduct_id());
+       if ($product) {
+        $name = (( (null !==($form->getProduct_id())) && ($pr->repoCount($product_id)> 0) ) ? $product->getProduct_name() : '');  
+        $model->setName($name);
+
+        // If the user has changed the description on the form => override default product description
+        $description = ((null !==($form->getDescription())) ? 
+                                  $form->getDescription() : 
+                                  $product->getProduct_description());
+
+        $model->setDescription($description);
+       }
        $model->setQuantity($form->getQuantity());
        
        $model->setPrice($form->getPrice());
        $model->setDiscount_amount($form->getDiscount_amount());
        $model->setOrder($form->getOrder());
-       
-       $datehelper = new DateHelper($s);
-       $datetime = $datehelper->get_or_set_with_style($form->getDate());
-       $datetimeimmutable = new \DateTimeImmutable(!empty($datetime) ? $datetime->format('Y-m-d H:i:s') : 'now');
-       $model->setDate($datetimeimmutable);
+              
+       $model->setDate(new \DateTimeImmutable('now'));
        
        // Product_unit is a string which we get from unit's name field using the unit_id
-       $model->setProduct_unit($unR->repoUnitquery((string)$form->getProduct_unit_id())->getUnit_name());
-       $model->setProduct_unit_id($form->getProduct_unit_id());
+       $unit = $unR->repoUnitquery((string)$form->getProduct_unit_id());
+       if ($unit) {
+          $model->setProduct_unit($unit->getUnit_name());
+       }     
+       $model->setProduct_unit_id((int)$form->getProduct_unit_id());
        $tax_rate_percentage = $this->taxrate_percentage((int)$tax_rate_id, $trr);
        // Users are required to enter a tax rate even if it is zero percent.
-       $product_id ? $this->repository->save($model) : '';  
-       $product_id ? $this->saveInvItemAmount((int)$model->getId(), $form->getQuantity(), $form->getPrice(), $form->getDiscount_amount(), $tax_rate_percentage, $iias, $iiar) : '';
+       if ($product_id) {
+         $this->repository->save($model);
+         if (null!==$form->getQuantity() && null!==$form->getPrice() && null!==$form->getDiscount_amount() && $tax_rate_percentage) {
+            $this->saveInvItemAmount((int)$model->getId(), $form->getQuantity(), $form->getPrice(), $form->getDiscount_amount(), $tax_rate_percentage, $iias, $iiar);
+         }
+       }  
     }
     
     /**
      * 
-     * @param InvItem $model
+     * @param object $model
      * @param InvItemForm $form
      * @param string $inv_id
      * @param PR $pr
@@ -85,49 +91,51 @@ final class InvItemService
      * @param UNR $unR
      * @return int
      */
-    public function saveInvItem_product(InvItem $model, InvItemForm $form, string $inv_id,PR $pr, SR $s, UNR $unR): int
+    public function saveInvItem_product(object $model, InvItemForm $form, string $inv_id,PR $pr, SR $s, UNR $unR): int
     {        
        // This function is used in invitem/edit_product when editing an item on the inv view
        // see https://github.com/cycle/orm/issues/348
        null!==$form->getTax_rate_id() ? $model->setTaxRate($model->getTaxRate()->getTax_rate_id() == $form->getTax_rate_id() ? $model->getTaxRate() : null): '';
        $tax_rate_id = ((null !==($form->getTax_rate_id())) ? $form->getTax_rate_id() : '');
        $model->setTax_rate_id((int)$tax_rate_id);
+       
        null!==$form->getProduct_id() ? $model->setProduct($model->getProduct()->getProduct_id() == $form->getProduct_id() ? $model->getProduct() : null): '';
        $product_id = ((null !==($form->getProduct_id())) ? $form->getProduct_id() : '');
        $model->setProduct_id((int)$product_id);
        
        $model->setInv_id((int)$inv_id);
-       $name = (( (null !==($form->getProduct_id())) && ($pr->repoCount($product_id)> 0) ) ? $pr->repoProductquery($form->getProduct_id())->getProduct_name() : '');  
-       $model->setName($name);
        
-       // If the user has changed the description on the form => override default product description
-       $description = ((null !==($form->getDescription())) ? 
+       $product = $pr->repoProductquery($form->getProduct_id());
+       if ($product) {
+        $name = (( (null !==($form->getProduct_id())) && ($pr->repoCount($product_id)> 0) ) ? $product->getProduct_name() : '');  
+        $model->setName($name);
+        // If the user has changed the description on the form => override default product description
+        $description = ((null !==($form->getDescription())) ? 
                                  $form->getDescription() : 
-                                 $pr->repoProductquery((string)$form->getProduct_id())->getProduct_description());
-       
-       $model->setDescription($description);
-       
+                                 $product->getProduct_description());
+        $model->setDescription($description);
+       }
        $model->setQuantity($form->getQuantity());
        
        $model->setPrice($form->getPrice());
        $model->setDiscount_amount($form->getDiscount_amount());
        $model->setOrder($form->getOrder());
        
-       $datehelper = new DateHelper($s);
-       $datetime = $datehelper->get_or_set_with_style($form->getDate());
-       $datetimeimmutable = new \DateTimeImmutable(!empty($datetime) ? $datetime->format('Y-m-d H:i:s') : 'now');
+       $datetimeimmutable = new \DateTimeImmutable('now');
        $model->setDate($datetimeimmutable);
        
        // Product_unit is a string which we get from unit's name field using the unit_id
-       $model->setProduct_unit($unR->repoUnitquery((string)$form->getProduct_unit_id())->getUnit_name());
+       $unit = $unR->repoUnitquery((string)$form->getProduct_unit_id());
+       if ($unit) {
+          $model->setProduct_unit($unit->getUnit_name());
+       } 
        $model->setProduct_unit_id((int)$form->getProduct_unit_id());         
        $product_id ? $this->repository->save($model) : '';  
        return (int)$tax_rate_id;
     }
     
     /**
-     * 
-     * @param InvItem $model
+     * @param object $model
      * @param InvItemForm $form
      * @param string $inv_id
      * @param taskR $taskR
@@ -137,7 +145,7 @@ final class InvItemService
      * @param SR $s
      * @return void
      */
-    public function addInvItem_task(InvItem $model, InvItemForm $form, string $inv_id, taskR $taskR, TRR $trr , IIAS $iias, IIAR $iiar, SR $s): void
+    public function addInvItem_task(object $model, InvItemForm $form, string $inv_id, taskR $taskR, TRR $trr , IIAS $iias, IIAR $iiar, SR $s): void
     {        
        // This function is used in task/selection_inv when adding a new task from the modal
        // see https://github.com/cycle/orm/issues/348
@@ -149,14 +157,18 @@ final class InvItemService
        
        $model->setInv_id((int)$inv_id);
        
-       $name = (( (null !==($form->getTask_id())) && ($taskR->repoCount((int)$form->getTask_id())> 0) ) ? $taskR->repoTaskquery($form->getTask_id())->getName() : '');  
-       $model->setName($name);
+       $task = $taskR->repoTaskquery((string)$form->getTask_id());
        
+       $model->setName($task ? $task->getName() : '');
        // If the user has changed the description on the form => override default task description
-       $description = ((null !==($form->getDescription())) ? 
-                                 $form->getDescription() : 
-                                 $taskR->repoTaskquery((string)$form->getTask_id())->getDescription());
-       
+       $description = '';
+       if (null!==$form->getDescription()) {
+              $description = $form->getDescription();
+       } else {
+           if ($task) {               
+              $description = $task->getDescription();
+           }
+       }
        $model->setDescription($description);
        
        $model->setQuantity($form->getQuantity());
@@ -165,25 +177,26 @@ final class InvItemService
        $model->setDiscount_amount($form->getDiscount_amount());
        $model->setOrder($form->getOrder());
        
-       $datehelper = new DateHelper($s);
-       $datetime = $datehelper->get_or_set_with_style($form->getDate());
-       $datetimeimmutable = new \DateTimeImmutable(!empty($datetime) ? $datetime->format('Y-m-d H:i:s') : 'now');
+       $datetimeimmutable = new \DateTimeImmutable('now');
        $model->setDate($datetimeimmutable);              
        $tax_rate_percentage = $this->taxrate_percentage((int)$tax_rate_id, $trr);
-       $task_id ? $this->repository->save($model) : '';                
-       $task_id ? $this->saveInvItemAmount((int)$model->getId(), $form->getQuantity(), $form->getPrice(), $form->getDiscount_amount(), $tax_rate_percentage, $iias, $iiar) : '';
+       if ($task_id) {
+            $this->repository->save($model);                
+            if ($form->getQuantity() && $form->getPrice() && $form->getDiscount_amount() && $tax_rate_percentage) {
+                $this->saveInvItemAmount((int)$model->getId(), $form->getQuantity(), $form->getPrice(), $form->getDiscount_amount(), $tax_rate_percentage, $iias, $iiar);
+            }    
+       }
     }
     
     /**
-     * 
-     * @param InvItem $model
+     * @param object $model
      * @param InvItemForm $form
      * @param string $inv_id
      * @param taskR $taskR
      * @param SR $s
      * @return int
      */
-    public function saveInvItem_task(InvItem $model, InvItemForm $form, string $inv_id, taskR $taskR, SR $s): int
+    public function saveInvItem_task(object $model, InvItemForm $form, string $inv_id, taskR $taskR, SR $s): int
     {        
        // This function is used in invitem/edit_task when editing an item on the inv view
        // see https://github.com/cycle/orm/issues/348
@@ -197,27 +210,31 @@ final class InvItemService
        
        $model->setInv_id((int)$inv_id);
        
-       $name = (( (null !==($form->getTask_id())) && ($taskR->repoCount((int)$form->getTask_id())> 0) ) ? $taskR->repoTaskquery($form->getTask_id())->getName() : '');  
-       $model->setName($name);
+       $task = $taskR->repoTaskquery((string)$form->getTask_id());
        
+       $model->setName($task ? $task->getName() : '');
        // If the user has changed the description on the form => override default task description
-       $description = ((null !==($form->getDescription())) ? 
-                                 $form->getDescription() : 
-                                 $taskR->repoTaskquery((string)$form->getTask_id())->getDescription());
-       
+       $description = '';
+       if (null!==$form->getDescription()) {
+              $description = $form->getDescription();
+       } else {
+           if ($task) {               
+              $description = $task->getDescription();
+           }
+       }
        $model->setDescription($description);
-       
+       $model->setDescription($description);
        $model->setQuantity($form->getQuantity());
        $model->setProduct_unit('');
        $model->setPrice($form->getPrice());
        $model->setDiscount_amount($form->getDiscount_amount());
        $model->setOrder($form->getOrder());
-       
-       $datehelper = new DateHelper($s);
-       $datetime = $datehelper->get_or_set_with_style($form->getDate());
-       $datetimeimmutable = new \DateTimeImmutable(!empty($datetime) ? $datetime->format('Y-m-d H:i:s') : 'now');
-       $model->setDate($datetimeimmutable);              
-       $task_id ? $this->repository->save($model) : '';                
+              
+       $datetimeimmutable = new \DateTimeImmutable('now');
+       $model->setDate($datetimeimmutable);
+       if ($task_id) {
+          $this->repository->save($model);
+       }   
        return (int)$tax_rate_id;
     }
     
@@ -234,6 +251,7 @@ final class InvItemService
      */
     public function saveInvItemAmount(int $inv_item_id, float $quantity, float $price, float $discount, float $tax_rate_percentage, IIAS $iias, IIAR $iiar): void
     {       
+       $iias_array = [];
        $iias_array['inv_item_id'] = $inv_item_id;       
        $sub_total = $quantity * $price;
        $tax_total = (($sub_total * ($tax_rate_percentage/100)));
@@ -246,16 +264,19 @@ final class InvItemService
        
        if ($iiar->repoCount((string)$inv_item_id) === 0) {
          $iias->saveInvItemAmountNoForm(new InvItemAmount(), $iias_array);} else {
-         $iias->saveInvItemAmountNoForm($iiar->repoInvItemAmountquery((string)$inv_item_id), $iias_array);     
+         $inv_item_amount = $iiar->repoInvItemAmountquery((string)$inv_item_id);    
+         if ($inv_item_amount) {
+            $iias->saveInvItemAmountNoForm($inv_item_amount, $iias_array);
+         }
        }                      
     }        
     
     /**
      * 
-     * @param array|object|null $model
+     * @param object $model
      * @return void
      */
-    public function deleteInvItem(array|object|null $model): void 
+    public function deleteInvItem(object $model): void 
     {
         $this->repository->delete($model);
     }
@@ -269,8 +290,11 @@ final class InvItemService
     public function taxrate_percentage(int $id, TRR $trr): float|null
     {
         $taxrate = $trr->repoTaxRatequery((string)$id);
-        $percentage = $taxrate->getTax_rate_percent();        
-        return $percentage;
+        if ($taxrate) {
+            $percentage = $taxrate->getTax_rate_percent();        
+            return $percentage;
+        }
+        return null;
     }
     
     /**
@@ -286,34 +310,42 @@ final class InvItemService
         // Get the basis invoice's items and balance with a negative quantity
         $items = $iiR->repoInvquery((string)$basis_inv_id);
         foreach ($items as $item){
-            $new_item = new InvItem();
-            $new_item->setInv_id((int)$new_inv_id);
-            $new_item->setTax_rate_id((int)$item->getTax_rate_id());
-            $item->getProduct_id() && null!==$item->getProduct_id() 
-            ? $new_item->setProduct_id((int)$item->getProduct_id()) 
-            : $new_item->setTask_id((int)$item->getTask_id()); 
-            $new_item->setName($item->getName() ?? '');
-            $new_item->setDescription($item->getDescription() ?? '');
-            $new_item->setQuantity($item->getQuantity()*-1);
-            $new_item->setPrice($item->getPrice() ?? 0.00);
-            $new_item->setDiscount_amount($item->getDiscount_amount() ?? 0.00);
-            $new_item->setOrder($item->getOrder());
-            // Even if an invoice is balanced with a credit invoice it will remain recurring ... unless stopped.
-            $new_item->setIs_recurring($item->getIs_recurring());
-            $new_item->setProduct_unit($item->getProduct_unit() ?? '');
-            $new_item->setProduct_unit_id((int)$item->getProduct_unit_id());
-            $new_item->setDate($item->getDate_added());
-            $iiR->save($new_item);
-                       
-            // Create an item amount for this item; reversing the items amounts to negative
-            $basis_item_amount = $iiaR->repoInvItemAmountquery((string)$item->getId());
-            $new_item_amount = new InvItemAmount();
-            $new_item_amount->setInv_item_id((int)$new_item->getId());
-            $new_item_amount->setSubtotal($basis_item_amount->getSubtotal()*-1);
-            $new_item_amount->setTax_total($basis_item_amount->getTax_total()*-1);
-            $new_item_amount->setDiscount($basis_item_amount->getDiscount()*-1);
-            $new_item_amount->setTotal($basis_item_amount->getTotal()*-1);
-            $iiaR->save($new_item_amount);        
+            if ($item instanceof InvItem){  
+                $new_item = new InvItem();
+                $new_item->setInv_id((int)$new_inv_id);
+                $new_item->setTax_rate_id((int)$item->getTax_rate_id());
+                $item->getProduct_id() ? $new_item->setProduct_id((int)$item->getProduct_id()) 
+                : $new_item->setTask_id((int)$item->getTask_id()); 
+                $new_item->setName($item->getName() ?? '');
+                $new_item->setDescription($item->getDescription() ?? '');
+                $new_item->setQuantity($item->getQuantity()*-1);
+                $new_item->setPrice($item->getPrice() ?? 0.00);
+                $new_item->setDiscount_amount($item->getDiscount_amount() ?? 0.00);
+                // TODO Ordering of items
+                $new_item->setOrder(0);
+                // Even if an invoice is balanced with a credit invoice it will remain recurring ... unless stopped.
+                // Is_recurring will be either stored as 0 or 1 in mysql. Cannot be null. 
+                /**
+                 * @psalm-suppress PossiblyNullArgument
+                 */
+                $new_item->setIs_recurring($item->getIs_recurring());                
+                $new_item->setProduct_unit($item->getProduct_unit() ?? '');
+                $new_item->setProduct_unit_id((int)$item->getProduct_unit_id());
+                $new_item->setDate($item->getDate_added());
+                $iiR->save($new_item);
+
+                // Create an item amount for this item; reversing the items amounts to negative
+                $basis_item_amount = $iiaR->repoInvItemAmountquery((string)$item->getId());
+                if ($basis_item_amount) {
+                    $new_item_amount = new InvItemAmount();
+                    $new_item_amount->setInv_item_id((int)$new_item->getId());
+                    $new_item_amount->setSubtotal($basis_item_amount->getSubtotal()*-1);
+                    $new_item_amount->setTax_total($basis_item_amount->getTax_total()*-1);
+                    $new_item_amount->setDiscount($basis_item_amount->getDiscount()*-1);
+                    $new_item_amount->setTotal($basis_item_amount->getTotal()*-1);
+                    $iiaR->save($new_item_amount);
+                }
+            }    
         }
     }    
 }

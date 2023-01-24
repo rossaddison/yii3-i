@@ -193,8 +193,10 @@ final class InvoiceController
      */
     private function cldr(string $drop_down_locale, SettingRepository $sR) : void {
         $cldr = $sR->withKey('cldr');
-        $cldr->setSetting_value($drop_down_locale);
-        $sR->save($cldr);        
+        if ($cldr) {
+            $cldr->setSetting_value($drop_down_locale);
+            $sR->save($cldr);
+        }        
     }
     
     /**
@@ -273,8 +275,10 @@ final class InvoiceController
         } else {
                 // Test Data Already exists => Settings...View install_test_data must be set back to No
                 $setting = $sR->withKey('install_test_data');
-                $setting->setSetting_value('0');
-                $sR->save($setting);
+                if ($setting) {
+                    $setting->setSetting_value('0');
+                    $sR->save($setting);
+                }
         }
     }
     
@@ -505,9 +509,18 @@ final class InvoiceController
         $product->setProduct_price(100.00);
         $product->setPurchase_price(30.00);
         $product->setProvider_name('We Provide');
-        $product->setTax_rate_id(($trR->withName('Standard'))->getTax_rate_id());
-        $product->setUnit_id(($uR->withName('unit'))->getUnit_id());
-        $product->setFamily_id(($fR->withName('Product'))->getFamily_id());
+        $taxrate = $trR->withName('Standard');
+        if ($taxrate) {
+            $product->setTax_rate_id($taxrate->getTax_rate_id());
+        }
+        $unit = $uR->withName('unit');
+        if ($unit) {
+            $product->setUnit_id($unit->getUnit_id());
+        }
+        $family = $fR->withName('Product');
+        if ($family) {
+            $product->setFamily_id($family->getFamily_id());
+        }
         $product->setProduct_tariff(5);
         $pR->save($product);
     }
@@ -528,9 +541,18 @@ final class InvoiceController
         $service->setProduct_price(5.00);
         $service->setPurchase_price(0.00);
         $service->setProvider_name('Employee');
-        $service->setTax_rate_id(($trR->withName('Zero'))->getTax_rate_id());
-        $service->setUnit_id(($uR->withName('service'))->getUnit_id());
-        $service->setFamily_id(($fR->withName('Service'))->getFamily_id());
+        $taxrate = $trR->withName('Zero');
+        if ($taxrate) {
+           $service->setTax_rate_id($taxrate->getTax_rate_id());
+        }
+        $unit = $uR->withName('service');
+        if ($unit) {
+            $service->setUnit_id($unit->getUnit_id());
+        }
+        $family = $fR->withName('Service');
+        if ($family) {
+            $service->setFamily_id($family->getFamily_id());
+        }
         $service->setProduct_tariff(3);
         $pR->save($service);
     }
@@ -649,7 +671,9 @@ final class InvoiceController
         // Completely remove any currently existing settings
         $all_settings = $sR->findAllPreloaded();
         foreach ($all_settings as $setting) {
+           if ($setting instanceof Setting) { 
             $sR->delete($setting);
+           } 
         }
     }
     

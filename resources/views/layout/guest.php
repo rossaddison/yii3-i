@@ -4,12 +4,20 @@ declare(strict_types=1);
 use App\Invoice\Asset\InvoiceAsset;
 use App\Invoice\Asset\MonospaceAsset;
 // DatePicker Assets available for dropdown locale/cldr selection
+use App\Invoice\Asset\i18nAsset\af_Asset;
 use App\Invoice\Asset\i18nAsset\ar_Asset;
+use App\Invoice\Asset\i18nAsset\az_Asset;
+use App\Invoice\Asset\i18nAsset\de_DE_Asset;
 use App\Invoice\Asset\i18nAsset\en_GB_Asset;
+use App\Invoice\Asset\i18nAsset\es_ES_Asset;
+use App\Invoice\Asset\i18nAsset\fr_FR_Asset;
 use App\Invoice\Asset\i18nAsset\id_Asset;
 use App\Invoice\Asset\i18nAsset\ja_Asset;
 use App\Invoice\Asset\i18nAsset\nl_Asset;
 use App\Invoice\Asset\i18nAsset\ru_Asset;
+use App\Invoice\Asset\i18nAsset\sk_Asset;
+use App\Invoice\Asset\i18nAsset\uk_UA_Asset;
+use App\Invoice\Asset\i18nAsset\uz_UZ_Asset;
 use App\Invoice\Asset\i18nAsset\zh_CN_Asset;
 
 // PCI Compliant Payment Gateway Assets
@@ -53,14 +61,22 @@ $s->get_setting('gateway_braintree_version') == '0' ? $assetManager->register(br
 // The $s value is configured for the layout in config/params.php yii-soft/view Reference::to and NOT by means of the InvoiceController
 
 switch ($session->get('_language') ?? $session->set('_language','en')) {
-    case 'ar' : $assetManager->register(ar_Asset::class); $locale = $translator->translate('layout.language.arabic'); break;
-    case 'en' : $assetManager->register(en_GB_Asset::class); $locale = $translator->translate('layout.language.english'); break;
-    case 'id' : $assetManager->register(id_Asset::class); $locale = $translator->translate('layout.language.indonesian'); break;
-    case 'ja' : $assetManager->register(ja_Asset::class); $locale = $translator->translate('layout.language.japanese'); break;
-    case 'nl' : $assetManager->register(nl_Asset::class); $locale = $translator->translate('layout.language.dutch'); break;
-    case 'ru' : $assetManager->register(ru_Asset::class); $locale = $translator->translate('layout.language.russian'); break;
-    case 'zh' : $assetManager->register(zh_CN_Asset::class); $locale = $translator->translate('layout.language.chinese.simplified'); break;
-    default   : $assetManager->register(en_GB_Asset::class); $locale = $translator->translate('layout.language.english'); break;
+    case 'af' : $assetManager->register(af_Asset::class); $locale = 'Afrikaans'; break;
+    case 'ar' : $assetManager->register(ar_Asset::class); $locale = 'Arabic'; break;
+    case 'az' : $assetManager->register(az_Asset::class); $locale = 'Azerbaijani'; break;
+    case 'de' : $assetManager->register(de_DE_Asset::class); $locale = 'German'; break;
+    case 'en' : $assetManager->register(en_GB_Asset::class); $locale = 'English'; break;
+    case 'fr' : $assetManager->register(fr_FR_Asset::class); $locale = 'French'; break;
+    case 'id' : $assetManager->register(id_Asset::class); $locale = 'Indonesian'; break;
+    case 'ja' : $assetManager->register(ja_Asset::class); $locale = 'Japanese'; break;
+    case 'nl' : $assetManager->register(nl_Asset::class); $locale = 'Dutch'; break;
+    case 'ru' : $assetManager->register(ru_Asset::class); $locale = 'Russian'; break;
+    case 'sk' : $assetManager->register(sk_Asset::class); $locale = 'Slovensky'; break;    
+    case 'es' : $assetManager->register(es_ES_Asset::class); $locale = 'Spanish'; break;
+    case 'uk' : $assetManager->register(uk_UA_Asset::class); $locale = 'Ukrainian'; break;
+    case 'uz' : $assetManager->register(uz_UZ_Asset::class); $locale = 'Uzbek'; break;
+    case 'zh' : $assetManager->register(zh_CN_Asset::class); $locale = 'Chinese Simplified'; break;
+    default   : $assetManager->register(en_GB_Asset::class); $locale = 'English'; break;
 }
 
 // If the dropdown locale has not been set on login => use the cldr setting value. If the cldr does not exist => use the 'en' value
@@ -148,22 +164,70 @@ echo Nav::widget()
             'url' => '#',
             'items' => [
                 [
+                    'label' => 'Afrikaans',
+                    'url' => $urlGenerator->generateFromCurrent(['_language' => 'af'], fallbackRouteName: 'site/index'),
+                ],
+                [
+                    'label' => 'Arabic / عربي',
+                    'url' => $urlGenerator->generateFromCurrent(['_language' => 'ar'], fallbackRouteName: 'site/index'),
+                ],
+                [
+                    'label' => 'Azerbaijani / Azərbaycan',
+                    'url' => $urlGenerator->generateFromCurrent(['_language' => 'az'], fallbackRouteName: 'site/index'),
+                ], 
+                [
+                    'label' => 'Chinese Simplified / 简体中文',
+                    'url' => $urlGenerator->generateFromCurrent(['_language' => 'zh'], fallbackRouteName: 'site/index'),
+                ],
+                [
                     'label' => 'English',
                     'url' => $urlGenerator->generateFromCurrent(['_language' => 'en'], fallbackRouteName: 'site/index'),
                 ],
                 [
-                    'label' => 'Ру�?�?кий',
+                    'label' => 'French / Français',
+                    'url' => $urlGenerator->generateFromCurrent(['_language' => 'fr'], fallbackRouteName: 'site/index'),
+                ],
+                [
+                    'label' => 'Dutch / Nederlands',
+                    'url' => $urlGenerator->generateFromCurrent(['_language' => 'nl'], fallbackRouteName: 'site/index'),
+                ],
+                [
+                    'label' => 'German / Deutsch',
+                    'url' => $urlGenerator->generateFromCurrent(['_language' => 'de'], fallbackRouteName: 'site/index'),
+                ],
+                [
+                    'label' => 'Indonesian / bahasa Indonesia',
+                    'url' => $urlGenerator->generateFromCurrent(['_language' => 'id'], fallbackRouteName: 'site/index'),
+                ],
+                [
+                    'label' => 'Japanese / 日本',
+                    'url' => $urlGenerator->generateFromCurrent(['_language' => 'ja'], fallbackRouteName: 'site/index'),
+                ],
+                [
+                    'label' => 'Russian / Русский',
                     'url' => $urlGenerator->generateFromCurrent(['_language' => 'ru'], fallbackRouteName: 'site/index'),
                 ],
                 [
-                    'label' => 'Slovenský',
+                    'label' => 'Slovakian / Slovenský',
                     'url' => $urlGenerator->generateFromCurrent(['_language' => 'sk'], fallbackRouteName: 'site/index'),
                 ],
                 [
-                    'label' => 'Indonesia',
-                    'url' => $urlGenerator->generateFromCurrent(['_language' => 'id'], fallbackRouteName: 'site/index'),
+                    'label' => 'Spanish / Española x',
+                    'url' => $urlGenerator->generateFromCurrent(['_language' => 'es'], fallbackRouteName: 'site/index'),
                 ],
-            ],
+                [
+                    'label' => 'Ukrainian / українська',
+                    'url' => $urlGenerator->generateFromCurrent(['_language' => 'uk'], fallbackRouteName: 'site/index'),
+                ],
+                [
+                    'label' => 'Uzbek / o'."'".'zbek',
+                    'url' => $urlGenerator->generateFromCurrent(['_language' => 'uz'], fallbackRouteName: 'site/index'),
+                ],
+                [
+                    'label' => 'Vietnamese / Tiếng Việt',
+                    'url' => $urlGenerator->generateFromCurrent(['_language' => 'vi'], fallbackRouteName: 'site/index'),
+                ],
+        ],
         ],
     ],
 );        

@@ -112,28 +112,31 @@ final class UnitController
             UnitRepository $unitRepository, SettingRepository $settingRepository, ValidatorInterface $validator): Response 
     {
         $unit = $this->unit($currentRoute, $unitRepository);
-        $parameters = [
-            'title' => 'Edit unit',
-            'action' => ['unit/edit', ['id' => $unit->getUnit_id()]],
-            'errors' => [],
-            'body' => [
-                'unit_name' => $this->unit($currentRoute, $unitRepository)->getUnit_name(),
-                'unit_name_plrl' => $this->unit($currentRoute, $unitRepository)->getUnit_name_plrl(),
-            ],
-            's'=>$settingRepository,
-        ];
-        if ($request->getMethod() === Method::POST) {
-            $form = new UnitForm();
-            $body = $request->getParsedBody();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
-                $this->unitService->saveUnit($unit, $form);
-                $this->flash($session, 'info', $settingRepository->trans('record_successfully_updated'));
-                return $this->webService->getRedirectResponse('unit/index');
+        if ($unit) {
+            $parameters = [
+                'title' => 'Edit unit',
+                'action' => ['unit/edit', ['id' => $unit->getUnit_id()]],
+                'errors' => [],
+                'body' => [
+                    'unit_name' => $unit->getUnit_name(),
+                    'unit_name_plrl' => $unit->getUnit_name_plrl(),
+                ],
+                's'=>$settingRepository,
+            ];
+            if ($request->getMethod() === Method::POST) {
+                $form = new UnitForm();
+                $body = $request->getParsedBody();
+                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                    $this->unitService->saveUnit($unit, $form);
+                    $this->flash($session, 'info', $settingRepository->trans('record_successfully_updated'));
+                    return $this->webService->getRedirectResponse('unit/index');
+                }
+                $parameters['body'] = $body;
+                $parameters['errors'] = $form->getFormErrors();
             }
-            $parameters['body'] = $body;
-            $parameters['errors'] = $form->getFormErrors();
-        }
-        return $this->viewRenderer->render('__form', $parameters);
+            return $this->viewRenderer->render('__form', $parameters);
+        } 
+        return $this->webService->getRedirectResponse('unit/index');
     }
     
     /**
@@ -147,7 +150,9 @@ final class UnitController
     {
         try {
               $unit = $this->unit($currentRoute, $unitRepository);              
-              $this->unitService->deleteUnit($unit);
+              if ($unit) {
+                $this->unitService->deleteUnit($unit);
+              }
               return $this->webService->getRedirectResponse('unit/index');
 	} catch (\Exception $e) {
               unset($e);
@@ -162,33 +167,40 @@ final class UnitController
      * @param SettingRepository $settingRepository
      * @param ValidatorInterface $validator
      */
-    public function view(CurrentRoute $currentRoute, UnitRepository $unitRepository,SettingRepository $settingRepository, ValidatorInterface $validator): \Yiisoft\DataResponse\DataResponse {
+    public function view(CurrentRoute $currentRoute, UnitRepository $unitRepository,SettingRepository $settingRepository, ValidatorInterface $validator)
+    : \Yiisoft\DataResponse\DataResponse|Response {
         $unit = $this->unit($currentRoute, $unitRepository);
-        $parameters = [
-            'title' => $settingRepository->trans('edit_setting'),
-            'action' => ['unit/edit', ['unit_id' => $unit->getUnit_id()]],
-            'errors' => [],
-            'unit'=>$unit,
-            's'=>$settingRepository,     
-            'body' => [
-                'unit_id'=>$unit->getUnit_id(),
-                'unit_name'=>$unit->getUnit_name(),
-                'unit_name_plrl'=>$unit->getUnit_name_plrl(),               
-            ],            
-        ];
-        return $this->viewRenderer->render('__view', $parameters);
+        if ($unit) {
+            $parameters = [
+                'title' => $settingRepository->trans('edit_setting'),
+                'action' => ['unit/edit', ['unit_id' => $unit->getUnit_id()]],
+                'errors' => [],
+                'unit'=>$unit,
+                's'=>$settingRepository,     
+                'body' => [
+                    'unit_id'=>$unit->getUnit_id(),
+                    'unit_name'=>$unit->getUnit_name(),
+                    'unit_name_plrl'=>$unit->getUnit_name_plrl(),               
+                ],            
+            ];
+            return $this->viewRenderer->render('__view', $parameters);
+        }
+        return $this->webService->getRedirectResponse('unit/index');
     } 
     
     /**
      * @param CurrentRoute $currentRoute
      * @param UnitRepository $unitRepository
-     * @return Unit|null
+     * @return object|null
      */
-    private function unit(CurrentRoute $currentRoute, UnitRepository $unitRepository): Unit|null
+    private function unit(CurrentRoute $currentRoute, UnitRepository $unitRepository): object|null
     {
         $unit_id = $currentRoute->getArgument('id');
-        $unit = $unitRepository->repoUnitquery($unit_id);
-        return $unit; 
+        if (null!==$unit_id) {
+            $unit = $unitRepository->repoUnitquery($unit_id);
+            return $unit; 
+        }
+        return null;
     }
     
     

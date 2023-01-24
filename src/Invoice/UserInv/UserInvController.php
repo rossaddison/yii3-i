@@ -81,6 +81,9 @@ final class UserInvController
         $sort = Sort::only(['user_id', 'name', 'email'])          
                      ->withOrderString($query_params['sort'] ?? '-user_id');
         $repo = $this->userinvs_active_with_sort($uiR,$active,$sort); 
+        /**
+         * @psalm-suppress PossiblyInvalidArgument
+         */
         $paginator = (new OffsetPaginator($repo))        
         ->withPageSize((int)$sR->get_setting('default_list_limit'))
         ->withCurrentPage($page)               
@@ -177,28 +180,32 @@ final class UserInvController
 
     ): Response {
         $aliases = new Aliases(['@invoice' => dirname(__DIR__), '@language' => '@invoice/Language']);
-        $parameters = [
-            'title' => 'Edit',
-            'action' => ['userinv/edit', ['id' => $this->userinv($currentRoute, $userinvRepository)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->userinv($currentRoute, $userinvRepository)),
-            'head'=>$head,
-            'aliases'=>$aliases,
-            'users'=>$uR->findAll(),
-            's'=>$settingRepository,
-            
-        ];
-        if ($request->getMethod() === Method::POST) {
-            $form = new UserInvForm();
-            $body = $request->getParsedBody();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
-                $this->userinvService->saveUserInv($this->userinv($currentRoute,$userinvRepository), $form);
-                return $this->webService->getRedirectResponse('userinv/index');
+        $user_inv = $this->userinv($currentRoute, $userinvRepository);
+        if ($user_inv) {
+            $parameters = [
+                'title' => 'Edit',
+                'action' => ['userinv/edit', ['id' => $user_inv->getId()]],
+                'errors' => [],
+                'body' => $this->body($user_inv),
+                'head'=>$head,
+                'aliases'=>$aliases,
+                'users'=>$uR->findAll(),
+                's'=>$settingRepository,
+
+            ];
+            if ($request->getMethod() === Method::POST) {
+                $form = new UserInvForm();
+                $body = $request->getParsedBody();
+                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                    $this->userinvService->saveUserInv($user_inv, $form);
+                    return $this->webService->getRedirectResponse('userinv/index');
+                }
+                $parameters['body'] = $body;
+                $parameters['errors'] = $form->getFormErrors();
             }
-            $parameters['body'] = $body;
-            $parameters['errors'] = $form->getFormErrors();
+            return $this->viewRenderer->render('_form', $parameters);
         }
-        return $this->viewRenderer->render('_form', $parameters);
+        return $this->webService->getRedirectResponse('userinv/index');         
     }
     
     /**
@@ -210,20 +217,28 @@ final class UserInvController
      * @param UserInvRepository $uiR
      */
     public function client(ViewRenderer $head, CurrentRoute $currentRoute, ClientRepository $cR,
-                           SettingRepository $sR, UserClientRepository $ucR, UserInvRepository $uiR) : \Yiisoft\DataResponse\DataResponse {
+                           SettingRepository $sR, UserClientRepository $ucR, UserInvRepository $uiR) 
+        : \Yiisoft\DataResponse\DataResponse|Response {
         // Use the primary key 'id' passed in userinv/index's urlGenerator to retrieve the user_id
-        $user_id = $this->userinv($currentRoute, $uiR)->getUser_Id();
-        $parameters = [
-            'head'=>$head,
-            's'=>$sR,
-            'cR'=>$cR,
-            'flash'=> $this->flash('', ''),
-            // Get all clients that this user will deal with
-            'user_clients'=>$ucR->repoClientquery($user_id),
-            'userinv'=>$uiR->repoUserInvUserIdquery($user_id),
-            'user_id'=>$user_id,
-        ];
-        return $this->viewRenderer->render('field', $parameters);
+        $user_inv = $this->userinv($currentRoute, $uiR);
+        if (null!==$user_inv) {
+            $user_id = $user_inv->getUser_Id();
+            if ($user_id) {
+                $parameters = [
+                    'head'=>$head,
+                    's'=>$sR,
+                    'cR'=>$cR,
+                    'flash'=> $this->flash('', ''),
+                    // Get all clients that this user will deal with
+                    'user_clients'=>$ucR->repoClientquery($user_id),
+                    'userinv'=>$uiR->repoUserInvUserIdquery($user_id),
+                    'user_id'=>$user_id,
+                ];
+                return $this->viewRenderer->render('field', $parameters);
+            }
+            return $this->webService->getRedirectResponse('userinv/index');
+        }
+        return $this->webService->getRedirectResponse('userinv/index');
     }
     
     /**
@@ -235,10 +250,13 @@ final class UserInvController
      */
     public function delete(TranslatorInterface $translator, CurrentRoute $currentRoute,UserInvRepository $userinvRepository 
     ): Response {
-      
-            $this->userinvService->deleteUserInv($this->userinv($currentRoute,$userinvRepository));               
+        $user_inv = $this->userinv($currentRoute,$userinvRepository); 
+        if ($user_inv) {
+            $this->userinvService->deleteUserInv($user_inv);               
             $this->flash('info', $translator->translate('invoice.deleted'));
             return $this->webService->getRedirectResponse('userinv/index'); 	
+        }
+        return $this->webService->getRedirectResponse('userinv/index');
     }
     
     /**
@@ -248,17 +266,20 @@ final class UserInvController
      */
     public function view(CurrentRoute $currentRoute,UserInvRepository $userinvRepository,
         SettingRepository $settingRepository,
-        ): \Yiisoft\DataResponse\DataResponse {
+        ): \Yiisoft\DataResponse\DataResponse|Response {
         $user_inv = $this->userinv($currentRoute, $userinvRepository);
-        $parameters = [
-            'title' => $settingRepository->trans('view'),
-            'action' => ['userinv/view', ['id' => $user_inv->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->userinv($currentRoute, $userinvRepository)),
-            's'=>$settingRepository,             
-            'userinv'=>$userinvRepository->repoUserInvquery((string)$user_inv->getId()),
-        ];
-        return $this->viewRenderer->render('_view', $parameters);
+        if ($user_inv) {
+            $parameters = [
+                'title' => $settingRepository->trans('view'),
+                'action' => ['userinv/view', ['id' => $user_inv->getId()]],
+                'errors' => [],
+                'body' => $this->body($user_inv),
+                's'=>$settingRepository,             
+                'userinv'=>$userinvRepository->repoUserInvquery((string)$user_inv->getId()),
+            ];
+            return $this->viewRenderer->render('_view', $parameters);
+        }
+        return $this->webService->getRedirectResponse('userinv/index');
     }
         
     /**
@@ -292,37 +313,43 @@ final class UserInvController
     /**
      * @param CurrentRoute $currentRoute
      * @param UserInvRepository $userinvRepository
-     * @return UserInv|null
+     * @return object|null
      */
-    private function userinv(CurrentRoute $currentRoute, UserInvRepository $userinvRepository): UserInv|null
+    private function userinv(CurrentRoute $currentRoute, UserInvRepository $userinvRepository): object|null
     {
         $id = $currentRoute->getArgument('id');       
-        $userinv = $userinvRepository->repoUserInvquery($id);
-        return $userinv;
+        if (null!==$id) {
+            $userinv = $userinvRepository->repoUserInvquery($id);
+            return $userinv;
+        }
+        return null;
     }
     
     /**
      * 
      * @param CurrentRoute $currentRoute
      * @param UserClientRepository $userclientRepository
-     * @return \App\Invoice\Entity\UserClient|Response
+     * @return object|null
      */
-    private function userclient(CurrentRoute $currentRoute,UserClientRepository $userclientRepository): \App\Invoice\Entity\UserClient|Response 
+    private function userclient(CurrentRoute $currentRoute, UserClientRepository $userclientRepository) : object|null
     {
         $id = $currentRoute->getArgument('id');       
-        $userclient = $userclientRepository->repoUserClientquery((string)$id);
-        if ($userclient === null) {
-            return $this->webService->getNotFoundResponse();
+        if (null!==$id) {
+            $userclient = $userclientRepository->repoUserClientquery($id);
+            if (null!==$userclient) {
+                return $userclient;
+            }
+            return null;
         }
-        return $userclient;
+        return null;
     }
     
     /**
-     * @return (\DateTimeImmutable|bool|int|null|string)[]
-     *
-     * @psalm-return array{id: string, user_id: string, type: int, active: bool, date_created: \DateTimeImmutable, date_modified: \DateTimeImmutable, language: null|string, name: null|string, company: null|string, address_1: null|string, address_2: null|string, city: null|string, state: null|string, zip: null|string, country: null|string, phone: null|string, fax: null|string, mobile: null|string, email: null|string, password: string, web: null|string, vat_id: null|string, tax_code: null|string, all_clients: bool, salt: null|string, passwordreset_token: null|string, subscribernumber: null|string, iban: null|string, gln: int|null, rcc: null|string}
+     * 
+     * @param object $userinv
+     * @return array
      */
-    private function body(UserInv $userinv): array {
+    private function body(object $userinv): array {
         $body = [
           'id'=>$userinv->getId(),
           'user_id'=>$userinv->getUser_id(),

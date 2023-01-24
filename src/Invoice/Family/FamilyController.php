@@ -120,26 +120,30 @@ final class FamilyController
     public function edit(CurrentRoute $currentRoute, Request $request, SettingRepository $settingRepository, FamilyRepository $familyRepository, ValidatorInterface $validator): Response 
     {
         $family = $this->family($currentRoute, $familyRepository);
-        $parameters = [
-            'title' => 'Edit family',
-            'action' => ['family/edit', ['id' => $family->getFamily_id()]],
-            'errors' => [],
-            'body' => [
-                'family_name' => $this->family($currentRoute, $familyRepository)->getFamily_name(),
-            ],
-            's'=>$settingRepository,
-        ];
-        if ($request->getMethod() === Method::POST) {
-            $form = new FamilyForm();
-            $body = $request->getParsedBody();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
-                $this->familyService->saveFamily($family, $form);
-                return $this->webService->getRedirectResponse('family/index');
+        if ($family) {
+            $parameters = [
+                'title' => 'Edit family',
+                'action' => ['family/edit', ['id' => $family->getFamily_id()]],
+                'errors' => [],
+                'body' => [
+                    'family_name' => $family->getFamily_name(),
+                ],
+                's'=>$settingRepository,
+            ];
+            if ($request->getMethod() === Method::POST) {
+                $form = new FamilyForm();
+                $body = $request->getParsedBody();
+                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                    $this->familyService->saveFamily($family, $form);
+                    return $this->webService->getRedirectResponse('family/index');
+                }
+                $parameters['body'] = $body;
+                $parameters['errors'] = $form->getFormErrors();
             }
-            $parameters['body'] = $body;
-            $parameters['errors'] = $form->getFormErrors();
+            return $this->viewRenderer->render('__form', $parameters);
+        } else {
+            return $this->webService->getRedirectResponse('family/index');
         }
-        return $this->viewRenderer->render('__form', $parameters);
     }
     
     /**
@@ -152,7 +156,10 @@ final class FamilyController
     {
         try {
             $family = $this->family($currentRoute, $familyRepository);
-            $this->familyService->deleteFamily($family);               
+            if ($family) {
+                $this->familyService->deleteFamily($family);               
+                return $this->webService->getRedirectResponse('family/index');  
+            }
             return $this->webService->getRedirectResponse('family/index');  
 	} catch (\Exception $e) {
             unset($e);
@@ -166,33 +173,39 @@ final class FamilyController
      * @param FamilyRepository $familyRepository
      * @param SettingRepository $settingRepository
      */
-    public function view(CurrentRoute $currentRoute, FamilyRepository $familyRepository,SettingRepository $settingRepository): \Yiisoft\DataResponse\DataResponse {
+    public function view(CurrentRoute $currentRoute, FamilyRepository $familyRepository,SettingRepository $settingRepository): Response {
         $family = $this->family($currentRoute, $familyRepository);
-        $parameters = [
-            'title' => 'View',
-            'action' => ['family/view', ['id' => $family->getFamily_id()]],
-            'errors' => [],
-            'family'=>$this->family($currentRoute,$familyRepository),
-            's'=>$settingRepository,     
-            'body' => [
+        if ($family) {
+            $parameters = [
                 'title' => 'View',
-                'id'=>$family->getFamily_id(),
-                'family_name'=>$family->getFamily_name(),
-            ],            
-        ];
-        return $this->viewRenderer->render('__view', $parameters);
+                'action' => ['family/view', ['id' => $family->getFamily_id()]],
+                'errors' => [],
+                'family'=>$family,
+                's'=>$settingRepository,     
+                'body' => [
+                    'title' => 'View',
+                    'id'=>$family->getFamily_id(),
+                    'family_name'=>$family->getFamily_name(),
+                ],            
+            ];
+            return $this->viewRenderer->render('__view', $parameters);
+        }
+        return $this->webService->getRedirectResponse('family/index');  
     }
     
     /**
      * @param CurrentRoute $currentRoute
      * @param FamilyRepository $familyRepository
-     * @return Family|null
+     * @return object|null
      */
-    private function family(CurrentRoute $currentRoute, FamilyRepository $familyRepository): Family|null
+    private function family(CurrentRoute $currentRoute, FamilyRepository $familyRepository): object|null
     {
         $family_id = $currentRoute->getArgument('id');
-        $family = $familyRepository->repoFamilyquery($family_id);
-        return $family; 
+        if (null!==$family_id) {
+            $family = $familyRepository->repoFamilyquery($family_id);
+            return $family; 
+        }
+        return null;
     }
     
     /**

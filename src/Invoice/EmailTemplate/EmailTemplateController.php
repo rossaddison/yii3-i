@@ -119,10 +119,9 @@ final class EmailTemplateController
         ];
         
         if ($request->getMethod() === Method::POST) {
-            
             $form = new EmailTemplateForm();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
-                $this->emailtemplateService->saveEmailTemplate($this->userService->getUser(),new EmailTemplate(),$form);
+            if (null!==$this->userService->getUser() && $form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+                $this->emailtemplateService->saveEmailTemplate(new EmailTemplate(),$form);
                 return $this->webService->getRedirectResponse('emailtemplate/index');
             }
             $parameters['errors'] = $form->getFormErrors();
@@ -160,44 +159,48 @@ final class EmailTemplateController
                          SettingRepository $settingRepository,
                          ValidatorInterface $validator,
     ): Response {
-        $parameters = [
-            'title' => $settingRepository->trans('edit'),
-            'action' => ['emailtemplate/edit', ['email_template_id' => $this->emailtemplate($currentRoute, $emailtemplateRepository)->getEmail_template_id()]],
-            'errors' => [],
-            'email_template'=>$this->emailtemplate($currentRoute, $emailtemplateRepository),
-            'body' => $this->body($this->emailtemplate($currentRoute, $emailtemplateRepository)),
-            'aliases'=> new Aliases(['@invoice' => dirname(__DIR__), '@language' => '@invoice/Language']),
-            's'=>$settingRepository,
-            'email_template_tags' => $this->viewRenderer->renderPartialAsString('/invoice/emailtemplate/template-tags', [
-                    's'=>$settingRepository,
-                    'template_tags_quote'=>$this->viewRenderer->renderPartialAsString('/invoice/emailtemplate/template-tags-quote', [
+        $email_template = $this->emailtemplate($currentRoute, $emailtemplateRepository);
+        if ($email_template) { 
+            $parameters = [
+                'title' => $settingRepository->trans('edit'),
+                'action' => ['emailtemplate/edit', ['email_template_id' => $email_template->getEmail_template_id()]],
+                'errors' => [],
+                'email_template'=> $email_template,
+                'body' => $email_template,
+                'aliases'=> new Aliases(['@invoice' => dirname(__DIR__), '@language' => '@invoice/Language']),
+                's'=>$settingRepository,
+                'email_template_tags' => $this->viewRenderer->renderPartialAsString('/invoice/emailtemplate/template-tags', [
                         's'=>$settingRepository,
-                        'custom_fields_quote_custom'=>$customfieldRepository->repoTablequery('quote_custom'),
-                    ]),
-                    'template_tags_inv'=>$this->viewRenderer->renderPartialAsString('/invoice/emailtemplate/template-tags-inv', [
-                        's'=>$settingRepository,
-                        'custom_fields_inv_custom'=>$customfieldRepository->repoTablequery('inv_custom'),
-                    ]), 
-                    'custom_fields' => [                        
-                        'client_custom'=>$customfieldRepository->repoTablequery('client_custom')
-                    ],            
-            ]),    
-            'invoice_templates'=>$emailtemplateRepository->get_invoice_templates('pdf'),
-            'quote_templates'=>$emailtemplateRepository->get_quote_templates('pdf'),
-            'selected_pdf_template'=>$this->emailtemplate($currentRoute, $emailtemplateRepository)->getEmail_template_pdf_template(),
-            'tag'=>$tag
-        ];
-        if ($request->getMethod() === Method::POST) {
-            $form = new EmailTemplateForm();
-            $body = $request->getParsedBody();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
-                $this->emailtemplateService->saveEmailTemplate($this->userService->getUser(),$this->emailtemplate($currentRoute, $emailtemplateRepository), $form);
-                return $this->webService->getRedirectResponse('emailtemplate/index');
+                        'template_tags_quote'=>$this->viewRenderer->renderPartialAsString('/invoice/emailtemplate/template-tags-quote', [
+                            's'=>$settingRepository,
+                            'custom_fields_quote_custom'=>$customfieldRepository->repoTablequery('quote_custom'),
+                        ]),
+                        'template_tags_inv'=>$this->viewRenderer->renderPartialAsString('/invoice/emailtemplate/template-tags-inv', [
+                            's'=>$settingRepository,
+                            'custom_fields_inv_custom'=>$customfieldRepository->repoTablequery('inv_custom'),
+                        ]), 
+                        'custom_fields' => [                        
+                            'client_custom'=>$customfieldRepository->repoTablequery('client_custom')
+                        ],            
+                ]),    
+                'invoice_templates'=>$emailtemplateRepository->get_invoice_templates('pdf'),
+                'quote_templates'=>$emailtemplateRepository->get_quote_templates('pdf'),
+                'selected_pdf_template'=>$email_template->getEmail_template_pdf_template(),
+                'tag'=>$tag
+            ];
+            if ($request->getMethod() === Method::POST) {
+                $form = new EmailTemplateForm();
+                $body = $request->getParsedBody();
+                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                    $this->emailtemplateService->saveEmailTemplate($email_template, $form);
+                    return $this->webService->getRedirectResponse('emailtemplate/index');
+                }
+                $parameters['body'] = $body;
+                $parameters['errors'] = $form->getFormErrors();
             }
-            $parameters['body'] = $body;
-            $parameters['errors'] = $form->getFormErrors();
+            return $this->viewRenderer->render('__form', $parameters);
         }
-        return $this->viewRenderer->render('__form', $parameters);
+        return $this->webService->getRedirectResponse('emailtemplate/index');   
     }
     
     /**
@@ -209,7 +212,11 @@ final class EmailTemplateController
     
     public function delete(CurrentRoute $currentRoute, EmailTemplateRepository $emailtemplateRepository 
     ): Response {       
-        $this->emailtemplateService->deleteEmailTemplate($this->emailtemplate($currentRoute, $emailtemplateRepository));               
+        $email_template = $this->emailtemplate($currentRoute, $emailtemplateRepository);
+        if ($email_template) {
+            $this->emailtemplateService->deleteEmailTemplate($email_template);               
+            return $this->webService->getRedirectResponse('emailtemplate/index');        
+        }
         return $this->webService->getRedirectResponse('emailtemplate/index');        
     }
     
@@ -243,17 +250,21 @@ final class EmailTemplateController
      * @param SettingRepository $settingRepository
      */
     public function view(CurrentRoute $currentRoute, EmailTemplateRepository $emailtemplateRepository, SettingRepository $settingRepository   
-    ): \Yiisoft\DataResponse\DataResponse {
-        $parameters = [
-            'title' => $settingRepository->trans('view'),
-            'action' => ['emailtemplate/edit', ['email_template_id' => $this->emailtemplate($currentRoute, $emailtemplateRepository)->getEmail_template_id()]],
-            'errors' => [],
-            'emailtemplate'=>$this->emailtemplate($currentRoute, $emailtemplateRepository),
-            'body' => $this->body($this->emailtemplate($currentRoute, $emailtemplateRepository)),
-            'aliases'=>new Aliases(['@invoice' => dirname(__DIR__), '@language' => '@invoice/Language']),
-            's'=>$settingRepository,
-        ];
-        return $this->viewRenderer->render('__view', $parameters); 
+    ): Response {
+        $email_template = $this->emailtemplate($currentRoute, $emailtemplateRepository);
+        if ($email_template) { 
+            $parameters = [
+                'title' => $settingRepository->trans('view'),
+                'action' => ['emailtemplate/edit', ['email_template_id' => $email_template->getEmail_template_id()]],
+                'errors' => [],
+                'emailtemplate'=>$email_template,
+                'body' => $this->body($email_template),
+                'aliases'=>new Aliases(['@invoice' => dirname(__DIR__), '@language' => '@invoice/Language']),
+                's'=>$settingRepository,
+            ];
+            return $this->viewRenderer->render('__view', $parameters); 
+        }
+        return $this->webService->getRedirectResponse('emailtemplate/index');
     }
     
     /**
@@ -272,13 +283,16 @@ final class EmailTemplateController
      * 
      * @param CurrentRoute $currentRoute
      * @param EmailTemplateRepository $emailtemplateRepository
-     * @return EmailTemplate|null
+     * @return object|null
      */
     private function emailtemplate(CurrentRoute $currentRoute, 
-                                   EmailTemplateRepository $emailtemplateRepository): EmailTemplate|null {
+                                   EmailTemplateRepository $emailtemplateRepository): object|null {
         $email_template_id = $currentRoute->getArgument('email_template_id');       
-        $emailtemplate = $emailtemplateRepository->repoEmailTemplatequery($email_template_id);
-        return $emailtemplate;
+        if (null!==$email_template_id) {
+            $emailtemplate = $emailtemplateRepository->repoEmailTemplatequery($email_template_id);
+            return $emailtemplate;
+        }
+        return null;
     }
     
     /**
@@ -292,11 +306,11 @@ final class EmailTemplateController
     }
     
     /**
-     * @return string[]
-     *
-     * @psalm-return array{email_template_title: string, email_template_type: string, email_template_body: string, email_template_subject: string, email_template_from_name: string, email_template_from_email: string, email_template_cc: string, email_template_bcc: string, email_template_pdf_template: string}
+     * 
+     * @param object $emailtemplate
+     * @return array
      */
-    private function body(EmailTemplate $emailtemplate): array {
+    private function body(object $emailtemplate): array {
         $body = [
                 'email_template_title'=>$emailtemplate->getEmail_template_title(),
                 'email_template_type'=>$emailtemplate->getEmail_template_type(),

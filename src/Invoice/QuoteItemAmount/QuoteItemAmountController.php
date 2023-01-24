@@ -117,26 +117,30 @@ final class QuoteItemAmountController
                         SettingRepository $settingRepository,                        
                         QuoteItemRepository $quote_itemRepository
     ): Response {
-        $parameters = [
-            'title' => 'Edit',
-            'action' => ['quoteitemamount/edit', ['id' => $this->quoteitemamount($currentRoute, $quoteitemamountRepository)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->quoteitemamount($currentRoute, $quoteitemamountRepository)),
-            'head'=>$head,
-            's'=>$settingRepository,
-                        'quote_items'=>$quote_itemRepository->findAllPreloaded()
-        ];
-        if ($request->getMethod() === Method::POST) {
-            $form = new QuoteItemAmountForm();
-            $body = $request->getParsedBody();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
-                $this->quoteitemamountService->saveQuoteItemAmount($this->quoteitemamount($currentRoute,$quoteitemamountRepository), $form);
-                return $this->webService->getRedirectResponse('quoteitemamount/index');
+        $quote_item_amount = $this->quoteitemamount($currentRoute, $quoteitemamountRepository);
+        if ($quote_item_amount) {
+            $parameters = [
+                'title' => 'Edit',
+                'action' => ['quoteitemamount/edit', ['id' => $quote_item_amount->getId()]],
+                'errors' => [],
+                'body' => $this->body($quote_item_amount),
+                'head'=>$head,
+                's'=>$settingRepository,
+                            'quote_items'=>$quote_itemRepository->findAllPreloaded()
+            ];
+            if ($request->getMethod() === Method::POST) {
+                $form = new QuoteItemAmountForm();
+                $body = $request->getParsedBody();
+                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                    $this->quoteitemamountService->saveQuoteItemAmount($quote_item_amount, $form);
+                    return $this->webService->getRedirectResponse('quoteitemamount/index');
+                }
+                $parameters['body'] = $body;
+                $parameters['errors'] = $form->getFormErrors();
             }
-            $parameters['body'] = $body;
-            $parameters['errors'] = $form->getFormErrors();
-        }
-        return $this->viewRenderer->render('_form', $parameters);
+            return $this->viewRenderer->render('_form', $parameters);
+        } // quote_item_amount    
+        return $this->webService->getNotFoundResponse();
     }
     
     /**
@@ -149,28 +153,38 @@ final class QuoteItemAmountController
      */
     public function delete(SessionInterface $session, CurrentRoute $currentRoute, QuoteItemAmountRepository $quoteitemamountRepository, SettingRepository $sR 
     ): Response {
-        $this->quoteitemamountService->deleteQuoteItemAmount($this->quoteitemamount($currentRoute, $quoteitemamountRepository));               
-        $this->flash($session, 'success', $sR->trans('record_successfully_deleted'));
-        return $this->webService->getRedirectResponse('quoteitemamount/index'); 
+        $quote_item_amount = $this->quoteitemamount($currentRoute, $quoteitemamountRepository);
+        if ($quote_item_amount) {
+            $this->quoteitemamountService->deleteQuoteItemAmount($quote_item_amount);               
+            $this->flash($session, 'success', $sR->trans('record_successfully_deleted'));
+            return $this->webService->getRedirectResponse('quoteitemamount/index'); 
+        }
+        return $this->webService->getNotFoundResponse();
     }
     
     /**
+     * 
      * @param CurrentRoute $currentRoute
      * @param QuoteItemAmountRepository $quoteitemamountRepository
      * @param SettingRepository $settingRepository
+     * @return \Yiisoft\DataResponse\DataResponse|Response
      */
     public function view(CurrentRoute $currentRoute, QuoteItemAmountRepository $quoteitemamountRepository,
         SettingRepository $settingRepository,
-        ): \Yiisoft\DataResponse\DataResponse {
-        $parameters = [
-            'title' => $settingRepository->trans('view'),
-            'action' => ['quoteitemamount/view', ['id' => $this->quoteitemamount($currentRoute, $quoteitemamountRepository)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->quoteitemamount($currentRoute, $quoteitemamountRepository)),
-            's'=>$settingRepository,             
-            'quoteitemamount'=>$quoteitemamountRepository->repoQuoteItemAmountquery($this->quoteitemamount($currentRoute, $quoteitemamountRepository)->getId()),
-        ];
-        return $this->viewRenderer->render('_view', $parameters);
+        ): \Yiisoft\DataResponse\DataResponse|Response {
+        $quote_item_amount = $this->quoteitemamount($currentRoute, $quoteitemamountRepository);
+        if ($quote_item_amount) {
+            $parameters = [
+                'title' => $settingRepository->trans('view'),
+                'action' => ['quoteitemamount/view', ['id' => $quote_item_amount->getId()]],
+                'errors' => [],
+                'body' => $this->body($quote_item_amount),
+                's'=>$settingRepository,             
+                'quoteitemamount'=>$quoteitemamountRepository->repoQuoteItemAmountquery($quote_item_amount->getId()),
+            ];
+            return $this->viewRenderer->render('_view', $parameters);
+        }
+        return $this->webService->getNotFoundResponse();
     }   
         
     /**
@@ -189,14 +203,17 @@ final class QuoteItemAmountController
     /**
      * @param CurrentRoute $currentRoute
      * @param QuoteItemAmountRepository $quoteitemamountRepository
-     * @return QuoteItemAmount|null
+     * @return object|null
      */
     private function quoteitemamount(CurrentRoute $currentRoute, 
-                                     QuoteItemAmountRepository $quoteitemamountRepository): QuoteItemAmount|null 
+                                     QuoteItemAmountRepository $quoteitemamountRepository): object|null 
     {
         $id = $currentRoute->getArgument('id');       
-        $quoteitemamount = $quoteitemamountRepository->repoQuoteItemAmountquery($id);
-        return $quoteitemamount;
+        if (null!==$id) {
+            $quoteitemamount = $quoteitemamountRepository->repoQuoteItemAmountquery($id);
+            return $quoteitemamount;
+        }
+        return null;
     }
     
     /**
@@ -211,11 +228,11 @@ final class QuoteItemAmountController
     }
     
     /**
-     * @return (float|null|string)[]
-     *
-     * @psalm-return array{id: string, quote_item_id: string, subtotal: float|null, tax_total: float|null, discount: float|null, total: float|null}
+     * 
+     * @param object $quoteitemamount
+     * @return array
      */
-    private function body(QuoteItemAmount $quoteitemamount): array {
+    private function body(object $quoteitemamount): array {
         $body = [
           'id'=>$quoteitemamount->getId(),
           'quote_item_id'=>$quoteitemamount->getQuote_item_id(),

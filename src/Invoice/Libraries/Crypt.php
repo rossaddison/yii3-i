@@ -53,6 +53,7 @@ class Crypt
      */
     public function encode($data)
     {
+        $key = '';
         if (preg_match("/^base64:(.*)$/", $this->decrypt_key, $matches)) {
             $key = base64_decode($matches[1]);
         }
@@ -68,7 +69,7 @@ class Crypt
      */
     public function decode($data)
     {
-
+        $key = '';
         if (empty($data)) {
             return '';
         }

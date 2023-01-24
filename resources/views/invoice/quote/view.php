@@ -270,6 +270,18 @@ use App\Invoice\Helpers\NumberHelper;
                                             </span>
                                         </div>
                                     </div>
+                                    
+                                    <?php 
+                                        // 2=>Draft 3=>Sent 4=>Viewed 5=>Approvd 6=>Rejected
+                                        if (in_array($quote->getStatus_id(),[2,3,4,5,6])) 
+                                    { ?>
+                                    <div>
+                                        <br>
+                                        <a href="<?= $urlGenerator->generate('quote/url_key',['url_key' => $quote->getUrl_key()]); ?>" class="btn btn-success">  
+                                            <?= $s->trans('approve_this_quote').'/'.$s->trans('reject_this_quote'); ?></i>    
+                                        </a>
+                                    </div>
+                                    <?php } ?>
                                 <?php } else {?>
                                     <div class="quote-properties">
                                         <label for="quote_guest_url"><?php echo $s->trans('guest_url'); ?></label>

@@ -164,12 +164,12 @@ final class InvItemController
         return $this->viewRenderer->renderPartial('_item_form_task', $parameters);
     }
     
-    /**
-     * @return (float|int|null|string)[]
-     *
-     * @psalm-return array{id: string, inv_id: string, tax_rate_id: string, product_id: null|string, task_id: null|string, name: null|string, description: null|string, quantity: float, price: float|null, discount_amount: float|null, order: int, product_unit: null|string, product_unit_id: null|string}
-     */
-    private function body(InvItem $invitem): array {
+   /**
+    * 
+    * @param object $invitem
+    * @return array
+    */
+    private function body(object $invitem): array {
         $body = [
           'id'=>$invitem->getId(),
           'inv_id'=>$invitem->getInv_id(),
@@ -189,6 +189,7 @@ final class InvItemController
     }
     
     /**
+     * 
      * @param ViewRenderer $head
      * @param SessionInterface $session
      * @param CurrentRoute $currentRoute
@@ -203,15 +204,18 @@ final class InvItemController
      * @param IR $iR
      * @param IIAS $iias
      * @param IIAR $iiar
+     * @return \Yiisoft\DataResponse\DataResponse
      */
     public function edit_product(ViewRenderer $head, SessionInterface $session, CurrentRoute $currentRoute, Request $request, ValidatorInterface $validator,
                         IIR $iiR, SR $sR, TRR $trR, PR $pR, TaskR $taskR, UR $uR, IR $iR, IIAS $iias, IIAR $iiar): \Yiisoft\DataResponse\DataResponse {
         $inv_id = $session->get('inv_id');
+        $inv_item = $this->invitem($currentRoute, $iiR);
         $parameters = [
             'title' => 'Edit',
-            'action' => ['invitem/edit_product', ['id' => $this->invitem($currentRoute, $iiR)->getId()]],
+            'action' => ['invitem/edit_product', ['id' => $currentRoute->getArgument('id')]],
             'errors' => [],
-            'body' => $this->body($this->invitem($currentRoute, $iiR)),
+            // if null inv_item, initialize it => prevent psalm PossiblyNullArgument error
+            'body' => $this->body($inv_item ?: New InvItem()),
             'inv_id'=>$inv_id,
             'head'=>$head,
             's'=>$sR,
@@ -228,12 +232,19 @@ final class InvItemController
                 $quantity = $form->getQuantity() ?? 0.00;
                 $price = $form->getPrice() ?? 0.00;
                 $discount = $form->getDiscount_amount() ?? 0.00;
-                $tax_rate_id = $this->invitemService->saveInvItem_product($this->invitem($currentRoute, $iiR), $form, $inv_id, $pR, $sR, $uR) ?: 1;        
+                $tax_rate_id = $this->invitemService->saveInvItem_product($inv_item ?: new InvItem(), $form, $inv_id, $pR, $sR, $uR) ?: 1;        
                 $tax_rate_percentage = $this->taxrate_percentage($tax_rate_id, $trR);
-                $this->saveInvItemAmount((int)$this->invitem($currentRoute, $iiR)->getId(), 
-                                         $quantity, $price, $discount, $tax_rate_percentage, $iias, $iiar);
-                return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
-                ['heading'=>'Successful','message'=>$sR->trans('record_successfully_updated'),'url'=>'inv/view','id'=>$inv_id])); 
+                if (null!==$tax_rate_percentage) {
+                    /**
+                     * @psalm-suppress PossiblyNullReference getId
+                     */
+                    $request_inv_item = (int)$this->invitem($currentRoute, $iiR)->getId();
+                    
+                    $this->saveInvItemAmount($request_inv_item, 
+                                             $quantity, $price, $discount, $tax_rate_percentage, $iias, $iiar);
+                    return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
+                    ['heading'=>'Successful','message'=>$sR->trans('record_successfully_updated'),'url'=>'inv/view','id'=>$inv_id])); 
+                }    
             } else {   
                 return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
                 ['heading'=>'Not successful','message'=>'nosussss','url'=>'inv/view','id'=>$inv_id])); 
@@ -243,33 +254,6 @@ final class InvItemController
         } 
         return $this->viewRenderer->render('_item_edit_product', $parameters);
     }
-    
-    
-    public function taxrate_percentage(int $id, TRR $trr): float|null
-    {
-        $taxrate = $trr->repoTaxRatequery((string)$id);
-        $percentage = $taxrate->getTax_rate_percent();        
-        return $percentage;
-    }
-    
-    
-    public function saveInvItemAmount(int $inv_item_id, float $quantity, float $price, float $discount, float $tax_rate_percentage, IIAS $iias, IIAR $iiar): void
-    {       
-       $iias_array['inv_item_id'] = $inv_item_id;       
-       $sub_total = $quantity * $price;
-       $tax_total = (($sub_total * ($tax_rate_percentage/100)));
-       $discount_total = ($quantity*$discount);
-       
-       $iias_array['discount'] = $discount_total;
-       $iias_array['subtotal'] = $sub_total;
-       $iias_array['taxtotal'] = $tax_total;
-       $iias_array['total'] = ($sub_total - $discount_total + $tax_total);       
-       
-       if ($iiar->repoCount((string)$inv_item_id) === 0) {
-         $iias->saveInvItemAmountNoForm(new InvItemAmount(), $iias_array);} else {
-         $iias->saveInvItemAmountNoForm($iiar->repoInvItemAmountquery((string)$inv_item_id), $iias_array);     
-       }                      
-    }   
     
     /**
      * @param ViewRenderer $head
@@ -287,51 +271,164 @@ final class InvItemController
      * @param IIAS $iias
      * @param IIAR $iiar
      */
-    public function edit_task(ViewRenderer $head, SessionInterface $session, CurrentRoute $currentRoute, Request $request, ValidatorInterface $validator,
-                        IIR $iiR, SR $sR, TRR $trR, PR $pR, TaskR $taskR, UR $uR, IR $iR, IIAS $iias, IIAR $iiar): \Yiisoft\DataResponse\DataResponse {
+    public function edit_product2(ViewRenderer $head, SessionInterface $session, CurrentRoute $currentRoute, Request $request, ValidatorInterface $validator,
+                        IIR $iiR, SR $sR, TRR $trR, PR $pR, TaskR $taskR, UR $uR, IR $iR, IIAS $iias, IIAR $iiar): Response {
         $inv_id = $session->get('inv_id');
-        $parameters = [
-            'title' => 'Edit',
-            'action' => ['invitem/edit_task', ['id' => $this->invitem($currentRoute, $iiR)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->invitem($currentRoute, $iiR)),
-            'inv_id'=>$inv_id,
-            'head'=>$head,
-            's'=>$sR,
-            'tax_rates'=>$trR->findAllPreloaded(),
-            // Only tasks that are complete are put on the invoice
-            'tasks'=>$taskR->repoTaskStatusquery(3),
-            'invs'=>$iR->findAllPreloaded(),                  
-            'units'=>$uR->findAllPreloaded(),
-            'numberhelper'=>new NumberHelper($sR)
-        ];
-        if ($request->getMethod() === Method::POST) {
-            $form = new InvItemForm();
-            $body = $request->getParsedBody();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
-                $tax_rate_id = $this->invitemService->saveInvItem_task($this->invitem($currentRoute, $iiR), $form, $inv_id, $taskR, $sR)  ?: 1;        
-                $tax_rate_percentage = $this->taxrate_percentage($tax_rate_id, $trR);
-                $quantity = $form->getQuantity() ?? 0.00;
-                $price = $form->getPrice() ?? 0.00;
-                $discount = $form->getDiscount_amount() ?? 0.00;
-                $this->saveInvItemAmount((int)$this->invitem($currentRoute, $iiR)->getId(), 
-                                         $quantity, $price, $discount, $tax_rate_percentage, $iias, $iiar);
-                return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
-                ['heading'=>'Successful','message'=>$sR->trans('record_successfully_updated'),'url'=>'inv/view','id'=>$inv_id])); 
-            }
-            $parameters['body'] = $body;
-            $parameters['errors'] = $form->getFormErrors();
-        } 
-        return $this->viewRenderer->render('_item_edit_task', $parameters);
+        $inv_item = $this->invitem($currentRoute, $iiR);
+        if ($inv_item) {
+            $parameters = [
+                'title' => 'Edit',
+                'action' => ['invitem/edit_product', ['id' => $inv_item->getId()]],
+                'errors' => [],
+                'body' => $this->body($inv_item),
+                'inv_id'=>$inv_id,
+                'head'=>$head,
+                's'=>$sR,
+                'tax_rates'=>$trR->findAllPreloaded(),
+                'products'=>$pR->findAllPreloaded(),
+                'invs'=>$iR->findAllPreloaded(),                  
+                'units'=>$uR->findAllPreloaded(),
+                'numberhelper'=>new NumberHelper($sR)
+            ];
+            if ($request->getMethod() === Method::POST) {
+                $form = new InvItemForm();
+                $body = $request->getParsedBody();
+                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                    $quantity = $form->getQuantity() ?? 0.00;
+                    $price = $form->getPrice() ?? 0.00;
+                    $discount = $form->getDiscount_amount() ?? 0.00;
+                    $tax_rate_id = $this->invitemService->saveInvItem_product($inv_item, $form, $inv_id, $pR, $sR, $uR) ?: 1;        
+                    //echo $tax_rate_id;
+                    $tax_rate_percentage = $this->taxrate_percentage($tax_rate_id, $trR);
+                    //echo $tax_rate_percentage;
+                    if (null!==$tax_rate_percentage) {
+                        $this->saveInvItemAmount((int)$inv_item->getId(), 
+                                                 $quantity, $price, $discount, $tax_rate_percentage, $iias, $iiar);
+                        return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
+                        ['heading'=>'Successful','message'=>$sR->trans('record_successfully_updated'),'url'=>'inv/view','id'=>$inv_id])); 
+                    }    
+                } else {   
+                    return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
+                    ['heading'=>'Not successful','message'=>'nosussss','url'=>'inv/view','id'=>$inv_id])); 
+                }
+                $parameters['body'] = $body;
+                $parameters['errors'] = $form->getFormErrors();
+            } 
+            return $this->viewRenderer->render('_item_edit_product', $parameters);
+        }
+        return $this->webService->getNotFoundResponse();    
+    }
+    
+    
+    public function taxrate_percentage(int $id, TRR $trr): float|null
+    {
+        $taxrate = $trr->repoTaxRatequery((string)$id);
+        if ($taxrate) {
+            $percentage = $taxrate->getTax_rate_percent();        
+            return $percentage;
+        }
+        return null;
+    }
+    
+    
+    public function saveInvItemAmount(int $inv_item_id, float $quantity, float $price, float $discount, float $tax_rate_percentage, IIAS $iias, IIAR $iiar): void
+    {       
+       $iias_array = [];
+       $iias_array['inv_item_id'] = $inv_item_id;       
+       $sub_total = $quantity * $price;
+       $tax_total = (($sub_total * ($tax_rate_percentage/100)));
+       $discount_total = ($quantity*$discount);
+       
+       $iias_array['discount'] = $discount_total;
+       $iias_array['subtotal'] = $sub_total;
+       $iias_array['taxtotal'] = $tax_total;
+       $iias_array['total'] = ($sub_total - $discount_total + $tax_total);       
+       
+       if ($iiar->repoCount((string)$inv_item_id) === 0) {
+         $iias->saveInvItemAmountNoForm(new InvItemAmount(), $iias_array);} else {
+         $inv_item_amount = $iiar->repoInvItemAmountquery((string)$inv_item_id);    
+         if ($inv_item_amount) {
+            $iias->saveInvItemAmountNoForm($inv_item_amount, $iias_array);     
+         }
+       }                      
+    }   
+    
+    /**
+     * 
+     * @param ViewRenderer $head
+     * @param SessionInterface $session
+     * @param CurrentRoute $currentRoute
+     * @param Request $request
+     * @param ValidatorInterface $validator
+     * @param IIR $iiR
+     * @param SR $sR
+     * @param TRR $trR
+     * @param PR $pR
+     * @param TaskR $taskR
+     * @param UR $uR
+     * @param IR $iR
+     * @param IIAS $iias
+     * @param IIAR $iiar
+     * @return Response
+     */
+    public function edit_task(ViewRenderer $head, SessionInterface $session, CurrentRoute $currentRoute, Request $request, ValidatorInterface $validator,
+                        IIR $iiR, SR $sR, TRR $trR, PR $pR, TaskR $taskR, UR $uR, IR $iR, IIAS $iias, IIAR $iiar): Response {
+        $inv_id = $session->get('inv_id');
+        $inv_item = $this->invitem($currentRoute, $iiR);
+        if ($inv_item) {
+            $parameters = [
+                'title' => 'Edit',
+                'action' => ['invitem/edit_task', ['id' => $inv_item->getId()]],
+                'errors' => [],
+                'body' => $this->body($inv_item),
+                'inv_id'=>$inv_id,
+                'head'=>$head,
+                's'=>$sR,
+                'tax_rates'=>$trR->findAllPreloaded(),
+                // Only tasks that are complete are put on the invoice
+                'tasks'=>$taskR->repoTaskStatusquery(3),
+                'invs'=>$iR->findAllPreloaded(),                  
+                'units'=>$uR->findAllPreloaded(),
+                'numberhelper'=>new NumberHelper($sR)
+            ];
+            if ($request->getMethod() === Method::POST) {
+                $form = new InvItemForm();
+                $body = $request->getParsedBody();
+                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                    $tax_rate_id = $this->invitemService->saveInvItem_task($inv_item, $form, $inv_id, $taskR, $sR)  ?: 1;        
+                    $tax_rate_percentage = $this->taxrate_percentage($tax_rate_id, $trR);
+                    $quantity = $form->getQuantity() ?? 0.00;
+                    $price = $form->getPrice() ?? 0.00;
+                    $discount = $form->getDiscount_amount() ?? 0.00;
+                    if ($tax_rate_percentage) {
+                        $this->saveInvItemAmount((int)$inv_item->getId(), 
+                                                 $quantity, $price, $discount, $tax_rate_percentage, $iias, $iiar);
+                        return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
+                        ['heading'=>'Successful','message'=>$sR->trans('record_successfully_updated'),'url'=>'inv/view','id'=>$inv_id])); 
+                    }
+                    return $this->webService->getNotFoundResponse();
+                }
+                $parameters['body'] = $body;
+                $parameters['errors'] = $form->getFormErrors();
+            } 
+            return $this->viewRenderer->render('_item_edit_task', $parameters);
+        }
+        return $this->webService->getNotFoundResponse();
     }
     
     /**
+     * 
      * @param CurrentRoute $currentRoute
      * @param IIR $iiR
+     * @return \Yiisoft\DataResponse\DataResponse|Response
      */
-    public function delete(CurrentRoute $currentRoute, IIR $iiR): \Yiisoft\DataResponse\DataResponse {
-            $iiR->repoInvItemCount((string)$this->invitem($currentRoute, $iiR)->getId()) === 1  ? (($this->invitemService->deleteInvItem($this->invitem($currentRoute, $iiR)))): '';
-            return $this->viewRenderer->render('inv/index');
+    public function delete(CurrentRoute $currentRoute, IIR $iiR): \Yiisoft\DataResponse\DataResponse|Response {
+            $inv_item = $this->invitem($currentRoute, $iiR);
+            if ($inv_item) {
+                $iiR->repoInvItemCount((string)$inv_item->getId()) === 1  ? (($this->invitemService->deleteInvItem($inv_item))): '';
+                return $this->viewRenderer->render('inv/index');
+            }
+            return $this->webService->getNotFoundResponse();
     }            
     
     /**
@@ -363,26 +460,32 @@ final class InvItemController
           'invitems' => $this->invitems($iiR),
           'flash'=> $flash
          ];
-        
         return $this->viewRenderer->render('index', $parameters);
     } 
     
     /**
+     * 
      * @param CurrentRoute $currentRoute
      * @param IIR $iiR
-     * @return InvItem
+     * @return object|null
      */
-    private function invitem(CurrentRoute $currentRoute, IIR $iiR): InvItem|null
+    private function invitem(CurrentRoute $currentRoute, IIR $iiR): object|null
     {
-        $id = $currentRoute->getArgument('id'); 
-        $invitem = $iiR->repoInvItemquery($id);
-        return $invitem;
+        $invitem = new InvItem();
+        $id = $currentRoute->getArgument('id');
+        if (null!==$id) {
+           $invitem = $iiR->repoInvItemquery($id);
+           if ($invitem) {
+               return $invitem;
+           }
+        }
+        return null;
     }
     
     /**
+     * 
+     * @param IIR $iiR
      * @return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
-     *
-     * @psalm-return \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
      */
     private function invitems(IIR $iiR): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader 
     {
@@ -402,8 +505,10 @@ final class InvItemController
         $items = $iiR->findinInvItems($item_ids);
         // If one item is deleted, the result is positive
         foreach ($items as $item){
+           if ($item instanceof InvItem) { 
             ($this->invitemService->deleteInvItem($item));
             $result = true;
+           } 
         }
         return $this->factory->createResponse(Json::encode(($result ? ['success'=>1]:['success'=>0])));  
     }
@@ -422,21 +527,27 @@ final class InvItemController
     }
     
     /**
+     * 
      * @param CurrentRoute $currentRoute
      * @param IIR $iiR
      * @param SR $sR
+     * @return Response
      */
     public function view(CurrentRoute $currentRoute, IIR $iiR,
         SR $sR 
-        ): \Yiisoft\DataResponse\DataResponse {
-        $parameters = [
-            'title' => $sR->trans('view'),
-            'action' => ['invitem/edit', ['id' => $this->invitem($currentRoute, $iiR)->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->invitem($currentRoute, $iiR)),
-            's'=>$sR,             
-            'invitem'=>$iiR->repoInvItemquery((string)$this->invitem($currentRoute, $iiR)->getId()),
-        ];
-        return $this->viewRenderer->render('_view', $parameters);
+        ): Response {
+        $inv_item = $this->invitem($currentRoute, $iiR);
+        if ($inv_item) {
+            $parameters = [
+                    'title' => $sR->trans('view'),
+                    'action' => ['invitem/edit', ['id' => $inv_item->getId()]],
+                    'errors' => [],
+                    'body' => $this->body($inv_item),
+                    's'=>$sR,             
+                    'invitem'=>$iiR->repoInvItemquery((string)$inv_item->getId()),
+            ];
+            return $this->viewRenderer->render('_view', $parameters);
+        }
+        return $this->webService->getNotFoundResponse();
     } 
 }

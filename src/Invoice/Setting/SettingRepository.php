@@ -70,25 +70,27 @@ final class SettingRepository extends Select\Repository
             
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $setting
+     * @param object|null $setting
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $setting): void
+    public function save(object|null $setting): void
     {
-        if ($setting->getSetting_key() === 'default_language') {
-            $this->session->set('_language', $setting->getSetting_value());            
+        if (null!==$setting) {
+            if ($setting->getSetting_key() === 'default_language') {
+                $this->session->set('_language', $setting->getSetting_value());            
+            }
+            $this->entityWriter->write([$setting]);        
         }
-        $this->entityWriter->write([$setting]);        
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $setting
+     * @param object|null $setting
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $setting): void
+    public function delete(object|null $setting): void
     {
         $this->entityWriter->delete([$setting]);
     }
@@ -109,9 +111,9 @@ final class SettingRepository extends Select\Repository
     /**
      * 
      * @param string $setting_id
-     * @return Setting|null
+     * @return object|null
      */
-    public function repoSettingquery(string $setting_id): ?Setting
+    public function repoSettingquery(string $setting_id): object|null
     {
         $query = $this
             ->select()
@@ -122,9 +124,9 @@ final class SettingRepository extends Select\Repository
     /**
      * 
      * @param string $setting_key
-     * @return Setting|null
+     * @return object|null
      */
-    public function withKey(string $setting_key): ?Setting
+    public function withKey(string $setting_key): object|null
     {
         $query = $this
             ->select()
@@ -135,9 +137,9 @@ final class SettingRepository extends Select\Repository
     /**
      * 
      * @param string $setting_value
-     * @return Setting|null
+     * @return object|null
      */
-    public function withValue(string $setting_value): ?Setting
+    public function withValue(string $setting_value): object|null
     {
         $query = $this
             ->select()
@@ -168,7 +170,9 @@ final class SettingRepository extends Select\Repository
     {
         $all_settings = $this->findAllPreloaded();  
         foreach ($all_settings as $data) {
-            $this->settings[$data->getSetting_key()] = $data->getSetting_value();
+            if ($data instanceof Setting) { 
+                $this->settings[$data->getSetting_key()] = $data->getSetting_value();
+            }
         }        
     }
     
@@ -200,12 +204,10 @@ final class SettingRepository extends Select\Repository
     }
     
     /**
+     * 
      * @param string $base_dir
      * @param int $level
-     *
-     * @return (int|string)[][]
-     *
-     * @psalm-return list<array{level: int, name: string, path: non-empty-string}>
+     * @return array
      */
     public function expandDirectoriesMatrix(string $base_dir, int $level): array {
         $directories = [];
@@ -224,41 +226,41 @@ final class SettingRepository extends Select\Repository
     } 
     
     /**
+     * 
+     * @param mixed $value1
+     * @param mixed $value2
+     * @param string $operator
+     * @param bool $checked
      * @return void
-     *
-     * @param null|string | int $value2
-     *
-     * @psalm-param '0'|'1'|0|1|null $value2
      */
-    public function check_select(string|bool $value1, string|int|null $value2, $operator = '==', $checked = false)
+    public function check_select(mixed $value1, mixed $value2, string $operator = '==', bool $checked = false) : void
     {
-    $select = $checked ? 'checked="checked"' : 'selected="selected"';
+        $select = $checked ? 'checked="checked"' : 'selected="selected"';
 
-    // Instant-validate if $value1 is a bool value
-    if (is_bool($value1) && $value2 === null) {
-        echo $value1 ? $select : '';
-        return;
-    }
+        // Instant-validate if $value1 is a bool value
+        if (is_bool($value1) && $value2 === null) {
+            echo $value1 ? $select : '';
+        }
 
-    switch ($operator) {
-        case '==':
-            $echo_selected = $value1 == $value2 ? true : false;
-            break;
-        case '!=':
-            $echo_selected = $value1 != $value2 ? true : false;
-            break;
-        case 'e':
-            $echo_selected = empty($value1) ? true : false;
-            break;
-        case '!e':
-            $echo_selected = empty($value1) ? true : false;
-            break;
-        default:
-            $echo_selected = $value1 ? true : false;
-            break;
-    }
+        switch ($operator) {
+            case '==':
+                $echo_selected = $value1 == $value2 ? true : false;
+                break;
+            case '!=':
+                $echo_selected = $value1 != $value2 ? true : false;
+                break;
+            case 'e':
+                $echo_selected = empty($value1) ? true : false;
+                break;
+            case '!e':
+                $echo_selected = empty($value1) ? true : false;
+                break;
+            default:
+                $echo_selected = $value1 ? true : false;
+                break;
+        }
 
-    echo $echo_selected ? $select : '';
+        echo $echo_selected ? $select : '';
     }
     
     /**
@@ -305,6 +307,7 @@ final class SettingRepository extends Select\Repository
             'af'=>'Afrikaans',
             'ar'=>'Arabic',
             'az'=>'Azerbaijani',
+            'fr'=>'French',
             'de'=>'German',
             'en'=>'English',
             'es'=>'Spanish',
@@ -331,8 +334,10 @@ final class SettingRepository extends Select\Repository
     public function save_session_locale_to_cldr(string $session_language) : void {
         if ($this->repoCount('cldr') > 0) {
             $cldr = $this->withKey('cldr');
-            $cldr->setSetting_value($session_language);
-            $this->save($cldr);
+            if ($cldr instanceof Setting) {
+                $cldr->setSetting_value($session_language);
+                $this->save($cldr);
+            }
         } else {
             $cldr = new Setting();
             $cldr->setSetting_key('cldr');
@@ -407,22 +412,25 @@ final class SettingRepository extends Select\Repository
     public function invoice_mark_viewed(string $invoice_id, IR $iR): void
     {
         $invoice = $iR->repoInvUnloadedquery($invoice_id);
-        
-        //mark as viewed if status is 2                                    
-        if (($iR->repoCount($invoice_id)>0) && $invoice->getStatus_id()===2){
-            //set the invoice to viewed status ie 3
-            $invoice->setStatus_id(3);
-            $iR->save($invoice);
-        }
-        
-        //set the invoice to 'read only' only once it has been viewed according to 'Other settings' 
-        //2 sent, 3 viewed, 4 paid,
-        if ($this->get_setting('read_only_toggle') == 3)
-        {
-            $invoice = $iR->repoInvUnloadedquery($invoice_id);
-            $invoice->setIs_read_only(true);
-            $iR->save($invoice);
-        }
+        if ($invoice) {
+            //mark as viewed if status is 2                                    
+            if (($iR->repoCount($invoice_id)>0) && $invoice->getStatus_id()===2){
+                //set the invoice to viewed status ie 3
+                $invoice->setStatus_id(3);
+                $iR->save($invoice);
+            }
+
+            //set the invoice to 'read only' only once it has been viewed according to 'Other settings' 
+            //2 sent, 3 viewed, 4 paid,
+            if ($this->get_setting('read_only_toggle') == 3)
+            {
+                $invoice = $iR->repoInvUnloadedquery($invoice_id);
+                if ($invoice) {
+                    $invoice->setIs_read_only(true);
+                    $iR->save($invoice);
+                }
+            }
+        }    
     }
     
    /**
@@ -434,22 +442,25 @@ final class SettingRepository extends Select\Repository
     public function quote_mark_viewed(string $quote_id, QR $qR) : void
     {
         $quote = $qR->repoQuoteStatusquery($quote_id,2);
-        
-        //mark as viewed if status is 2
-        if ($qR->repoCount($quote_id)>0){
-            //set the quote to viewed status ie 3
-            $quote->setStatus_id(3);
-            $qR->save($quote);
-        }
-        
-        //set the quote to 'read only' only once it has been viewed according to 'Other settings' 
-        //2 sent, 3 viewed, 
-        if ($this->get_setting('read_only_toggle') == 3)
-        {
-            $quote = $qR->repoQuoteUnloadedquery($quote_id);
-            $quote->setIs_read_only(true);
-            $qR->save($quote);
-        }
+        if ($quote) {
+            //mark as viewed if status is 2
+            if ($qR->repoCount($quote_id)>0){
+                //set the quote to viewed status ie 3
+                $quote->setStatus_id(3);
+                $qR->save($quote);
+            }
+
+            //set the quote to 'read only' only once it has been viewed according to 'Other settings' 
+            //2 sent, 3 viewed, 
+            if ($this->get_setting('read_only_toggle') == 3)
+            {
+                $quote = $qR->repoQuoteUnloadedquery($quote_id);
+                if ($quote) {
+                    $quote->setIs_read_only(true);
+                    $qR->save($quote);
+                }
+            }
+        }    
     }
     
     /**
@@ -457,34 +468,43 @@ final class SettingRepository extends Select\Repository
      */
     public function invoice_mark_sent(string|null $invoice_id, IR $iR) : void
     {
-        $invoice = $iR->repoInvUnloadedquery($invoice_id);
-        //draft->sent->view->paid
-        //set the invoice to sent ie. 2                                    
-        if (!empty($invoice) && $invoice->getStatus_id() === 1){
-            $invoice->setStatus_id(2);
-        }
-        //set the invoice to read only ie. not updateable, if invoice_status_id is 2
-        if ($this->withKey('read_only_toggle')->getSetting_value() === '2')
-        {
-            $invoice->setIs_read_only(true);            
-        }
-        $iR->save($invoice);
+            if (null!==$invoice_id) {
+            $invoice = $iR->repoInvUnloadedquery($invoice_id);
+            if ($invoice) {
+                //draft->sent->view->paid
+                //set the invoice to sent ie. 2                                    
+                if ($invoice->getStatus_id() === 1){
+                    $invoice->setStatus_id(2);
+                }
+                //set the invoice to read only ie. not updateable, if invoice_status_id is 2
+                if (null!==$this->withKey('read_only_toggle')) {
+                    if ($this->withKey('read_only_toggle')?->getSetting_value() === '2')
+                    {
+                        $invoice->setIs_read_only(true);            
+                    }
+                }
+                $iR->save($invoice);
+                
+            }
+        }    
     }
     
     /**
-     * @param null|string $quote_id
+     * 
+     * @param string|null $quote_id
+     * @param QR $qR
+     * @return void
      */
     public function quote_mark_sent(string|null $quote_id, QR $qR) : void
     {
         // Quote exists and has a status of 1 ie. draft
         if ($qR->repoQuoteStatuscount($quote_id, 1) > 0) {
-           $quote = $qR->repoQuoteStatusquery($quote_id,1);
+            $quote = $qR->repoQuoteStatusquery($quote_id,1);
+            if ($quote){
+                 $quote->setStatus_id(2);
+                 $qR->save($quote);
+            }
         }   
-        
-        if (!empty($quote)){
-            $quote->setStatus_id(2);
-            $qR->save($quote);
-        }
     }
     
     
@@ -609,40 +629,34 @@ final class SettingRepository extends Select\Repository
         return $aliases;
     }
     
-    /**
-     * @psalm-param 'pdf'|'public' $type
-     */
-    public function get_invoice_templates(string $type = 'pdf')
+    public function get_invoice_templates(string $type = 'pdf') : array
     {
         $aliases = new Aliases(['@base' => dirname(dirname(dirname(__DIR__))), 
                                 '@pdf' => '@base/resources/views/invoice/template/invoice/pdf',
                                 '@public' =>'@base/resources/views/invoice/template/invoice/public'
                                ]);
+        $templates = [];
         if ($type == 'pdf') { 
             $templates = array_diff(scandir($aliases->get('@pdf'),SCANDIR_SORT_ASCENDING), array('..', '.'));
         } elseif ($type == 'public') {
             $templates = array_diff(scandir($aliases->get('@public'),SCANDIR_SORT_ASCENDING), array('..', '.'));
-        }
-        $templates = $this->remove_extension($templates);
-        return $templates;
+        }        
+        return $this->remove_extension($templates);
     }
 
-    /**
-     * @psalm-param 'pdf'|'public' $type
-     */
-    public function get_quote_templates(string $type = 'pdf')
+    public function get_quote_templates(string $type = 'pdf') : array
     {
          $aliases = new Aliases(['@base' => dirname(dirname(dirname(__DIR__))), 
                                  '@pdf' => '@base/resources/views/invoice/template/quote/pdf',
                                  '@public' =>'@base/resources/views/invoice/template/quote/public'
                                ]);
+        $templates = [];
         if ($type == 'pdf') { 
             $templates = array_diff(scandir($aliases->get('@pdf'),SCANDIR_SORT_ASCENDING), array('..', '.'));
         } elseif ($type == 'public') {
             $templates = array_diff(scandir($aliases->get('@public'),SCANDIR_SORT_ASCENDING), array('..', '.'));
         }
-        $templates = $this->remove_extension($templates);
-        return $templates;
+        return $this->remove_extension($templates);
     }
     
     /**
@@ -712,8 +726,13 @@ final class SettingRepository extends Select\Repository
         ]);
         return $aliases;
     }
-
-    private function remove_extension($files)
+    
+    /**
+     * 
+     * @param array $files
+     * @return array
+     */
+    private function remove_extension(array $files) : array
     {
         foreach ($files as $key => $file) {
             $files[$key] = str_replace('.php', '', $file);
@@ -1191,6 +1210,9 @@ final class SettingRepository extends Select\Repository
         ],
         ''    
         ];
+        /**
+         * @psalm-suppress PossiblyInvalidArrayOffset
+         */
         $information = 'data-toggle = "tooltip"'.' '.'title = "'. $tooltip[$setting]['why'].' and is used in '.$tooltip[$setting]['where'].'"';
         $build = $debug_mode ? $information : '';
         return $build;
@@ -1267,6 +1289,7 @@ final class SettingRepository extends Select\Repository
      * @psalm-return array{upper: \DateTimeImmutable, lower: \DateTimeImmutable,...}
      */
     public function range(string $period) : array {
+        $range = [];
         switch ($period) {
                     case 'this-month':
                         $range['upper'] = new \DateTimeImmutable('now');

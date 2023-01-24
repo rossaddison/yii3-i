@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Invoice\PaymentCustom;
 
-use App\Invoice\Entity\PaymentCustom;
 use Cycle\ORM\Select;
 use Throwable;
 use Yiisoft\Data\Reader\Sort;

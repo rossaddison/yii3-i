@@ -91,16 +91,19 @@ private EntityWriter $entityWriter;
     public function generate_number(int $id, bool $set_next = true) : mixed
     {
         $group = $this->repoGroupquery((string)$id) ?: null;
-        $my_result = $this->parse_identifier_format(
-            (string)$group->getIdentifier_format(),
-            (int)$group->getNext_id(),
-            (int)$group->getLeft_pad()) ?? null ;
-        if ($set_next) {
-            $this->set_next_number($id);
+        if ($group) {
+            $my_result = $this->parse_identifier_format(
+                (string)$group->getIdentifier_format(),
+                (int)$group->getNext_id(),
+                (int)$group->getLeft_pad()) ?? null ;
+            if ($set_next) {
+                $this->set_next_number($id);
+            }
+            if (!empty($my_result) && gettype($my_result)){
+                return $my_result;        
+            } 
+            return '';
         }
-        if (!empty($my_result) && gettype($my_result)){
-            return $my_result;        
-        } 
         return '';
     }
     

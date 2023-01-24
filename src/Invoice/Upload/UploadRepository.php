@@ -116,9 +116,9 @@ private EntityWriter $entityWriter;
     /**
      * 
      * @param string $id
-     * @return Upload|null
+     * @return object|null
      */
-    public function repoUploadquery(string $id) : Upload|null {
+    public function repoUploadquery(string $id) : object|null {
         $query = $this->select()
                       ->where(['id' => $id]);
         return  $query->fetchOne() ?: null;

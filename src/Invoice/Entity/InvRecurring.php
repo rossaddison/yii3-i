@@ -73,7 +73,7 @@ class InvRecurring
         return $this->start;
     }    
     
-    public function setStart(?string $start): void
+    public function setStart(string $start): void
     {
         $this->start = new \DateTime($start);
     }
@@ -83,7 +83,7 @@ class InvRecurring
         return $this->end;
     }    
     
-    public function setEnd(?string $end): void
+    public function setEnd(string $end): void
     {
         $this->end = new \DateTime($end);
     }
@@ -93,7 +93,7 @@ class InvRecurring
         return $this->next;
     }    
     
-    public function setNext(?string $next): void 
+    public function setNext(string $next): void 
     {
         $this->next = new \DateTime($next);
     }

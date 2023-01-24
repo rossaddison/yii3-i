@@ -250,25 +250,25 @@ use Yiisoft\Html\Html;
                         <span><?= $s->trans('subtotal'); ?></span><br/>
                         
                         <span name="subtotal" class="amount" data-toggle="tooltip" title="inv_item_amount->subtotal">
-                            <?= $numberhelper->format_currency($inv_item_amount->repoInvItemAmountquery((string)$item->getId())->getSubtotal()); ?>
+                            <?= $numberhelper->format_currency($inv_item_amount->repoInvItemAmountquery((string)$item->getId())?->getSubtotal()); ?>
                         </span>
                     </td>
                     <td class="td-amount td-vert-middle">
                         <span><?= $s->trans('discount'); ?></span><br/>
                         <span name="item_discount_total" class="amount" data-toggle="tooltip" title="inv_item_amount->discount">
-                            <?= $numberhelper->format_currency($inv_item_amount->repoInvItemAmountquery((string)$item->getId())->getDiscount()); ?>
+                            <?= $numberhelper->format_currency($inv_item_amount->repoInvItemAmountquery((string)$item->getId())?->getDiscount()); ?>
                         </span>
                     </td>
                     <td class="td-amount td-vert-middle">
                         <span><?= $s->trans('tax'); ?></span><br/>
                         <span name="item_tax_total" class="amount" data-toggle="tooltip" title="inv_item_amount->tax_total">
-                            <?= $numberhelper->format_currency($inv_item_amount->repoInvItemAmountquery((string)$item->getId())->getTax_total()); ?>
+                            <?= $numberhelper->format_currency($inv_item_amount->repoInvItemAmountquery((string)$item->getId())?->getTax_total()); ?>
                         </span>
                     </td>
                     <td class="td-amount td-vert-middle">
                         <span><?= $s->trans('total'); ?></span><br/>
                         <span name="item_total" class="amount" data-toggle="tooltip" title="inv_item_amount->total">
-                            <?= $numberhelper->format_currency($inv_item_amount->repoInvItemAmountquery((string)$item->getId())->getTotal()); ?>
+                            <?= $numberhelper->format_currency($inv_item_amount->repoInvItemAmountquery((string)$item->getId())?->getTotal()); ?>
                         </span>
                     </td>                   
                 </tr>
@@ -303,13 +303,13 @@ use Yiisoft\Html\Html;
                     </td>
                     <td>
                         <?php if ($inv_tax_rates) {
-                            foreach ($inv_tax_rates as $index => $inv_tax_rate) { ?>
-                                <form method="POST" class="form-inline" action="<?= $urlGenerator->generate('inv/delete_inv_tax_rate',['id'=>$inv_tax_rate->getId()]) ?>">
+                            foreach ($inv_tax_rates as $inv_tax_rate) { ?>
+                                
                                     <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                                     <?php if ($show_buttons === true && $user_can_edit === true) { ?>
-                                        <button type="submit" class="btn btn-xs btn-link" onclick="return confirm('<?= $s->trans('delete_tax_warning'); ?>');">
-                                            <i class="fa fa-trash"></i>
-                                        </button>
+                                    <span  class="btn btn-xs btn-link" onclick="return confirm('<?= $s->trans('delete_tax_warning'); ?>');">
+                                        <a href="<?= $urlGenerator->generate('inv/delete_inv_tax_rate',['id'=>$inv_tax_rate->getId()]) ?>"><i class="fa fa-trash"></i></a>
+                                    </span>
                                     <?php } ?>
                                     <span class="text-muted">
                                         <?= Html::encode($inv_tax_rate->getTaxRate()->getTax_rate_name()) . ' ' . $numberhelper->format_amount($inv_tax_rate->getTaxRate()->getTax_rate_percent()) . '%' ?>
@@ -317,7 +317,7 @@ use Yiisoft\Html\Html;
                                     <span class="amount" data-toggle="tooltip" title="inv_tax_rate->inv_tax_rate_amount">
                                         <?php echo $numberhelper->format_currency($inv_tax_rate->getInv_tax_rate_amount()); ?>
                                     </span>
-                                </form>
+                                
                             <?php }
                         } else {
                             echo $numberhelper->format_currency('0');

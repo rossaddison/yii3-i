@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Invoice\Product;
 
-use App\Invoice\Entity\Product;
 use Cycle\ORM\Select;
 use Throwable;
 use Cycle\Database\Injection\Parameter;
@@ -99,7 +98,7 @@ final class ProductRepository extends Select\Repository
      *
      * @psalm-return TEntity|null
      */
-    public function repoProductquery(string|null $product_id):object|null
+    public function repoProductquery(string|null $product_id): object|null
     {
         $query = $this
             ->select()
@@ -111,9 +110,11 @@ final class ProductRepository extends Select\Repository
     }
     
     /**
-     * @psalm-param 'Cleen Screans'|'Tuch Padd' $product_name
+     * 
+     * @param string $product_name
+     * @return object|null
      */
-    public function withName(string $product_name) : ?Product 
+    public function withName(string $product_name) : object|null 
     {
         $query = $this
             ->select()
@@ -170,11 +171,11 @@ final class ProductRepository extends Select\Repository
     } 
     
     /**
-     * @param int|string $product_id
-     *
-     * @psalm-param ''|int $product_id
+     * 
+     * @param string $product_id
+     * @return int
      */
-    public function repoCount(string|int $product_id): int {
+    public function repoCount(string $product_id): int {
         $count = $this->select()
                       ->where(['id' => $product_id])
                       ->count();

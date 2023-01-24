@@ -91,6 +91,7 @@ return [
     'invoice.products'=>'Products',
     'invoice.project.add'=>'Project Add',
     'invoice.quote'=>'Quote',
+    'invoice.quote.copied.to.invoice'=>'Quote Copied to Invoice',
     'invoice.quote.item'=>'Quote Item',
     'invoice.quote.custom'=>'Quote Custom',
     'invoice.quote.custom.add'=>'Quote Custom Add',

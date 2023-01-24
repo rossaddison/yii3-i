@@ -39,11 +39,16 @@ final class TaskForm extends FormModel
       return $this->price;
     }
     
-    public function getFinish_date(\App\Invoice\Setting\SettingRepository $s) : \DateTime|false
+    public function getFinish_date(\App\Invoice\Setting\SettingRepository $s) : \DateTime
     {
         $datehelper = new DateHelper($s);         
-        $finish_date = $datehelper->datetime_zone_style($this->finish_date);
-        return $finish_date;
+        $datetime = new \DateTime();
+        $datetime->setTimezone(new \DateTimeZone($s->get_setting('time_zone') ? $s->get_setting('time_zone') : 'Europe/London')); 
+        $datetime->format($datehelper->style());
+        $date = $datehelper->date_to_mysql(null!==$this->finish_date ? $this->finish_date : \Date('Y-m-d'));
+        $str_replace = str_replace($datehelper->separator(), '-', $date);
+        $datetime->modify($str_replace);
+        return $datetime;
     }
 
     public function getStatus() : int|null

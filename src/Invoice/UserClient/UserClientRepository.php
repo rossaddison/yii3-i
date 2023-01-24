@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Invoice\UserClient;
 
 use App\Invoice\Entity\UserClient;
+use App\Invoice\Entity\Client;
+use App\Invoice\Entity\UserInv;
 use App\Invoice\UserClient\UserClientForm;
 use App\Invoice\UserClient\UserClientService as UCS;
 use App\Invoice\UserInv\UserInvRepository as UIR;
@@ -129,10 +131,7 @@ private EntityWriter $entityWriter;
     
     /**
      * @param string $user_id
-     *
-     * @return string[]
-     *
-     * @psalm-return list{0?: string,...}
+     * @return array
      */
     public function get_assigned_to_user(string $user_id) : array {
         // Get all clients assigned to this user
@@ -141,8 +140,10 @@ private EntityWriter $entityWriter;
         if ($count_user_clients> 0) {
             $user_clients = $this->repoClientquery($user_id);        
             foreach ($user_clients as $user_client) {
-                // Include Non-active clients as well since these might be reactivated later 
-                $assigned_client_ids[] = $user_client->getClient_id();                 
+                if ($user_client instanceof UserClient) {
+                    // Include Non-active clients as well since these might be reactivated later 
+                    $assigned_client_ids[] = $user_client->getClient_id();                 
+                }
             }
         }
         return $assigned_client_ids;
@@ -165,8 +166,10 @@ private EntityWriter $entityWriter;
         $all_clients = $cR->findAllPreloaded();
         $every_client_ids = [];
         foreach ($all_clients as $client) {
-            $client_id = $client->getClient_id();
-            $every_client_ids[] = $client_id;
+            if ($client instanceof Client) {
+                $client_id = $client->getClient_id();
+                $every_client_ids[] = $client_id;
+            }
         }
         
         // Create unassigned client list for dropdown
@@ -189,9 +192,11 @@ private EntityWriter $entityWriter;
         if ($uiR->countAllWithAllClients()>0) {
             $users = $uiR->findAllWithAllClients();
             foreach ($users as $user) {
-                $user_id = $user->getUser_id();
-                $available_client_ids = $this->get_not_assigned_to_user($user_id, $cR); 
-                $this->assign_to_user_client($available_client_ids, $user_id, $validator, $ucS);
+                if ($user instanceof UserInv) {
+                    $user_id = $user->getUser_id();
+                    $available_client_ids = $this->get_not_assigned_to_user($user_id, $cR); 
+                    $this->assign_to_user_client($available_client_ids, $user_id, $validator, $ucS);
+                }
             }
         }            
     }

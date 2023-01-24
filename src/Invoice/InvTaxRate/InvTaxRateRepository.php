@@ -6,7 +6,6 @@ namespace App\Invoice\InvTaxRate;
 
 use App\Invoice\Entity\InvTaxRate;
 use Cycle\ORM\Select;
-use Throwable;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
@@ -97,10 +96,14 @@ private EntityWriter $entityWriter;
         return $count;   
     }
     
-    //find a specific invs tax rate, normally to delete
-    public function repoInvTaxRatequery(string $id): null|InvTaxRate    {
+    /**
+     * 
+     * @param string $id
+     * @return TEntity|null
+     */
+    public function repoInvTaxRatequery(string $id): ?object    {
         $query = $this->select()->load('inv')->load('tax_rate')->where(['id' => $id]);
-        return  $query->fetchOne() ?: null;        
+        return  $query->fetchOne();        
     }
     
     // find all inv tax rates used for a specific inv normally to apply include_item_tax 
@@ -113,9 +116,14 @@ private EntityWriter $entityWriter;
         return $this->prepareDataReader($query);   
     }
     
-    public function repoTaxRatequery(string $tax_rate_id): null|InvTaxRate    {
+    /**
+     * 
+     * @param string $tax_rate_id
+     * @return TEntity|null
+     */
+    public function repoTaxRatequery(string $tax_rate_id): ?object {
         $query = $this->select()->load('tax_rate')->where(['tax_rate_id' => $tax_rate_id]);
-        return  $query->fetchOne() ?: null;        
+        return  $query->fetchOne();        
     }
         
     public function repoGetInvTaxRateAmounts(string $inv_id): EntityReader  {

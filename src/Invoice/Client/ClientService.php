@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Invoice\Client;
 
-use App\Invoice\Entity\Client;
 use App\Invoice\Setting\SettingRepository;
 
 final class ClientService
@@ -16,10 +15,8 @@ final class ClientService
         $this->repository = $repository;
     }
 
-    public function saveClient(Client $model, ClientForm $form, SettingRepository $s): void
+    public function saveClient(object $model, ClientForm $form, SettingRepository $s): void
     {
-        //ERROR: PossiblyNullArgument - src/Invoice/Client/ClientService.php:21:32 - Argument 1 of App\Invoice\Entity\Client::setClient_name cannot be null, possibly null value provided (see https://psalm.dev/078)
-        //$model->setClient_name($form->getClient_name());
         null!==$form->getClient_name() ? $model->setClient_name($form->getClient_name()) : '';
         null!==$form->getClient_address_1() ? $model->setClient_address_1($form->getClient_address_1()): '';
         null!==$form->getClient_address_2() ? $model->setClient_address_2($form->getClient_address_2()): '';

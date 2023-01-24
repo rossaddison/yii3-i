@@ -91,7 +91,7 @@ final class UnitRepository extends Select\Repository
         return  $query->fetchOne() ?: null;        
     }
     
-    public function withName(string $unit_name): ?Unit
+    public function withName(string $unit_name): object|null
     {
         $query = $this
             ->select()
@@ -106,19 +106,24 @@ final class UnitRepository extends Select\Repository
      * @param $unit_id
      * @param $quantity
      *
-     * @return mixed
+     * @return string|object|null
      *
      * @psalm-param 1 $quantity
      */
-    public function singular_or_plural_name(string $unit_id, int $quantity)
+    public function singular_or_plural_name(string $unit_id, int $quantity) : string|object|null
     {
-        if ((int)$unit_id === 0) { return '';} else {
+        if ((int)$unit_id === 0) { 
+            return '';            
+        } else {
             $unit = $this->repoUnitquery($unit_id);
-            if ($quantity == -1 || $quantity == 1) {
-                return $unit->getUnit_name();
-            } else {
-                return $unit->getUnit_name_plrl();
-            }        
+            if ($unit) {
+                if ($quantity == -1 || $quantity == 1) {
+                    return $unit->getUnit_name();
+                } else {
+                    return $unit->getUnit_name_plrl();
+                }
+            }
+            return null;            
         }
     }
     

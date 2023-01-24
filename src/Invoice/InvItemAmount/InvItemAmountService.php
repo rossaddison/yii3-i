@@ -16,7 +16,7 @@ final class InvItemAmountService
         $this->repository = $repository;
     }
     
-    public function saveInvItemAmountNoForm(InvItemAmount $model, array $invitem): void
+    public function saveInvItemAmountNoForm(object $model, array $invitem): void
     {        
        $model->setInv_item_id((int)$invitem['inv_item_id']);
        $model->setSubtotal($invitem['subtotal']);
@@ -26,7 +26,7 @@ final class InvItemAmountService
        $this->repository->save($model);
     }
     
-    public function deleteInvItemAmount(InvItemAmount $model): void
+    public function deleteInvItemAmount(object $model): void
     {
        $this->repository->delete($model);
     }

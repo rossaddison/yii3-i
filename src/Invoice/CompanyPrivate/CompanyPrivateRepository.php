@@ -84,7 +84,7 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @return null|object
+     * @return object|null
      *
      * @psalm-return TEntity|null
      */

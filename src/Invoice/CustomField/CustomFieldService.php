@@ -17,19 +17,17 @@ final class CustomFieldService
         $this->repository = $repository;
     }
 
-    public function saveCustomField(CustomField $model, CustomFieldForm $form): void
+    public function saveCustomField(object $model, CustomFieldForm $form): void
     {
-        
-       $model->setTable($form->getTable());
-       $model->setLabel($form->getLabel());
-       $model->setType($form->getType());
-       $model->setLocation($form->getLocation());
-       $model->setOrder($form->getOrder());
- 
-        $this->repository->save($model);
+       null!==$form->getTable() ? $model->setTable($form->getTable()) : '';
+       null!==$form->getLabel() ? $model->setLabel($form->getLabel()) : '';
+       null!==$form->getType() ? $model->setType($form->getType()) : '';
+       null!==$form->getLocation() ? $model->setLocation($form->getLocation()) : '';
+       null!==$form->getOrder() ? $model->setOrder($form->getOrder()) : '';
+       $this->repository->save($model);
     }
     
-    public function deleteCustomField(CustomField $model): void
+    public function deleteCustomField(object $model): void
     {
         $this->repository->delete($model);
     }

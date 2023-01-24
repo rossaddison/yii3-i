@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Invoice\Sumex;
 
+use App\Invoice\Helpers\DateHelper;
 use Yiisoft\Form\FormModel;
 use Yiisoft\Validator\Rule\Required;
-use \DateTime;
 
 final class SumexForm extends FormModel
 {    
@@ -38,20 +38,41 @@ final class SumexForm extends FormModel
     {
       return $this->observations;
     }
-
-    public function getTreatmentstart() : DateTime|null
+    
+    public function getTreatmentstart(\App\Invoice\Setting\SettingRepository $s) : \DateTime
     {
-        return new \DateTime($this->treatmentstart);       
+        $datehelper = new DateHelper($s);         
+        $datetime = new \DateTime();
+        $datetime->setTimezone(new \DateTimeZone($s->get_setting('time_zone') ? $s->get_setting('time_zone') : 'Europe/London')); 
+        $datetime->format($datehelper->style());
+        $date = $datehelper->date_to_mysql(null!==$this->treatmentstart ? $this->treatmentstart : \Date('Y-m-d'));
+        $str_replace = str_replace($datehelper->separator(), '-', $date);
+        $datetime->modify($str_replace);
+        return $datetime;
     }
-
-    public function getTreatmentend() : DateTime|null
+    
+    public function getTreatmentend(\App\Invoice\Setting\SettingRepository $s) : \DateTime
     {
-        return new \DateTime($this->treatmentend);
+        $datehelper = new DateHelper($s);         
+        $datetime = new \DateTime();
+        $datetime->setTimezone(new \DateTimeZone($s->get_setting('time_zone') ? $s->get_setting('time_zone') : 'Europe/London')); 
+        $datetime->format($datehelper->style());
+        $date = $datehelper->date_to_mysql(null!==$this->treatmentend ? $this->treatmentend : \Date('Y-m-d'));
+        $str_replace = str_replace($datehelper->separator(), '-', $date);
+        $datetime->modify($str_replace);
+        return $datetime;
     }
-
-    public function getCasedate() : DateTime|null
+    
+    public function getCasedate(\App\Invoice\Setting\SettingRepository $s) : \DateTime
     {
-        return new \DateTime($this->casedate);
+        $datehelper = new DateHelper($s);         
+        $datetime = new \DateTime();
+        $datetime->setTimezone(new \DateTimeZone($s->get_setting('time_zone') ? $s->get_setting('time_zone') : 'Europe/London')); 
+        $datetime->format($datehelper->style());
+        $date = $datehelper->date_to_mysql(null!==$this->casedate ? $this->casedate : \Date('Y-m-d'));
+        $str_replace = str_replace($datehelper->separator(), '-', $date);
+        $datetime->modify($str_replace);
+        return $datetime;
     }
 
     public function getCasenumber() : string|null

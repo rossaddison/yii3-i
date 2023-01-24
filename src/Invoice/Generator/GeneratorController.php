@@ -159,27 +159,31 @@ final class GeneratorController
     public function edit(CurrentRoute $currentRoute, Request $request, GeneratorRepository $generatorRepository, SettingRepository $s, ValidatorInterface $validator, DatabaseManager $dbal): Response 
     {
         $generator = $this->generator($currentRoute, $generatorRepository);
-        $parameters = [
-            'title' => $s->trans('edit'),
-            'action' => ['generator/edit', ['id' => $generator->getGentor_id()]],
-            'errors' => [],
-            'body' => $this->body($this->generator($currentRoute, $generatorRepository)),
-            's'=>$s,
-            'tables'=>$dbal->database('default')->getTables(),
-            'selected_table'=>$this->generator($currentRoute, $generatorRepository)->getPre_entity_table(),
-        ];
-        if ($request->getMethod() === Method::POST) {
-            $form = new GeneratorForm();
-            $body = $request->getParsedBody();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
-                $this->generatorService->saveGenerator($generator, $form);
-                $this->flash('warning', $s->trans('record_successfully_updated'));
-                return $this->webService->getRedirectResponse('generator/index');
+        if ($generator) {
+            $parameters = [
+                'title' => $s->trans('edit'),
+                'action' => ['generator/edit', ['id' => $generator->getGentor_id()]],
+                'errors' => [],
+                'body' => $generator,
+                's'=>$s,
+                'tables'=>$dbal->database('default')->getTables(),
+                'selected_table'=>$generator->getPre_entity_table(),
+            ];
+            if ($request->getMethod() === Method::POST) {
+                $form = new GeneratorForm();
+                $body = $request->getParsedBody();
+                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                    $this->generatorService->saveGenerator($generator, $form);
+                    $this->flash('warning', $s->trans('record_successfully_updated'));
+                    return $this->webService->getRedirectResponse('generator/index');
+                }
+                $parameters['body'] = $body;
+                $parameters['errors'] = $form->getFormErrors();
             }
-            $parameters['body'] = $body;
-            $parameters['errors'] = $form->getFormErrors();
-        }
-        return $this->viewRenderer->render('__form', $parameters);
+            return $this->viewRenderer->render('__form', $parameters);
+        } else {
+                    return $this->webService->getRedirectResponse('generator/index');
+        }    
     }
     
     /**
@@ -191,10 +195,14 @@ final class GeneratorController
      */
     public function delete(CurrentRoute $currentRoute, GeneratorRepository $generatorRepository, SettingRepository $s): Response 
     {
-        $generator = $this->generator($currentRoute, $generatorRepository);
-        $this->flash('danger', $s->trans('record_successfully_deleted'));
         try {
-           $this->generatorService->deleteGenerator($generator);
+            $generator = $this->generator($currentRoute, $generatorRepository);
+            if ($generator) {
+                $this->flash('danger', $s->trans('record_successfully_deleted'));
+                $this->generatorService->deleteGenerator($generator);
+                return $this->webService->getRedirectResponse('generator/index');  
+            }           
+            return $this->webService->getRedirectResponse('generator/index');
         }
         catch (\Exception $e) {
            unset($e);  
@@ -209,18 +217,21 @@ final class GeneratorController
      * @param SettingRepository $settingRepository
      * @param ValidatorInterface $validator
      */
-    public function view(CurrentRoute $currentRoute, GeneratorRepository $generatorRepository, SettingRepository $settingRepository,ValidatorInterface $validator): \Yiisoft\DataResponse\DataResponse {
+    public function view(CurrentRoute $currentRoute, GeneratorRepository $generatorRepository, SettingRepository $settingRepository, ValidatorInterface $validator): Response {
         $generator = $this->generator($currentRoute, $generatorRepository);
-        $parameters = [
-            'title' => $settingRepository->trans('view'),
-            'action' => ['generator/view', ['id' => $generator->getGentor_id()]],
-            'errors' => [],
-            'generator'=>$this->generator($currentRoute, $generatorRepository),
-            's'=>$settingRepository,     
-            'body' => $this->body($this->generator($currentRoute, $generatorRepository)),            
-            'selected_table'=>$this->generator($currentRoute, $generatorRepository)->getPre_entity_table(),            
-        ];
-        return $this->viewRenderer->render('__view', $parameters);
+        if ($generator) {
+            $parameters = [
+                'title' => $settingRepository->trans('view'),
+                'action' => ['generator/view', ['id' => $generator->getGentor_id()]],
+                'errors' => [],
+                'generator'=>$generator,
+                's'=>$settingRepository,     
+                'body' => $this->body($generator),            
+                'selected_table'=>$generator->getPre_entity_table(),            
+            ];
+            return $this->viewRenderer->render('__view', $parameters);
+        }
+        return $this->webService->getRedirectResponse('generator/index');   
     }
     
     /**
@@ -238,12 +249,15 @@ final class GeneratorController
     /**
      * @param CurrentRoute $currentRoute
      * @param GeneratorRepository $generatorRepository
-     * @return Gentor|null
+     * @return object|null
      */
-    private function generator(CurrentRoute $currentRoute, GeneratorRepository $generatorRepository): Gentor|null{
+    private function generator(CurrentRoute $currentRoute, GeneratorRepository $generatorRepository): object|null{
         $id = $currentRoute->getArgument('id');
-        $generator = $generatorRepository->repoGentorQuery($id);
-        return $generator; 
+        if (null!==$id) {
+            $generator = $generatorRepository->repoGentorQuery($id);
+            return $generator; 
+        }
+        return null;
     }
    
     /**
@@ -269,11 +283,11 @@ final class GeneratorController
     }
     
     /**
-     * @return (bool|int|null|string)[]
-     *
-     * @psalm-return array{route_prefix: string, route_suffix: string, camelcase_capital_name: string, small_singular_name: string, small_plural_name: string, namespace_path: string, controller_layout_dir: string, controller_layout_dir_dot_path: string, repo_extra_camelcase_name: string, paginator_next_page_attribute: string, pre_entity_table: string, created_include: bool, modified_include: bool, updated_include: bool, deleted_include: bool, constrain_index_field: string, keyset_paginator_include: bool, offset_paginator_include: bool, filter_field: string, filter_field_start_position: int|null, filter_field_end_position: int|null, flash_include: bool, headerline_include: bool}
+     * 
+     * @param object $generator
+     * @return array
      */
-    private function body(Gentor $generator): array {
+    private function body(object $generator): array {
         $body = [
                 'route_prefix' => $generator->getRoute_prefix(),
                 'route_suffix' => $generator->getRoute_suffix(),
@@ -313,29 +327,32 @@ final class GeneratorController
     public function entity(CurrentRoute $currentRoute, GeneratorRepository $gr, 
                              SettingRepository $settingRepository, GeneratorRelationRepository $grr,
                              DatabaseManager $dbal, View $view
-                            ): \Yiisoft\DataResponse\DataResponse {
+                            ): Response {
         $file = self::ENTITY;
         $path = $this->getAliases();
         $g = $this->generator($currentRoute, $gr);
-        $id = $g->getGentor_id();
-        $relations = $grr->findRelations($id);
-        $orm = $dbal->database('default')
-                    ->table($g->getPre_entity_table());
-        $content = $this->getContent($view,$g,$relations,$orm,$file);
-        $flash = $this->flash('success',$g->getCamelcase_capital_name().$file.' generated at '.$path.'/'.$g->getCamelcase_capital_name().$file);
-        $build_file = $this->build_and_save($path,$content,$file,$g->getCamelcase_capital_name());
-        $parameters = [
-            'canEdit'=>$this->rbac(),
-            's'=> $settingRepository,
-            'title' => 'Generate '.$file,
-            'body' => $this->body($g),
-            'generator'=> $g,
-            'orm_schema'=>$orm,
-            'relations'=>$relations,
-            'flash'=> $flash,
-            'generated'=>$build_file,
-        ];
-        return $this->viewRenderer->render('__results', $parameters);
+        if (null!==$g) {
+            $id = $g->getGentor_id();
+            $relations = $grr->findRelations($id);
+            $orm = $dbal->database('default')
+                        ->table($g->getPre_entity_table());
+            $content = $this->getContent($view,$g,$relations,$orm,$file);
+            $flash = $this->flash('success',$g->getCamelcase_capital_name().$file.' generated at '.$path.'/'.$g->getCamelcase_capital_name().$file);
+            $build_file = $this->build_and_save($path,$content,$file,$g->getCamelcase_capital_name());
+            $parameters = [
+                'canEdit'=>$this->rbac(),
+                's'=> $settingRepository,
+                'title' => 'Generate '.$file,
+                'body' => $this->body($g),
+                'generator'=> $g,
+                'orm_schema'=>$orm,
+                'relations'=>$relations,
+                'flash'=> $flash,
+                'generated'=>$build_file,
+            ];
+            return $this->viewRenderer->render('__results', $parameters);
+        }
+        return $this->webService->getRedirectResponse('site/index');
     }
     
     /**
@@ -349,29 +366,32 @@ final class GeneratorController
     public function repo(CurrentRoute $currentRoute, GeneratorRepository $gr, 
                              SettingRepository $settingRepository, GeneratorRelationRepository $grr,
                              DatabaseManager $dbal, View $view
-                            ): \Yiisoft\DataResponse\DataResponse {
+                            ): Response {
         $file = self::REPO;
         $path = $this->getAliases();
         $g = $this->generator($currentRoute, $gr);
-        $id = $g->getGentor_id();
-        $relations = $grr->findRelations($id);
-        $orm = $dbal->database('default')
-                    ->table($g->getPre_entity_table());
-        $content = $this->getContent($view,$g,$relations,$orm,$file);
-        $flash = $this->flash('success',$g->getCamelcase_capital_name().$file.' generated at '.$path.'/'.$g->getCamelcase_capital_name().$file);
-        $build_file = $this->build_and_save($path,$content,$file,$g->getCamelcase_capital_name());
-        $parameters = [
-            'canEdit'=>$this->rbac(),
-            's'=> $settingRepository,
-            'title' => 'Generate '.$file,
-            'body' => $this->body($g),
-            'generator'=> $g,
-            'orm_schema'=>$orm,
-            'relations'=>$relations,
-            'flash'=> $flash,
-            'generated'=>$build_file,
-        ];
-        return $this->viewRenderer->render('__results', $parameters);
+        if ($g) {
+            $id = $g->getGentor_id();
+            $relations = $grr->findRelations($id);
+            $orm = $dbal->database('default')
+                        ->table($g->getPre_entity_table());
+            $content = $this->getContent($view,$g,$relations,$orm,$file);
+            $flash = $this->flash('success',$g->getCamelcase_capital_name().$file.' generated at '.$path.'/'.$g->getCamelcase_capital_name().$file);
+            $build_file = $this->build_and_save($path,$content,$file,$g->getCamelcase_capital_name());
+            $parameters = [
+                'canEdit'=>$this->rbac(),
+                's'=> $settingRepository,
+                'title' => 'Generate '.$file,
+                'body' => $this->body($g),
+                'generator'=> $g,
+                'orm_schema'=>$orm,
+                'relations'=>$relations,
+                'flash'=> $flash,
+                'generated'=>$build_file,
+            ];
+            return $this->viewRenderer->render('__results', $parameters);
+        }
+        return $this->webService->getRedirectResponse('site/index');
     }
     
     /**
@@ -385,29 +405,32 @@ final class GeneratorController
     public function service(CurrentRoute $currentRoute, GeneratorRepository $gr, 
                              SettingRepository $settingRepository, GeneratorRelationRepository $grr,
                              DatabaseManager $dbal, View $view
-                            ): \Yiisoft\DataResponse\DataResponse {
+                            ): Response {
         $file = self::SERVICE;
         $path = $this->getAliases();
         $g = $this->generator($currentRoute, $gr);
-        $id = $g->getGentor_id();
-        $relations = $grr->findRelations($id);
-        $orm = $dbal->database('default')
-                    ->table($g->getPre_entity_table());
-        $content = $this->getContent($view,$g,$relations,$orm,$file);
-        $flash = $this->flash('success',$g->getCamelcase_capital_name().$file.' generated at '.$path.'/'.$g->getCamelcase_capital_name().$file);
-        $build_file = $this->build_and_save($path,$content,$file,$g->getCamelcase_capital_name());
-        $parameters = [
-            'canEdit'=>$this->rbac(),
-            's'=> $settingRepository,
-            'title' => 'Generate '.$file,
-            'body' => $this->body($g),
-            'generator'=> $g,
-            'orm_schema'=>$orm,
-            'relations'=>$relations,
-            'flash'=> $flash,
-            'generated'=>$build_file,
-        ];
-        return $this->viewRenderer->render('__results', $parameters);
+        if ($g) {
+            $id = $g->getGentor_id();
+            $relations = $grr->findRelations($id);
+            $orm = $dbal->database('default')
+                        ->table($g->getPre_entity_table());
+            $content = $this->getContent($view,$g,$relations,$orm,$file);
+            $flash = $this->flash('success',$g->getCamelcase_capital_name().$file.' generated at '.$path.'/'.$g->getCamelcase_capital_name().$file);
+            $build_file = $this->build_and_save($path,$content,$file,$g->getCamelcase_capital_name());
+            $parameters = [
+                'canEdit'=>$this->rbac(),
+                's'=> $settingRepository,
+                'title' => 'Generate '.$file,
+                'body' => $this->body($g),
+                'generator'=> $g,
+                'orm_schema'=>$orm,
+                'relations'=>$relations,
+                'flash'=> $flash,
+                'generated'=>$build_file,
+            ];
+            return $this->viewRenderer->render('__results', $parameters);
+        }
+        return $this->webService->getRedirectResponse('site/index');
     }
     
     /**
@@ -421,101 +444,32 @@ final class GeneratorController
     public function form(CurrentRoute $currentRoute, GeneratorRepository $gr, 
                              SettingRepository $settingRepository, GeneratorRelationRepository $grr,
                              DatabaseManager $dbal, View $view
-                            ): \Yiisoft\DataResponse\DataResponse {
+                            ): Response {
         $file = self::FORM;
         $path = $this->getAliases();
         $g = $this->generator($currentRoute, $gr);
-        $id = $g->getGentor_id();
-        $relations = $grr->findRelations($id);
-        $orm = $dbal->database('default')
-                    ->table($g->getPre_entity_table());
-        $content = $this->getContent($view,$g,$relations,$orm,$file);
-        $flash = $this->flash('success',$g->getCamelcase_capital_name().$file.' generated at '.$path.'/'.$g->getCamelcase_capital_name().$file);
-        $build_file = $this->build_and_save($path,$content,$file,$g->getCamelcase_capital_name());
-        $parameters = [
-            'canEdit'=>$this->rbac(),
-            's'=> $settingRepository,
-            'title' => 'Generate '.$file,
-            'body' => $this->body($g),
-            'generator'=> $g,
-            'orm_schema'=>$orm,
-            'relations'=>$relations,
-            'flash'=> $flash,
-            'generated'=>$build_file,
-        ];
-        return $this->viewRenderer->render('__results', $parameters);
-    }
-    
-    /**
-     * @param CurrentRoute $currentRoute
-     * @param GeneratorRepository $gr
-     * @param SettingRepository $settingRepository
-     * @param GeneratorRelationRepository $grr
-     * @param DatabaseManager $dbal
-     * @param View $view
-     */
-    public function mapper(CurrentRoute $currentRoute, GeneratorRepository $gr, 
-                             SettingRepository $settingRepository, GeneratorRelationRepository $grr,
-                             DatabaseManager $dbal, View $view
-                            ): \Yiisoft\DataResponse\DataResponse {
-        $file = self::MAPPER;
-        $path = $this->getAliases();
-        $g = $this->generator($currentRoute, $gr);
-        $id = $g->getGentor_id();
-        $relations = $grr->findRelations($id);
-        $orm = $dbal->database('default')
-                    ->table($g->getPre_entity_table());
-        $content = $this->getContent($view,$g,$relations,$orm,$file);
-        $flash = $this->flash('success',$g->getCamelcase_capital_name().$file.' generated at '.$path.'/'.$g->getCamelcase_capital_name().$file);
-        $build_file = $this->build_and_save($path,$content,$file,$g->getCamelcase_capital_name());
-        $parameters = [
-            'canEdit'=>$this->rbac(),
-            's'=> $settingRepository,
-            'title' => 'Generate '.$file,
-            'body' => $this->body($g),
-            'generator'=> $g,
-            'orm_schema'=>$orm,
-            'relations'=>$relations,
-            'flash'=> $flash,
-            'generated'=>$build_file,
-        ];
-        return $this->viewRenderer->render('__results', $parameters);
-    }
-    
-    /**
-     * @param CurrentRoute $currentRoute
-     * @param GeneratorRepository $gr
-     * @param SettingRepository $settingRepository
-     * @param GeneratorRelationRepository $grr
-     * @param DatabaseManager $dbal
-     * @param View $view
-     */
-    public function scope(CurrentRoute $currentRoute, GeneratorRepository $gr, 
-                             SettingRepository $settingRepository, GeneratorRelationRepository $grr,
-                             DatabaseManager $dbal, View $view
-                            ): \Yiisoft\DataResponse\DataResponse {
-        $file = self::SCOPE;
-        $path = $this->getAliases();
-        $g = $this->generator($currentRoute, $gr);
-        $id = $g->getGentor_id();
-        $relations = $grr->findRelations($id);
-        $orm = $dbal->database('default')
-                    ->table($g->getPre_entity_table());
-        $content = $this->getContent($view,$g,$relations,$orm,$file);
-        $flash = $this->flash('success',$g->getCamelcase_capital_name().$file.' generated at '.$path.'/'.$g->getCamelcase_capital_name().$file);
-        $build_file = $this->build_and_save($path,$content,$file,$g->getCamelcase_capital_name());
-        $parameters = [
-            'canEdit'=>$this->rbac(),
-            's'=> $settingRepository,
-            'title' => 'Generate '.$file,
-            'body' => $this->body($g),
-            'generator'=> $g,
-            'orm_schema'=>$orm,
-            'relations'=>$relations,
-            'flash'=> $flash,
-            'generated'=>$build_file,
-        ];
-        return $this->viewRenderer->render('__results', $parameters);
+        if ($g) {
+                $id = $g->getGentor_id();
+                $relations = $grr->findRelations($id);
+                $orm = $dbal->database('default')
+                            ->table($g->getPre_entity_table());
+                $content = $this->getContent($view,$g,$relations,$orm,$file);
+                $flash = $this->flash('success',$g->getCamelcase_capital_name().$file.' generated at '.$path.'/'.$g->getCamelcase_capital_name().$file);
+                $build_file = $this->build_and_save($path,$content,$file,$g->getCamelcase_capital_name());
+                $parameters = [
+                    'canEdit'=>$this->rbac(),
+                    's'=> $settingRepository,
+                    'title' => 'Generate '.$file,
+                    'body' => $this->body($g),
+                    'generator'=> $g,
+                    'orm_schema'=>$orm,
+                    'relations'=>$relations,
+                    'flash'=> $flash,
+                    'generated'=>$build_file,
+                ];
+                return $this->viewRenderer->render('__results', $parameters);
+        }
+        return $this->webService->getRedirectResponse('site/index');
     }
     
     /**
@@ -529,29 +483,32 @@ final class GeneratorController
     public function controller(CurrentRoute $currentRoute, GeneratorRepository $gr, 
                              SettingRepository $settingRepository, GeneratorRelationRepository $grr,
                              DatabaseManager $dbal, View $view
-                            ): \Yiisoft\DataResponse\DataResponse {
+                            ): Response {
         $file = self::CONTROLLER;
         $path = $this->getAliases();
         $g = $this->generator($currentRoute, $gr);
-        $id = $g->getGentor_id();
-        $relations = $grr->findRelations($id);
-        $orm = $dbal->database('default')
-                    ->table($g->getPre_entity_table());
-        $content = $this->getContent($view,$g,$relations,$orm,$file);
-        $flash = $this->flash('success',$g->getCamelcase_capital_name().$file.' generated at '.$path.'/'.$g->getCamelcase_capital_name().$file);
-        $build_file = $this->build_and_save($path,$content,$file,$g->getCamelcase_capital_name());
-        $parameters = [
-            'canEdit'=>$this->rbac(),
-            's'=> $settingRepository,
-            'title' => 'Generate '.$file,
-            'body' => $this->body($g),
-            'generator'=> $g,
-            'orm_schema'=>$orm,
-            'relations'=>$relations,
-            'flash'=> $flash,
-            'generated'=>$build_file,
-        ];
-        return $this->viewRenderer->render('__results', $parameters);
+        if ($g) {
+            $id = $g->getGentor_id();
+            $relations = $grr->findRelations($id);
+            $orm = $dbal->database('default')
+                        ->table($g->getPre_entity_table());
+            $content = $this->getContent($view,$g,$relations,$orm,$file);
+            $flash = $this->flash('success',$g->getCamelcase_capital_name().$file.' generated at '.$path.'/'.$g->getCamelcase_capital_name().$file);
+            $build_file = $this->build_and_save($path,$content,$file,$g->getCamelcase_capital_name());
+            $parameters = [
+                'canEdit'=>$this->rbac(),
+                's'=> $settingRepository,
+                'title' => 'Generate '.$file,
+                'body' => $this->body($g),
+                'generator'=> $g,
+                'orm_schema'=>$orm,
+                'relations'=>$relations,
+                'flash'=> $flash,
+                'generated'=>$build_file,
+            ];
+            return $this->viewRenderer->render('__results', $parameters);
+        }
+        return $this->webService->getRedirectResponse('site/index');
     }
     
     /**
@@ -565,29 +522,32 @@ final class GeneratorController
     public function _index(CurrentRoute $currentRoute, GeneratorRepository $gr, 
                              SettingRepository $settingRepository, GeneratorRelationRepository $grr,
                              DatabaseManager $dbal, View $view
-                            ): \Yiisoft\DataResponse\DataResponse {
+                            ): Response {
         $file = self::INDEX;
         $path = $this->getAliases();
         $g = $this->generator($currentRoute, $gr);
-        $id = $g->getGentor_id();
-        $relations = $grr->findRelations($id);
-        $orm = $dbal->database('default')
-                    ->table($g->getPre_entity_table());
-        $content = $this->getContent($view,$g,$relations,$orm,$file);
-        $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
-        $build_file = $this->build_and_save($path,$content,$file,'');
-        $parameters = [
-            'canEdit'=>$this->rbac(),
-            's'=> $settingRepository,
-            'title' => 'Generate '.$file,
-            'body' => $this->body($g),
-            'generator'=> $g,
-            'orm_schema'=>$orm,
-            'relations'=>$relations,
-            'flash'=> $flash,
-            'generated'=>$build_file,
-        ];
-        return $this->viewRenderer->render('__results', $parameters);
+        if ($g) {
+            $id = $g->getGentor_id();
+            $relations = $grr->findRelations($id);
+            $orm = $dbal->database('default')
+                        ->table($g->getPre_entity_table());
+            $content = $this->getContent($view,$g,$relations,$orm,$file);
+            $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
+            $build_file = $this->build_and_save($path,$content,$file,'');
+            $parameters = [
+                'canEdit'=>$this->rbac(),
+                's'=> $settingRepository,
+                'title' => 'Generate '.$file,
+                'body' => $this->body($g),
+                'generator'=> $g,
+                'orm_schema'=>$orm,
+                'relations'=>$relations,
+                'flash'=> $flash,
+                'generated'=>$build_file,
+            ];
+            return $this->viewRenderer->render('__results', $parameters);
+        }
+        return $this->webService->getRedirectResponse('site/index');
     }
     
     /**
@@ -601,31 +561,33 @@ final class GeneratorController
     public function _index_adv_paginator(CurrentRoute $currentRoute, GeneratorRepository $gr, 
                              SettingRepository $settingRepository, GeneratorRelationRepository $grr,
                              DatabaseManager $dbal, View $view
-                            ): \Yiisoft\DataResponse\DataResponse {
+                            ): Response {
         $file = self::INDEX_ADV_PAGINATOR;
         $path = $this->getAliases();
         $g = $this->generator($currentRoute, $gr);
-        $id = $g->getGentor_id();
-        $relations = $grr->findRelations($id);
-        $orm = $dbal->database('default')
-                    ->table($g->getPre_entity_table());
-        $content = $this->getContent($view,$g,$relations,$orm,$file);
-        $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
-        $build_file = $this->build_and_save($path,$content,$file,'');
-        $parameters = [
-            'canEdit'=>$this->rbac(),
-            's'=> $settingRepository,
-            'title' => 'Generate '.$file,
-            'body' => $this->body($g),
-            'generator'=> $g,
-            'orm_schema'=>$orm,
-            'relations'=>$relations,
-            'flash'=> $flash,
-            'generated'=>$build_file,
-        ];
-        return $this->viewRenderer->render('__results', $parameters);
-    }
-    
+        if ($g) {
+            $id = $g->getGentor_id();
+            $relations = $grr->findRelations($id);
+            $orm = $dbal->database('default')
+                        ->table($g->getPre_entity_table());
+            $content = $this->getContent($view,$g,$relations,$orm,$file);
+            $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
+            $build_file = $this->build_and_save($path,$content,$file,'');
+            $parameters = [
+                'canEdit'=>$this->rbac(),
+                's'=> $settingRepository,
+                'title' => 'Generate '.$file,
+                'body' => $this->body($g),
+                'generator'=> $g,
+                'orm_schema'=>$orm,
+                'relations'=>$relations,
+                'flash'=> $flash,
+                'generated'=>$build_file,
+            ];
+            return $this->viewRenderer->render('__results', $parameters);
+        }
+        return $this->webService->getRedirectResponse('site/index');   
+    }    
     /**
      * @param CurrentRoute $currentRoute
      * @param GeneratorRepository $gr
@@ -637,29 +599,32 @@ final class GeneratorController
     public function _index_adv_paginator_with_filter(CurrentRoute $currentRoute, GeneratorRepository $gr, 
                              SettingRepository $settingRepository, GeneratorRelationRepository $grr,
                              DatabaseManager $dbal, View $view
-                            ): \Yiisoft\DataResponse\DataResponse {
+                            ): Response {
         $file = self::INDEX_ADV_PAGINATOR_WITH_FILTER;
         $path = $this->getAliases();
         $g = $this->generator($currentRoute, $gr);
-        $id = $g->getGentor_id();
-        $relations = $grr->findRelations($id);
-        $orm = $dbal->database('default')
-                    ->table($g->getPre_entity_table());
-        $content = $this->getContent($view,$g,$relations,$orm,$file);
-        $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
-        $build_file = $this->build_and_save($path,$content,$file,'');
-        $parameters = [
-            'canEdit'=>$this->rbac(),
-            's'=> $settingRepository,
-            'title' => 'Generate '.$file,
-            'body' => $this->body($g),
-            'generator'=> $g,
-            'orm_schema'=>$orm,
-            'relations'=>$relations,
-            'flash'=> $flash,
-            'generated'=>$build_file,
-        ];
-        return $this->viewRenderer->render('__results', $parameters);
+        if ($g) {
+            $id = $g->getGentor_id();
+            $relations = $grr->findRelations($id);
+            $orm = $dbal->database('default')
+                        ->table($g->getPre_entity_table());
+            $content = $this->getContent($view,$g,$relations,$orm,$file);
+            $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
+            $build_file = $this->build_and_save($path,$content,$file,'');
+            $parameters = [
+                'canEdit'=>$this->rbac(),
+                's'=> $settingRepository,
+                'title' => 'Generate '.$file,
+                'body' => $this->body($g),
+                'generator'=> $g,
+                'orm_schema'=>$orm,
+                'relations'=>$relations,
+                'flash'=> $flash,
+                'generated'=>$build_file,
+            ];
+            return $this->viewRenderer->render('__results', $parameters);
+        }
+        return $this->webService->getRedirectResponse('site/index');
     }
     
     /**
@@ -673,29 +638,32 @@ final class GeneratorController
     public function _form(CurrentRoute $currentRoute, GeneratorRepository $gr, 
                              SettingRepository $settingRepository, GeneratorRelationRepository $grr,
                              DatabaseManager $dbal, View $view
-                            ): \Yiisoft\DataResponse\DataResponse {
+                            ): Response {
         $file = self::_FORM;
         $path = $this->getAliases();
         $g = $this->generator($currentRoute, $gr);
-        $id = $g->getGentor_id();
-        $relations = $grr->findRelations($id);
-        $orm = $dbal->database('default')
-                    ->table($g->getPre_entity_table());
-        $content = $this->getContent($view,$g,$relations,$orm,$file);
-        $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
-        $build_file = $this->build_and_save($path,$content,$file,'');
-        $parameters = [
-            'canEdit'=>$this->rbac(),
-            's'=> $settingRepository,
-            'title' => 'Generate '.$file,
-            'body' => $this->body($g),
-            'generator'=> $g,
-            'orm_schema'=>$orm,
-            'relations'=>$relations,
-            'flash'=> $flash,
-            'generated'=>$build_file,
-        ];
-        return $this->viewRenderer->render('__results', $parameters);
+        if ($g) {
+            $id = $g->getGentor_id();
+            $relations = $grr->findRelations($id);
+            $orm = $dbal->database('default')
+                        ->table($g->getPre_entity_table());
+            $content = $this->getContent($view,$g,$relations,$orm,$file);
+            $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
+            $build_file = $this->build_and_save($path,$content,$file,'');
+            $parameters = [
+                'canEdit'=>$this->rbac(),
+                's'=> $settingRepository,
+                'title' => 'Generate '.$file,
+                'body' => $this->body($g),
+                'generator'=> $g,
+                'orm_schema'=>$orm,
+                'relations'=>$relations,
+                'flash'=> $flash,
+                'generated'=>$build_file,
+            ];
+            return $this->viewRenderer->render('__results', $parameters);
+        }
+        return $this->webService->getRedirectResponse('site/index');
     }
     
     /**
@@ -709,29 +677,33 @@ final class GeneratorController
     public function _view(CurrentRoute $currentRoute, GeneratorRepository $gr, 
                              SettingRepository $settingRepository, GeneratorRelationRepository $grr,
                              DatabaseManager $dbal, View $view
-                            ): \Yiisoft\DataResponse\DataResponse {
+                            ): 
+        Response {
         $file = self::_VIEW;
         $path = $this->getAliases();
         $g = $this->generator($currentRoute, $gr);
-        $id = $g->getGentor_id();
-        $relations = $grr->findRelations($id);
-        $orm = $dbal->database('default')
-                    ->table($g->getPre_entity_table());
-        $content = $this->getContent($view,$g,$relations,$orm,$file);
-        $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
-        $build_file = $this->build_and_save($path,$content,$file,'');
-        $parameters = [
-            'canEdit'=>$this->rbac(),
-            's'=> $settingRepository,
-            'title' => 'Generate '.$file,
-            'body' => $this->body($g),
-            'generator'=> $g,
-            'orm_schema'=>$orm,
-            'relations'=>$relations,
-            'flash'=> $flash,
-            'generated'=>$build_file,
-        ];
-        return $this->viewRenderer->render('__results', $parameters);
+        if ($g) {
+            $id = $g->getGentor_id();
+            $relations = $grr->findRelations($id);
+            $orm = $dbal->database('default')
+                        ->table($g->getPre_entity_table());
+            $content = $this->getContent($view,$g,$relations,$orm,$file);
+            $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
+            $build_file = $this->build_and_save($path,$content,$file,'');
+            $parameters = [
+                'canEdit'=>$this->rbac(),
+                's'=> $settingRepository,
+                'title' => 'Generate '.$file,
+                'body' => $this->body($g),
+                'generator'=> $g,
+                'orm_schema'=>$orm,
+                'relations'=>$relations,
+                'flash'=> $flash,
+                'generated'=>$build_file,
+            ];
+            return $this->viewRenderer->render('__results', $parameters);
+        }        
+        return $this->webService->getRedirectResponse('site/index');
     }
     
     //generate this individual route. Append to config/routes file.  
@@ -747,29 +719,32 @@ final class GeneratorController
     public function _route(CurrentRoute $currentRoute, GeneratorRepository $gr, 
                              SettingRepository $settingRepository, GeneratorRelationRepository $grr,
                              DatabaseManager $dbal, View $view
-                           ): \Yiisoft\DataResponse\DataResponse {
+                           ): Response {
         $file = self::_ROUTE;
         $path = $this->getAliases();
         $g = $this->generator($currentRoute, $gr);
-        $id = $g->getGentor_id();
-        $relations = $grr->findRelations($id);
-        $orm = $dbal->database('default')
-                    ->table($g->getPre_entity_table());
-        $content = $this->getContent($view,$g,$relations,$orm,$file);
-        $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
-        $build_file = $this->build_and_save($path,$content,$file,'');
-        $parameters = [
-            'canEdit'=>$this->rbac(),
-            's'=> $settingRepository,
-            'title' => 'Generate '.$file,
-            'body' => $this->body($g),
-            'generator'=> $g,
-            'orm_schema'=>$orm,
-            'relations'=>$relations,
-            'flash'=> $flash,
-            'generated'=>$build_file,
-        ];
-        return $this->viewRenderer->render('__results', $parameters);
+            if ($g) {
+            $id = $g->getGentor_id();
+            $relations = $grr->findRelations($id);
+            $orm = $dbal->database('default')
+                        ->table($g->getPre_entity_table());
+            $content = $this->getContent($view,$g,$relations,$orm,$file);
+            $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
+            $build_file = $this->build_and_save($path,$content,$file,'');
+            $parameters = [
+                'canEdit'=>$this->rbac(),
+                's'=> $settingRepository,
+                'title' => 'Generate '.$file,
+                'body' => $this->body($g),
+                'generator'=> $g,
+                'orm_schema'=>$orm,
+                'relations'=>$relations,
+                'flash'=> $flash,
+                'generated'=>$build_file,
+            ];
+            return $this->viewRenderer->render('__results', $parameters);
+        }
+        return $this->webService->getRedirectResponse('site/index');
     }
     
     /**
@@ -789,103 +764,79 @@ final class GeneratorController
      * 
      * @param CurrentRoute $currentRoute
      * @param SettingRepository $sR
-     * @return Response
-     */
-    public function google_translate(CurrentRoute $currentRoute, SettingRepository $sR) : Response {
-        // Call the API and handle any network failures.
-        $type = $currentRoute->getArgument('type');
-        try {
-            switch ($type) {
-                case 'ip':
-                    $return = $this->google_translate_lang('ip', $sR);
-                    break;
-                case 'gateway':
-                    $return = $this->google_translate_lang('gateway', $sR);
-                    break;
-                case 'app':
-                    $return = $this->google_translate_lang('app', $sR);
-                    break;
-                default:
-                    break;
-            }            
-        } catch (\Exception $ex) {
-            printf('Call failed with message: %s' . PHP_EOL, $ex->getMessage());
-        }
-        return $return;        
-    }
-    
-    /**
-     * @param string $type
-     * @param SettingRepository $sR
-     *
+     * @return \Yiisoft\DataResponse\DataResponse|Response
      * @throws CaCertFileNotFoundException
      * @throws GoogleTranslateJsonFileNotFoundException
      * @throws GoogleTranslateLocaleSettingNotFoundException
      */
-    public function google_translate_lang(string $type, SettingRepository $sR) : \Yiisoft\DataResponse\DataResponse {
+    public function google_translate_lang(CurrentRoute $currentRoute, SettingRepository $sR) : \Yiisoft\DataResponse\DataResponse|Response {
         // ? Downloaded https://curl.haxx.se/ca/cacert.pem" into 
         // c:\wamp64\bin\php\{active_php}  
-        !empty(\ini_get('curl.cainfo')) ?  $curlcertificate = true : false;
-        if ($curlcertificate == false) {
-            throw new CaCertFileNotFoundException(); 
+        $type = $currentRoute->getArgument('type');
+        if (null!==$type) {
+            $curlcertificate = !empty(\ini_get('curl.cainfo')) ?  true : false;
+            if ($curlcertificate == false) {
+                throw new CaCertFileNotFoundException(); 
+            }
+            // ? Downloaded json file at 
+            // https://console.cloud.google.com/iam-admin/serviceaccounts/details/
+            // {unique_project_id}/keys?project={your_project_name}
+            // into ..src/Invoice/Google_translate_unique_folder
+            $aliases = $sR->get_google_translate_json_file_aliases();
+            $targetPath = $aliases->get('@google_translate_json_file_folder');
+            $path_and_filename = $targetPath .DIRECTORY_SEPARATOR.$sR->get_setting('google_translate_json_filename');
+            if (empty($path_and_filename)){
+                throw new GoogleTranslateJsonFileNotFoundException(); 
+            }
+            $data = file_get_contents(FileHelper::normalizePath($path_and_filename));
+            $json = Json::decode($data, true);
+            $projectId = $json['project_id']; 
+            putenv("GOOGLE_APPLICATION_CREDENTIALS=$path_and_filename");
+            $translationClient = new TranslationServiceClient();
+            // Use the ..src/Invoice/Language/English/ip_lang.php associative array as template
+            $folder_language = 'English';           
+            $lang = new Lang();
+            // type eg. 'ip', 'gateway'  of ip_lang.php or gateway_lang.php
+            $lang->load($type, $folder_language);
+            $content = $lang->_language;
+            // Build a template array using keys from $content
+            // These keys will be filled with the associated translated text values
+            // generated below by merging the two arrays.
+            $content_keys_array = array_keys($content);
+            // Retrieve the selected new language according to locale in Settings View Google Translate
+            // eg. 'es' ie. Spanish
+            $targetLanguage = $sR->get_setting('google_translate_locale');
+            if (empty($targetLanguage)){
+                throw new GoogleTranslateLocaleSettingNotFoundException(); 
+            }
+            // https://github.com/googleapis/google-cloud-php-translate
+            $response = $translationClient->translateText(
+                $content,
+                $targetLanguage,
+                TranslationServiceClient::locationName($projectId, 'global')
+            );
+            $result_array = [];
+            foreach ($response->getTranslations() as $key => $translation) {
+                $result_array[$key] = $translation->getTranslatedText();
+            }
+            $combined_array = array_combine($content_keys_array, $result_array);
+            $file = $this->google_translate_get_file_from_type($type);
+            $path = $this->getAliases();
+            $content_params = [
+                'combined_array' => $combined_array
+            ];
+            $file_content = $this->viewRenderer->renderPartialAsString(
+            '/invoice/generator/templates_protected/'.$file, $content_params);
+            $this->flash('success', $file.' generated at '. $path .'/'.$file);
+            $this->build_and_save($path, $file_content, $file, $type);
+            $parameters = [
+               'alert' => $this->alert(),
+               'combined_array' => $combined_array
+            ];      
+            return $this->viewRenderer->render('__google_translate_lang', $parameters);
         }
-        // ? Downloaded json file at 
-        // https://console.cloud.google.com/iam-admin/serviceaccounts/details/
-        // {unique_project_id}/keys?project={your_project_name}
-        // into ..src/Invoice/Google_translate_unique_folder
-        $aliases = $sR->get_google_translate_json_file_aliases();
-        $targetPath = $aliases->get('@google_translate_json_file_folder');
-        $path_and_filename = $targetPath .DIRECTORY_SEPARATOR.$sR->get_setting('google_translate_json_filename');
-        if (empty($path_and_filename)){
-            throw new GoogleTranslateJsonFileNotFoundException(); 
-        }
-        $data = file_get_contents(FileHelper::normalizePath($path_and_filename));
-        $json = Json::decode($data, true);
-        $projectId = $json['project_id']; 
-        putenv("GOOGLE_APPLICATION_CREDENTIALS=$path_and_filename");
-        $translationClient = new TranslationServiceClient();
-        // Use the ..src/Invoice/Language/English/ip_lang.php associative array as template
-        $folder_language = 'English';           
-        $lang = new Lang();
-        // type eg. 'ip', 'gateway'  of ip_lang.php or gateway_lang.php
-        $lang->load($type, $folder_language);
-        $content = $lang->_language;
-        // Build a template array using keys from $content
-        // These keys will be filled with the associated translated text values
-        // generated below by merging the two arrays.
-        $content_keys_array = array_keys($content);
-        // Retrieve the selected new language according to locale in Settings View Google Translate
-        // eg. 'es' ie. Spanish
-        $targetLanguage = $sR->get_setting('google_translate_locale');
-        if (empty($targetLanguage)){
-            throw new GoogleTranslateLocaleSettingNotFoundException(); 
-        }
-        // https://github.com/googleapis/google-cloud-php-translate
-        $response = $translationClient->translateText(
-            $content,
-            $targetLanguage,
-            TranslationServiceClient::locationName($projectId, 'global')
-        );
-        $result_array = [];
-        foreach ($response->getTranslations() as $key => $translation) {
-            $result_array[$key] = $translation->getTranslatedText();
-        }
-        $combined_array = array_combine($content_keys_array, $result_array);
-        $file = $this->google_translate_get_file_from_type($type);
-        $path = $this->getAliases();
-        $content_params = [
-            'combined_array' => $combined_array
-        ];
-        $dti = new \DateTimeImmutable('now');
-        $file_content = $this->viewRenderer->renderPartialAsString(
-        '/invoice/generator/templates_protected/'.$file, $content_params);
-        $this->flash('success', $file.' generated at '. $path .'/'.$file);
-        $this->build_and_save($path, $file_content, $file, $type);
-        $parameters = [
-           'alert' => $this->alert(),
-           'combined_array' => $combined_array
-        ];      
-        return $this->viewRenderer->render('__google_translate_lang', $parameters);
+        $this->flash('info','File type not found.');
+        return $this->webService->getRedirectResponse('site/index');
     }
     
     /**
@@ -894,6 +845,7 @@ final class GeneratorController
      * @return string
      */
     private function google_translate_get_file_from_type(string $type) : string {
+        $file = '';
         switch ($type) {
             case 'ip':
                 $file = self::_IP;
@@ -922,9 +874,15 @@ final class GeneratorController
     }
     
     /**
-     * @param Gentor|Response $generator
+     * 
+     * @param View $view
+     * @param object $generator
+     * @param \Yiisoft\Data\Reader\DataReaderInterface $relations
+     * @param \Cycle\Database\TableInterface $orm_schema
+     * @param string $file
+     * @return string
      */
-    private function getContent(View $view,Response|Gentor $generator,\Yiisoft\Data\Reader\DataReaderInterface $relations,\Cycle\Database\TableInterface $orm_schema,string $file): string{
+    private function getContent(View $view, object $generator,\Yiisoft\Data\Reader\DataReaderInterface $relations,\Cycle\Database\TableInterface $orm_schema,string $file): string{
         return $content = $view->render("//invoice/generator/templates_protected/".$file,['generator' => $generator,
                 'relations'=>$relations,
                 'orm_schema'=>$orm_schema,
@@ -932,7 +890,12 @@ final class GeneratorController
     }
     
     /**
-     * @psalm-param '' $name
+     * 
+     * @param string $generated_dir_path
+     * @param string $content
+     * @param string $file
+     * @param string $name
+     * @return GenerateCodeFileHelper
      */
     private function build_and_save(string $generated_dir_path,string $content, string $file,string $name): GenerateCodeFileHelper{
         echo $generated_dir_path;
@@ -940,4 +903,4 @@ final class GeneratorController
         $build_file->save();
         return $build_file;
     }
-}
+}    

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Invoice\ItemLookup;
 
-use App\Invoice\Entity\ItemLookup;
 use Cycle\ORM\Select;
 use Throwable;
 use Yiisoft\Data\Reader\Sort;
@@ -56,7 +55,6 @@ private EntityWriter $entityWriter;
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
      * @param array|object|null $itemlookup
-     * @throws Throwable 
      * @return void
      */
     public function save(array|object|null $itemlookup): void
@@ -65,9 +63,8 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * 
      * @param array|object|null $itemlookup
-     * @throws Throwable 
      * @return void
      */
     public function delete(array|object|null $itemlookup): void
@@ -84,12 +81,12 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @return null|object
-     *
-     * @psalm-return TEntity|null
+     * 
+     * @param string $id
+     * @return TEntity|null
      */
-    public function repoItemLookupquery(string $id):object|null    {
+    public function repoItemLookupquery(string $id):?object {
         $query = $this->select()->where(['id' => $id]);
-        return  $query->fetchOne() ?: null;        
+        return  $query->fetchOne();        
     }
 }

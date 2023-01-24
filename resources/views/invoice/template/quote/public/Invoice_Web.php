@@ -37,11 +37,13 @@ $numberhelper = new NumberHelper($s);
             <h2><?= $s->trans('quote'); ?>&nbsp;<?= $quote->getNumber(); ?></h2>
 
             <div class="btn-group">
-                <?php if (in_array($quote->getStatus_id(), array(2, 3))) : ?>
+                <?php if (in_array($quote->getStatus_id(), array(2, 3, 5))) : ?>
                     <a href="<?= $urlGenerator->generate('quote/approve', ['url_key'=>$quote_url_key]); ?>"
                        class="btn btn-success">
                         <i class="fa fa-check"></i><?= $s->trans('approve_this_quote'); ?>
                     </a>
+                <?php endif; ?>
+                <?php if (in_array($quote->getStatus_id(), array(2, 3, 4))) : ?>
                     <a href="<?= $urlGenerator->generate('quote/reject', ['url_key'=>$quote_url_key]); ?>"
                        class="btn btn-danger">
                         <i class="fa fa-times-circle"></i><?= $s->trans('reject_this_quote'); ?>
@@ -129,7 +131,7 @@ $numberhelper = new NumberHelper($s);
 
                     <table class="table table-condensed">
                         <tbody>
-                        <<tr>
+                        <tr>
                             <td><?= $s->trans('quote_date'); ?></td>
                             <td style="text-align:right;"><?= $datehelper->date_from_mysql($quote->getDate_created()); ?></td>
                         </tr>

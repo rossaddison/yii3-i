@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Invoice\GeneratorRelation;
 
-use App\Invoice\Entity\GentorRelation;
 use Cycle\ORM\Select;
 use Throwable;
 use Yiisoft\Data\Reader\Sort;
@@ -104,7 +103,7 @@ final class GeneratorRelationRepository extends Select\Repository
         return  $query->fetchAll();        
     }
     
-    public function withLowercaseName(string $generatorrelation_lowercase_name): ?GentorRelation
+    public function withLowercaseName(string $generatorrelation_lowercase_name): object|null
     {
         $query = $this
             ->select()

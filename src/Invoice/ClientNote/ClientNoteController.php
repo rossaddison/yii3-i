@@ -100,49 +100,60 @@ final class ClientNoteController
                         CurrentRoute $currentRoute
     ): Response {
         $client_note = $this->clientnote($currentRoute, $clientnoteRepository);
-        $parameters = [
-            'title' => $settingRepository->trans('edit'),
-            'action' => ['clientnote/edit', ['id' => $client_note->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->clientnote($currentRoute, $clientnoteRepository)),
-            'head'=>$head,
-            'd'=>$dateHelper,
-            's'=>$settingRepository,
-            'clients'=>$clientRepository->findAllPreloaded()
-        ];
-        if ($request->getMethod() === Method::POST) {
-            $form = new ClientNoteForm();
-            $body = $request->getParsedBody();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
-                $this->clientnoteService->saveClientNote($this->clientnote($currentRoute, $clientnoteRepository), $form, $settingRepository);
-                return $this->webService->getRedirectResponse('clientnote/index');
+        if ($client_note) {
+            $parameters = [
+                'title' => $settingRepository->trans('edit'),
+                'action' => ['clientnote/edit', ['id' => $client_note->getId()]],
+                'errors' => [],
+                'body' => $this->body($client_note),
+                'head'=>$head,
+                'd'=>$dateHelper,
+                's'=>$settingRepository,
+                'clients'=>$clientRepository->findAllPreloaded()
+            ];
+            if ($request->getMethod() === Method::POST) {
+                $form = new ClientNoteForm();
+                $body = $request->getParsedBody();
+                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                    $this->clientnoteService->saveClientNote($client_note, $form, $settingRepository);
+                    return $this->webService->getRedirectResponse('clientnote/index');
+                }
+                $parameters['body'] = $body;
+                $parameters['errors'] = $form->getFormErrors();
             }
-            $parameters['body'] = $body;
-            $parameters['errors'] = $form->getFormErrors();
-        }
-        return $this->viewRenderer->render('_form', $parameters);
+            return $this->viewRenderer->render('_form', $parameters);
+        } //client note
+        return $this->webService->getRedirectResponse('clientnote/index');   
     }
     
     public function delete(ClientNoteRepository $clientnoteRepository, CurrentRoute $currentRoute
-    ): Response {       
-        $this->clientnoteService->deleteClientNote($this->clientnote($currentRoute,$clientnoteRepository));               
-        return $this->webService->getRedirectResponse('clientnote/index');        
+    ): Response {
+        $client_note = $this->clientnote($currentRoute, $clientnoteRepository);
+        if ($client_note) {
+            $this->clientnoteService->deleteClientNote($client_note);               
+            return $this->webService->getRedirectResponse('clientnote/index');        
+        }
+        return $this->webService->getRedirectResponse('clientnote/index');
     }
     
     public function view(CurrentRoute $currentRoute, ClientNoteRepository $clientnoteRepository, DateHelper $dateHelper,
         SettingRepository $settingRepository
-        ): \Yiisoft\DataResponse\DataResponse {
+        ): Response {
         $client_note = $this->clientnote($currentRoute, $clientnoteRepository);
-        $parameters = [
-            'title' => $settingRepository->trans('view'),
-            'action' => ['clientnote/edit', ['id' => $client_note->getId()]],
-            'errors' => [],
-            'body' => $this->body($this->clientnote($currentRoute, $clientnoteRepository)),
-            'd'=>$dateHelper,
-            's'=>$settingRepository,             
-            'clientnote'=>$clientnoteRepository->repoClientNotequery($this->clientnote($currentRoute, $clientnoteRepository)->getId()),
-        ];
-        return $this->viewRenderer->render('_view', $parameters);
+        if ($client_note) { 
+            $parameters = [
+                'title' => $settingRepository->trans('view'),
+                'action' => ['clientnote/edit', ['id' => $client_note->getId()]],
+                'errors' => [],
+                'body' => $this->body($client_note),
+                'd'=>$dateHelper,
+                's'=>$settingRepository,             
+                'clientnote'=>$client_note,
+            ];
+            return $this->viewRenderer->render('_view', $parameters);
+        } else {
+            return $this->webService->getRedirectResponse('clientnote/index');
+        } 
     }
     
     /**
@@ -159,15 +170,19 @@ final class ClientNoteController
     }
     
     /**
+     * 
      * @param CurrentRoute $currentRoute
      * @param ClientNoteRepository $clientnoteRepository
-     * @return ClientNote|null
+     * @return object|null
      */
-    private function clientnote(CurrentRoute $currentRoute, ClientNoteRepository $clientnoteRepository): ClientNote|null
+    private function clientnote(CurrentRoute $currentRoute, ClientNoteRepository $clientnoteRepository): object|null
     {
         $id = $currentRoute->getArgument('id');       
-        $clientnote = $clientnoteRepository->repoClientNotequery($id);
-        return $clientnote;
+        if (null!==$id) {
+            $clientnote = $clientnoteRepository->repoClientNotequery($id);
+            return $clientnote;
+        }
+        return null;
     }
     
     /**
@@ -183,10 +198,10 @@ final class ClientNoteController
     
     /**
      * 
-     * @param ClientNote $clientnote
+     * @param object $clientnote
      * @return array
      */
-    private function body(ClientNote $clientnote): array {
+    private function body(object $clientnote): array {
         $body = [
           'id'=>$clientnote->getId(),
           'client_id'=>$clientnote->getClient_id(),

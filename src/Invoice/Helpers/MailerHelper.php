@@ -81,23 +81,30 @@ Class MailerHelper
             return false;
         }
         $quote = $qR->repoCount($quote_id) > 0 ? $qR->repoQuoteLoadedquery($quote_id) : null;
-        $base_url = $urlGenerator->generate('quote/view',['id'=>$quote_id]);
-        $user_id = $quote->getUser()->getId() ?? null;
-        $user_inv = null!==$user_id ? $uiR->repoUserInvUserIdquery($user_id) : null;
-        $from_email = $user_inv->getEmail() ?? '';        
-        $from_name = $user_inv->getName() ?? '';        
-        $subject = sprintf($this->s->trans('quote_status_email_subject'),
-            $quote->getClient()->getClient_name() ?? '',
-            $quote->getNumber() ?? ''
-        );
-        $body = sprintf(nl2br($this->s->trans('quote_status_email_body')),
-            $quote->getClient()->getClient_name(),
-            // TODO: Hyperlink for base url in Html
-            $quote->getNumber(), $base_url
-        );
-        if ($this->s->get_setting('email_send_method') == 'yiimail') {
-            return $this->yii_mailer_send($from_email, $from_name, $from_email, $subject, $body, null, null, [], '', $uiR);
-        }
+        if ($quote) {
+            $base_url = $urlGenerator->generate('quote/view',['id'=>$quote_id]);
+            $user_id = $quote->getUser()?->getId() ?? null;
+            $user_inv = null!==$user_id ? $uiR->repoUserInvUserIdquery($user_id) : null;
+            if (null!==$user_inv && $user_inv instanceof UserInv) {
+                if (null!==$quote->getClient()->getClient_name()) {  
+                    $from_email = $user_inv->getEmail() ?? '';        
+                    $from_name = $user_inv->getName() ?? '';        
+                    $subject = sprintf($this->s->trans('quote_status_email_subject'),
+                        $quote->getClient()->getClient_name() ?? '',
+                        $quote->getNumber() ?? ''
+                    );                
+                    $body = sprintf(nl2br($this->s->trans('quote_status_email_body')),
+                        $quote->getClient()->getClient_name() ?? '',
+                        // TODO: Hyperlink for base url in Html
+                        $quote->getNumber(), $base_url
+                    );
+
+                    if ($this->s->get_setting('email_send_method') == 'yiimail') {
+                        return $this->yii_mailer_send($from_email, $from_name, $from_email, $subject, $body, null, null, [], '', $uiR);
+                    }
+                }    
+            }
+        }    
         return false;
     }
     
@@ -114,24 +121,25 @@ Class MailerHelper
         string|null $pdf_template_target_path,    
         UIR|null $uiR): bool
     {
-        if (!empty($cc) && (strlen($cc)>4) && !is_array($cc)) {
+        if (!empty($cc) && is_string($cc) &&(strlen($cc)>4) && !is_array($cc)) {
             // Allow multiple CC's delimited by comma or semicolon
             $cc = (strpos($cc, ',')) ? explode(',', $cc) : explode(';', $cc);
         }
         
-        if (!empty($bcc) && (strlen($bcc)>4) && !is_array($bcc)) {
+        if (!empty($bcc) && is_string($bcc) && (strlen($bcc)>4) && !is_array($bcc)) {
             // Allow multiple BCC's delimited by comma or semicolon
             $bcc = (strpos($bcc, ',')) ? explode(',', $bcc) : explode(';', $bcc);
         }
         
         // Bcc mails to admin && the admin email account has been setup under userinv which is an extension table of user
-        if (($this->s->get_setting('bcc_mails_to_admin') == 1) && ($uiR->repoUserInvUserIdcount((string)1) > 0)) {
-            $user_inv = $uiR->repoUserInvUserIdquery((string)1) ?: null;
-            $email = null!==$user_inv ? $user_inv->getEmail() : '';
-            // $bcc should be an array after the explode 
-            is_array($bcc) && $email!=='' ? array_unshift($bcc, $email) : '';
+        if (null!==$uiR) { 
+            if (($this->s->get_setting('bcc_mails_to_admin') == 1) && ($uiR->repoUserInvUserIdcount((string)1) > 0)) {
+                $user_inv = $uiR->repoUserInvUserIdquery((string)1) ?: null;
+                $email = null!==$user_inv ? $user_inv->getEmail() : '';
+                // $bcc should be an array after the explode 
+                is_array($bcc) && $email!=='' ? array_unshift($bcc, $email) : '';
+            }
         }
-
         $email = $this->mailer
             ->compose(
                 'contact-email',
@@ -177,14 +185,16 @@ Class MailerHelper
             $email_attachments_with_pdf_template = $email;
         }
         // Ensure that the administrator exists in the userinv extension table. If the email is blank generate a flash
-        if ($uiR->repoUserInvUserIdcount((string)1) == 0) {
-            $admin = new UserInv();
-            $admin->setUser_id(1);
-            // Administrator's are given a type of 0, Guests eg. Accountant 1
-            $admin->setType(0);
-            $admin->setName('Administrator');
-            $admin->setEmail('setup@your.email');
-            $uiR->save($admin);
+        if (null!==$uiR) {
+            if ($uiR->repoUserInvUserIdcount((string)1) == 0) {
+                $admin = new UserInv();
+                $admin->setUser_id(1);
+                // Administrator's are given a type of 0, Guests eg. Accountant 1
+                $admin->setType(0);
+                $admin->setName('Administrator');
+                $admin->setEmail('setup@your.email');
+                $uiR->save($admin);
+            }
         }
         try {
             $this->mailer->send($email_attachments_with_pdf_template);
@@ -193,9 +203,7 @@ Class MailerHelper
         } catch (\Exception $e) {
             $flashMsg = 'Email not successfully sent: ' .$e->getMessage();
             $this->logger->error($flashMsg);            
-        } finally {
-            $this->flash(isset($e) ? 'danger' : 'success', $flashMsg);
-        }
+        } 
         return false;
     }
     

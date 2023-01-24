@@ -185,6 +185,7 @@ class Inv
     
     public function getStatus($status_id): string
     {
+        $status = '';
         switch ($status_id) {
             case 1:
                 $status=  'Draft';
@@ -240,7 +241,7 @@ class Inv
        return $this->date_created;  
     }
     
-    public function setDate_created(?DateTimeImmutable $date_created) : void
+    public function setDate_created(DateTimeImmutable $date_created) : void
     {
        $this->date_created = $date_created;
     }

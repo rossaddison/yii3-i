@@ -64,13 +64,13 @@ if (!empty($errors)) {
                 <td class="td-amount td-quantity">
                     <div class="input-group">
                         <span class="input-group-text"><?= $s->trans('quantity'); ?></span>
-                        <input type="number" name="quantity" class="input-sm form-control amount has-feedback" required value="<?= $numberhelper->format_amount($body['quantity'] ?? ''); ?>">
+                        <input type="number" name="quantity" class="input-sm form-control amount has-feedback" required value="<?= $numberhelper->format_amount($body['quantity'] ?? 0.00); ?>">
                     </div>
                 </td>
                 <td class="td-amount">
                     <div class="input-group">
                         <span class="input-group-text"><?= $s->trans('price'); ?></span>
-                        <input type="number" name="price" class="input-sm form-control amount has-feedback" required value="<?= $numberhelper->format_amount($body['price'] ?? ''); ?>">
+                        <input type="number" name="price" class="input-sm form-control amount has-feedback" required value="<?= $numberhelper->format_amount($body['price'] ?? 0.00); ?>">
                     </div>
                 </td>
                 <td class="td-amount td-vert-middle">
@@ -78,7 +78,7 @@ if (!empty($errors)) {
                         <span class="input-group-text"><?= $s->trans('item_discount'); ?></span>
                         <input type="number" name="discount_amount" class="input-sm form-control amount has-feedback" required
                                data-toggle="tooltip" data-placement="bottom"
-                               title="<?= $s->get_setting('currency_symbol') . ' ' . $s->trans('per_item'); ?>" value="<?= $numberhelper->format_amount($body['discount_amount'] ?? ''); ?>">
+                               title="<?= $s->get_setting('currency_symbol') . ' ' . $s->trans('per_item'); ?>" value="<?= $numberhelper->format_amount($body['discount_amount'] ?? 0.00); ?>">
                     </div>
                 </td>
                 <td td-vert-middle>
@@ -88,7 +88,7 @@ if (!empty($errors)) {
                             <option value="0"><?= $s->trans('none'); ?></option>
                             <?php foreach ($tax_rates as $tax_rate) { ?>
                                 <option value="<?php echo $tax_rate->getTax_rate_id(); ?>" <?php $s->check_select(Html::encode($body['tax_rate_id'] ?? ''), $tax_rate->getTax_rate_id()) ?>>
-                                    <?php echo $numberhelper->format_amount($tax_rate->getTax_rate_percent()) . '% - ' . $tax_rate->getTax_rate_name(); ?>
+                                    <?php echo ($tax_rate->getTax_rate_percent()) . '% - ' . $tax_rate->getTax_rate_name(); ?>
                                 </option>
                             <?php } ?>
                         </select>

@@ -133,9 +133,9 @@ private EntityWriter $entityWriter;
      * 
      * @param string|null $quote_id
      * @param int $status_id
-     * @return Quote|null
+     * @return object|null
      */
-    public function repoQuoteStatusquery(string|null $quote_id, int $status_id) : ?Quote {
+    public function repoQuoteStatusquery(string|null $quote_id, int $status_id) : object|null {
         $query = $this->select()->where(['id' => $quote_id])
                                 ->where(['status_id'=>$status_id]);
         return  $query->fetchOne() ?: null;        
@@ -153,7 +153,7 @@ private EntityWriter $entityWriter;
         return  $count;      
     }
         
-    public function repoUrl_key_guest_loaded(string $url_key) : ?Quote {
+    public function repoUrl_key_guest_loaded(string $url_key) : object|null {
         $query = $this->select()
                        ->load('client') 
                        ->where(['url_key' => $url_key]);

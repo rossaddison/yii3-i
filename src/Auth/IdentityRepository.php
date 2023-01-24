@@ -24,14 +24,15 @@ final class IdentityRepository extends Select\Repository implements IdentityRepo
     {
         parent::__construct($select);
     }
-
+    
     /**
-     * @param string $id
-     *
-     * @return Identity|null
+     * @psalm-suppress MoreSpecificReturnType
      */
     public function findIdentity(string $id): ?Identity
     {
+        /**
+         * @psalm-suppress LessSpecificReturnStatement
+         */
         return $this->findOne(['user_id' => $id]);
     }
 
