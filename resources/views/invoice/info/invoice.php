@@ -11,7 +11,8 @@
 <p><s>Pdf template construction upon emailing.</s></p>
 <p>Work on info issues</p>
 <p>Work In Progress - Shorter Term Goals</p>
-<p>Dead Code Removal with Psalm 3 Testing</p>
+<p>Psalm Level 2 - Testing</p>
+<p><s>Dead Code Removal with Psalm 3 Testing</s></p>
 <p><s>Language array generator using Google Translate</s></p>
 <p>All invoices with dates falling within CompanyPrivate start and end dates will have the specific logo uploaded</p>
 <p>for this CompanyPrivate record attached to these invoices.</p>
@@ -22,11 +23,11 @@
 <p>Psalm Level 3 Testing (0 errors)</p>
 <p>Improve security of client viewing their quotes/invoices online with following code in InvController/url_key function</p>
 <p><code>
-// After signup the user was included in the userinv using Settings...User Account...+
-$user_inv = $uiR->repoUserInvUserIdquery($currentUser_getId);
-// The client has been assigned to the user id using Setting...User Account...Assigned Clients
-$user_client = $ucR->repoUserClientqueryCount($currentUser_getId, $inv->getClient_id()) === 1 ? true : false;
-if ($user_inv && $user_client) {  
+        // After signup the user was included in the userinv using Settings...User Account...+<br>
+$user_inv = $uiR->repoUserInvUserIdquery($currentUser_getId);<br>
+// The client has been assigned to the user id using Setting...User Account...Assigned Clients<br>
+$user_client = $ucR->repoUserClientqueryCount($currentUser_getId, $inv->getClient_id()) === 1 ? true : false;<br>
+if ($user_inv && $user_client) {  <br>
 </code></p>
 <p>If the currentUser getId returns a null value they are a guest. See documentation. Yiisoft/CurrentUser</p>
 <p>Note: The Psalm PossiblyNullArgument has to be suppressed here to allow for a possible null value here for validation of Yiisoft guest status. </p>
@@ -41,7 +42,8 @@ if ($user_inv && $user_client) {
 <p><b>12 Post-setup Steps to Introducing Azerbaijani language</b></p>
 <p>1. config/params {locales}</p>
 <p>2. views/layout/invoice.php {az_Asset and menu construction}</p>
-<p>3. views/layout/main.php {menu construction}</p>
+<p>3a. views/layout/main.php {menu construction}</p>
+<p>3b. views/layout/guest.php {menu construction}</p>
 <p>4. SettingRepository/locale_language_array</p>
 <p>5. Settings...Views...Google Translate...select locale from dropdown</p>
 <p>6. Generator... Translate src/Invoice/Language/English/ip_lang.php</p>
