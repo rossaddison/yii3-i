@@ -239,10 +239,9 @@ final class SettingController
                 }
                 $this->flash($this->session, 'info', $this->s->trans('settings_successfully_saved'));
                 return $this->webService->getRedirectResponse('setting/tab_index');
+                }
             }
             return $this->viewRenderer->render('tab_index', $parameters);        
-        }
-                return $this->webService->getRedirectResponse('setting/tab_index');
     }
     
     public function tab_index_settings_save(string $key, string $value, SettingRepository $sR) : void {
