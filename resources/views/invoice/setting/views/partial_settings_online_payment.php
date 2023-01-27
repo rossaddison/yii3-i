@@ -138,6 +138,28 @@ foreach ($gateway_drivers as $driver => $fields) :
             <?php } ?>
 
             <hr>
+            
+            <?php
+            // regions are specific to Amazon Pay
+            if ($d == 'amazon_pay') 
+            { ?>
+            <div class="form-group">
+                <label for="settings[gateway_<?= $d; ?>_region]">
+                    <?= $s->trans('online_payment_region'); ?>
+                </label>
+                <?php $body['settings[gateway_' . $d . '_region]'] = $s->get_setting('gateway_' . $d . '_region');?>
+                <select name="settings[gateway_<?= $d; ?>_region]"
+                    id="settings[gateway_<?= $d; ?>_region]"
+                    class="input-sm form-control">
+                    <?php foreach ($gateway_regions as $val => $key) { ?>
+                        <option value="<?= $val; ?>"
+                            <?php $s->check_select($body['settings[gateway_' . $d . '_region]'], $val); ?>>
+                            <?= $val; ?>
+                        </option>
+                    <?php } ?>
+                </select>
+            </div>
+            <?php } ?>
 
             <div class="form-group">
                 <label for="settings[gateway_<?= $d; ?>_currency]">

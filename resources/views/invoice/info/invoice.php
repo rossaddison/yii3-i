@@ -19,6 +19,18 @@
 <p>CompanyPrivate logo will be automatically input on invoice/quotes depending on whether the date of the invoice falls between the start and end date.</p>
 <p>Introducing Paypal.</p>
 <p>Introducing India's PayTm payment gateway's QR code method of payment and comparing this with Stripe's method.</p>
+<p><b>27 January 2023</b></p>
+<p>Psalm Level 3 Testing (0 errors)</p>
+<p>Testing</p>
+<p>Upgrade Amazon Pay: 2.4.0 => 2.5.1</p>
+<p>Test Amazon Pay with a Client logon.</p> 
+<p>1. Client has been registered as a User via Yii Demo.</p>
+<p>2. Client's User id has been transferred to UserInv via Settings ... User Account...+ by means of an Admin logon</p>
+<p>3. Client's client_id has been assigned to their user_id via Settings ... User Account ...Assigned Clients by means of an Admin logon.</p>  
+<p>Remove unknown region 'gb' bug. Admin must select one of three amazon regions in dropdown under Settings ... Online Payment. </p>
+<p>Include Amazon's 3 standard regions ie. North America, Europe, and Japan in regions dropdown on Amazon_pay Settings Payment Gateway.</p>
+<p>If region is not set, default to 'eu' in PaymentInformation/amazon_get_region</p>
+<p>Include default time/zone under InvoiceController</p>
 <p><b>23 January 2023</b></p>
 <p>Psalm Level 3 Testing (0 errors)</p>
 <p>Improve security of client viewing their quotes/invoices online with following code in InvController/url_key function</p>

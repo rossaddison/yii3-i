@@ -346,6 +346,7 @@ final class InvoiceController
             'reports_in_new_tab' => true,
             'tax_rate_decimal_places' => 3, 
             'thousands_separator' => ',',
+            'time_zone' => 'Europe/London'
         ]; 
         $this->install_default_settings($default_settings, $sR);        
     }

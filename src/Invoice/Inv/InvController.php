@@ -2065,10 +2065,13 @@ final class InvController
                     ];        
                     return $this->view_renderer->render('/invoice/inv/url_key', $parameters);
                 } // if inv_amount
+                $this->flash('warning','There is no invoice amount.');
                 return $this->web_service->getNotFoundResponse(); 
             } // if user_inv
+            $this->flash('danger','Client not allocated to user.');
             return $this->web_service->getNotFoundResponse(); 
         } // if inv
+        $this->flash('danger', 'Invoice not found');
         return $this->web_service->getNotFoundResponse();
     }
     

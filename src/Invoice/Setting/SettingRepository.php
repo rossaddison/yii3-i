@@ -301,6 +301,19 @@ final class SettingRepository extends Select\Repository
      * 
      * @return array
      */
+    public function amazon_regions() : array {
+        $regions = [
+            'North America' => 'na',
+            'Japan' => 'jp',
+            'Europe' => 'eu',
+        ];
+        return $regions;
+     }
+    
+    /**
+     * 
+     * @return array
+     */
     public function locale_language_array() : array {
     // locale => src/Invoice/Language/{language folder name}    
         $language_list = [

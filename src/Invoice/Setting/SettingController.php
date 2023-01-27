@@ -189,6 +189,7 @@ final class SettingController
                 's'=>$this->s,
                 'gateway_drivers'=>$this->s->payment_gateways(),
                 'gateway_currency_codes'=>CurrencyHelper::all(),
+                'gateway_regions' => $this->s->amazon_regions(),
                 'payment_methods'=>$pm->findAllPreloaded(),                
                 'crypt'=> $crypt
             ]),

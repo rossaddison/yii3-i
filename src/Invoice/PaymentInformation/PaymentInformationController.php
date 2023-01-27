@@ -252,7 +252,7 @@ final class PaymentInformationController
         $amazonpay_config = [
             'public_key_id' => $this->crypt->decode($this->sR->get_setting('gateway_amazon_pay_publicKeyId')),
             'private_key' => $this->amazon_private_key_file(),            
-            'region' => \IntlTimeZone::getRegion($this->sR->get_setting('time_zone') ?: 'Europe/London') ?: 'GB',
+            'region' => $this->amazon_get_region(),  
             'sandbox' => $this->sR->get_setting('gateway_amazon_pay_sandbox') === '1' ? true : false
         ];
         $client = new \Amazon\Pay\API\Client($amazonpay_config);
@@ -262,6 +262,23 @@ final class PaymentInformationController
         //           : '';
         $signature = $client->generateButtonSignature($this->amazon_payload_json($url_key));
         return $signature;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function amazon_get_region() : string {
+        $regions = $this->sR->amazon_regions();
+        $region_value = '';
+        // Region North America => na, Japan => jp, Europe => eu
+        $region = $this->sR->get_setting('gateway_amazon_pay_region');
+        if (!in_array($region, $regions)) {
+            $region_value = 'eu';
+        } else {
+            $region_value = $regions[$region];
+        }
+        return $region_value;
     }
     
     /**
@@ -385,7 +402,7 @@ final class PaymentInformationController
                             // If the amazoon version is '0', it is pci compliant
                             if ($this->sR->get_setting('gateway_amazon_pay_version') === '0'
                             && $this->sR->get_setting('gateway_amazon_pay_enabled') === '1' && $client_chosen_gateway === 'Amazon_Pay') {
-                                $this->flash('warning','Testing: You will need to create a buyer test account under sellercental.');
+                                //$this->flash('warning','Testing: You will need to create a buyer test account under sellercental.');
                                 // Return the view
                                 $aliases = $this->sR->get_amazon_pem_file_folder_aliases();
                                 if (!file_exists($aliases->get('@pem_file_unique_folder').'/private.pem')){

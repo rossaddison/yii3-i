@@ -74,6 +74,7 @@ $lang = array(
     'online_payment_returnUrl'           => 'Return Url',
     'online_payment_sandboxId'           => 'Sandbox Id',
     'online_payment_sandbox'             => 'Sandbox',
+    'online_payment_region'              => 'Region',
 
     // Status / Error Messages
     'online_payment_payment_cancelled'   => 'Payment cancelled.',
