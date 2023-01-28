@@ -37,7 +37,7 @@ final class OffsetPagination extends Widget
 
     public function isRequired(): bool
     {
-        return $this->paginator === null ? false : $this->paginator->isRequired();
+        return $this->paginator !== null && $this->paginator->isRequired();
     }
 
     /**
@@ -52,7 +52,7 @@ final class OffsetPagination extends Widget
         return $this;
     }
 
-    protected function run(): string
+    public function render(): string
     {
         if ($this->paginator === null) {
             return '';
@@ -78,8 +78,8 @@ final class OffsetPagination extends Widget
         if ($this->prepared) {
             return;
         }
-        $this->pagesCount = null!== $this->paginator ? $this->paginator->getTotalPages() : 0;
-        $this->currentPage = null!== $this->paginator ? $this->paginator->getCurrentPage() : 0;
+        $this->pagesCount = $this->paginator->getTotalPages();
+        $this->currentPage = $this->paginator->getCurrentPage();
         if ($this->pagesCount > 9) {
             if ($this->currentPage <= 4) {
                 $this->pages = [...range(1, 5), null, ...range($this->pagesCount - 2, $this->pagesCount)];
@@ -109,7 +109,7 @@ final class OffsetPagination extends Widget
         $result = '';
 
         // `Previous` page
-        $prevUrl = null!==$this->paginator && $this->paginator->isOnFirstPage() ? null : $this->getPageLink($this->currentPage - 1);
+        $prevUrl = $this->paginator->isOnFirstPage() ? null : $this->getPageLink($this->currentPage - 1);
         $result .= Html::openTag('li', ['class' => $prevUrl === null ? 'page-item disabled' : 'page-item']);
         $result .= Html::a('Previous', $prevUrl, ['class' => 'page-link']);
         $result .= Html::closeTag('li');
@@ -127,7 +127,7 @@ final class OffsetPagination extends Widget
         }
 
         // `Next` page
-        $nextUrl = null!==$this->paginator && $this->paginator->isOnLastPage() ? null : $this->getPageLink($this->currentPage + 1);
+        $nextUrl = $this->paginator->isOnLastPage() ? null : $this->getPageLink($this->currentPage + 1);
         $result .= Html::openTag('li', ['class' => $nextUrl === null ? 'page-item disabled' : 'page-item']);
         $result .= Html::a('Next', $nextUrl, ['class' => 'page-link']);
         $result .= Html::closeTag('li');
