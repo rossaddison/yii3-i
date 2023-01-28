@@ -78,7 +78,13 @@ final class OffsetPagination extends Widget
         if ($this->prepared) {
             return;
         }
-        $this->pagesCount = $this->paginator->getTotalPages();
+        
+        // Psalm Level 3: PossiblyNullReference: Cannot call method getTotalPages on possibly null value
+        $this->pagesCount = 0;
+        if (null!==$this->paginator) {
+            $this->pagesCount = $this->paginator->getTotalPages();
+        }
+        
         $this->currentPage = $this->paginator->getCurrentPage();
         if ($this->pagesCount > 9) {
             if ($this->currentPage <= 4) {
