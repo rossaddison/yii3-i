@@ -183,7 +183,7 @@ class Inv
       $this->group_id = $group_id;
     }
     
-    public function getStatus($status_id): string
+    public function getStatus(int $status_id): string
     {
         $status = '';
         switch ($status_id) {

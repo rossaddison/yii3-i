@@ -26,7 +26,7 @@ class Identity implements CookieLoginIdentityInterface
 
     public function __construct()
     {
-        $this->regenerateCookieLoginKey();
+        $this->authKey = $this->regenerateCookieLoginKey();
     }
 
     public function getId(): ?string
@@ -52,8 +52,8 @@ class Identity implements CookieLoginIdentityInterface
         return $this->authKey === $key;
     }
 
-    public function regenerateCookieLoginKey(): void
+    public function regenerateCookieLoginKey(): string
     {
-        $this->authKey = Random::string(32);
+        return Random::string(32);
     }
 }

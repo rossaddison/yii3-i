@@ -1,4 +1,4 @@
-<h6 id="invoice">Development Summary: (...views/invoice/info/invoice.php)</h6>
+<h6 id="invoice">Development Summary: (...resources/views/invoice/info/invoice.php)</h6>
 
 <p><b>Aim: To develop a similar invoicing system to InvoicePlane integrating with the latest Jquery, and security features of Yii3 using wampserver
         as a test platform for WAMP and also Ubuntu 22.04 LTS for LAMP.</b>
@@ -19,6 +19,36 @@
 <p>CompanyPrivate logo will be automatically input on invoice/quotes depending on whether the date of the invoice falls between the start and end date.</p>
 <p>Introducing Paypal.</p>
 <p>Introducing India's PayTm payment gateway's QR code method of payment and comparing this with Stripe's method.</p>
+<p><b>28 January 2023</b></p>
+<p>Helpers\CountryHelper\get_country_list</p>
+<p>The following code is functional but results in UnresolvableInclude: Worth coming back to.</p>
+<p>Psalm Level 2 Testing - Submission 1</p>
+<code>    
+/**<br>
+ * Returns an array list of cldr => country, translated in the language $cldr.<br>
+ * If there is no translated country list, return the english one.<br>
+ *<br>
+ * @param string $cldr<br>
+ * @return mixed<br>
+ */    <br>
+public function get_country_list(string $cldr) : mixed<br>
+{<br>
+    $new_aliases = new Aliases(['@helpers' => __DIR__, '@country_list' => '@helpers/Country-list']);<br>
+    $file = $new_aliases->get('@country_list') .DIRECTORY_SEPARATOR. $cldr .DIRECTORY_SEPARATOR.'country.php';<br>
+    $default_english = $new_aliases->get('@country_list') .DIRECTORY_SEPARATOR.'en'.DIRECTORY_SEPARATOR.'country.php';<br>
+    if (file_exists($file)) {<br>
+        /**<br>
+         * @psalm-suppress UnresolvableInclude<br>
+         */<br>
+        return (include $file);<br>
+    } else {<br>
+        /**<br>
+         * @psalm-suppress UnresolvableInclude<br>
+         */<br>
+        return (include $default_english);<br>
+    }<br>
+}<br>
+</code>
 <p><b>27 January 2023</b></p>
 <p>Psalm Level 3 Testing (0 errors)</p>
 <p>Testing</p>

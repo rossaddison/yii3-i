@@ -132,10 +132,14 @@ final class ClientController
     }
 
     /**
-     * @psalm-param 'body.php' $file
-     * @psalm-param '' $name
+     * 
+     * @param string $generated_dir_path
+     * @param string $content
+     * @param string $file
+     * @param string $name
+     * @return GenerateCodeFileHelper
      */
-    private function build_and_save(string $generated_dir_path,$content, string $file,string $name): GenerateCodeFileHelper{
+    private function build_and_save(string $generated_dir_path, string $content, string $file,string $name): GenerateCodeFileHelper {
         $build_file = new GenerateCodeFileHelper("$generated_dir_path/$name$file", $content); 
         $build_file->save();
         return $build_file;
@@ -188,7 +192,7 @@ final class ClientController
     // Data fed from client.js->$(document).on('click', '#client_create_confirm', function () {
     public function create_confirm(Request $request, ValidatorInterface $validator, cfR $cfR, sR $sR) : \Yiisoft\DataResponse\DataResponse
     {
-        $body = $request->getQueryParams() ?? [];
+        $body = $request->getQueryParams();
         $datehelper = new DateHelper($sR);
         $ajax_body = [
             'client_name'=>$body['client_name'] ?? 'clientnameismissing',
@@ -243,7 +247,16 @@ final class ClientController
         } 
     }
     
-    public function custom_fields(ValidatorInterface $validator, $body, $matches, $client_id, $ccR) : \Yiisoft\DataResponse\DataResponse
+    /**
+     * 
+     * @param ValidatorInterface $validator
+     * @param array $body
+     * @param mixed $matches
+     * @param string $client_id
+     * @param ccR $ccR
+     * @return \Yiisoft\DataResponse\DataResponse
+     */
+    public function custom_fields(ValidatorInterface $validator, array $body, mixed $matches, string $client_id, ccR $ccR) : \Yiisoft\DataResponse\DataResponse
     {   
         $parameters =[];
         if (!empty($body['custom'])) {
@@ -271,8 +284,11 @@ final class ClientController
                 $client_custom['custom_field_id']=$key;
                 $client_custom['value']=$value; 
                 $model = ($ccR->repoClientCustomCount($client_id,$key) == 1 ? $ccR->repoFormValuequery($client_id,$key) : new ClientCustom());
-                ($ajax_custom->load($client_custom) && $validator->validate($ajax_custom)->isValid()) ? 
-                        $this->clientCustomService->saveClientCustom($model, $ajax_custom) : '';                
+                if ($model instanceof ClientCustom) {
+                   if ($ajax_custom->load($client_custom) && $validator->validate($ajax_custom)->isValid()) { 
+                        $this->clientCustomService->saveClientCustom($model, $ajax_custom);
+                   }     
+                }
             }
             $parameters = [
                 'success'=>1,
@@ -314,19 +330,19 @@ final class ClientController
                 'title' => $sR->trans('edit'),
                 'action' => ['client/edit', ['id' => $client_id]],
                 'errors' => [],
-                'head'=>$head,
+                'head'=> $head,
                 'datehelper'=> new DateHelper($sR),
-                'client'=>$client,
+                'client'=> $client,
                 'body' => $this->body($client),
                 'aliases'=> new Aliases(['@invoice' => dirname(__DIR__), '@language' => '@invoice/Language']),
                 'selected_country' => $selected_country ?: $sR->get_setting('default_country'),            
                 'selected_language' => $selected_language ?: $sR->get_setting('default_language'),
                 'datepicker_dropdown_locale_cldr' => $session->get('_language') ?? 'en',
                 'countries'=> $countries->get_country_list($sR->get_setting('cldr')),
-                'custom_fields'=>$cfR->repoTablequery('client_custom'),
-                'custom_values'=>$cvR->attach_hard_coded_custom_field_values_to_custom_field($cfR->repoTablequery('client_custom')),
+                'custom_fields'=> $cfR->repoTablequery('client_custom'),
+                'custom_values'=> $cvR->attach_hard_coded_custom_field_values_to_custom_field($cfR->repoTablequery('client_custom')),
                 'cvH'=> new CVH($sR),
-                'client_custom_values'=>$this->client_custom_values((string)$client_id, $ccR)
+                'client_custom_values'=> $this->client_custom_values((string)$client_id, $ccR)
             ];
             if ($request->getMethod() === Method::POST) {            
                 $edited_body = $request->getParsedBody();
@@ -420,7 +436,7 @@ final class ClientController
     
     public function load_client_notes(Request $request, cnR $cnR): \Yiisoft\DataResponse\DataResponse
     {
-        $body = $request->getQueryParams() ?? [];
+        $body = $request->getQueryParams();
         $client_id = $body['client_id'];
         $data = $cnR->repoClientNoteCount($client_id) > 0 ? $cnR->repoClientquery((string)$client_id) : null;
         $parameters = [
@@ -442,8 +458,15 @@ final class ClientController
         return $canEdit;
     }
     
-    // save the client custom fields
-    public function save_client_custom_fields(ValidatorInterface $validator, ccR $ccR, $client_id, $body)
+    /**
+     * 
+     * @param ValidatorInterface $validator
+     * @param ccR $ccR
+     * @param string $client_id
+     * @param array $body
+     * @return \Yiisoft\DataResponse\DataResponse
+     */
+    public function save_client_custom_fields(ValidatorInterface $validator, ccR $ccR, string $client_id, array $body)
                     : \Yiisoft\DataResponse\DataResponse
     {
        $parameters = [];
@@ -492,13 +515,20 @@ final class ClientController
         }
     }
     
-    // save the client custom fields
+    /**
+     * 
+     * @param SessionInterface $session
+     * @param ValidatorInterface $validator
+     * @param Request $request
+     * @param ccR $ccR
+     * @return \Yiisoft\DataResponse\DataResponse
+     */
     public function save_custom_fields(SessionInterface $session, ValidatorInterface $validator, Request $request, ccR $ccR)
                     : \Yiisoft\DataResponse\DataResponse
     {
        $parameters = [];      
        $parameters['success'] = 0; 
-       $body = $request->getQueryParams() ?? [];
+       $body = $request->getQueryParams();
        $custom = $body['custom'] ? $body['custom'] : '';
        $custom_field_body = [            
             'custom'=>$custom,            
@@ -542,12 +572,21 @@ final class ClientController
             return $this->factory->createResponse(Json::encode($parameters)); 
         }
     }
-
+    
+    /**
+     * 
+     * @param Request $request
+     * @param ValidatorInterface $validator
+     * @param cnS $cnS
+     * @param cnR $cnR
+     * @param sR $sR
+     * @return \Yiisoft\DataResponse\DataResponse
+     */
     public function save_client_note_new(Request $request, ValidatorInterface $validator, cnS $cnS, cnR $cnR, sR $sR) : \Yiisoft\DataResponse\DataResponse 
     {
         $datehelper = new DateHelper($sR);
         //receive data ie. note
-        $body = $request->getQueryParams() ?? [];
+        $body = $request->getQueryParams();
         $client_id = $body['client_id'];
         $date = new \DateTimeImmutable('now');
         $note = $body['client_note'];
@@ -570,7 +609,26 @@ final class ClientController
         }        
         return $this->factory->createResponse(Json::encode($parameters));          
     }
-        
+    
+    /**
+     * 
+     * @param SessionInterface $session
+     * @param CurrentRoute $currentRoute
+     * @param cR $cR
+     * @param cfR $cfR
+     * @param cnR $cnR
+     * @param cvR $cvR
+     * @param ccR $ccR
+     * @param gR $gR
+     * @param iR $iR
+     * @param iaR $iaR
+     * @param irR $irR
+     * @param qR $qR
+     * @param pymtR $pymtR
+     * @param qaR $qaR
+     * @param sR $sR
+     * @return Response
+     */    
     public function view(SessionInterface $session, CurrentRoute $currentRoute, cR $cR, cfR $cfR, cnR $cnR, cvR $cvR, ccR $ccR, gR $gR, iR $iR, iaR $iaR, irR $irR, qR $qR, pymtR $pymtR, qaR $qaR, sR $sR   
     ): Response {
       $client = $this->client($currentRoute, $cR);

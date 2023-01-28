@@ -93,7 +93,12 @@ private EntityWriter $entityWriter;
         return  $query->fetchOne() ?: null;        
     }
     
-    public function repoCount($id): int {
+    /**
+     * 
+     * @param string $id
+     * @return int
+     */
+    public function repoCount(string $id): int {
         $count = $this->select()
                       ->where(['id' => $id])
                       ->count();

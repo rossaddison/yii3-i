@@ -229,6 +229,7 @@ echo Nav::widget()
                                  ['label' => $translator->translate('invoice.platform.netbeans.UTF-8'), 'url'=>'https://stackoverflow.com/questions/59800221/gradle-netbeans-howto-set-encoding-to-utf-8-in-editor-and-compiler'],
                                  ['label' => $translator->translate('invoice.platform.csrf'), 'url'=>'https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#use-of-custom-request-headers'],
                                  ['label' => 'Html to Markdown', 'url'=>'https://convertsimple.com/convert-html-to-markdown/'],
+                                 ['label' => 'jQuery UI 1.13.2', 'url'=>'https://github.com/jquery/jquery-ui'],    
                                  ['label' => 'LAMP'],
                                  ['label' => $translator->translate('invoice.platform.editor'). ': Apache Netbeans 12.4 64 bit'], 
                                  ['label' => $translator->translate('invoice.platform.server'). ': Ubuntu LTS 22.04 64 bit'],

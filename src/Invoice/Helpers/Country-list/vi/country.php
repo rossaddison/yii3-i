@@ -1,4 +1,6 @@
-<?php return array(
+<?php 
+declare(strict_types=1); 
+return array(
     'SA' => 'A-rập Xê-út',
     'EG' => 'Ai Cập',
     'AZ' => 'Ai-déc-bai-gian',

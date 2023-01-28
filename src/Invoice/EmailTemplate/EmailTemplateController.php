@@ -166,7 +166,7 @@ final class EmailTemplateController
                 'action' => ['emailtemplate/edit', ['email_template_id' => $email_template->getEmail_template_id()]],
                 'errors' => [],
                 'email_template'=> $email_template,
-                'body' => $email_template,
+                'body' => $this->body($email_template),
                 'aliases'=> new Aliases(['@invoice' => dirname(__DIR__), '@language' => '@invoice/Language']),
                 's'=>$settingRepository,
                 'email_template_tags' => $this->viewRenderer->renderPartialAsString('/invoice/emailtemplate/template-tags', [
@@ -226,7 +226,7 @@ final class EmailTemplateController
      */
     public function get_content(Request $request, EmailTemplateRepository $etR) : \Yiisoft\DataResponse\DataResponse {
         //views/invoice/inv/mailer_invoice'
-        $get_content = $request->getQueryParams() ?? [];
+        $get_content = $request->getQueryParams();
         $email_template_id = $get_content['email_template_id'];
         $email_template = $etR->repoEmailTemplateCount((string)$email_template_id) > 0 ? $etR->repoEmailTemplatequery((string)$email_template_id) : null;
         return $this->factory->createResponse(Json::htmlEncode(($email_template ? 
@@ -279,12 +279,6 @@ final class EmailTemplateController
         return $canEdit;
     }
     
-    /**
-     * 
-     * @param CurrentRoute $currentRoute
-     * @param EmailTemplateRepository $emailtemplateRepository
-     * @return object|null
-     */
     private function emailtemplate(CurrentRoute $currentRoute, 
                                    EmailTemplateRepository $emailtemplateRepository): object|null {
         $email_template_id = $currentRoute->getArgument('email_template_id');       

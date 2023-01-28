@@ -1,4 +1,6 @@
-<?php return array(
+<?php   
+  declare(strict_types=1); 
+  return array(
     'AF' => 'Afghanistan',
     'AL' => 'Albania',
     'DZ' => 'Algeria',
