@@ -78,8 +78,8 @@ final class OffsetPagination extends Widget
         if ($this->prepared) {
             return;
         }
-        $this->pagesCount = $this->paginator?->getTotalPages();
-        $this->currentPage = $this->paginator?->getCurrentPage();
+        $this->pagesCount = $this->paginator->getTotalPages();
+        $this->currentPage = $this->paginator->getCurrentPage();
         if ($this->pagesCount > 9) {
             if ($this->currentPage <= 4) {
                 $this->pages = [...range(1, 5), null, ...range($this->pagesCount - 2, $this->pagesCount)];
