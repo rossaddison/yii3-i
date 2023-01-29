@@ -1,6 +1,7 @@
 <?php
     declare(strict_types=1); 
     
+    use App\Invoice\Entity\CustomField;
     use Yiisoft\Html\Html;
     use Yiisoft\Html\Tag\Form;
     use DateTimeImmutable;
@@ -114,6 +115,7 @@
         </div>
         <?php foreach ($custom_fields as $custom_field): ?>            
         <div class="mb3 form-group">
+        <?php if ($custom_field instanceof CustomField) { ?>
         <?= $cvH->print_field_for_form($payment_custom_values,
                                        $custom_field,
                                        // Custom values to fill drop down list if a dropdown box has been created
@@ -124,6 +126,7 @@
                                        'form-group',
                                        // Label class similar to above
                                        'control-label'); ?>
+        <?php } ?>    
         </div>    
         <?php endforeach; ?>        
     </div> 

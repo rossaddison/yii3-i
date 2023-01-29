@@ -642,6 +642,11 @@ final class SettingRepository extends Select\Repository
         return $aliases;
     }
     
+    /**
+     * 
+     * @param string $type
+     * @return array
+     */
     public function get_invoice_templates(string $type = 'pdf') : array
     {
         $aliases = new Aliases(['@base' => dirname(dirname(dirname(__DIR__))), 
@@ -656,7 +661,12 @@ final class SettingRepository extends Select\Repository
         }        
         return $this->remove_extension($templates);
     }
-
+    
+    /**
+     * 
+     * @param string $type
+     * @return array
+     */
     public function get_quote_templates(string $type = 'pdf') : array
     {
          $aliases = new Aliases(['@base' => dirname(dirname(dirname(__DIR__))), 

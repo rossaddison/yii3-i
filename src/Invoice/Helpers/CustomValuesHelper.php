@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace App\Invoice\Helpers;
 
 use App\Invoice\CustomValue\CustomValueRepository as CVR;
+use App\Invoice\Entity\CustomField;
+use App\Invoice\Entity\CustomValue;
 use App\Invoice\Setting\SettingRepository as SRepo;
 use App\Invoice\Helpers\DateHelper as DHelp;
 use Yiisoft\Html\Html;
@@ -70,17 +72,16 @@ Class CustomValuesHelper {
     }
 
     /**
-      * Print a custom form field based on the type
-      *
-      * @param $encode
-      * @param $entity_custom_values
-      * @param $custom_field
-      * @param $custom_value
-      * @param string $class_top
-      * @param string $class_surrounding_top
-      * @param string $label_class
-      */
-     public function print_field_for_view($entity_custom_values, $custom_field, $custom_value, $class_top = '', $class_surrounding_top = 'controls', $label_class = 'label label-primary'): void {
+     * 
+     * @param array $entity_custom_values
+     * @param CustomField $custom_field
+     * @param array $custom_value
+     * @param string $class_top
+     * @param string $class_surrounding_top
+     * @param string $label_class
+     * @return void
+     */
+    public function print_field_for_view(array $entity_custom_values, CustomField $custom_field, array $custom_value, string $class_top = '', string $class_surrounding_top = 'controls', string $label_class = 'label label-primary'): void {
         ?>
         <div>
             <div class="<?php echo $class_top; ?>">
@@ -162,8 +163,19 @@ Class CustomValuesHelper {
     }
     
     // Note: $custom_value can be an array of dropdown list values
-    // eg see payment/_form.php            
-    public function print_field_for_form($entity_custom_values, $custom_field, $custom_value, $class_input = '', $class_before_input_class = 'controls', $label_class =''): void {
+    // eg see payment/_form.php          
+    /**
+     * 
+     * @param array $entity_custom_values
+     * @param CustomField $custom_field
+     * @param array $custom_value
+     * @param string $class_input
+     * @param string $class_before_input_class
+     * @param string $label_class
+     * @return void
+     */
+    
+    public function print_field_for_form(array $entity_custom_values, CustomField $custom_field, array  $custom_value, string $class_input = '', string $class_before_input_class = 'controls', string $label_class =''): void {
         ?>
         
             <div class="col-xs-12 col-sm-2 text-right text-left-xs">
@@ -259,7 +271,14 @@ Class CustomValuesHelper {
         <?php
     }
     
-    public function print_field_for_pdf($entity_custom_values, $custom_field, $cvR): void {
+    /**
+     * 
+     * @param array $entity_custom_values
+     * @param CustomField $custom_field
+     * @param object $cvR
+     * @return void
+     */
+    public function print_field_for_pdf(array $entity_custom_values, CustomField $custom_field, object $cvR): void {
         ?>
         <div>
             <div>
@@ -326,10 +345,10 @@ Class CustomValuesHelper {
      * 
      * @param array $entity_custom_values
      * @param string $custom_field_id
-     * @param CVR $cvR
+     * @param object $cvR
      * @return string|int|null
      */           
-    public function selected_value(array $entity_custom_values, string $custom_field_id, CVR $cvR) : string|int|null {
+    public function selected_value(array $entity_custom_values, string $custom_field_id, object $cvR) : string|int|null {
         $quote_custom_value = $this->form_value($entity_custom_values,$custom_field_id);
         if (($quote_custom_value !== '') && !empty($quote_custom_value)) {
           $custom_value = $cvR->repoCustomValuequery((string)$quote_custom_value);

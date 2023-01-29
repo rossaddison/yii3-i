@@ -309,7 +309,7 @@ final class QuoteController
     
     public function create_confirm(CurrentUser $currentUser, Request $request, ValidatorInterface $validator, GR $gR, TRR $trR) : \Yiisoft\DataResponse\DataResponse
     {
-        $body = $request->getQueryParams() ?? [];
+        $body = $request->getQueryParams();
         $ajax_body = [
             'inv_id'=>null,
             'client_id'=>(int)$body['client_id'],
@@ -628,7 +628,7 @@ final class QuoteController
     /**
      * @psalm-param 'pdf' $type
      */
-    public function email_get_quote_templates(string $type = 'pdf')
+    public function email_get_quote_templates(string $type = 'pdf') : array
     {
         return $this->sR->get_quote_templates($type);
     }
@@ -977,7 +977,7 @@ final class QuoteController
      */
     public function guest(Request $request, QAR $qaR, CurrentRoute $currentRoute,
                           QR $qR, UCR $ucR, UIR $uiR) : \Yiisoft\DataResponse\DataResponse|Response {
-        $query_params = $request->getQueryParams() ?? [];
+        $query_params = $request->getQueryParams();
         $pageNum = (int)$currentRoute->getArgument('page', '1');
          //status 0 => 'all';
         $status = (int)$currentRoute->getArgument('status', '0');
@@ -1203,7 +1203,7 @@ final class QuoteController
      */
     public function modal_change_client(Request $request, CR $cR, SR $sR): \Yiisoft\DataResponse\DataResponse 
     { 
-        $body = $request->getQueryParams() ?? [];
+        $body = $request->getQueryParams();
         $client = $cR->repoClientquery((string)$body['client_id']);
         $parameters = [
             'success'=>1,
@@ -1479,7 +1479,7 @@ final class QuoteController
                                              GR $gR, IIAR $iiaR, IR $iR, InvItemAmountservice $iiaS, PR $pR, QAR $qaR, QCR $qcR,
                                              QIR $qiR,QR $qR, QTRR $qtrR, TRR $trR, UNR $unR) : \Yiisoft\DataResponse\DataResponse|Response
     {
-        $body = $request->getQueryParams() ?? [];
+        $body = $request->getQueryParams();
         $quote_id = (string)$body['quote_id'];
         $quote = $qR->repoQuoteUnloadedquery($quote_id);
         if ($quote) {
@@ -1715,7 +1715,7 @@ final class QuoteController
                                            GR $gR, QIAS $qiaS, PR $pR, QAR $qaR, QCR $qcR,
                                            QIAR $qiaR, QIR $qiR, QR $qR, QTRR $qtrR, TRR $trR, UNR $unR) : \Yiisoft\DataResponse\DataResponse|Response
     {
-        $data_quote_js = $request->getQueryParams() ?? [];
+        $data_quote_js = $request->getQueryParams();
         $quote_id = (string)$data_quote_js['quote_id'];
         $original = $qR->repoQuoteUnloadedquery($quote_id);
         if ($original) {
@@ -1881,10 +1881,10 @@ final class QuoteController
     }
     
     /**
-     * @param $files
+     * @param array $files
      * @return mixed
      */
-    private function remove_extension($files) : mixed
+    private function remove_extension(array $files) : mixed
     {
         foreach ($files as $key => $file) {
             $files[$key] = str_replace('.php', '', $file);
@@ -1905,7 +1905,7 @@ final class QuoteController
             $parameters = [
                 'success'=>0
             ]; 
-            $js_data = $request->getQueryParams() ?? [];        
+            $js_data = $request->getQueryParams();        
             $quote_id = $js_data['quote_id'];
             $custom_field_body = [            
                 'custom'=>$js_data['custom'] ?: '',            
@@ -1923,7 +1923,7 @@ final class QuoteController
      */
     public function save_quote_tax_rate(Request $request, ValidatorInterface $validator)
                                         : \Yiisoft\DataResponse\DataResponse {       
-        $body = $request->getQueryParams() ?? [];
+        $body = $request->getQueryParams();
         $ajax_body = [
             'quote_id'=>$body['quote_id'],
             'tax_rate_id'=>$body['tax_rate_id'],

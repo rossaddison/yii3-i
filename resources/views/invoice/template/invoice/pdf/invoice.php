@@ -159,12 +159,12 @@ use App\Invoice\Helpers\DateHelper;
                 <?php endif; ?>
                 <td class="text-right">
                     <?php  
-                        echo Html::encode($s->format_currency($inv_item_amount->getTax_total())); 
+                        echo Html::encode($s->format_currency($inv_item_amount?->getTax_total())); 
                     ?>
                 </td>
                 <td class="text-right">
                     <?php  
-                        echo Html::encode($s->format_currency($inv_item_amount->getTotal())); 
+                        echo Html::encode($s->format_currency($inv_item_amount?->getTotal())); 
                     ?>
                 </td>
             </tr>

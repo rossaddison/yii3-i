@@ -15,10 +15,10 @@ final class OffsetPagination extends Widget
 
     private ?Closure $urlGenerator = null;
     private ?Paginator $paginator = null;
-    private int $pagesCount;
-    private int $currentPage;
-    private array $pages;
-    private bool $prepared;
+    private int $pagesCount = 0;
+    private int $currentPage = 0;
+    private array $pages = [];
+    private bool $prepared = false;
 
     public function paginator(?Paginator $paginator): self
     {
