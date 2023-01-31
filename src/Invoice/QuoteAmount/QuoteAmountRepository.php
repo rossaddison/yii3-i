@@ -137,11 +137,18 @@ private EntityWriter $entityWriter;
         return  $query->fetchOne() ?: null;        
     }
    
-    public function repoStatusTotals($key, $range, $sR) : EntityReader {        
+    /**
+     * 
+     * @param int $key
+     * @param array $range
+     * @param SR $sR
+     * @return EntityReader
+     */
+    public function repoStatusTotals(int $key, array $range, SR $sR) : EntityReader {        
         $datehelper = new DateHelper($sR);
         $query = $this->select()
                       ->load('quote')
-                      ->where(['quote.status_id' => (int)$key])
+                      ->where(['quote.status_id' => $key])
                       ->andWhere('quote.date_created', '>=' ,$datehelper->date_from_mysql_without_style($range['lower']))
                       ->andWhere('quote.date_created', '<=' ,$datehelper->date_from_mysql_without_style($range['upper']));                      
         return $this->prepareDataReader($query);
@@ -178,12 +185,6 @@ private EntityWriter $entityWriter;
         // $period eg. this-month, last-month derived from $sR->get_setting('invoice or quote_overview_period') 
         $range = $sR->range($period); 
         
-        // 1 => class: 'draft', href: 1},
-        // 2 => class: 'sent', href: 2}, 
-        // 3 => class: 'viewed', href: 3}, 
-        // 4 => class: 'approved', href: 4}}
-        // 5 => class: 'rejected', href: 5}}
-        // 6 => class: 'cancelled', href: 6}}
         foreach ($qR->getStatuses($sR) as $key => $status) {
             $status_specific_quotes = $this->repoStatusTotals($key, $range, $sR);
             $total = 0.00;

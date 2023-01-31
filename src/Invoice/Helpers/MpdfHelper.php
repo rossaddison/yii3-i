@@ -78,7 +78,7 @@ Class MpdfHelper
         const ORIENT_PORTRAIT = 'P';
         /**
          * Landscape orientation
-         */
+         */        
         const ORIENT_LANDSCAPE = 'L';
         /**
          * File output sent to browser inline
@@ -96,10 +96,16 @@ Class MpdfHelper
          * File output sent as a string
          */
         const DEST_STRING = 'S';
+        /**
+         * @var string
+         */
+        public string $mode = self::MODE_BLANK;
         
-        public $mode = self::MODE_BLANK;
-        
-        public $format = self::FORMAT_A4;
+        /**
+         * 
+         * @var string
+         */
+        public string $format = self::FORMAT_A4;
         /**
          * @var integer
          */
@@ -123,21 +129,24 @@ Class MpdfHelper
         /**
          * @var float 
          */
-        public $marginBottom = 16;
+        public float $marginBottom = 16;
         /**
          * @var float
          */
-        public $marginHeader = 9;
+        public float $marginHeader = 9;
         /**
          * @var float
          */
-        public $marginFooter = 9;
+        public float $marginFooter = 9;
         /**
          * @var string
          */
-        public $orientation = self::ORIENT_PORTRAIT;    
+        public string $orientation = self::ORIENT_PORTRAIT;    
         
-        public $options = [
+        /**
+         * @var array
+         */
+        public array $options = [
             'autoScriptToLang' => true,
             'ignore_invalid_utf8' => true,
             'tabSpaces' => 4,
@@ -159,6 +168,7 @@ Class MpdfHelper
                                    sR $sR, 
                                    bool $isInvoice = false, 
                                    object|null $quote_or_invoice = null) 
+        : \Mpdf\Mpdf|array|string
         {
             $sR->load_settings();
             $invoice_array = [];            
@@ -180,7 +190,18 @@ Class MpdfHelper
             }
         }
         
-        private function isInvoice(string $filename, array $invoice_array, bool $stream, \Mpdf\Mpdf $mpdf, Aliases $aliases, SR $sR) {
+        /**
+         * 
+         * @param string $filename
+         * @param array $invoice_array
+         * @param bool $stream
+         * @param \Mpdf\Mpdf $mpdf
+         * @param Aliases $aliases
+         * @param SR $sR
+         * @return \Mpdf\Mpdf|array|string
+         */
+        private function isInvoice(string $filename, array $invoice_array, bool $stream, \Mpdf\Mpdf $mpdf, Aliases $aliases, SR $sR)
+        : \Mpdf\Mpdf|array|string {
             foreach (glob($aliases->get('@uploads').$sR::getUploadsArchiveholderRelativeUrl() . '*' . $filename . '.pdf') as $file) {
                 array_push($invoice_array, $file);
             }

@@ -63,6 +63,11 @@ final class UnitRepository extends Select\Repository
         $this->entityWriter->delete([$unit]);
     }
 
+    /**
+     * 
+     * @param Select $query
+     * @return EntityReader
+     */
     private function prepareDataReader(Select $query): EntityReader
     {
         return (new EntityReader($query))->withSort(
@@ -71,7 +76,12 @@ final class UnitRepository extends Select\Repository
         );
     }
     
-    public function repoCount($unit_id): int {
+    /**
+     * 
+     * @param string $unit_id
+     * @return int
+     */
+    public function repoCount(string $unit_id): int {
         $count = $this->select()
                       ->where(['id' => $unit_id])
                       ->count();
@@ -91,6 +101,11 @@ final class UnitRepository extends Select\Repository
         return  $query->fetchOne() ?: null;        
     }
     
+    /**
+     * 
+     * @param string $unit_name
+     * @return object|null
+     */
     public function withName(string $unit_name): object|null
     {
         $query = $this
@@ -102,13 +117,10 @@ final class UnitRepository extends Select\Repository
     /**
      * Return either the singular unit name or the plural unit name,
      * depending on the quantity
-     *
-     * @param $unit_id
-     * @param $quantity
-     *
+     * 
+     * @param string $unit_id
+     * @param int $quantity
      * @return string|object|null
-     *
-     * @psalm-param 1 $quantity
      */
     public function singular_or_plural_name(string $unit_id, int $quantity) : string|object|null
     {

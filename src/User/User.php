@@ -26,7 +26,7 @@ class User
     private string $login;
 
     #[Column(type: 'string')]
-    private string $passwordHash;
+    private string $passwordHash = '';
 
     #[Column(type: 'datetime')]
     private DateTimeImmutable $created_at;

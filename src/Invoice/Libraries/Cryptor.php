@@ -32,16 +32,16 @@ Namespace App\Invoice\Libraries;
 
 class Cryptor
 {
-    private $cipher_algo;
-    private $hash_algo;
-    private $iv_num_bytes;
-    private $format;
+    private string $cipher_algo;
+    private string $hash_algo;
+    private int $iv_num_bytes = 0;
+    private int $format;
 
     const FORMAT_RAW = 0;
     const FORMAT_B64 = 1;
     const FORMAT_HEX = 2;
 
-    public function __construct($cipher_algo = 'aes-256-ctr', $hash_algo = 'sha256', $fmt = Cryptor::FORMAT_B64)
+    public function __construct(string $cipher_algo = 'aes-256-ctr', string $hash_algo = 'sha256', int $fmt = Cryptor::FORMAT_B64)
     {
         $this->cipher_algo = $cipher_algo;
         $this->hash_algo = $hash_algo;
@@ -67,7 +67,7 @@ class Cryptor
      * @param  int $fmt Optional override for the output encoding. One of FORMAT_RAW, FORMAT_B64 or FORMAT_HEX.
      * @return string      The encrypted string.
      */
-    public function encryptString($in, $key, $fmt = null)
+    public function encryptString(string $in, string $key, int|null $fmt = null)
     {
         if ($fmt === null)
         {
@@ -142,8 +142,8 @@ class Cryptor
         }
 
         // Extract the initialisation vector and encrypted data
-        $iv = substr($raw, 0, $this->iv_num_bytes);
-        $raw = substr($raw, $this->iv_num_bytes);
+        $iv = substr($raw, 0, $this->iv_num_bytes ?: 0);
+        $raw = substr($raw, $this->iv_num_bytes ?: 0);
 
         // Hash the key
         $keyhash = openssl_digest($key, $this->hash_algo, true);

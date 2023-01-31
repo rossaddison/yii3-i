@@ -249,7 +249,7 @@ final class QuoteItemController
      */
     public function multiple(Request $request, QIR $qiR): \Yiisoft\DataResponse\DataResponse {
         //jQuery parameters from quote.js function delete-items-confirm-quote 'item_ids' and 'quote_id'
-        $select_items = $request->getQueryParams() ?? [];
+        $select_items = $request->getQueryParams();
         $result = false;
         $item_ids = ($select_items['item_ids'] ? $select_items['item_ids'] : []);
         $items = $qiR->findinQuoteItems($item_ids);

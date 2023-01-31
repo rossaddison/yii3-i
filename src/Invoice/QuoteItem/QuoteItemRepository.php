@@ -136,11 +136,12 @@ private EntityWriter $entityWriter;
     
     /**
      * Get selection of quote items from all quote_items
-     *
-     * @psalm-return EntityReader
+     * 
+     * @param array $item_ids
+     * @return EntityReader
      */
      
-    public function findinQuoteItems($item_ids) : EntityReader {
+    public function findinQuoteItems(array $item_ids) : EntityReader {
         $query = $this->select()->where(['id'=>['in'=> new Parameter($item_ids)]]);
         return $this->prepareDataReader($query);    
     } 

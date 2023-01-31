@@ -264,7 +264,7 @@ final class TaskController
     public function selection_inv(ValidatorInterface $validator, Request $request, SessionInterface $session,
                                   tR $taskR, sR $sR, trR $trR, iiaR $iiaR, iiR $iiR, itrR $itrR, iaR $iaR, iR $iR, pymR $pymR)
                                   : \Yiisoft\DataResponse\DataResponse {        
-        $select_items = $request->getQueryParams() ?? [];
+        $select_items = $request->getQueryParams();
         $task_ids = ($select_items['task_ids'] ? $select_items['task_ids'] : []);
         $inv_id = $select_items['inv_id'];
         // Use Spiral||Cycle\Database\Injection\Parameter to build 'IN' array of tasks.
@@ -283,26 +283,34 @@ final class TaskController
         return $this->factory->createResponse(Json::encode($tasks));        
     }
     
-    /**
-     * @psalm-param positive-int $order
-     * @psalm-param sR<object> $sR
-     */
-private function save_task_lookup_item_inv(int $order, object $task, $inv_id, tR $taskR, trR $trR, iiaR $iiaR, sR $sR, ValidatorInterface $validator) : void {
+/**
+ * 
+ * @param int $order
+ * @param object $task
+ * @param string $inv_id
+ * @param tR $taskR
+ * @param trR $trR
+ * @param iiaR $iiaR
+ * @param sR $sR
+ * @param ValidatorInterface $validator
+ * @return void
+ */    
+private function save_task_lookup_item_inv(int $order, object $task, string $inv_id, tR $taskR, trR $trR, iiaR $iiaR, sR $sR, ValidatorInterface $validator) : void {
            $form = new InvItemForm();
            $ajax_content = [
-                'name'=>$task->getName(),        
-                'inv_id'=>(string)$inv_id,            
-                'tax_rate_id'=>$task->getTax_rate_id(),
-                'task_id'=>$task->getId(),
+                'name'=> $task->getName(),        
+                'inv_id'=> $inv_id,            
+                'tax_rate_id'=> $task->getTax_rate_id(),
+                'task_id'=> $task->getId(),
                 'product_id'=>null,
                 'date_added'=>new \DateTimeImmutable('now'),
-                'description'=>$task->getDescription(),
+                'description'=> $task->getDescription(),
                 // A default quantity of 1 is used to initialize the item
                 'quantity'=>floatval(1),
-                'price'=>$task->getPrice(),
+                'price'=> $task->getPrice(),
                 // The user will determine how much discount to give on this item later
                 'discount_amount'=>floatval(0),
-                'order'=>$order
+                'order'=> $order
            ];
            if ($form->load($ajax_content) && $validator->validate($form)->isValid()) {
                 $this->invitemService->addInvItem_task(new InvItem(), $form, $inv_id, $taskR, $trR, new iiaS($iiaR), $iiaR, $sR);                 

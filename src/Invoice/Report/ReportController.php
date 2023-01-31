@@ -106,14 +106,14 @@ class ReportController
      * @param ClientRepository $cR
      * @param InvAmountRepository $iaR
      * @param SettingRepository $sR
-     * @return Response
+     * @return Response|\Mpdf\Mpdf|array|string
      */
     public function invoice_aging_index(Request $request, 
                                         ViewRenderer $head, 
                                         SessionInterface $session,
                                         ClientRepository $cR,
                                         InvAmountRepository $iaR,
-                                        SettingRepository $sR) : Response
+                                        SettingRepository $sR) : Response|\Mpdf\Mpdf|array|string
     {
         $parameters = [
             'head'=> $head,
@@ -274,11 +274,11 @@ class ReportController
      * @param SessionInterface $session
      * @param PaymentRepository $pymtR
      * @param SettingRepository $sR
-     * @return Response
+     * @return Response|\Mpdf\Mpdf|array|string
      */
     public function payment_history_index(Request $request, ViewRenderer $head, SessionInterface $session,                                         
                                     PaymentRepository $pymtR,
-                                    SettingRepository $sR) : Response
+                                    SettingRepository $sR) : Response|\Mpdf\Mpdf|array|string
     {        
         $datehelper = new DateHelper($sR);
         $parameters = [
@@ -364,13 +364,13 @@ class ReportController
      * @param InvRepository $iR
      * @param InvAmountRepository $iaR
      * @param SettingRepository $sR
-     * @return Response
+     * @return Response|\Mpdf\Mpdf|array|string
      */
     public function sales_by_client_index(Request $request, ViewRenderer $head, SessionInterface $session,                                         
                                     ClientRepository $cR,
                                     InvRepository $iR,
                                     InvAmountRepository $iaR,
-                                    SettingRepository $sR) : Response
+                                    SettingRepository $sR) : Response|\Mpdf\Mpdf|array|string
     {
         $datehelper = new DateHelper($sR);
         $parameters = [
@@ -438,25 +438,28 @@ class ReportController
         $clients = $cR->findAllPreloaded();
         foreach ($clients as $client) {
             if ($client instanceof Client) {
-                // Client Name and Surname
-                $row['client_name_surname'] = $clienthelper->format_client($client);
-                $row['inv_count'] = $iR->repoCountByClient($client->getClient_id());
-                $row['sales_no_tax'] = $iR->repoCountByClient($client->getClient_id()) > 0 
-                              ? $iR->with_item_subtotal_from_to($client->getClient_id(), $from, $to, $iaR) 
-                              : 0.00;
-                // plus
-                $row['item_tax_total'] = $iR->repoCountByClient($client->getClient_id()) > 0 
-                              ? $iR->with_item_tax_total_from_to($client->getClient_id(), $from, $to, $iaR) 
-                              : 0.00;
-                // plus
-                $row['tax_total'] = $iR->repoCountByClient($client->getClient_id()) > 0 
-                              ? $iR->with_tax_total_from_to($client->getClient_id(), $from, $to, $iaR) 
-                              : 0.00;
-                // equals
-                $row['sales_with_tax'] = $iR->repoCountByClient($client->getClient_id()) > 0 
-                              ? $iR->with_total_from_to($client->getClient_id(), $from, $to, $iaR) 
-                              : 0.00;                
-                array_push($results,$row); 
+                $client_id = $client->getClient_id();
+                if (null!==$client_id) {
+                    // Client Name and Surname
+                    $row['client_name_surname'] = $clienthelper->format_client($client);
+                    $row['inv_count'] = $iR->repoCountByClient($client_id);
+                    $row['sales_no_tax'] = $iR->repoCountByClient($client_id) > 0 
+                                  ? $iR->with_item_subtotal_from_to($client_id, $from, $to, $iaR) 
+                                  : 0.00;
+                    // plus
+                    $row['item_tax_total'] = $iR->repoCountByClient($client_id) > 0 
+                                  ? $iR->with_item_tax_total_from_to($client_id, $from, $to, $iaR) 
+                                  : 0.00;
+                    // plus
+                    $row['tax_total'] = $iR->repoCountByClient($client_id) > 0 
+                                  ? $iR->with_tax_total_from_to($client_id, $from, $to, $iaR) 
+                                  : 0.00;
+                    // equals
+                    $row['sales_with_tax'] = $iR->repoCountByClient($client_id) > 0 
+                                  ? $iR->with_total_from_to($client_id, $from, $to, $iaR) 
+                                  : 0.00;                
+                    array_push($results,$row); 
+                } // null!==$client_id;
             }    
         }        
         return $results;
@@ -471,13 +474,13 @@ class ReportController
      * @param InvRepository $iR
      * @param InvAmountRepository $iaR
      * @param SettingRepository $sR
-     * @return Response
+     * @return Response|\Mpdf\Mpdf|array|string
      */
     public function sales_by_year_index(Request $request, ViewRenderer $head, SessionInterface $session,                                         
                                     ClientRepository $cR,
                                     InvRepository $iR,
                                     InvAmountRepository $iaR,
-                                    SettingRepository $sR) : Response
+                                    SettingRepository $sR) : Response|\Mpdf\Mpdf|array|string
     {       
         $datehelper = new DateHelper($sR);
         $parameters = [

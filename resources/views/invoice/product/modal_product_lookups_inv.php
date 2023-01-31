@@ -37,7 +37,8 @@
 
             <br/>
             
-            <div class="modal-header">                             
+            <div class="modal-header"> 
+                    <!-- see src\Invoice\Asset\rebuild-1.13\js\modal-product-lookups.js line 64 -->
                     <button class="select-items-confirm-inv btn btn-success alignment:center" type="button" disabled>
                         <i class="fa fa-check"></i>
                         <?= $s->trans('submit'); ?>

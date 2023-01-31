@@ -340,9 +340,7 @@ final class PaymentInformationController
                             'customer_id'=> $invoice->getClient_id(),
                             'customer' =>$invoice->getClient()->getClient_name(). ' ' .$invoice->getClient()->getClient_surname(), 
                             // Default currency is needed to generate a payment intent 
-                            'currency'=> null !== strtolower($this->sR->get_setting('currency_code')) 
-                                              ? strtolower($this->sR->get_setting('currency_code'))
-                                              : 'gbp',
+                            'currency'=> !empty($this->sR->get_setting('currency_code')) ? strtolower($this->sR->get_setting('currency_code'))  : 'gbp',
                             'customer_email'=> $invoice->getClient()->getClient_email(),
                             // Keep a record of the invoice items in description
                             'description' => Json::encode($items_array),
@@ -642,67 +640,65 @@ public function stripe_complete(Request $request, CurrentRoute $currentRoute) : 
         $invoice = $this->iR->repoUrl_key_guest_count($invoice_url_key) > 0 ? $this->iR->repoUrl_key_guest_loaded($invoice_url_key) : null;
         if ($invoice) {
             // Get Stripe's query param redirect_status returned in their returnUrl 
-            $query_params = $request->getQueryParams() ?? '';
-            if (is_array($query_params)) {
-                $redirect_status_from_stripe = $query_params['redirect_status'];
-                // Set the status to paid
-                // Your stripe dashboard has the metadata invoice id and a breakdown of 'online' payment method 
-                // eg. card or bacs
-                if ($redirect_status_from_stripe === 'succeeded') {
-                    $invoice->setStatus_id(4);
-                    // 1 None, 2 Cash, 3 Cheque, 4 Card / Direct-debit - Succeeded, 5 Card / Direct-debit - Processing, 6 Card / Direct-debit - Customer Ready 
-                    $payment_method = 4;
-                    $invoice->setPayment_method(4);
-                }
+            $query_params = $request->getQueryParams();
 
-                if ($redirect_status_from_stripe === 'requires_payment_method') {
-                    $invoice->setStatus_id(3);
+            $redirect_status_from_stripe = $query_params['redirect_status'];
+            // Set the status to paid
+            // Your stripe dashboard has the metadata invoice id and a breakdown of 'online' payment method 
+            // eg. card or bacs
+            if ($redirect_status_from_stripe === 'succeeded') {
+                $invoice->setStatus_id(4);
+                // 1 None, 2 Cash, 3 Cheque, 4 Card / Direct-debit - Succeeded, 5 Card / Direct-debit - Processing, 6 Card / Direct-debit - Customer Ready 
+                $payment_method = 4;
+                $invoice->setPayment_method(4);
+            }
 
-                    // 1 None, 2 Cash, 3 Cheque, 4 Card / Direct-debit - Succeeded, 5 Card / Direct-debit - Processing, 6 Card / Direct-debit - Customer Ready  
-                    $payment_method = 5;
-                    $invoice->setPayment_method(5);
-                    $pending_message = "Requires a payment method. ";
-                }
+            if ($redirect_status_from_stripe === 'requires_payment_method') {
+                $invoice->setStatus_id(3);
 
-                $heading = $redirect_status_from_stripe == 'succeeded' ? sprintf($this->sR->trans('online_payment_payment_successful'), $invoice->getNumber()) 
-                                                  : sprintf($this->sR->trans('online_payment_payment_failed'), $invoice->getNumber()). ' '. $pending_message ?? '';
-                $this->iR->save($invoice);
-                $invoice_amount_record = $this->iaR->repoInvquery((int)$invoice->getId());
-                if (null!==$invoice_amount_record) {    
-                    $balance = $invoice_amount_record->getBalance();
+                // 1 None, 2 Cash, 3 Cheque, 4 Card / Direct-debit - Succeeded, 5 Card / Direct-debit - Processing, 6 Card / Direct-debit - Customer Ready  
+                $payment_method = 5;
+                $invoice->setPayment_method(5);
+                $pending_message = "Requires a payment method. ";
+            }
 
-                    // The invoice amount has been paid => balance on the invoice is zero and the paid amount is full    
-                    $invoice_amount_record->setBalance(0);
-                    $invoice_amount_record->setPaid($invoice_amount_record->getTotal());
-                    $this->iaR->save($invoice_amount_record);
-                    $this->record_online_payments_and_merchant_for_non_omnipay(
-                        // Reference   
-                        $invoice->getNumber().'-'.$redirect_status_from_stripe,
-                        $invoice->getId(),
-                        $balance,
-                        $payment_method,
-                        $invoice->getNumber(),
-                        'Stripe',
-                        'stripe',
-                        $invoice_url_key,
-                        true,   
-                        $sandbox_url_array   
-                    );
-                    $view_data = [
-                        'render' => $this->viewRenderer->renderPartialAsString(
-                            '/invoice/setting/payment_message', [
-                                'heading'=> $heading,
-                                'message'=> $this->sR->trans('payment').':'.$this->sR->trans('complete'), 
-                                'url'=>'inv/url_key',
-                                'url_key'=>$invoice_url_key,'gateway'=>'Stripe',
-                                'sandbox_url'=> $sandbox_url_array['stripe']                
-                            ])
-                    ];
-                    return $this->viewRenderer->render('payment_completion_page', $view_data);
-                } //null!==$invoice_amount_record    
-                return $this->webService->getNotFoundResponse();
-            } //is_array query params     
-            return $this->webService->getNotFoundResponse();
+            $heading = $redirect_status_from_stripe == 'succeeded' ? sprintf($this->sR->trans('online_payment_payment_successful'), $invoice->getNumber()) 
+                                              : sprintf($this->sR->trans('online_payment_payment_failed'), $invoice->getNumber()). ' '. $pending_message ?? '';
+            $this->iR->save($invoice);
+            $invoice_amount_record = $this->iaR->repoInvquery((int)$invoice->getId());
+            if (null!==$invoice_amount_record) {    
+                $balance = $invoice_amount_record->getBalance();
+
+                // The invoice amount has been paid => balance on the invoice is zero and the paid amount is full    
+                $invoice_amount_record->setBalance(0);
+                $invoice_amount_record->setPaid($invoice_amount_record->getTotal());
+                $this->iaR->save($invoice_amount_record);
+                $this->record_online_payments_and_merchant_for_non_omnipay(
+                    // Reference   
+                    $invoice->getNumber().'-'.$redirect_status_from_stripe,
+                    $invoice->getId(),
+                    $balance,
+                    $payment_method,
+                    $invoice->getNumber(),
+                    'Stripe',
+                    'stripe',
+                    $invoice_url_key,
+                    true,   
+                    $sandbox_url_array   
+                );
+                $view_data = [
+                    'render' => $this->viewRenderer->renderPartialAsString(
+                        '/invoice/setting/payment_message', [
+                            'heading'=> $heading,
+                            'message'=> $this->sR->trans('payment').':'.$this->sR->trans('complete'), 
+                            'url'=>'inv/url_key',
+                            'url_key'=>$invoice_url_key,'gateway'=>'Stripe',
+                            'sandbox_url'=> $sandbox_url_array['stripe']                
+                        ])
+                ];
+                return $this->viewRenderer->render('payment_completion_page', $view_data);
+            } //null!==$invoice_amount_record    
+            return $this->webService->getNotFoundResponse();           
         } //null!==$invoice    
         return $this->webService->getNotFoundResponse();
     } //null!==$invoice_url_key    

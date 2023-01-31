@@ -60,7 +60,7 @@ final class UserInvController
     }
 
     // UserInv  is the extension Table of User
-    // Users that have been signed up through the demmo must be added
+    // Users that have been signed up through the demo must be added
     // to the invoicing system 
     // using Setting...User Account
     
@@ -76,7 +76,8 @@ final class UserInvController
                           UserInvRepository $uiR, SettingRepository $sR, TranslatorInterface $translator): \Yiisoft\DataResponse\DataResponse
     {      
         $canEdit = $this->rbac();
-        $query_params = $request->getQueryParams() ?? [];$page = (int)$currentRoute->getArgument('page', '1');        
+        $query_params = $request->getQueryParams();
+        $page = (int)$currentRoute->getArgument('page', '1');        
         $active = (int)$currentRoute->getArgument('active', '2');         
         $sort = Sort::only(['user_id', 'name', 'email'])          
                      ->withOrderString($query_params['sort'] ?? '-user_id');

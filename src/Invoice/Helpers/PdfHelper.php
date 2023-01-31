@@ -21,7 +21,11 @@ Class PdfHelper
         $this->session = $session;
     }
     
-    private function locale_to_language(){
+    /**
+     * 
+     * @return string|null
+     */
+    private function locale_to_language() : string|null {
         $dropdown_locale = (string)$this->session->get('_language');
         $session_list = $this->s->locale_language_array();
         return $session_list[$dropdown_locale] ?? null;
@@ -61,10 +65,10 @@ Class PdfHelper
      * @param \App\Invoice\QuoteTaxRate\QuoteTaxRateRepository $qtrR
      * @param \App\Invoice\UserInv\UserInvRepository $uiR
      * @param \Yiisoft\Yii\View\ViewRenderer $viewrenderer
-     * @return string
+     * @return \Mpdf\Mpdf|array|string
      */
     public function generate_quote_pdf(string|null $quote_id, string $user_id, bool $stream, bool $custom, object|null $quote_amount, array $quote_custom_values,\App\Invoice\Client\ClientRepository $cR, \App\Invoice\CustomValue\CustomValueRepository $cvR, \App\Invoice\CustomField\CustomFieldRepository $cfR, \App\Invoice\QuoteItem\QuoteItemRepository $qiR, \App\Invoice\QuoteItemAmount\QuoteItemAmountRepository $qiaR, \App\Invoice\Quote\QuoteRepository $qR, \App\Invoice\QuoteTaxRate\QuoteTaxRateRepository $qtrR, \App\Invoice\UserInv\UserInvRepository $uiR,
-                                \Yiisoft\Yii\View\ViewRenderer $viewrenderer) : string
+                                \Yiisoft\Yii\View\ViewRenderer $viewrenderer) : \Mpdf\Mpdf|array|string
     {       
             if ($quote_id) {
             $quote = $qR->repoCount($quote_id) > 0 ? $qR->repoQuoteLoadedquery($quote_id) : null;
@@ -134,7 +138,6 @@ Class PdfHelper
                 $mpdfhelper = new MpdfHelper(); 
                 $filename = $this->s->trans('quote') . '_' . str_replace(['\\', '/'], '_', $quote->getNumber());
                 return $mpdfhelper->pdf_create($html, $filename, $stream, $quote->getPassword(), $this->s, $isInvoice = false, $quote);
-
             }    
         }    
         return '';
@@ -156,10 +159,10 @@ Class PdfHelper
      * @param \App\Invoice\InvTaxRate\InvTaxRateRepository $itrR
      * @param \App\Invoice\UserInv\UserInvRepository $uiR
      * @param \Yiisoft\Yii\View\ViewRenderer $viewrenderer
-     * @return string
+     * @return \Mpdf\Mpdf|array|string
      */
     public function generate_inv_pdf(string|null $inv_id, string $user_id, bool $stream, bool $custom, object|null $inv_amount, array $inv_custom_values,\App\Invoice\Client\ClientRepository $cR, \App\Invoice\CustomValue\CustomValueRepository $cvR, \App\Invoice\CustomField\CustomFieldRepository $cfR, \App\Invoice\InvItem\InvItemRepository $iiR, \App\Invoice\InvItemAmount\InvItemAmountRepository $iiaR, \App\Invoice\Inv\InvRepository $iR, \App\Invoice\InvTaxRate\InvTaxRateRepository $itrR, \App\Invoice\UserInv\UserInvRepository $uiR,
-                                \Yiisoft\Yii\View\ViewRenderer $viewrenderer) : string
+                                \Yiisoft\Yii\View\ViewRenderer $viewrenderer) : \Mpdf\Mpdf|array|string
     {       
        if ($inv_id) { 
             $inv = $iR->repoCount($inv_id) > 0 ? $iR->repoInvLoadedquery($inv_id) : null;

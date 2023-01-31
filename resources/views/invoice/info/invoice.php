@@ -11,7 +11,7 @@
 <p><s>Pdf template construction upon emailing.</s></p>
 <p>Work on info issues</p>
 <p>Work In Progress - Shorter Term Goals</p>
-<p>Psalm Level 2 - Testing</p>
+<p><s>Psalm Level 2 - Testing</s></p>
 <p><s>Dead Code Removal with Psalm 3 Testing</s></p>
 <p><s>Language array generator using Google Translate</s></p>
 <p>All invoices with dates falling within CompanyPrivate start and end dates will have the specific logo uploaded</p>
@@ -19,6 +19,9 @@
 <p>CompanyPrivate logo will be automatically input on invoice/quotes depending on whether the date of the invoice falls between the start and end date.</p>
 <p>Introducing Paypal.</p>
 <p>Introducing India's PayTm payment gateway's QR code method of payment and comparing this with Stripe's method.</p>
+<p><b>31 January 2023</b></p>
+<p>Psalm Level 2 Testing - 0 errors</p>
+<p>Bug Fix: Edit Task</p>
 <p><b>28 January 2023</b></p>
 <p>Helpers\CountryHelper\get_country_list</p>
 <p>The following code is functional but results in UnresolvableInclude: Worth coming back to.</p>

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Invoice\Quote;
 
-use App\Invoice\Entity\Quote;
 use App\Invoice\Setting\SettingRepository as SR;
 use App\Invoice\Group\GroupRepository as GR;
 use Cycle\ORM\Select;
@@ -152,7 +151,12 @@ private EntityWriter $entityWriter;
                                 ->count();
         return  $count;      
     }
-        
+    
+    /**
+     * 
+     * @param string $url_key
+     * @return object|null
+     */    
     public function repoUrl_key_guest_loaded(string $url_key) : object|null {
         $query = $this->select()
                        ->load('client') 
@@ -160,6 +164,11 @@ private EntityWriter $entityWriter;
         return  $query->fetchOne() ?: null;        
     }
     
+    /**
+     * 
+     * @param string $url_key
+     * @return int
+     */
     public function repoUrl_key_guest_count(string $url_key) : int {
         $count = $this->select()
                       ->where(['url_key' => $url_key])
@@ -182,7 +191,10 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @psalm-return EntityReader
+     * 
+     * @param int $status_id
+     * @param array $user_client
+     * @return EntityReader
      */
     public function repoGuest_Clients_Sent_Viewed_Approved_Rejected_Cancelled(int $status_id, array $user_client = []) : EntityReader {
         // Get specific statuses
@@ -327,11 +339,11 @@ private EntityWriter $entityWriter;
     }
 
     /**
-     * @param $client_id
+     * @param int $client_id
      *
      * @psalm-return Select<TEntity>
      */
-    public function by_client($client_id): Select
+    public function by_client(int $client_id): Select
     {
         $query = $this->select()
                       ->where(['client_id'=>$client_id]);
@@ -368,11 +380,11 @@ private EntityWriter $entityWriter;
     }
 
     /**
-     * @param $url_key
+     * @param string $url_key
      *
      * @psalm-return Select<TEntity>
      */
-    public function approve_or_reject_quote_by_key($url_key): Select{
+    public function approve_or_reject_quote_by_key(string $url_key): Select{
         $query = $this->select()
                       ->where(['status_id'=>['in'=>new Parameter([2,3,4,5])]])
                       ->where(['url_key'=>$url_key]);
@@ -380,11 +392,11 @@ private EntityWriter $entityWriter;
     }
 
     /**
-     * @param $id
-     *
-     * @psalm-return Select<TEntity>
+     * 
+     * @param string $id
+     * @return Select
      */
-    public function approve_or_reject_quote_by_id($id): Select{
+    public function approve_or_reject_quote_by_id(string $id): Select{
         $query = $this->select()
                       ->where(['status_id'=>['in'=>new Parameter([2,3,4,5])]])
                       ->where(['id'=>$id]);
@@ -411,7 +423,12 @@ private EntityWriter $entityWriter;
         return $count;
     }
     
-    public function repoCountByClient($client_id) : int {
+    /**
+     * 
+     * @param int $client_id
+     * @return int
+     */
+    public function repoCountByClient(int $client_id) : int {
         $count = $this->select()
                       ->where(['client_id'=>$client_id])  
                       ->count();
@@ -419,10 +436,11 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @psalm-return EntityReader
+     * 
+     * @param int $client_id
+     * @return EntityReader
      */
-        
-    public function repoClient($client_id) : EntityReader { 
+    public function repoClient(int $client_id) : EntityReader { 
         $query = $this->select()
                       ->where(['client_id' => $client_id]); 
         return $this->prepareDataReader($query);

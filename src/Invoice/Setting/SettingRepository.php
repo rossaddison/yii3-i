@@ -28,9 +28,9 @@ final class SettingRepository extends Select\Repository
 {
     private EntityWriter $entityWriter;
     
-    public $settings = [];
+    public array $settings = [];
     
-    private $session;
+    private SessionInterface $session;
 
     /**
      * 
@@ -198,7 +198,13 @@ final class SettingRepository extends Select\Repository
         return (isset($this->settings[$key])) ? $this->settings[$key] : '';
     }    
     
-    public function set_setting($key, $value): void
+    /**
+     * 
+     * @param string $key
+     * @param string $value
+     * @return void
+     */
+    public function set_setting(string $key, string $value): void
     {
         $this->settings[$key] = $value;
     }
@@ -580,7 +586,12 @@ final class SettingRepository extends Select\Repository
         return 'src/Invoice/Uploads/Customer_files/';
     }
     
-    public function format_currency($amount): string
+    /**
+     * 
+     * @param mixed $amount
+     * @return string
+     */
+    public function format_currency(mixed $amount): string
     {
         $this->load_settings();
         $currency_symbol =$this->get_setting('currency_symbol');
@@ -735,7 +746,9 @@ final class SettingRepository extends Select\Repository
         $aliases = $this->get_invoice_archived_folder_aliases();
         $filehelper = new FileHelper();
         // TODO Use PathPattern to create *.pdf and '*_'.$invoice_number.'.pdf' pattern
-        $filter = (null==$invoice_number ? (new PathMatcher())->doNotCheckFilesystem() : (new PathMatcher())->doNotCheckFilesystem());        
+        $filter = (new PathMatcher())
+                   ->doNotCheckFilesystem()
+                   ->only($invoice_number.'.pdf');        
         $files = $filehelper::findFiles($aliases->get('@archive_invoice'), ['recursive'=>false,'filter'=>$filter]);                
         return $files;
     }
@@ -1044,7 +1057,13 @@ final class SettingRepository extends Select\Repository
            return $line;
     }
    
-    public function where($setting, $debug_mode = true) : string {
+    /**
+     * 
+     * @param string $setting
+     * @param bool $debug_mode
+     * @return string
+     */
+    public function where(string $setting, bool $debug_mode = true) : string {
         $tooltip = [
          // General Settings   
         'install_test_data' => [
@@ -1347,7 +1366,13 @@ final class SettingRepository extends Select\Repository
     }
     
     //https://www.php.net/manual/en/features.file-upload.errors.php
-    public function codeToMessage($code): string
+    
+    /**
+     * 
+     * @param int $code
+     * @return string
+     */
+    public function codeToMessage(int $code): string
     {
         switch ($code) {
             case UPLOAD_ERR_INI_SIZE:

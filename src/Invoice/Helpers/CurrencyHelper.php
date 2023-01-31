@@ -55,13 +55,13 @@ class CurrencyHelper
      * @param  string $currency_code The three letter currency code
      * @return mixed  A Currency object, or null if no currency was found
      */
-    public static function find(string $currency_code) : mixed
+    public function find(string $currency_code) : mixed
     {
         $code = strtoupper($currency_code);
         $currencies = static::all();
 
-        if (isset($currencies[$code])) {
-            return new static($code, $currencies[$code]['numeric'], $currencies[$code]['decimals']);
+        if (!empty($currencies[$code])) {
+            return new CurrencyHelper($code, $currencies[$code]['numeric'], $currencies[$code]['decimals']);
         }
         return null;
     }    

@@ -14,6 +14,12 @@ final class QuoteAmountService
         $this->repository = $repository;
     }
     
+    /**
+     * 
+     * @param object $model
+     * @param int $quote_id
+     * @return void
+     */
     public function initializeQuoteAmount(object $model, int $quote_id) : void
     {
        $model->setQuote_id($quote_id);
@@ -39,7 +45,13 @@ final class QuoteAmountService
         $this->repository->save($model);
        } 
     } 
-
+    
+    /**
+     * 
+     * @param object $model
+     * @param QuoteAmountForm $form
+     * @return void
+     */
     public function saveQuoteAmount(object $model, QuoteAmountForm $form): void
     {        
        $model->setQuote_id($form->getQuote_id());
@@ -50,7 +62,13 @@ final class QuoteAmountService
        $this->repository->save($model);
     }
     
-    public function saveQuoteAmountViaCalculations(object $model, $array): void
+    /**
+     * 
+     * @param object $model
+     * @param array $array
+     * @return void
+     */
+    public function saveQuoteAmountViaCalculations(object $model, array $array): void
     {        
        $model->setQuote_id($array['quote_id']);
        $model->setItem_subtotal($array['item_subtotal']);
@@ -60,6 +78,11 @@ final class QuoteAmountService
        $this->repository->save($model);
     }
     
+    /**
+     * 
+     * @param object|null $model
+     * @return void
+     */
     public function deleteQuoteAmount(object|null $model): void
     {
         $this->repository->delete($model);

@@ -77,6 +77,10 @@ private EntityWriter $entityWriter;
         $this->entityWriter->delete([$task]);
     }
     
+    /**
+     * @param Select $query
+     * @return EntityReader
+     */
     private function prepareDataReader(Select $query): EntityReader
     {
         return (new EntityReader($query))->withSort(
@@ -108,19 +112,23 @@ private EntityWriter $entityWriter;
         return $this->prepareDataReader($query);        
     }
     
-     /**
-     * Get selection of tasks from all tasks
-     *
-     * @psalm-return EntityReader
-     */
-    
-    public function findinTasks($task_ids) : EntityReader {
+    /**
+     * 
+     * @param array $task_ids
+     * @return EntityReader
+     */    
+    public function findinTasks(array $task_ids) : EntityReader {
         $query = $this->select()
                       ->where(['id'=>['in'=> new Parameter($task_ids)]]);
         return $this->prepareDataReader($query);    
     } 
     
-    public function repoCount(int $task_id) : int {
+    /**
+     * 
+     * @param string $task_id
+     * @return int
+     */
+    public function repoCount(string $task_id) : int {
         $count = $this->select()
                       ->where(['id'=>$task_id])
                       ->count();

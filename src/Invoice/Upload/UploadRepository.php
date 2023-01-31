@@ -28,9 +28,9 @@ private EntityWriter $entityWriter;
         parent::__construct($select);
     }
     
-    public $ctype_default = "application/octet-stream";
+    public string $ctype_default = "application/octet-stream";
     
-    public $content_types = [
+    public array $content_types = [
         'gif' => 'image/gif',
         'jpg' => 'image/jpeg',
         'jpeg' => 'image/jpeg',
@@ -48,9 +48,9 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @return array
+     * @return string
      */
-    public function getContentTypeDefaultOctetStream() : array {
+    public function getContentTypeDefaultOctetStream() : string {
         return $this->ctype_default;
     }
 

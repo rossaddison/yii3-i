@@ -255,71 +255,6 @@ final class InvItemController
         return $this->viewRenderer->render('_item_edit_product', $parameters);
     }
     
-    /**
-     * @param ViewRenderer $head
-     * @param SessionInterface $session
-     * @param CurrentRoute $currentRoute
-     * @param Request $request
-     * @param ValidatorInterface $validator
-     * @param IIR $iiR
-     * @param SR $sR
-     * @param TRR $trR
-     * @param PR $pR
-     * @param TaskR $taskR
-     * @param UR $uR
-     * @param IR $iR
-     * @param IIAS $iias
-     * @param IIAR $iiar
-     */
-    public function edit_product2(ViewRenderer $head, SessionInterface $session, CurrentRoute $currentRoute, Request $request, ValidatorInterface $validator,
-                        IIR $iiR, SR $sR, TRR $trR, PR $pR, TaskR $taskR, UR $uR, IR $iR, IIAS $iias, IIAR $iiar): Response {
-        $inv_id = $session->get('inv_id');
-        $inv_item = $this->invitem($currentRoute, $iiR);
-        if ($inv_item) {
-            $parameters = [
-                'title' => 'Edit',
-                'action' => ['invitem/edit_product', ['id' => $inv_item->getId()]],
-                'errors' => [],
-                'body' => $this->body($inv_item),
-                'inv_id'=>$inv_id,
-                'head'=>$head,
-                's'=>$sR,
-                'tax_rates'=>$trR->findAllPreloaded(),
-                'products'=>$pR->findAllPreloaded(),
-                'invs'=>$iR->findAllPreloaded(),                  
-                'units'=>$uR->findAllPreloaded(),
-                'numberhelper'=>new NumberHelper($sR)
-            ];
-            if ($request->getMethod() === Method::POST) {
-                $form = new InvItemForm();
-                $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
-                    $quantity = $form->getQuantity() ?? 0.00;
-                    $price = $form->getPrice() ?? 0.00;
-                    $discount = $form->getDiscount_amount() ?? 0.00;
-                    $tax_rate_id = $this->invitemService->saveInvItem_product($inv_item, $form, $inv_id, $pR, $sR, $uR) ?: 1;        
-                    //echo $tax_rate_id;
-                    $tax_rate_percentage = $this->taxrate_percentage($tax_rate_id, $trR);
-                    //echo $tax_rate_percentage;
-                    if (null!==$tax_rate_percentage) {
-                        $this->saveInvItemAmount((int)$inv_item->getId(), 
-                                                 $quantity, $price, $discount, $tax_rate_percentage, $iias, $iiar);
-                        return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
-                        ['heading'=>'Successful','message'=>$sR->trans('record_successfully_updated'),'url'=>'inv/view','id'=>$inv_id])); 
-                    }    
-                } else {   
-                    return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
-                    ['heading'=>'Not successful','message'=>'nosussss','url'=>'inv/view','id'=>$inv_id])); 
-                }
-                $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
-            } 
-            return $this->viewRenderer->render('_item_edit_product', $parameters);
-        }
-        return $this->webService->getNotFoundResponse();    
-    }
-    
-    
     public function taxrate_percentage(int $id, TRR $trr): float|null
     {
         $taxrate = $trr->repoTaxRatequery((string)$id);
@@ -375,45 +310,45 @@ final class InvItemController
                         IIR $iiR, SR $sR, TRR $trR, PR $pR, TaskR $taskR, UR $uR, IR $iR, IIAS $iias, IIAR $iiar): Response {
         $inv_id = $session->get('inv_id');
         $inv_item = $this->invitem($currentRoute, $iiR);
-        if ($inv_item) {
-            $parameters = [
-                'title' => 'Edit',
-                'action' => ['invitem/edit_task', ['id' => $inv_item->getId()]],
-                'errors' => [],
-                'body' => $this->body($inv_item),
-                'inv_id'=>$inv_id,
-                'head'=>$head,
-                's'=>$sR,
-                'tax_rates'=>$trR->findAllPreloaded(),
-                // Only tasks that are complete are put on the invoice
-                'tasks'=>$taskR->repoTaskStatusquery(3),
-                'invs'=>$iR->findAllPreloaded(),                  
-                'units'=>$uR->findAllPreloaded(),
-                'numberhelper'=>new NumberHelper($sR)
-            ];
-            if ($request->getMethod() === Method::POST) {
-                $form = new InvItemForm();
-                $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
-                    $tax_rate_id = $this->invitemService->saveInvItem_task($inv_item, $form, $inv_id, $taskR, $sR)  ?: 1;        
-                    $tax_rate_percentage = $this->taxrate_percentage($tax_rate_id, $trR);
-                    $quantity = $form->getQuantity() ?? 0.00;
-                    $price = $form->getPrice() ?? 0.00;
-                    $discount = $form->getDiscount_amount() ?? 0.00;
-                    if ($tax_rate_percentage) {
-                        $this->saveInvItemAmount((int)$inv_item->getId(), 
-                                                 $quantity, $price, $discount, $tax_rate_percentage, $iias, $iiar);
-                        return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
-                        ['heading'=>'Successful','message'=>$sR->trans('record_successfully_updated'),'url'=>'inv/view','id'=>$inv_id])); 
-                    }
-                    return $this->webService->getNotFoundResponse();
+        $parameters = [
+            'title' => 'Edit',
+            'action' => ['invitem/edit_task', ['id' => $currentRoute->getArgument('id')]],
+            'errors' => [],
+            // if null inv_item, initialize it => prevent psalm PossiblyNullArgument error
+            'body' => $this->body($inv_item ?: New InvItem()),
+            'inv_id'=>$inv_id,
+            'head'=>$head,
+            's'=>$sR,
+            'tax_rates'=>$trR->findAllPreloaded(),
+            // Only tasks that are complete are put on the invoice
+            'tasks'=>$taskR->repoTaskStatusquery(3),
+            'invs'=>$iR->findAllPreloaded(),                  
+            'units'=>$uR->findAllPreloaded(),
+            'numberhelper'=>new NumberHelper($sR)
+        ];
+        if ($request->getMethod() === Method::POST) {
+            $form = new InvItemForm();
+            $body = $request->getParsedBody();
+            if ($form->load($body) && $validator->validate($form)->isValid()) {
+                $quantity = $form->getQuantity() ?? 0.00;
+                $price = $form->getPrice() ?? 0.00;
+                $discount = $form->getDiscount_amount() ?? 0.00;
+                $tax_rate_id = $this->invitemService->saveInvItem_task($inv_item ?: new InvItem(), $form, $inv_id, $taskR, $sR)  ?: 1;        
+                $tax_rate_percentage = $this->taxrate_percentage($tax_rate_id, $trR);
+                if (null!==$tax_rate_percentage) {
+                    /**
+                     * @psalm-suppress PossiblyNullReference getId
+                     */
+                    $request_inv_item = (int)$this->invitem($currentRoute, $iiR)->getId();
+                    $this->saveInvItemAmount($request_inv_item, $quantity, $price, $discount, $tax_rate_percentage, $iias, $iiar);
+                    return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
+                    ['heading'=>'Successful','message'=>$sR->trans('record_successfully_updated'),'url'=>'inv/view','id'=>$inv_id])); 
                 }
-                $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
-            } 
-            return $this->viewRenderer->render('_item_edit_task', $parameters);
-        }
-        return $this->webService->getNotFoundResponse();
+            }
+            $parameters['body'] = $body;
+            $parameters['errors'] = $form->getFormErrors();
+        } 
+        return $this->viewRenderer->render('_item_edit_task', $parameters);        
     }
     
     /**
@@ -499,7 +434,7 @@ final class InvItemController
      */
     public function multiple(Request $request, IIR $iiR): \Yiisoft\DataResponse\DataResponse {
         //jQuery parameters from inv.js function delete-items-confirm-inv 'item_ids' and 'inv_id'
-        $select_items = $request->getQueryParams() ?? [];
+        $select_items = $request->getQueryParams();
         $result = false;
         $item_ids = ($select_items['item_ids'] ? $select_items['item_ids'] : []);
         $items = $iiR->findinInvItems($item_ids);

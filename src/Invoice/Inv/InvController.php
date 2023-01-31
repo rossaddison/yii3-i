@@ -382,7 +382,7 @@ final class InvController
     
     public function create_confirm(CurrentUser $currentUser, Request $request, ValidatorInterface $validator, GR $gR, TRR $trR, IAR $iaR) : \Yiisoft\DataResponse\DataResponse
     { 
-        $body = $request->getQueryParams() ?? [];        
+        $body = $request->getQueryParams();        
         $ajax_body = [
             'quote_id'=>null,
             'client_id'=>$body['client_id'],
@@ -433,58 +433,55 @@ final class InvController
      * @param IIAR $iiaR
      */
     public function create_credit_confirm(Request $request, ValidatorInterface $validator,IR $iR, GR $gR, IAR $iaR, IIR $iiR, IIAR $iiaR) : \Yiisoft\DataResponse\DataResponse|Response {
-        $body = $request->getQueryParams() ?? [];
-        if (is_array($body)) {
-                $basis_inv = $iR->repoInvLoadedquery($body['inv_id']);
-                if (null!==$basis_inv) {
-                    $basis_inv_id = $body['inv_id'];
-                    // Set the basis_inv to read-only;
-                    $basis_inv->setIs_read_only(true);
-                    $ajax_body = [
-                        'client_id'=>$body['client_id'],
-                        'group_id'=>$body['group_id'],
-                        'user_id'=>$body['user_id'],
-                        'creditinvoice_parent_id'=>$body['inv_id'],
-                        'status_id'=>$basis_inv->getStatus_id(),
-                        'is_read_only'=>false,
-                        'number'=>$gR->generate_number($body['group_id'], true),
-                        'discount_amount'=>null,
-                        'discount_percent'=>null,
-                        'url_key'=>'',
-                        'password'=>$body['password'], 
-                        'payment_method'=>0,
-                        'terms'=>'',
+        $body = $request->getQueryParams();
+        $basis_inv = $iR->repoInvLoadedquery($body['inv_id']);
+        if (null!==$basis_inv) {
+            $basis_inv_id = $body['inv_id'];
+            // Set the basis_inv to read-only;
+            $basis_inv->setIs_read_only(true);
+            $ajax_body = [
+                'client_id'=>$body['client_id'],
+                'group_id'=>$body['group_id'],
+                'user_id'=>$body['user_id'],
+                'creditinvoice_parent_id'=>$body['inv_id'],
+                'status_id'=>$basis_inv->getStatus_id(),
+                'is_read_only'=>false,
+                'number'=>$gR->generate_number($body['group_id'], true),
+                'discount_amount'=>null,
+                'discount_percent'=>null,
+                'url_key'=>'',
+                'password'=>$body['password'], 
+                'payment_method'=>0,
+                'terms'=>'',
+            ];
+            // Save the basis invoice
+            $iR->save($basis_inv);
+            $ajax_content = new InvForm();
+            $new_inv = new Inv();
+            $current_user = $this->user_service->getUser();
+            if (null!==$current_user) {
+            // guest will return null; if not null => not guest
+                if ($ajax_content->load($ajax_body) && $validator->validate($ajax_content)->isValid()) {    
+                        // The current user cannot be a guest ie. null!==$current_user
+                        /** @psalm-suppress PossiblyNullArgument */
+                        $saved_inv = $this->inv_service->saveInv($current_user, $new_inv,$ajax_content, $this->sR, $gR);
+                        $this->inv_item_service->initializeCreditInvItems((int)$basis_inv_id, $saved_inv->getId(), $iiR,$iiaR, $this->sR);
+                        $this->inv_amount_service->initializeCreditInvAmount(new InvAmount(), (int)$basis_inv_id, $saved_inv->getId() );
+                        $this->inv_tax_rate_service->initializeCreditInvTaxRate((int)$basis_inv_id, $saved_inv->getId());
+                        $parameters = ['success'=>1];
+                        //return response to inv.js to reload page at location
+                        return $this->factory->createResponse(Json::encode($parameters));                                      
+                } else {
+                    $parameters = [
+                       'success'=>0,
                     ];
-                    // Save the basis invoice
-                    $iR->save($basis_inv);
-                    $ajax_content = new InvForm();
-                    $new_inv = new Inv();
-                    $current_user = $this->user_service->getUser();
-                    if (null!==$current_user) {
-                    // guest will return null; if not null => not guest
-                        if ($ajax_content->load($ajax_body) && $validator->validate($ajax_content)->isValid()) {    
-                                // The current user cannot be a guest ie. null!==$current_user
-                                /** @psalm-suppress PossiblyNullArgument */
-                                $saved_inv = $this->inv_service->saveInv($current_user, $new_inv,$ajax_content, $this->sR, $gR);
-                                $this->inv_item_service->initializeCreditInvItems((int)$basis_inv_id, $saved_inv->getId(), $iiR,$iiaR, $this->sR);
-                                $this->inv_amount_service->initializeCreditInvAmount(new InvAmount(), (int)$basis_inv_id, $saved_inv->getId() );
-                                $this->inv_tax_rate_service->initializeCreditInvTaxRate((int)$basis_inv_id, $saved_inv->getId());
-                                $parameters = ['success'=>1];
-                                //return response to inv.js to reload page at location
-                                return $this->factory->createResponse(Json::encode($parameters));                                      
-                        } else {
-                            $parameters = [
-                               'success'=>0,
-                            ];
-                            //return response to inv.js to reload page at location
-                            return $this->factory->createResponse(Json::encode($parameters));          
-                        }
-                        return $this->web_service->getRedirectResponse('inv/index'); 
-                    }
-                    return $this->web_service->getRedirectResponse('inv/index'); 
-            } //null!==$basis_inv    
+                    //return response to inv.js to reload page at location
+                    return $this->factory->createResponse(Json::encode($parameters));          
+                }
+                return $this->web_service->getRedirectResponse('inv/index'); 
+            }
             return $this->web_service->getRedirectResponse('inv/index'); 
-        } // if is_array $body    
+        } //null!==$basis_inv    
         return $this->web_service->getRedirectResponse('inv/index'); 
            
     }
@@ -1000,19 +997,21 @@ final class InvController
                 // true => invoice ie. not quote
                 // $stream is false => pdfhelper->generate_inv_pdf => mpdfhelper->pdf_Create => filename returned 
                 $pdf_template_target_path = $this->pdf_helper->generate_inv_pdf($inv_id, $inv->getUser_id(), $stream, true, $inv_amount, $inv_custom_values, $cR, $cvR, $cfR, $iiR, $iiaR, $iR, $itrR, $uiR, $viewrenderer); 
-                $mail_message = $template_helper->parse_template($inv_id, true, $email_body, $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR);
-                $mail_subject = $template_helper->parse_template($inv_id, true, $subject, $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR);
-                $mail_cc = $template_helper->parse_template($inv_id, true, $cc, $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR);
-                $mail_bcc = $template_helper->parse_template($inv_id, true, $bcc, $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR);
-                $mail_from = // from[0] is the from_email and from[1] is the from_name    
-                    array($template_helper->parse_template($inv_id, true, $from[0], $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR), 
-                          $template_helper->parse_template($inv_id, true, $from[1], $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR));
-                //$message = (empty($mail_message) ? 'this is a message ' : $mail_message);
-                $message = $mail_message;
-                // mail_from[0] is the from_email and mail_from[1] is the from_name
-                return $mailer_helper->yii_mailer_send($mail_from[0], $mail_from[1], 
-                                                       $to, $mail_subject, $message, $mail_cc, $mail_bcc, 
-                                                       $attachFiles, $pdf_template_target_path, $uiR);
+                if (is_string($pdf_template_target_path)) {
+                    $mail_message = $template_helper->parse_template($inv_id, true, $email_body, $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR);
+                    $mail_subject = $template_helper->parse_template($inv_id, true, $subject, $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR);
+                    $mail_cc = $template_helper->parse_template($inv_id, true, $cc, $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR);
+                    $mail_bcc = $template_helper->parse_template($inv_id, true, $bcc, $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR);
+                    $mail_from = // from[0] is the from_email and from[1] is the from_name    
+                        array($template_helper->parse_template($inv_id, true, $from[0], $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR), 
+                              $template_helper->parse_template($inv_id, true, $from[1], $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR));
+                    //$message = (empty($mail_message) ? 'this is a message ' : $mail_message);
+                    $message = $mail_message;
+                    // mail_from[0] is the from_email and mail_from[1] is the from_name
+                    return $mailer_helper->yii_mailer_send($mail_from[0], $mail_from[1], 
+                    $to, $mail_subject, $message, $mail_cc, $mail_bcc, 
+                    $attachFiles, $pdf_template_target_path, $uiR);
+                } //is_string 
             } //inv
             return false;
         } // inv_id
@@ -1145,7 +1144,7 @@ final class InvController
      */
     public function guest(Request $request, IAR $iaR, IRR $irR, CurrentRoute $currentRoute,
                           IR $iR, UCR $ucR, UIR $uiR) : \Yiisoft\DataResponse\DataResponse|Response {
-        $query_params = $request->getQueryParams() ?? [];
+        $query_params = $request->getQueryParams();
         $pageNum = (int)$currentRoute->getArgument('page', '1');
          //status 0 => 'all';
         $status = (int)$currentRoute->getArgument('status', '0');
@@ -1450,29 +1449,31 @@ final class InvController
                     if ($inv) {
                         // Because the invoice is not streamed an aliase of temporary folder file location is returned        
                         $temp_aliase = $pdfhelper->generate_inv_pdf($inv_id, $inv->getUser_id(), $stream, $c_f, $inv_amount, $inv_custom_values, $cR, $cvR, $cfR, $iiR, $iiaR, $iR, $itrR, $uiR, $this->view_renderer);                
-                        $path_parts = pathinfo($temp_aliase);
-                        /**
-                         * @psalm-suppress PossiblyUndefinedArrayOffset
-                         */
-                        $file_ext = $path_parts['extension'];
-                        $original_file_name = $path_parts['basename'];
-                        if (file_exists($temp_aliase)) {
-                            $file_size = filesize($temp_aliase);
-                            $allowed_content_type_array = $upR->getContentTypes(); 
-                            // Check extension against allowed content file types @see UploadRepository getContentTypes
-                            $save_ctype = isset($allowed_content_type_array[$file_ext]);
-                            $ctype = $save_ctype ? $allowed_content_type_array[$file_ext] : $upR->getContentTypeDefaultOctetStream();
-                            // https://www.php.net/manual/en/function.header.php
-                            // Remember that header() must be called before any actual output is sent, either by normal HTML tags,
-                            // blank lines in a file, or from PHP.
-                            header("Expires: -1");
-                            header("Cache-Control: public, must-revalidate, post-check=0, pre-check=0");
-                            header("Content-Disposition: attachment; filename=\"$original_file_name\"");
-                            header("Content-Type: " . $ctype);
-                            header("Content-Length: " . $file_size);
-                            echo file_get_contents($temp_aliase, true);
-                            exit;
-                        } // file_exists 
+                        if (is_string($temp_aliase)) {
+                            $path_parts = pathinfo($temp_aliase);
+                            /**
+                             * @psalm-suppress PossiblyUndefinedArrayOffset
+                             */
+                            $file_ext = $path_parts['extension'];
+                            $original_file_name = $path_parts['basename'];
+                            if (file_exists($temp_aliase)) {
+                                $file_size = filesize($temp_aliase);
+                                $allowed_content_type_array = $upR->getContentTypes(); 
+                                // Check extension against allowed content file types @see UploadRepository getContentTypes
+                                $save_ctype = isset($allowed_content_type_array[$file_ext]);
+                                $ctype = $save_ctype ? $allowed_content_type_array[$file_ext] : $upR->getContentTypeDefaultOctetStream();
+                                // https://www.php.net/manual/en/function.header.php
+                                // Remember that header() must be called before any actual output is sent, either by normal HTML tags,
+                                // blank lines in a file, or from PHP.
+                                header("Expires: -1");
+                                header("Cache-Control: public, must-revalidate, post-check=0, pre-check=0");
+                                header("Content-Disposition: attachment; filename=\"$original_file_name\"");
+                                header("Content-Type: " . $ctype);
+                                header("Content-Length: " . $file_size);
+                                echo file_get_contents($temp_aliase, true);
+                                exit;
+                            } // file_exists
+                        } // is_string    
                     } //inv    
                 } // inv_amount
             } // inv_guest    
@@ -1525,30 +1526,32 @@ final class InvController
                     if ($inv) {
                         // Because the invoice is not streamed an aliase of temporary folder file location is returned        
                         $temp_aliase = $pdfhelper->generate_inv_pdf($inv_id, $inv->getUser_id(), $stream, $c_f , $inv_amount, $inv_custom_values, $cR, $cvR, $cfR, $iiR, $iiaR, $iR, $itrR, $uiR, $this->view_renderer);                
-                        $path_parts = pathinfo($temp_aliase);
-                        /**
-                         * @psalm-suppress PossiblyUndefinedArrayOffset
-                         */
-                        $file_ext = $path_parts['extension'];
-                        // Do not choose 'basename' because extension pdf not necessary ie. filename is basename without extension .pdf
-                        $original_file_name = $path_parts['filename'];
-                        if (file_exists($temp_aliase)) {
-                            $file_size = filesize($temp_aliase);
-                            $allowed_content_type_array = $upR->getContentTypes(); 
-                            // Check extension against allowed content file types @see UploadRepository getContentTypes
-                            $save_ctype = isset($allowed_content_type_array[$file_ext]);
-                            $ctype = $save_ctype ? $allowed_content_type_array[$file_ext] : $upR->getContentTypeDefaultOctetStream();
-                            // https://www.php.net/manual/en/function.header.php
-                            // Remember that header() must be called before any actual output is sent, either by normal HTML tags,
-                            // blank lines in a file, or from PHP.
-                            header("Expires: -1");
-                            header("Cache-Control: public, must-revalidate, post-check=0, pre-check=0");
-                            header("Content-Disposition: attachment; filename=\"$original_file_name\"");
-                            header("Content-Type: " . $ctype);
-                            header("Content-Length: " . $file_size);
-                            echo file_get_contents($temp_aliase, true);
-                            exit;
-                        } // file_exists
+                        if (is_string($temp_aliase)) {
+                            $path_parts = pathinfo($temp_aliase);
+                            /**
+                             * @psalm-suppress PossiblyUndefinedArrayOffset
+                             */
+                            $file_ext = $path_parts['extension'];
+                            // Do not choose 'basename' because extension pdf not necessary ie. filename is basename without extension .pdf
+                            $original_file_name = $path_parts['filename'];
+                            if (file_exists($temp_aliase)) {
+                                $file_size = filesize($temp_aliase);
+                                $allowed_content_type_array = $upR->getContentTypes(); 
+                                // Check extension against allowed content file types @see UploadRepository getContentTypes
+                                $save_ctype = isset($allowed_content_type_array[$file_ext]);
+                                $ctype = $save_ctype ? $allowed_content_type_array[$file_ext] : $upR->getContentTypeDefaultOctetStream();
+                                // https://www.php.net/manual/en/function.header.php
+                                // Remember that header() must be called before any actual output is sent, either by normal HTML tags,
+                                // blank lines in a file, or from PHP.
+                                header("Expires: -1");
+                                header("Cache-Control: public, must-revalidate, post-check=0, pre-check=0");
+                                header("Content-Disposition: attachment; filename=\"$original_file_name\"");
+                                header("Content-Type: " . $ctype);
+                                header("Content-Length: " . $file_size);
+                                echo file_get_contents($temp_aliase, true);
+                                exit;
+                            } // file_exists
+                        } // $temp_aliase    
                     } // $inv
                 } // inv_amount    
             } // inv_guest
@@ -1708,7 +1711,7 @@ final class InvController
                                            GR $gR, IIAS $iiaS, PR $pR, TASKR $taskR, IAR $iaR, ICR $icR,
                                            IIAR $iiaR, IIR $iiR,IR $iR, ITRR $itrR, TRR $trR, UNR $unR) : \Yiisoft\DataResponse\DataResponse|Response
     {
-        $data_inv_js = $request->getQueryParams() ?? [];
+        $data_inv_js = $request->getQueryParams();
         $inv_id = (string)$data_inv_js['inv_id'];
         $original = $iR->repoInvUnloadedquery($inv_id);
         if ($original) {
@@ -1865,10 +1868,10 @@ final class InvController
     }
         
     /**
-     * @param $files
+     * @param array $files 
      * @return mixed
      */
-    private function remove_extension($files) : mixed
+    private function remove_extension(array $files) : mixed
     {
         foreach ($files as $key => $file) {
             $files[$key] = str_replace('.php', '', $file);
@@ -1888,7 +1891,7 @@ final class InvController
             $parameters = [
                 'success'=>0
             ];
-            $js_data = $request->getQueryParams() ?? [];        
+            $js_data = $request->getQueryParams();        
             $inv_id = $js_data['inv_id'];
             $custom_field_body = [            
                 'custom'=>$js_data['custom'] ?: '',            
@@ -1903,7 +1906,7 @@ final class InvController
      *
      * @psalm-param array{custom: ''|mixed} $array
      */
-    public function save_custom_fields(ValidatorInterface $validator, array $array, $inv_id, ICR $icR) : void
+    public function save_custom_fields(ValidatorInterface $validator, array $array, string $inv_id, ICR $icR) : void
     {   
         if (!empty($array['custom'])) {
             $db_array = [];
@@ -1945,7 +1948,7 @@ final class InvController
      * @param ValidatorInterface $validator
      */
     public function save_inv_tax_rate(Request $request, ValidatorInterface $validator) : \Yiisoft\DataResponse\DataResponse {
-        $body = $request->getQueryParams() ?? [];
+        $body = $request->getQueryParams();
         $ajax_body = [
             'inv_id'=>$body['inv_id'],
             'tax_rate_id'=>$body['inv_tax_rate_id'],

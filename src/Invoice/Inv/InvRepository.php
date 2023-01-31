@@ -53,11 +53,11 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * Get Invoices with filter
-     *
-     * @psalm-return EntityReader
+     * 
+     * @param int $client_id
+     * @return EntityReader
      */
-    public function findAllWithClient($client_id) : EntityReader
+    public function findAllWithClient(int $client_id) : EntityReader
     {
         $query = $this->select()
                 ->where(['client_id' => $client_id]);  
@@ -199,7 +199,7 @@ private EntityWriter $entityWriter;
     /**
      * @psalm-return Select<TEntity>
      */
-    public function repoClient_guest_count($inv_id, array $user_client = []) : Select {
+    public function repoClient_guest_count(int $inv_id, array $user_client = []) : Select {
         $count = $this->select()
                       ->where(['id' => $inv_id])
                       // sent = 2, viewed = 3, paid = 4
@@ -313,9 +313,11 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @psalm-return EntityReader
+     * 
+     * @param int $client_id
+     * @return EntityReader
      */
-    public function by_client($client_id) : EntityReader {
+    public function by_client(int $client_id) : EntityReader {
         $query = $this->select()
                       ->where(['client_id'=> $client_id]);
         return $this->prepareDataReader($query);    
@@ -412,7 +414,13 @@ private EntityWriter $entityWriter;
     
     // total = item_subtotal + item_tax_total + tax_total
     // total => sales including item tax and tax
-    public function with_total($client_id, IAR $iaR): float
+    /**
+     * 
+     * @param int $client_id
+     * @param IAR $iaR
+     * @return float
+     */
+    public function with_total(int $client_id, IAR $iaR): float
     {
         $invoices = $this->findAllWithClient($client_id);
         $sum = 0.00;
@@ -426,7 +434,13 @@ private EntityWriter $entityWriter;
     }
     
     // sales without item tax and tax => item_subtotal
-    public function with_item_subtotal($client_id, IAR $iaR): float
+    /**
+     * 
+     * @param int $client_id
+     * @param IAR $iaR
+     * @return float
+     */
+    public function with_item_subtotal(int $client_id, IAR $iaR): float
     {
         $invoices = $this->findAllWithClient($client_id);
         $sum = 0.00;
@@ -441,7 +455,15 @@ private EntityWriter $entityWriter;
     
     // total = item_subtotal + item_tax_total + tax_total
     // total => sales including item tax and tax
-    public function with_total_from_to(int|null $client_id, string $from, string $to, IAR $iaR): float
+    /**
+     * 
+     * @param int $client_id
+     * @param string $from
+     * @param string $to
+     * @param IAR $iaR
+     * @return float
+     */
+    public function with_total_from_to(int $client_id, string $from, string $to, IAR $iaR): float
     {
         $invoices = $this->repoClientLoadedFromToDate($client_id, $from, $to);
         $sum = 0.00;
@@ -455,7 +477,15 @@ private EntityWriter $entityWriter;
     }
     
     // sales without item tax and tax => item_subtotal
-    public function with_item_subtotal_from_to(int|null $client_id, string $from, string $to, IAR $iaR): float
+    /**
+     * 
+     * @param int $client_id
+     * @param string $from
+     * @param string $to
+     * @param IAR $iaR
+     * @return float
+     */
+    public function with_item_subtotal_from_to(int $client_id, string $from, string $to, IAR $iaR): float
     {
         $invoices = $this->repoClientLoadedFromToDate($client_id, $from, $to);
         $sum = 0.00;
@@ -469,7 +499,15 @@ private EntityWriter $entityWriter;
     }
     
     // First tax: Item tax total 
-    public function with_item_tax_total_from_to(int|null $client_id, string $from, string $to, IAR $iaR): float
+    /**
+     * 
+     * @param int $client_id
+     * @param string $from
+     * @param string $to
+     * @param IAR $iaR
+     * @return float
+     */
+    public function with_item_tax_total_from_to(int $client_id, string $from, string $to, IAR $iaR): float
     {
         $invoices = $this->repoClientLoadedFromToDate($client_id, $from, $to);
         $sum = 0.00;
@@ -483,7 +521,7 @@ private EntityWriter $entityWriter;
     }
     
     // Second tax: Total tax total 
-    public function with_tax_total_from_to(int|null $client_id, string $from, string $to, IAR $iaR): float
+    public function with_tax_total_from_to(int $client_id, string $from, string $to, IAR $iaR): float
     {
         $invoices = $this->repoClientLoadedFromToDate($client_id, $from, $to);
         $sum = 0.00;
@@ -496,7 +534,15 @@ private EntityWriter $entityWriter;
         return $sum;
     }
     
-    public function with_paid_from_to($client_id, $from, $to, IAR $iaR): float
+    /**
+     * 
+     * @param int $client_id
+     * @param string $from
+     * @param string $to
+     * @param IAR $iaR
+     * @return float
+     */
+    public function with_paid_from_to(int $client_id, string $from, string $to, IAR $iaR): float
     {
         $invoices = $this->repoClientLoadedFromToDate($client_id, $from, $to);
         $sum = 0.00;
@@ -508,8 +554,14 @@ private EntityWriter $entityWriter;
         }
         return $sum;
     }
-
-    public function with_total_paid($client_id, IAR $iaR): float
+    
+    /**
+     * 
+     * @param int $client_id
+     * @param IAR $iaR
+     * @return float
+     */
+    public function with_total_paid(int $client_id, IAR $iaR): float
     {
         $invoices = $this->findAllWithClient($client_id);
         $sum = 0.00;
@@ -522,7 +574,13 @@ private EntityWriter $entityWriter;
         return $sum;
     }
 
-    public function with_total_balance($client_id, IAR $iaR): float
+    /**
+     * 
+     * @param int $client_id
+     * @param IAR $iaR
+     * @return float
+     */
+    public function with_total_balance(int $client_id, IAR $iaR): float
     {
         $invoices = $this->findAllWithClient($client_id);
         $sum = 0.00;
@@ -535,6 +593,11 @@ private EntityWriter $entityWriter;
         return $sum;
     }
     
+    /**
+     * 
+     * @param int|null $client_id
+     * @return int
+     */
     public function repoCountByClient(int|null $client_id) : int {
         $count = $this->select()
                       ->where(['client_id'=>$client_id])  
@@ -542,7 +605,14 @@ private EntityWriter $entityWriter;
         return $count;
     }
     
-    public function repoCountClientLoadedFromToDate($client_id, $from_date, $to_date) : int {
+    /**
+     * 
+     * @param int $client_id
+     * @param string $from_date
+     * @param string $to_date
+     * @return int
+     */
+    public function repoCountClientLoadedFromToDate(int $client_id, string $from_date, string $to_date) : int {
         $count = $this->select()
                       ->load('client')
                       ->where(['client_id'=>$client_id])
@@ -552,7 +622,14 @@ private EntityWriter $entityWriter;
         return $count;
     }
     
-    public function repoClientLoadedFromToDate($client_id, $from_date, $to_date) : EntityReader {
+    /**
+     * 
+     * @param int $client_id
+     * @param string $from_date
+     * @param string $to_date
+     * @return EntityReader
+     */
+    public function repoClientLoadedFromToDate(int $client_id, string $from_date, string $to_date) : EntityReader {
         $query = $this->select()
                       ->load('client')  
                       ->where(['client_id'=>$client_id])
@@ -562,7 +639,9 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @psalm-return EntityReader
+     * 
+     * @param int|null $client_id
+     * @return EntityReader
      */
     public function repoClient(int|null $client_id) : EntityReader { 
         $query = $this->select()

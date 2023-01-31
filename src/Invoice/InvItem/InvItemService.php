@@ -75,7 +75,7 @@ final class InvItemService
        // Users are required to enter a tax rate even if it is zero percent.
        if ($product_id) {
          $this->repository->save($model);
-         if (null!==$form->getQuantity() && null!==$form->getPrice() && null!==$form->getDiscount_amount() && $tax_rate_percentage) {
+         if (null!==$form->getQuantity() && null!==$form->getPrice() && null!==$form->getDiscount_amount() && null!==$tax_rate_percentage) {
             $this->saveInvItemAmount((int)$model->getId(), $form->getQuantity(), $form->getPrice(), $form->getDiscount_amount(), $tax_rate_percentage, $iias, $iiar);
          }
        }  
@@ -182,7 +182,7 @@ final class InvItemService
        $tax_rate_percentage = $this->taxrate_percentage((int)$tax_rate_id, $trr);
        if ($task_id) {
             $this->repository->save($model);                
-            if ($form->getQuantity() && $form->getPrice() && $form->getDiscount_amount() && $tax_rate_percentage) {
+            if (null!==$form->getQuantity() && null!==$form->getPrice() && null!==$form->getDiscount_amount() && null!==$tax_rate_percentage) {
                 $this->saveInvItemAmount((int)$model->getId(), $form->getQuantity(), $form->getPrice(), $form->getDiscount_amount(), $tax_rate_percentage, $iias, $iiar);
             }    
        }
@@ -203,6 +203,7 @@ final class InvItemService
        null!==$form->getTax_rate_id() ? $model->setTaxRate($model->getTaxRate()->getTax_rate_id() == $form->getTax_rate_id() ? $model->getTaxRate() : null): '';
        $tax_rate_id = ((null !==($form->getTax_rate_id())) ? $form->getTax_rate_id() : '');
        $model->setTax_rate_id((int)$tax_rate_id);
+       
        null!==$form->getTask_id() ? $model->setTask($model->getTask()->getId() == $form->getTask_id() ? $model->getTask() : null): '';
        $task_id = ((null !==($form->getTask_id())) ? $form->getTask_id() : '');
        // Product id and task id are mutually exclusive

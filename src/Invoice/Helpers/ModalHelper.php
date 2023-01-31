@@ -21,7 +21,18 @@ public function __construct(SRepo $s)
 // Eg. 
 // $modalhelper->modal('quote_change_client btn-lg btn-outline-light','#w0-modal','fa fa-edit cursor-pointer small',null,'change_client','client');
 
-public function modal($class, $target, $icon, $label, $title, $placeholdername, $keyboard=true): void
+/**
+ * 
+ * @param string $class
+ * @param string $target
+ * @param string $icon
+ * @param string $label
+ * @param string $title
+ * @param string $placeholdername
+ * @param bool $keyboard
+ * @return void
+ */
+public function modal(string $class, string $target, string $icon, string $label, string $title, string $placeholdername, bool $keyboard=true): void
 {
     $this->s->load_settings();
     echo Modal::widget()
@@ -49,6 +60,5 @@ public function modal($class, $target, $icon, $label, $title, $placeholdername, 
     echo '</div>';
     echo Modal::end();
     echo Html::br(); 
-}                    
-
+}              
 }

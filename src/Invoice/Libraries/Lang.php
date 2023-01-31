@@ -42,7 +42,7 @@ class Lang
 	/**
 	 * Load a language file
 	 *
-	 * @param string $langfile	Language file name
+	 * @param array|string $langfile	Language file name
 	 * @param string $idiom		Language name (english, etc.)
 	 * @param bool $return		Whether to return the loaded array of translations
 	 * @param bool $add_suffix	Whether to add suffix to $langfile
@@ -52,7 +52,7 @@ class Lang
 	 *
 	 * @psalm-return array<empty, empty>|null|true
 	 */
-	public function load($langfile, $idiom = '', $return = FALSE, $add_suffix = true, $alt_path = '')
+	public function load(array|string $langfile, $idiom = '', $return = FALSE, $add_suffix = true, $alt_path = '')
 	{
 		if (is_array($langfile))
 		{

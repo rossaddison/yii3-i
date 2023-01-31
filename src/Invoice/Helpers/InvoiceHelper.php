@@ -55,12 +55,12 @@ Class InvoiceHelper
      * Documentation: https://www.postfinance.ch/binp/postfinance/public/dam.M26m_i6_6ceYcN2XtAN4w8OHMynQG7FKxJVK8TtQzr0.spool/content/dam/pf/de/doc/consult/manual/dlserv/inpayslip_isr_man_en.pdf
      *
      * @param string $slipType
-     * @param $amount
+     * @param mixed $amount
      * @param string $rnumb
-     * @param $subNumb
+     * @param mixed $subNumb
      * @return string
      */
-    public function invoice_genCodeline($slipType, $amount, $rnumb, $subNumb): string
+    public function invoice_genCodeline(string $slipType, mixed $amount, string $rnumb, mixed $subNumb): string
     {
         $isEur = false;
 
@@ -83,11 +83,11 @@ Class InvoiceHelper
             $this->flash('danger', $this->s->trans('Invalid subscriber number'));
         }
 
-        $subNumb = explode("-", $subNumb);
-        $fullSub = $subNumb[0] . sprintf("%06d", $subNumb[1]) . $subNumb[2];
-        $rnumb = preg_replace('/\s+/', '', $rnumb);
+        $subNumb_exploded = explode("-", $subNumb);
+        $fullSub = $subNumb_exploded[0] . sprintf("%06d", $subNumb_exploded[1]) . $subNumb_exploded[2];
+        $rnumb_preg_replace = preg_replace('/\s+/', '', $rnumb);
 
-        return $slipType . $amountLine . $checkSlAmount . ">" . $rnumb . "+ " . $fullSub . ">";
+        return $slipType . $amountLine . $checkSlAmount . ">" . $rnumb_preg_replace . "+ " . $fullSub . ">";
     }
 
     /**

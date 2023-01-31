@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Invoice\TaxRate;
 
-use App\Invoice\Entity\TaxRate;
 use Cycle\ORM\Select;
 use Throwable;
 use Yiisoft\Data\Reader\Sort;
@@ -63,6 +62,11 @@ final class TaxRateRepository extends Select\Repository
         $this->entityWriter->delete([$taxrate]);
     }
 
+    /**
+     * 
+     * @param Select $query
+     * @return EntityReader
+     */
     private function prepareDataReader(Select $query): EntityReader
     {
         return (new EntityReader($query))->withSort(
@@ -71,7 +75,11 @@ final class TaxRateRepository extends Select\Repository
         );
     }
     
-    
+    /**
+     * 
+     * @param string $tax_rate_id
+     * @return null|object
+     */
     public function repoTaxRatequery(string $tax_rate_id): null|object
     {
         $query = $this
@@ -80,6 +88,11 @@ final class TaxRateRepository extends Select\Repository
         return  $query->fetchOne() ?: null;        
     }
     
+    /**
+     * 
+     * @param string $tax_rate_name
+     * @return object|null
+     */
     public function withName(string $tax_rate_name): object|null
     {
         $query = $this
@@ -88,13 +101,22 @@ final class TaxRateRepository extends Select\Repository
         return  $query->fetchOne() ?: null;
     }
     
-    public function repoCount($tax_rate_id): int {
+    /**
+     * 
+     * @param string $tax_rate_id
+     * @return int
+     */
+    public function repoCount(string $tax_rate_id): int {
         $count = $this->select()
                       ->where(['id' => $tax_rate_id])
                       ->count();
         return $count;   
     }
     
+    /**
+     * 
+     * @return int
+     */
     public function repoCountAll(): int {
         $countall = $this->select()
                          ->count();

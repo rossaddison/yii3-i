@@ -289,7 +289,7 @@ class ProductController
      * @param pR $pR
      */
     public function lookup(ViewRenderer $head, Request $request, fR $fR, sR $sR, pR $pR): \Yiisoft\DataResponse\DataResponse {
-        $queryparams = $request->getQueryParams() ?? [];
+        $queryparams = $request->getQueryParams();
         $fp = $queryparams[$this->fpc] ?? '';
         $ff = $queryparams[$this->ffc] ?? '';
         $rt = $queryparams[$this->rtc] ?? '';
@@ -416,7 +416,7 @@ class ProductController
     public function selection_quote(ValidatorInterface $validator, Request $request,
                                    pR $pR, qaR $qaR, qiR $qiR, qR $qR, qtrR $qtrR,
                                    sR $sR, trR $trR, uR $uR, qiaR $qiaR, qiaS $qiaS) : \Yiisoft\DataResponse\DataResponse {        
-        $select_items = $request->getQueryParams() ?? [];
+        $select_items = $request->getQueryParams();
         $product_ids = ($select_items['product_ids'] ? $select_items['product_ids'] : []);
         $quote_id = $select_items['quote_id'];
         // Use Spiral||Cycle\Database\Injection\Parameter to build 'IN' array of products.
@@ -452,7 +452,7 @@ class ProductController
      * @param pymR $pymR
      */
     public function selection_inv(ValidatorInterface $validator, Request $request, pR $pR, sR $sR, trR $trR, uR $uR, iiaR $iiaR, iiR $iiR, itrR $itrR, iaR $iaR, iR $iR, pymR $pymR) : \Yiisoft\DataResponse\DataResponse {        
-        $select_items = $request->getQueryParams() ?? [];
+        $select_items = $request->getQueryParams();
         $product_ids = ($select_items['product_ids'] ? $select_items['product_ids'] : []);
         $inv_id = $select_items['inv_id'];
         // Use Spiral||Cycle\Database\Injection\Parameter to build 'IN' array of products.

@@ -128,7 +128,7 @@ final class InvRecurringController
      * @param ValidatorInterface $validator
      */
     public function create_recurring_confirm(Request $request, ValidatorInterface $validator) : \Yiisoft\DataResponse\DataResponse {
-        $body = $request->getQueryParams() ?? [];
+        $body = $request->getQueryParams();
         $form = new InvRecurringForm();
         $invrecurring = new InvRecurring(); 
         $body_array = [
@@ -203,7 +203,7 @@ final class InvRecurringController
      * @return \Yiisoft\DataResponse\DataResponse
      */
     public function get_recur_start_date(Request $request): \Yiisoft\DataResponse\DataResponse{
-        $body = $request->getQueryParams() ?? [];
+        $body = $request->getQueryParams();
         $invoice_date = $body['invoice_date'];
         // DateTimeImmutable::__construct(): Failed to parse time string (22-04-202222-04-2022) at position 10 (2): Double date specification
         $sub_str = substr($invoice_date,0,10);

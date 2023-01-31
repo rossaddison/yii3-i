@@ -158,12 +158,12 @@ final class ProductRepository extends Select\Repository
     } 
     
      /**
-     * Get selection of products from all products
-     *
-     * @psalm-return EntityReader
-     */
-    
-    public function findinProducts($product_ids) : EntityReader {
+      * Get selection of products from all products
+      * 
+      * @param array $product_ids
+      * @return EntityReader
+      */
+    public function findinProducts(array $product_ids) : EntityReader {
         $query = $this
         ->select()
         ->where(['id'=>['in'=> new Parameter($product_ids)]]);

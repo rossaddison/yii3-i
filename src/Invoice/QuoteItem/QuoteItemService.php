@@ -68,7 +68,7 @@ final class QuoteItemService
        $tax_rate_percentage = $this->taxrate_percentage((int)$tax_rate_id, $trr);
        if ($product_id) {
           $this->repository->save($model);  
-          if (null!==$form->getQuantity() && null!==$form->getPrice() && null!==$form->getDiscount_amount() && $tax_rate_percentage) {
+          if (null!==$form->getQuantity() && null!==$form->getPrice() && null!==$form->getDiscount_amount() && null!==$tax_rate_percentage) {
             $this->saveQuoteItemAmount((int)$model->getId(), $form->getQuantity(), $form->getPrice(), $form->getDiscount_amount(), $tax_rate_percentage, $qiar, $qias);
           }
        }

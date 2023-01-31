@@ -76,6 +76,7 @@ final class PaymentController
         $this->paymentCustomService = $paymentCustomService;
         $this->translator = $translator;
         $this->factory = $factory;
+        $this->viewRenderer = $viewRenderer;
         if ($this->userService->hasPermission('viewPayment') 
             && !$this->userService->hasPermission('editPayment')) {
             $this->viewRenderer = $viewRenderer->withControllerName('invoice/payment')
@@ -298,11 +299,14 @@ final class PaymentController
     }
     
     /**
-     * @param (mixed|string)[] $array
-     *
+     * @param ValidatorInterface $validator
+     * @param (mixed|string)[] $array     
+     * @param string $payment_id
+     * @param PaymentCustomRepository $pcR
      * @psalm-param array{custom: ''|mixed} $array
+     * @return void
      */
-    public function custom_fields(ValidatorInterface $validator, array $array, $payment_id, PaymentCustomRepository $pcR) : void
+    public function custom_fields(ValidatorInterface $validator, array $array, string $payment_id, PaymentCustomRepository $pcR) : void
     {   
         if (!empty($array['custom'])) {
             $db_array = [];
@@ -478,9 +482,14 @@ final class PaymentController
     }
     
     /**
-     * @param array|null|object $parse
+     * 
+     * @param array $custom
+     * @param ValidatorInterface $validator
+     * @param PaymentCustomRepository $pcR
+     * @param string $payment_id
+     * @return void
      */
-    public function edit_save_custom_fields($custom, ValidatorInterface $validator, PaymentCustomRepository $pcR,string $payment_id): void {
+    public function edit_save_custom_fields(array $custom, ValidatorInterface $validator, PaymentCustomRepository $pcR,string $payment_id): void {
         foreach ($custom as $custom_field_id => $value) {
             $payment_custom = $pcR->repoFormValuequery($payment_id, (string)$custom_field_id);
             if ($payment_custom) {
@@ -534,7 +543,7 @@ final class PaymentController
                           InvAmountRepository $iaR,
                           UserClientRepository $ucR,
                           UserInvRepository $uiR) : \Yiisoft\DataResponse\DataResponse|Response {
-        $query_params = $request->getQueryParams() ?? [];
+        $query_params = $request->getQueryParams();
         $page = (int)$currentRoute->getArgument('page','1');
         // Clicking on the gridview's Inv_id column hyperlink generates 
         // the query_param called 'sort' 
@@ -600,7 +609,7 @@ final class PaymentController
                           UserInvRepository $uiR,
                           DateHelper $dateHelper): \Yiisoft\DataResponse\DataResponse
     {   
-        $query_params = $request->getQueryParams() ?? [];
+        $query_params = $request->getQueryParams();
         $page = (int)$currentRoute->getArgument('page','1');
         $sort = $query_params['sort'] ?? '-inv_id';
         $sort_by = Sort::only(['inv_id','date', 'successful', 'driver'])
@@ -649,7 +658,7 @@ final class PaymentController
                           SettingRepository $settingRepository, 
                           DateHelper $dateHelper,  
                           InvAmountRepository $iaR) : \Yiisoft\DataResponse\DataResponse {
-        $query_params = $request->getQueryParams() ?? [];
+        $query_params = $request->getQueryParams();
         $page = (int)$currentRoute->getArgument('page','1');
         // Clicking on the gridview's Inv_id column hyperlink generates 
         // the query_param called 'sort' which is seen in the url
@@ -733,7 +742,7 @@ final class PaymentController
                           SettingRepository $settingRepository, 
                           DateHelper $dateHelper): \Yiisoft\DataResponse\DataResponse
     {   
-        $query_params = $request->getQueryParams() ?? [];
+        $query_params = $request->getQueryParams();
         $page = (int)$currentRoute->getArgument('page','1');
         $sort = $query_params['sort'] ?? '-inv_id';
         $sort_by = Sort::only(['inv_id','date', 'successful', 'driver'])
@@ -857,7 +866,7 @@ final class PaymentController
     {
             $parameters = [];
             $parameters['success'] = 0; 
-            $js_data = $request->getQueryParams() ?? [];        
+            $js_data = $request->getQueryParams();        
             $payment_id = $js_data['payment_id'];
             $custom_field_body = [            
                 'custom'=>$js_data['custom'] ?: '',            

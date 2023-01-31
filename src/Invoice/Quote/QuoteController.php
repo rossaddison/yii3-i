@@ -824,17 +824,19 @@ final class QuoteController
             if ($quote_entity) {
                 $stream = false;        
                 $pdf_template_target_path = $this->pdf_helper->generate_quote_pdf($quote_id, $quote_entity->getUser_id(), $stream, true, $quote_amount, $quote_custom_values, $cR, $cvR, $cfR, $qiR, $qiaR, $qR, $qtrR, $uiR, $viewrenderer); 
-                $mail_message = $template_helper->parse_template($quote_id, false, $email_body, $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR);
-                $mail_subject = $template_helper->parse_template($quote_id, false, $subject, $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR);
-                $mail_cc = $template_helper->parse_template($quote_id, false, $cc, $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR);
-                $mail_bcc = $template_helper->parse_template($quote_id, false, $bcc, $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR);
-                $mail_from = // from[0] is the from_email and from[1] is the from_name    
-                    array($template_helper->parse_template($quote_id, false, $from[0], $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR), 
-                          $template_helper->parse_template($quote_id, false, $from[1], $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR));
-                // mail_from[0] is the from_email and mail_from[1] is the from_name
-                return $mailer_helper->yii_mailer_send($mail_from[0], $mail_from[1], 
-                                                       $to, $mail_subject, $mail_message, $mail_cc, $mail_bcc, $attachFiles, $pdf_template_target_path,
-                                                       $uiR);
+                if (is_string($pdf_template_target_path)) {
+                    $mail_message = $template_helper->parse_template($quote_id, false, $email_body, $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR);
+                    $mail_subject = $template_helper->parse_template($quote_id, false, $subject, $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR);
+                    $mail_cc = $template_helper->parse_template($quote_id, false, $cc, $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR);
+                    $mail_bcc = $template_helper->parse_template($quote_id, false, $bcc, $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR);
+                    $mail_from = // from[0] is the from_email and from[1] is the from_name    
+                        array($template_helper->parse_template($quote_id, false, $from[0], $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR), 
+                              $template_helper->parse_template($quote_id, false, $from[1], $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR));
+                    // mail_from[0] is the from_email and mail_from[1] is the from_name
+                    return $mailer_helper->yii_mailer_send($mail_from[0], $mail_from[1], 
+                                                           $to, $mail_subject, $mail_message, $mail_cc, $mail_bcc, $attachFiles, $pdf_template_target_path,
+                                                           $uiR);
+                } // pdf_template_target_path    
             } // quote_entity
             return false;
         } // quote_id    
