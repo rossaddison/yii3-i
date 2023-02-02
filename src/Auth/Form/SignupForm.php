@@ -10,7 +10,7 @@ use Yiisoft\Form\FormModel;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\Validator\Result;
 use Yiisoft\Validator\Rule\Equal;
-use Yiisoft\Validator\Rule\HasLength;
+use Yiisoft\Validator\Rule\Length;
 use Yiisoft\Validator\Rule\Required;
 use Yiisoft\Validator\ValidatorInterface;
 
@@ -75,16 +75,16 @@ final class SignupForm extends FormModel
     }
 
     /**
-     * @return (Equal|HasLength|Required|\Closure)[][]
+     * @return (Equal|Length|Required|\Closure)[][]
      *
-     * @psalm-return array{login: list{Required, HasLength, \Closure(mixed):Result}, password: list{Required, HasLength}, passwordVerify: list{Required, Equal}}
+     * @psalm-return array{login: list{Required, Length, \Closure(mixed):Result}, password: list{Required, Length}, passwordVerify: list{Required, Equal}}
      */
     public function getRules(): array
     {
         return [
             'login' => [
                 new Required(),
-                new HasLength(min: 1, max: 48, skipOnError: true),
+                new Length(min: 1, max: 48, skipOnError: true),
                 function (mixed $value): Result {
                     $result = new Result();
                     if ($this->userRepository->findByLogin($value) !== null) {
@@ -96,7 +96,7 @@ final class SignupForm extends FormModel
             ],
             'password' => [
                 new Required(),
-                new HasLength(min: 8),
+                new Length(min: 8),
             ],
             'passwordVerify' => [
                 new Required(),
