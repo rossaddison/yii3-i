@@ -241,7 +241,9 @@
             "composer/installers": true,
             "composer/package-versions-deprecated": true,
             "infection/extension-installer": true,
-            "yiisoft/config": true
+            "yiisoft/config": true,
+            
+            "php-http/discovery": true,
         }
     },
     "repositories": [
