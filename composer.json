@@ -106,7 +106,7 @@
         "yiisoft/yii-runner-http": "^1.1",
         "yiisoft/yii-sentry": "dev-master",
         "yiisoft/yii-swagger": "*",
-        "yiisoft/yii-view": "^5.0"
+        "yiisoft/yii-view": "^6.0"
     },
     "require-dev": {
         "codeception/c3": "^2.8",
