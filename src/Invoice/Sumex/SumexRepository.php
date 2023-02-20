@@ -12,7 +12,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of Sumex
  * @extends Select\Repository<TEntity>
  */
 final class SumexRepository extends Select\Repository
@@ -56,22 +56,22 @@ private EntityWriter $entityWriter;
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $sumex
+     * @param array|Sumex|null $sumex
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $sumex): void
+    public function save(array|Sumex|null $sumex): void
     {
         $this->entityWriter->write([$sumex]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $sumex
+     * @param array|Sumex|null $sumex
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $sumex): void
+    public function delete(array|Sumex|null $sumex): void
     {
         $this->entityWriter->delete([$sumex]);
     }
@@ -85,11 +85,11 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @return null|object
+     * @return null|Sumex
      *
      * @psalm-return TEntity|null
      */
-    public function repoSumexquery(string $id):object|null    {
+    public function repoSumexquery(string $id):Sumex|null    {
         $query = $this->select()->where(['id' => $id]);
         return  $query->fetchOne() ?: null;        
     }

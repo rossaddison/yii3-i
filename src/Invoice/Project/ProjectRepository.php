@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Invoice\Project;
 
+use App\Invoice\Entity\Project;
 use Cycle\ORM\Select;
 use Throwable;
 use Yiisoft\Data\Reader\Sort;
@@ -11,7 +12,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of Project
  * @extends Select\Repository<TEntity>
  */
 final class ProjectRepository extends Select\Repository
@@ -55,22 +56,22 @@ private EntityWriter $entityWriter;
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $project
+     * @param array|Project|null $project
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $project): void
+    public function save(array|Project|null $project): void
     {
         $this->entityWriter->write([$project]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $project
+     * @param array|Project|null $project
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $project): void
+    public function delete(array|Project|null $project): void
     {
         $this->entityWriter->delete([$project]);
     }
@@ -84,11 +85,11 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @return null|object
+     * @return null|Project
      *
      * @psalm-return TEntity|null
      */
-    public function repoProjectquery(string $id):object|null    {
+    public function repoProjectquery(string $id):Project|null    {
         $query = $this->select()->load('client')->where(['id' =>$id]);
         return  $query->fetchOne() ?: null;        
     }

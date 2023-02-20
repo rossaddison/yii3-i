@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Invoice\Profile;
 
+use App\Invoice\Entity\Profile;
 use App\Invoice\Profile\ProfileForm;
 use App\Invoice\Profile\ProfileRepository;
 
@@ -18,7 +19,13 @@ final class ProfileService
         $this->repository = $repository;
     }
 
-    public function saveProfile(object $model, ProfileForm $form): void
+    /**
+     * 
+     * @param Profile $model
+     * @param ProfileForm $form
+     * @return void
+     */
+    public function saveProfile(Profile $model, ProfileForm $form): void
     {
        $form->getCompany_id() ? $model->setCompany_id($form->getCompany_id()) : '';
        $form->getCurrent() ? $model->setCurrent($form->getCurrent()) : '';
@@ -28,7 +35,12 @@ final class ProfileService
        $this->repository->save($model);
     }
     
-    public function deleteProfile(object $model): void
+    /**
+     * 
+     * @param Profile $model
+     * @return void
+     */
+    public function deleteProfile(Profile $model): void
     {
         $this->repository->delete($model);
     }

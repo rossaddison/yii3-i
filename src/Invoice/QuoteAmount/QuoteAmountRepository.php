@@ -15,7 +15,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of QuoteAmount
  * @extends Select\Repository<TEntity>
  */
 final class QuoteAmountRepository extends Select\Repository
@@ -59,22 +59,22 @@ private EntityWriter $entityWriter;
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $quoteamount
+     * @param array|QuoteAmount|null $quoteamount
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $quoteamount): void
+    public function save(array|QuoteAmount|null $quoteamount): void
     {
         $this->entityWriter->write([$quoteamount]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $quoteamount
+     * @param array|QuoteAmount|null $quoteamount
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $quoteamount): void
+    public function delete(array|QuoteAmount|null $quoteamount): void
     {
         $this->entityWriter->delete([$quoteamount]);
     }
@@ -98,11 +98,11 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @return null|object
+     * @return null|QuoteAmount
      *
      * @psalm-return TEntity|null
      */
-    public function repoQuoteAmountqueryTest(string $quote_id):object|null {
+    public function repoQuoteAmountqueryTest(string $quote_id):QuoteAmount|null {
         $query = $this->select()
                       ->load('quote')
                       ->where(['quote_id' => $quote_id]);
@@ -112,11 +112,11 @@ private EntityWriter $entityWriter;
     /**
      * @param string $quote_id
      *
-     * @return null|object
+     * @return null|QuoteAmount
      *
      * @psalm-return TEntity|null
      */
-    public function repoQuoteAmountquery(string $quote_id):object|null {
+    public function repoQuoteAmountquery(string $quote_id):QuoteAmount|null {
         $query = $this->select()
                       ->load('quote')
                       ->where(['quote_id' => $quote_id]);
@@ -126,11 +126,11 @@ private EntityWriter $entityWriter;
     /**
      * @param string $quote_id
      *
-     * @return null|object
+     * @return null|QuoteAmount
      *
      * @psalm-return TEntity|null
      */
-    public function repoQuotequery(string $quote_id):object|null {
+    public function repoQuotequery(string $quote_id):QuoteAmount|null {
         $query = $this->select()
                       ->load('quote')
                       ->where(['quote_id' => $quote_id]);
@@ -146,6 +146,10 @@ private EntityWriter $entityWriter;
      */
     public function repoStatusTotals(int $key, array $range, SR $sR) : EntityReader {        
         $datehelper = new DateHelper($sR);
+        /** 
+         * @var \DateTimeImmutable $range['lower']
+         * @var \DateTimeImmutable $range['upper']
+         */
         $query = $this->select()
                       ->load('quote')
                       ->where(['quote.status_id' => $key])
@@ -155,16 +159,21 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @param (int|string) $key
-     *
-     * @psalm-param array-key $key
-     * @psalm-param SR<object> $sR
+     * 
+     * @param int $key
+     * @param array $range
+     * @param SR $sR
+     * @return int
      */
-    public function repoStatusTotals_Num_Total($key, array $range, SR $sR) : int {        
+    public function repoStatusTotals_Num_Total(int $key, array $range, SR $sR) : int {        
         $datehelper = new DateHelper($sR);
+        /** 
+         * @var \DateTimeImmutable $range['lower']
+         * @var \DateTimeImmutable $range['upper']
+         */
         $query = $this->select()
                       ->load('quote')                      
-                      ->where(['quote.status_id' => (int)$key])
+                      ->where(['quote.status_id' => $key])
                       ->andWhere('quote.date_created', '>=' ,$datehelper->date_from_mysql_without_style($range['lower']))
                       ->andWhere('quote.date_created', '<=' ,$datehelper->date_from_mysql_without_style($range['upper']))
                       ->count();
@@ -181,18 +190,15 @@ private EntityWriter $entityWriter;
     public function get_status_totals(QR $qR, SR $sR, string $period) : array
     {
         $return = [];
-        
         // $period eg. this-month, last-month derived from $sR->get_setting('invoice or quote_overview_period') 
-        $range = $sR->range($period); 
-        
+        $range = $sR->range($period);
         foreach ($qR->getStatuses($sR) as $key => $status) {
             $status_specific_quotes = $this->repoStatusTotals($key, $range, $sR);
+            /** @var float $total */
             $total = 0.00;
-            foreach ($status_specific_quotes as $quote) {
-               if ($quote instanceof QuoteAmount) { 
-                $this_total = $quote->getTotal();
-                $total += $this_total;
-               } 
+            /** @var QuoteAmount $quote_amount */
+            foreach ($status_specific_quotes as $quote_amount) {
+                $total = $total + (float)$quote_amount->getTotal();                
             }
             $return[$key] = [
                 'quote_status_id' => $key,

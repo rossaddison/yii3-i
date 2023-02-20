@@ -12,7 +12,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of CompanyPrivate
  * @extends Select\Repository<TEntity>
  */
 final class CompanyPrivateRepository extends Select\Repository
@@ -55,22 +55,22 @@ private EntityWriter $entityWriter;
     
      /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $companyprivate
+     * @param array|CompanyPrivate|null $companyprivate
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $companyprivate): void
+    public function save(array|CompanyPrivate|null $companyprivate): void
     {
         $this->entityWriter->write([$companyprivate]);
     }
     
      /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $companyprivate
+     * @param array|CompanyPrivate|null $companyprivate
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $companyprivate): void
+    public function delete(array|CompanyPrivate|null $companyprivate): void
     {
         $this->entityWriter->delete([$companyprivate]);
     }
@@ -84,11 +84,11 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @return object|null
+     * @return CompanyPrivate|null
      *
      * @psalm-return TEntity|null
      */
-    public function repoCompanyPrivatequery(string $id):object|null    {
+    public function repoCompanyPrivatequery(string $id):CompanyPrivate|null    {
         $query = $this->select()->load('company')->where(['id' =>$id]);
         return  $query->fetchOne() ?: null;        
     }

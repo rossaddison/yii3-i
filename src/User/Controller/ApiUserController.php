@@ -37,12 +37,11 @@ final class ApiUserController
         $users = $userRepository->getReader();
 
         $items = [];
+        /** @var User $user */
         foreach ($users as $user) {
-           if ($user instanceof User) { 
             $items[] = ['login' => $user->getLogin(), 'created_at' => $user
                 ->getCreatedAt()
                 ->format('H:i:s d.m.Y'), ];
-           } 
         }
 
         return $this->responseFactory->createResponse($items);

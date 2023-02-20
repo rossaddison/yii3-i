@@ -14,26 +14,36 @@ final class UserCustomForm extends FormModel
     private ?int $fieldid=null;
     private ?string $fieldvalue='';
 
-    public function getUser_id() : ?int
+    public function getUser_id() : int|null
     {
       return $this->user_id;
     }
 
-    public function getFieldid() : ?int
+    public function getFieldid() : int|null
     {
       return $this->fieldid;
     }
 
-    public function getFieldvalue() : ?string
+    public function getFieldvalue() : string|null
     {
-      return $this->fieldvalue;
+      return $this->fieldvalue ?? '';
     }
 
+    /**
+     * @return string
+     *
+     * @psalm-return ''
+     */
     public function getFormName(): string
     {
       return '';
     }
-    
+
+    /**
+     * @return Required[][][]
+     *
+     * @psalm-return array{fieldvalue: list{list{Required}}}
+     */
     public function getRules(): array    {
       return [
         'fieldvalue' => [

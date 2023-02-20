@@ -214,9 +214,9 @@ final class ProjectController
     /**
      * @param CurrentRoute $currentRoute
      * @param ProjectRepository $projectRepository
-     * @return object|null
+     * @return Project|null
      */
-    private function project(CurrentRoute $currentRoute, ProjectRepository $projectRepository): object|null
+    private function project(CurrentRoute $currentRoute, ProjectRepository $projectRepository): Project|null
     {
         $id = $currentRoute->getArgument('id');  
         if (null!==$id) {
@@ -239,10 +239,10 @@ final class ProjectController
     
     /**
      * 
-     * @param object $project
+     * @param Project $project
      * @return array
      */
-    private function body(object $project): array {
+    private function body(Project $project): array {
         $body = [                
           'id'=>$project->getId(),
           'client_id'=>$project->getClient_id(),

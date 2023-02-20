@@ -5,7 +5,6 @@ namespace App\Invoice\InvTaxRate;
 
 use App\Invoice\Entity\InvTaxRate;
 
-
 final class InvTaxRateService
 {
     private InvTaxRateRepository $repository;
@@ -15,6 +14,12 @@ final class InvTaxRateService
         $this->repository = $repository;
     }
 
+    /**
+     * 
+     * @param InvTaxRate $model
+     * @param InvTaxRateForm $form
+     * @return void
+     */
     public function saveInvTaxRate(InvTaxRate $model, InvTaxRateForm $form): void
     {        
         $inv_id = ((null !==($form->getInv_id())) ? $form->getInv_id() : '');
@@ -55,10 +60,10 @@ final class InvTaxRateService
     
     /**
      * 
-     * @param array|object|null $model
+     * @param array|InvTaxRate|null $model
      * @return void
      */
-    public function deleteInvTaxRate(array|object|null $model): void
+    public function deleteInvTaxRate(array|InvTaxRate|null $model): void
     {
         $this->repository->delete($model);
     }

@@ -6,6 +6,7 @@ namespace App\User;
 
 use Yiisoft\Access\AccessCheckerInterface;
 use Yiisoft\User\CurrentUser;
+use App\User\User;
 
 final class UserService
 {
@@ -16,7 +17,11 @@ final class UserService
     ) {
     }
     
-    public function getUser(): object|null
+    /**
+     * 
+     * @return User|null  
+     */
+    public function getUser(): User|null
     {
         $userId = $this->currentUser->getId();
         if (null!==$userId) {

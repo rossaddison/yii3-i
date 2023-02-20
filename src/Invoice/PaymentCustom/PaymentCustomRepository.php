@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Invoice\PaymentCustom;
 
+use App\Invoice\Entity\PaymentCustom;
 use Cycle\ORM\Select;
 use Throwable;
 use Yiisoft\Data\Reader\Sort;
@@ -11,7 +12,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of PaymentCustom
  * @extends Select\Repository<TEntity>
  */
 final class PaymentCustomRepository extends Select\Repository
@@ -56,22 +57,22 @@ private EntityWriter $entityWriter;
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $paymentcustom
+     * @param array|PaymentCustom|null $paymentcustom
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $paymentcustom): void
+    public function save(array|PaymentCustom|null $paymentcustom): void
     {
         $this->entityWriter->write([$paymentcustom]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $paymentcustom
+     * @param array|PaymentCustom|null $paymentcustom
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $paymentcustom): void
+    public function delete(array|PaymentCustom|null $paymentcustom): void
     {
         $this->entityWriter->delete([$paymentcustom]);
     }
@@ -85,11 +86,11 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @return null|object
+     * @return null|PaymentCustom
      *
      * @psalm-return TEntity|null
      */
-    public function repoPaymentCustomquery(string $id): object|null    {
+    public function repoPaymentCustomquery(string $id): PaymentCustom|null    {
         $query = $this->select()->load('payment')
             ->load('custom_field')
             ->where(['id' =>$id]);
@@ -97,11 +98,11 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @return null|object
+     * @return null|PaymentCustom
      *
      * @psalm-return TEntity|null
      */
-    public function repoFormValuequery(string $payment_id, string $custom_field_id): object|null {
+    public function repoFormValuequery(string $payment_id, string $custom_field_id): PaymentCustom|null {
         $query = $this->select()->where(['payment_id' =>$payment_id])
                                 ->andWhere(['custom_field_id' =>$custom_field_id]);
         return  $query->fetchOne() ?: null;        

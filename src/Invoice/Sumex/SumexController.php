@@ -95,8 +95,9 @@ final class SumexController
         if ($request->getMethod() === Method::POST) {
             
             $form = new SumexForm();
+            $model = new Sumex();
             if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
-                $this->sumexService->saveSumex(new Sumex(),$form, $settingRepository);
+                $this->sumexService->saveSumex($model, $form, $settingRepository);
                 return $this->webService->getRedirectResponse('sumex/index');
             }
             $parameters['errors'] = $form->getFormErrors();
@@ -201,9 +202,9 @@ final class SumexController
     /**
      * @param CurrentRoute $currentRoute
      * @param SumexRepository $sumexRepository
-     * @return object|null
+     * @return Sumex|null
      */
-    private function sumex(CurrentRoute $currentRoute, SumexRepository $sumexRepository): object|null
+    private function sumex(CurrentRoute $currentRoute, SumexRepository $sumexRepository): Sumex|null
     {
         $id = $currentRoute->getArgument('id');       
         if (null!==$id) {
@@ -226,10 +227,10 @@ final class SumexController
     
     /**
      * 
-     * @param object $sumex
+     * @param Sumex $sumex
      * @return array
      */
-    private function body(object $sumex): array {
+    private function body(Sumex $sumex): array {
         $body = [
           'invoice'=>$sumex->getInvoice(),
           'reason'=>$sumex->getReason(),

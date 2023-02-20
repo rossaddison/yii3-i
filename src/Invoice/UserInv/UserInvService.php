@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Invoice\UserInv;
 
+use App\Invoice\Entity\UserInv;
+
 final class UserInvService
 {
     private UserInvRepository $repository;
@@ -13,7 +15,13 @@ final class UserInvService
         $this->repository = $repository;
     }
 
-    public function saveUserInv(object $model, UserInvForm $form): void
+    /**
+     * 
+     * @param UserInv $model
+     * @param UserInvForm $form
+     * @return void
+     */
+    public function saveUserInv(UserInv $model, UserInvForm $form): void
     {        
        $model->setUser_id($form->getUser_id());
        null!==$form->getType() ? $model->setType($form->getType()) : '';
@@ -48,7 +56,12 @@ final class UserInvService
        $this->repository->save($model);
     }
     
-    public function deleteUserInv(object $model): void
+    /**
+     * 
+     * @param UserInv $model
+     * @return void
+     */
+    public function deleteUserInv(UserInv $model): void
     {
         $this->repository->delete($model);
     }

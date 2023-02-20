@@ -41,13 +41,13 @@ final class InvService
     
     /**
      * 
-     * @param object $currentUser
-     * @param object $model
+     * @param User $user
+     * @param Inv $model
      * @param InvForm $form
      * @param SR $s
-     * @return object $model
+     * @return Inv $model
      */
-    public function addInv(object $currentUser, object $model, InvForm $form, SR $s): object
+    public function addInv(User $user, Inv $model, InvForm $form, SR $s): Inv
     {        
        $datehelper = new DateHelper($s);
        $datetime = $datehelper->get_or_set_with_style(null!==$form->getDate_created()? $form->getDate_created() : new \DateTime());
@@ -70,7 +70,7 @@ final class InvService
             // Draft => 1, Sent => 2
             $model->setStatus_id($s->get_setting('mark_invoices_sent_copy') === '1' ? 2 : 1 );            
             null!==$form->getNumber() ? $model->setNumber($form->getNumber()) : '';
-            $model->setUser_id((int)$currentUser->getId());
+            $model->setUser_id((int)$user->getId());
             $model->setUrl_key(Random::string(32));            
             $model->setDate_created(new \DateTimeImmutable('now'));
             $model->setTime_created((new \DateTimeImmutable('now'))->format('H:i:s'));
@@ -88,9 +88,9 @@ final class InvService
      * @param InvForm $form
      * @param SR $s
      * @param GR $gR
-     * @return object $model
+     * @return Inv $model
      */
-    public function saveInv(object $user, object $model, InvForm $form, SR $s, GR $gR): object 
+    public function saveInv(object $user, object $model, InvForm $form, SR $s, GR $gR): Inv 
     {  
        //$before_save = $model; 
        $datehelper = new DateHelper($s);
@@ -133,7 +133,7 @@ final class InvService
     }
     
     /**
-     * @param object $model
+     * @param Inv $model
      * @param ICR $icR
      * @param ICS $icS
      * @param IIR $iiR
@@ -144,7 +144,7 @@ final class InvService
      * @param IAS $iaS
      * @return void
      */
-    public function deleteInv(object $model, ICR $icR, ICS $icS, IIR $iiR, IIS $iiS, ITRR $itrR, ITRS $itrS, IAR $iaR, IAS $iaS): void
+    public function deleteInv(Inv $model, ICR $icR, ICS $icS, IIR $iiR, IIS $iiS, ITRR $itrR, ITRS $itrS, IAR $iaR, IAS $iaS): void
     {
         $inv_id = $model->getId();
         // Invs with no items: If there are no invoice items there will be no invoice amount record

@@ -118,6 +118,7 @@ final class OffsetPagination extends Widget
         $result .= Html::closeTag('li');
 
         // Numeric buttons
+        /** @var int|null $page */
         foreach ($this->pages as $page) {
             $isDisabled = $this->currentPage === $page || $page === null;
             $result .= Html::openTag('li', ['class' => $isDisabled ? 'page-item disabled' : 'page-item']);

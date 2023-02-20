@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Invoice\TaxRate;
 
+use App\Invoice\Entity\TaxRate;
 use Cycle\ORM\Select;
 use Throwable;
 use Yiisoft\Data\Reader\Sort;
@@ -11,7 +12,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of TaxRate
  * @extends Select\Repository<TEntity>
  */
 final class TaxRateRepository extends Select\Repository
@@ -42,22 +43,22 @@ final class TaxRateRepository extends Select\Repository
             
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $taxrate
+     * @param array|TaxRate|null $taxrate
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $taxrate): void
+    public function save(array|TaxRate|null $taxrate): void
     {
         $this->entityWriter->write([$taxrate]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $taxrate
+     * @param array|TaxRate|null $taxrate
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $taxrate): void
+    public function delete(array|TaxRate|null $taxrate): void
     {
         $this->entityWriter->delete([$taxrate]);
     }
@@ -78,9 +79,9 @@ final class TaxRateRepository extends Select\Repository
     /**
      * 
      * @param string $tax_rate_id
-     * @return null|object
+     * @return null|TaxRate
      */
-    public function repoTaxRatequery(string $tax_rate_id): null|object
+    public function repoTaxRatequery(string $tax_rate_id): null|TaxRate
     {
         $query = $this
             ->select()
@@ -91,9 +92,9 @@ final class TaxRateRepository extends Select\Repository
     /**
      * 
      * @param string $tax_rate_name
-     * @return object|null
+     * @return TaxRate|null
      */
-    public function withName(string $tax_rate_name): object|null
+    public function withName(string $tax_rate_name): TaxRate|null
     {
         $query = $this
             ->select()

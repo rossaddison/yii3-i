@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Invoice\Quote;
 
+use App\Invoice\Entity\Quote;
 use App\Invoice\Setting\SettingRepository as SR;
 use App\Invoice\Group\GroupRepository as GR;
 use Cycle\ORM\Select;
@@ -14,7 +15,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of Quote
  * @extends Select\Repository<TEntity>
  */
 final class QuoteRepository extends Select\Repository
@@ -77,26 +78,31 @@ private EntityWriter $entityWriter;
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $quote
+     * @param array|Quote|null $quote
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $quote): void
+    public function save(array|Quote|null $quote): void
     {
         $this->entityWriter->write([$quote]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $quote
+     * @param array|Quote|null $quote
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $quote): void
+    public function delete(array|Quote|null $quote): void
     {
         $this->entityWriter->delete([$quote]);
     }
     
+    /**
+     * 
+     * @param Select $query
+     * @return EntityReader
+     */
     private function prepareDataReader(Select $query): EntityReader
     {
         return (new EntityReader($query))->withSort(
@@ -106,22 +112,22 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @return null|object
+     * @return null|Quote
      *
      * @psalm-return TEntity|null
      */
-    public function repoQuoteUnLoadedquery(string $id):object|null    {
+    public function repoQuoteUnLoadedquery(string $id):Quote|null    {
         $query = $this->select()
                       ->where(['id' => $id]);
         return  $query->fetchOne() ?: null;        
     }
     
     /**
-     * @return null|object
+     * @return null|Quote
      *
      * @psalm-return TEntity|null
      */
-    public function repoQuoteLoadedquery(string $id):object|null    {
+    public function repoQuoteLoadedquery(string $id):Quote|null    {
         $query = $this->select()
                       ->load(['client','group','user']) 
                       ->where(['id' => $id]);
@@ -132,9 +138,9 @@ private EntityWriter $entityWriter;
      * 
      * @param string|null $quote_id
      * @param int $status_id
-     * @return object|null
+     * @return Quote|null
      */
-    public function repoQuoteStatusquery(string|null $quote_id, int $status_id) : object|null {
+    public function repoQuoteStatusquery(string|null $quote_id, int $status_id) : Quote|null {
         $query = $this->select()->where(['id' => $quote_id])
                                 ->where(['status_id'=>$status_id]);
         return  $query->fetchOne() ?: null;        
@@ -155,9 +161,9 @@ private EntityWriter $entityWriter;
     /**
      * 
      * @param string $url_key
-     * @return object|null
+     * @return Quote|null
      */    
-    public function repoUrl_key_guest_loaded(string $url_key) : object|null {
+    public function repoUrl_key_guest_loaded(string $url_key) : Quote|null {
         $query = $this->select()
                        ->load('client') 
                        ->where(['url_key' => $url_key]);

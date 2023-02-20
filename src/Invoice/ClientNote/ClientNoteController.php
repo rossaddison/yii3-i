@@ -173,9 +173,9 @@ final class ClientNoteController
      * 
      * @param CurrentRoute $currentRoute
      * @param ClientNoteRepository $clientnoteRepository
-     * @return object|null
+     * @return ClientNote|null
      */
-    private function clientnote(CurrentRoute $currentRoute, ClientNoteRepository $clientnoteRepository): object|null
+    private function clientnote(CurrentRoute $currentRoute, ClientNoteRepository $clientnoteRepository): ClientNote|null
     {
         $id = $currentRoute->getArgument('id');       
         if (null!==$id) {
@@ -197,11 +197,10 @@ final class ClientNoteController
     }
     
     /**
-     * 
-     * @param object $clientnote
+     * @param ClientNote $clientnote
      * @return array
      */
-    private function body(object $clientnote): array {
+    private function body(ClientNote $clientnote): array {
         $body = [
           'id'=>$clientnote->getId(),
           'client_id'=>$clientnote->getClient_id(),

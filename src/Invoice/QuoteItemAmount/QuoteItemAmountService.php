@@ -4,29 +4,48 @@ declare(strict_types=1);
 
 namespace App\Invoice\QuoteItemAmount;
 
+use App\Invoice\Entity\QuoteItemAmount;
+
 final class QuoteItemAmountService
 {
-
     private QuoteItemAmountRepository $repository;
 
     public function __construct(QuoteItemAmountRepository $repository)
     {
         $this->repository = $repository;
     }
-
-    public function saveQuoteItemAmount(object $model, QuoteItemAmountForm $form): void
+    
+    /**
+     * 
+     * @param QuoteItemAmount $model
+     * @param QuoteItemAmountForm $form
+     * @return void
+     */
+    public function saveQuoteItemAmount(QuoteItemAmount $model, QuoteItemAmountForm $form): void
     { 
-       $model->setQuote_item_id($form->getQuote_item_id());
-       $model->setSubtotal($form->getSubtotal());
-       $model->setTax_total($form->getTax_total());
-       $model->setDiscount($form->getDiscount());
-       $model->setTotal($form->getTotal());
+       null!==$form->getQuote_item_id() ? $model->setQuote_item_id($form->getQuote_item_id()) : '';
+       $model->setSubtotal($form->getSubtotal() ?? 0.00);
+       $model->setTax_total($form->getTax_total() ?? 0.00);
+       $model->setDiscount($form->getDiscount() ?? 0.00);
+       $model->setTotal($form->getTotal() ?? 0.00);
        $this->repository->save($model);
     }
     
-    public function saveQuoteItemAmountNoForm(object $model, array $quoteitem): void
+    /**
+     * 
+     * @param QuoteItemAmount $model
+     * @param array $quoteitem
+     * @return void
+     */
+    public function saveQuoteItemAmountNoForm(QuoteItemAmount $model, array $quoteitem): void
     {        
        $model->setQuote_item_id((int)$quoteitem['quote_item_id']);
+       /** 
+        * @var float $quoteitem['subtotal']
+        * @var float $quoteitem['taxtotal']
+        * @var float $quoteitem['discount']
+        * @var float $quoteitem['total']
+        */
        $model->setSubtotal($quoteitem['subtotal']);
        $model->setTax_total($quoteitem['taxtotal']);
        $model->setDiscount($quoteitem['discount']);
@@ -34,7 +53,12 @@ final class QuoteItemAmountService
        $this->repository->save($model);
     }
     
-    public function deleteQuoteItemAmount(object $model): void
+    /**
+     * 
+     * @param QuoteItemAmount $model
+     * @return void
+     */
+    public function deleteQuoteItemAmount(QuoteItemAmount $model): void
     {
        $this->repository->delete($model);
     }

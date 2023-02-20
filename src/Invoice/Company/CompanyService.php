@@ -19,11 +19,11 @@ final class CompanyService
     
     /**
      * 
-     * @param object $model
+     * @param Company $model
      * @param CompanyForm $form
      * @return void
      */
-    public function saveCompany(object $model, CompanyForm $form): void
+    public function saveCompany(Company $model, CompanyForm $form): void
     {
        null!==$form->getCurrent() ? $model->setCurrent($form->getCurrent()) : '';
        null!==$form->getName() ? $model->setName($form->getName()) : '';
@@ -42,10 +42,10 @@ final class CompanyService
     
     /**
      * 
-     * @param array|object|null $model
+     * @param array|Company|null $model
      * @return void
      */
-    public function deleteCompany(array|object|null $model): void
+    public function deleteCompany(array|Company|null $model): void
     {
         $this->repository->delete($model);
     }

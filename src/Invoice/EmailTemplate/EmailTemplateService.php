@@ -6,7 +6,6 @@ namespace App\Invoice\EmailTemplate;
 
 use App\Invoice\Entity\EmailTemplate;
 use App\Invoice\EmailTemplate\EmailTemplateRepository;
-use App\User\User;
 
 final class EmailTemplateService
 {
@@ -16,8 +15,14 @@ final class EmailTemplateService
     {
         $this->repository = $repository;
     }
-
-    public function saveEmailTemplate(object $model, EmailTemplateForm $form): void
+    
+    /**
+     * 
+     * @param EmailTemplate $model
+     * @param EmailTemplateForm $form
+     * @return void
+     */
+    public function saveEmailTemplate(EmailTemplate $model, EmailTemplateForm $form): void
     {
         null!==$form->getEmail_template_title() ? $model->setEmail_template_title($form->getEmail_template_title()) : '';
         null!==$form->getEmail_template_type() ? $model->setEmail_template_type($form->getEmail_template_type()) : '';
@@ -31,7 +36,12 @@ final class EmailTemplateService
         $this->repository->save($model);
     }
     
-    public function deleteEmailTemplate(array|object|null $model): void
+    /**
+     * 
+     * @param array|EmailTemplate|null $model
+     * @return void
+     */
+    public function deleteEmailTemplate(array|EmailTemplate|null $model): void
     {
         $this->repository->delete($model);
     }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Invoice\PaymentMethod;
 
+use App\Invoice\Entity\PaymentMethod;
+
 final class PaymentMethodService
 {
 
@@ -14,7 +16,13 @@ final class PaymentMethodService
         $this->repository = $repository;
     }
 
-    public function savePaymentMethod(object $model, PaymentMethodForm $form): void
+    /**
+     * 
+     * @param PaymentMethod $model
+     * @param PaymentMethodForm $form
+     * @return void
+     */
+    public function savePaymentMethod(PaymentMethod $model, PaymentMethodForm $form): void
     {
         
        $form->getName() ? $model->setName($form->getName()) : '';
@@ -22,7 +30,12 @@ final class PaymentMethodService
        $this->repository->save($model);
     }
     
-    public function deletePaymentMethod(object $model): void
+    /**
+     * 
+     * @param PaymentMethod $model
+     * @return void
+     */
+    public function deletePaymentMethod(PaymentMethod $model): void
     {
         $this->repository->delete($model);
     }

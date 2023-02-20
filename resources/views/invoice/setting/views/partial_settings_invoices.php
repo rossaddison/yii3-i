@@ -50,7 +50,6 @@
                             <?php $body['settings[invoice_default_payment_method]'] = $s->get_setting('invoice_default_payment_method');?>
                             <select name="settings[invoice_default_payment_method]" class="form-control"
                                 id="settings[invoice_default_payment_method]" >
-                                <option value=""><?= $s->trans('none'); ?></option>
                                 <?php
                                 foreach ($payment_methods as $payment_method) { ?>
                                     <option value="<?= $payment_method->getId(); ?>"

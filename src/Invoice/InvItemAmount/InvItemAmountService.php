@@ -6,7 +6,6 @@ namespace App\Invoice\InvItemAmount;
 
 use App\Invoice\Entity\InvItemAmount;
 
-
 final class InvItemAmountService
 {
     private InvItemAmountRepository $repository;    
@@ -16,7 +15,13 @@ final class InvItemAmountService
         $this->repository = $repository;
     }
     
-    public function saveInvItemAmountNoForm(object $model, array $invitem): void
+    /**
+     * 
+     * @param InvItemAmount $model
+     * @param array $invitem
+     * @return void
+     */
+    public function saveInvItemAmountNoForm(InvItemAmount $model, array $invitem): void
     {        
        $model->setInv_item_id((int)$invitem['inv_item_id']);
        $model->setSubtotal($invitem['subtotal']);
@@ -26,7 +31,12 @@ final class InvItemAmountService
        $this->repository->save($model);
     }
     
-    public function deleteInvItemAmount(object $model): void
+    /**
+     * 
+     * @param InvItemAmount $model
+     * @return void
+     */
+    public function deleteInvItemAmount(InvItemAmount $model): void
     {
        $this->repository->delete($model);
     }

@@ -53,7 +53,6 @@ final class AssignRoleCommand extends Command
         try {
             $orm = $this->promise->getORM();
             $userRepo = $orm->getRepository(User::class);
-            /** @var User|null $user */
             $user = $userRepo->findByPK($userId);
             if (null === $user) {
                 throw new InvalidArgumentException('Can\'t find user');

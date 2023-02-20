@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Invoice\Payment;
 
+use App\Invoice\Entity\Payment;
 use App\Invoice\Setting\SettingRepository;
-
 
 final class PaymentService
 {
@@ -21,11 +21,11 @@ final class PaymentService
     
     /**
      * 
-     * @param object $model
+     * @param Payment $model
      * @param PaymentForm $form
      * @return void
      */
-    public function addPayment(object $model, PaymentForm $form): void
+    public function addPayment(Payment $model, PaymentForm $form): void
     {
        $form->getPayment_method_id() ? $model->setPayment_method_id($form->getPayment_method_id()) : '';
        $model->setPayment_date($form->getPayment_date($this->sR));
@@ -37,15 +37,18 @@ final class PaymentService
     
     /**
      * 
-     * @param object $model
+     * @param Payment $model
      * @param array $array
      * @return void
      */
-    public function addPayment_via_payment_handler(object $model, array $array): void
+    public function addPayment_via_payment_handler(Payment $model, array $array): void
     {
        $model->setPayment_method_id((int)$array['payment_method_id']);
+       /** @var \DateTime $array['payment_date'] */
        $model->setPayment_date($array['payment_date']);
+       /** @var float $array['amount'] */
        $model->setAmount($array['amount']);
+       /** @var string $array['note'] */
        $model->setNote($array['note']);
        $model->setInv_id((int)$array['inv_id']); 
        $this->repository->save($model);
@@ -53,11 +56,11 @@ final class PaymentService
     
     /**
      * 
-     * @param object $model
+     * @param Payment $model
      * @param PaymentForm $form
      * @return void
      */
-    public function editPayment(object $model, PaymentForm $form): void
+    public function editPayment(Payment $model, PaymentForm $form): void
     {
        $model->setPayment_date($form->getPayment_date($this->sR));
        $form->getAmount() ? $model->setAmount($form->getAmount()) : '';
@@ -85,7 +88,12 @@ final class PaymentService
        $this->repository->save($model);
     }
     
-    public function deletePayment(object $model): void
+    /**
+     * 
+     * @param Payment $model
+     * @return void
+     */
+    public function deletePayment(Payment $model): void
     {
         $this->repository->delete($model);
     }

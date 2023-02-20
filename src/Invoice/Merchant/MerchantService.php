@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Invoice\Merchant;
 
+use App\Invoice\Entity\Merchant;
 use App\Invoice\Helpers\DateHelper;
 use App\Invoice\Setting\SettingRepository as sR;
 
@@ -20,12 +21,12 @@ final class MerchantService
     
     /**
      * 
-     * @param object $model
+     * @param Merchant $model
      * @param MerchantForm $form
      * @param sR $sR
      * @return void
      */
-    public function saveMerchant(object $model, MerchantForm $form, sR $sR): void
+    public function saveMerchant(Merchant $model, MerchantForm $form, sR $sR): void
     {
        $form->getInv_id() ? $form->$model->setInv_id($form->getInv_id()) : '';
        $form->getSuccessful() ? $model->setSuccessful($form->getSuccessful()) : '';
@@ -36,7 +37,13 @@ final class MerchantService
        $this->repository->save($model);
     }
     
-    public function saveMerchant_via_payment_handler(object $model, array $array): void
+    /**
+     * 
+     * @param Merchant $model
+     * @param array $array
+     * @return void
+     */
+    public function saveMerchant_via_payment_handler(Merchant $model, array $array): void
     {
        $model->setInv_id((int)$array['inv_id']);
        $model->setSuccessful($array['merchant_response_successful']);
@@ -50,10 +57,10 @@ final class MerchantService
     
     /**
      * 
-     * @param object $model
+     * @param Merchant $model
      * @return void
      */
-    public function deleteMerchant(object $model): void
+    public function deleteMerchant(Merchant $model): void
     {
         $this->repository->delete($model);
     }

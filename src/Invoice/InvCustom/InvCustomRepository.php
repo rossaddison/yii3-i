@@ -12,7 +12,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of InvCustom
  * @extends Select\Repository<TEntity>
  */
 final class InvCustomRepository extends Select\Repository
@@ -56,22 +56,22 @@ private EntityWriter $entityWriter;
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $invcustom
+     * @param array|InvCustom|null $invcustom
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $invcustom): void
+    public function save(array|InvCustom|null $invcustom): void
     {
         $this->entityWriter->write([$invcustom]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $invcustom
+     * @param array|InvCustom|null $invcustom
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $invcustom): void
+    public function delete(array|InvCustom|null $invcustom): void
     {
         $this->entityWriter->delete([$invcustom]);
     }
@@ -85,11 +85,11 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @return null|object
+     * @return null|InvCustom
      *
      * @psalm-return TEntity|null
      */
-    public function repoInvCustomquery(string $id): object|null    {
+    public function repoInvCustomquery(string $id): InvCustom|null    {
         $query = $this->select()->load('custom_field')
                                 ->load('inv')
                                 ->where(['id'=>$id]);
@@ -97,11 +97,11 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @return null|object
+     * @return null|InvCustom
      *
      * @psalm-return TEntity|null
      */
-    public function repoFormValuequery(string $inv_id, string $custom_field_id) : object|null {
+    public function repoFormValuequery(string $inv_id, string $custom_field_id) : InvCustom|null {
         $query = $this->select()->where(['inv_id' =>$inv_id])
                                 ->andWhere(['custom_field_id' =>$custom_field_id]);
         return  $query->fetchOne();        

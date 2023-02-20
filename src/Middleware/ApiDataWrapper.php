@@ -16,6 +16,7 @@ final class ApiDataWrapper implements MiddlewareInterface
     {
         $response = $handler->handle($request);
         if ($response instanceof DataResponse) {
+            /** @var mixed $data */
             $data = $response->getData();
             if ($response->getStatusCode() !== 200) {
                 if (is_string($data) && !empty($data)) {

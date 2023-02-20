@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Invoice\QuoteCustom;
 
+use App\Invoice\Entity\QuoteCustom;
 
 final class QuoteCustomService
 {
@@ -14,20 +15,26 @@ final class QuoteCustomService
         $this->repository = $repository;
     }
 
-    public function saveQuoteCustom(object $model, QuoteCustomForm $form): void
+    /**
+     * 
+     * @param QuoteCustom $model
+     * @param QuoteCustomForm $form
+     * @return void
+     */
+    public function saveQuoteCustom(QuoteCustom $model, QuoteCustomForm $form): void
     { 
-       $model->setQuote_id($form->getQuote_id());
-       $model->setCustom_field_id($form->getCustom_field_id());
-       $model->setValue($form->getValue());
+       null!==$form->getQuote_id() ? $model->setQuote_id($form->getQuote_id()) : '';
+       null!==$form->getCustom_field_id() ? $model->setCustom_field_id($form->getCustom_field_id()) : '';
+       $model->setValue($form->getValue() ?? '');
        $this->repository->save($model);
     }
     
     /**
      * 
-     * @param array|object|null $model
+     * @param array|QuoteCustom|null $model
      * @return void
      */
-    public function deleteQuoteCustom(array|object|null $model): void
+    public function deleteQuoteCustom(array|QuoteCustom|null $model): void
     {
         $this->repository->delete($model);
     }

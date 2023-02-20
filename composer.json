@@ -120,6 +120,7 @@
         "yiisoft/yii-swagger": "^2.0",               
         "yiisoft/yii-view": "^6.0"
     },
+    
     "require-dev": {
         "codeception/c3": "^2.8",
         "codeception/codeception": "^5.0.8",

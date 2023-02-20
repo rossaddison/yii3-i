@@ -19,6 +19,7 @@ use App\Invoice\Entity\TaxRate;
 // Services
 // Inv
 use App\User\UserService;
+use App\User\User;
 use App\Invoice\Inv\InvService;
 use App\Invoice\InvItem\InvItemService;
 use App\Invoice\InvAmount\InvAmountService;
@@ -93,7 +94,7 @@ use Yiisoft\Session\SessionInterface;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Validator\ValidatorInterface;
 use Yiisoft\Yii\View\ViewRenderer;
-use Yiisoft\Translator\TranslatorInterface as Translator; 
+use Yiisoft\Translator\TranslatorInterface as Translator;
 use Yiisoft\User\CurrentUser;
 // Psr\Http
 use Psr\Log\LoggerInterface;
@@ -273,13 +274,12 @@ final class QuoteController
         return $this->web_service->getNotFoundResponse();    
     }
     
-    
     /**
      * 
-     * @param object $quote
+     * @param Quote $quote
      * @return array
      */
-    private function body(object $quote): array {
+    private function body(Quote $quote): array {
         $body = [
           'number'=>$quote->getNumber(),
             
@@ -306,8 +306,7 @@ final class QuoteController
     }
     
     // Data fed from quote.js->$(document).on('click', '#quote_create_confirm', function () {
-    
-    public function create_confirm(CurrentUser $currentUser, Request $request, ValidatorInterface $validator, GR $gR, TRR $trR) : \Yiisoft\DataResponse\DataResponse
+    public function create_confirm(Request $request, ValidatorInterface $validator, GR $gR, TRR $trR) : \Yiisoft\DataResponse\DataResponse
     {
         $body = $request->getQueryParams();
         $ajax_body = [
@@ -328,7 +327,8 @@ final class QuoteController
         $ajax_content = new QuoteForm();
         $quote = new Quote();
         if ($ajax_content->load($ajax_body) && $validator->validate($ajax_content)->isValid()) {    
-            $this->quote_service->addQuote($currentUser, $quote, $ajax_content, $this->sR);
+            /** @psalm-suppress PossiblyNullArgument $this->user_service->getUser() */
+            $this->quote_service->addQuote($this->user_service->getUser(), $quote, $ajax_content, $this->sR);
             $this->quote_amount_service->initializeQuoteAmount(new QuoteAmount(), (int)$quote->getId());
             $this->default_taxes($quote, $trR, $validator);            
             $parameters = ['success'=>1];
@@ -361,13 +361,21 @@ final class QuoteController
         if (!empty($array['custom'])) {
             $db_array = [];
             $values = [];
+            /** 
+             * @var array $custom
+             * @var string $custom['value']
+             * @var string $custom['name']
+             */
             foreach ($array['custom'] as $custom) {
                 if (preg_match("/^(.*)\[\]$/i", $custom['name'], $matches)) {
                     $values[$matches[1]][] = $custom['value'] ;
-                } else {
+                } else {                    
                     $values[$custom['name']] = $custom['value'];
                 }
-            }            
+            } 
+            /** 
+             * @var string $value
+             */
             foreach ($values as $key => $value) {                
                 preg_match("/^custom\[(.*?)\](?:\[\]|)$/", $key, $matches);
                 if ($matches) {
@@ -375,7 +383,7 @@ final class QuoteController
                     $key_value = preg_match('/\d+/', $key, $m) ? $m[0] : '';
                     $db_array[$key_value] = $value;
                 }
-            }            
+            }
             foreach ($db_array as $key => $value){
                 if ($value !=='') { 
                     $ajax_custom = new QuoteCustomForm();
@@ -406,21 +414,20 @@ final class QuoteController
     public function default_taxes(Quote $quote, TRR $trR, ValidatorInterface $validator): void{
         if ($trR->repoCountAll() > 0) {
             $taxrates = $trR->findAllPreloaded();
+            /** @var TaxRate $taxrate */
             foreach ($taxrates as $taxrate) {
-                if ($taxrate instanceof TaxRate) {
-                    $taxrate->getTax_rate_default()  == 1 ? $this->default_tax_quote($taxrate, $quote, $validator) : '';
-                }
+                $taxrate->getTax_rate_default()  == 1 ? $this->default_tax_quote($taxrate, $quote, $validator) : '';
             }
         }
     }
     
     /**
-     * @param object|null $taxrate
-     * @param object $quote
+     * @param TaxRate|null $taxrate
+     * @param Quote $quote
      * @param ValidatorInterface $validator
      * @return void
      */
-    public function default_tax_quote(object|null $taxrate, object $quote, ValidatorInterface $validator) : void {
+    public function default_tax_quote(TaxRate|null $taxrate, Quote $quote, ValidatorInterface $validator) : void {
         $quote_tax_rate_form = new QuoteTaxRateForm();
         $quote_tax_rate = [];
         $quote_tax_rate['quote_id'] = $quote->getId();
@@ -481,7 +488,7 @@ final class QuoteController
             unset($e);
             $this->flash('danger', 'Cannot delete.');
         }
-        $quote_id = $this->session->get('quote_id');
+        $quote_id = (string)$this->session->get('quote_id');
         return $this->factory->createResponse($this->view_renderer->renderPartialAsString('/invoice/setting/quote_successful',
         ['heading'=>'','message'=>$this->sR->trans('record_successfully_deleted'),'url'=>'quote/view','id'=>$quote_id]));  
     }
@@ -498,7 +505,7 @@ final class QuoteController
             unset($e);
             $this->flash('danger', 'Cannot delete.');
         }
-        $quote_id = $this->session->get('quote_id');
+        $quote_id = (string)$this->session->get('quote_id');
         return $this->factory->createResponse($this->view_renderer->renderPartialAsString('/invoice/setting/inv_message',
         ['heading'=>$this->sR->trans('quote_tax_rate'),'message'=>$this->sR->trans('record_successfully_deleted'),'url'=>'quote/view','id'=>$quote_id]));  
     }
@@ -531,7 +538,7 @@ final class QuoteController
                         QCR $qcR
     ): \Yiisoft\DataResponse\DataResponse|Response {
         $quote = $this->quote($currentRoute, $quoteRepo,true);
-        if ($quote) {
+        if (null!==$quote && !empty($quote->getId())) {
             $quote_id = $quote->getId(); 
             $action = ['quote/edit', ['id' => $quote_id]];
             $parameters = [
@@ -544,7 +551,7 @@ final class QuoteController
                 'invs'=>$invRepo->findAllPreloaded(),
                 'clients'=>$clientRepo->findAllPreloaded(),
                 'groups'=>$groupRepo->findAllPreloaded(),
-                'users'=>$userRepo->findAll(),
+                'users'=>$userRepo->findAllUsers(),
                 'numberhelper' => new NumberHelper($this->sR),
                 'quote_statuses'=> $quoteRepo->getStatuses($this->sR),            
                 'cvH'=> new CVH($this->sR),
@@ -552,10 +559,10 @@ final class QuoteController
                 // Applicable to normally building up permanent selection lists eg. dropdowns
                 'custom_values'=>$cvR->attach_hard_coded_custom_field_values_to_custom_field($cfR->repoTablequery('quote_custom')),
                 // There will initially be no custom_values attached to this quote until they are filled in the field on the form
-                'quote_custom_values' => $this->quote_custom_values($quote_id, $qcR),
+                'quote_custom_values' => null!==$quote_id ? $this->quote_custom_values($quote_id, $qcR) : null,
             ];
             if ($request->getMethod() === Method::POST) {   
-                $edited_body = $request->getParsedBody();
+                $edited_body = (array)$request->getParsedBody();
                 $returned_form = $this->edit_save_form_fields($edited_body, $currentRoute, $validator, $quoteRepo, $groupRepo);
                 $parameters['body'] = $edited_body;
                 $parameters['errors']=$returned_form->getFormErrors();
@@ -572,9 +579,14 @@ final class QuoteController
     }
     
     /**
-     * @param array|null|object $edited_body
+     * @param array $edited_body
+     * @param CurrentRoute $currentRoute
+     * @param ValidatorInterface $validator
+     * @param QR $quoteRepo
+     * @param GR $gR
+     * @return QuoteForm
      */
-    public function edit_save_form_fields(array|object|null $edited_body, CurrentRoute $currentRoute, ValidatorInterface $validator, QR $quoteRepo, GR $gR) : QuoteForm {
+    public function edit_save_form_fields(array $edited_body, CurrentRoute $currentRoute, ValidatorInterface $validator, QR $quoteRepo, GR $gR) : QuoteForm {
         $form = new QuoteForm();
         $quote = $this->quote($currentRoute, $quoteRepo, true);
         if ($quote && $form->load($edited_body) && $validator->validate($form)->isValid()) {
@@ -592,14 +604,22 @@ final class QuoteController
      * @param null|string $quote_id
      */
     public function edit_save_custom_fields(array|object|null $parse, ValidatorInterface $validator, QCR $qcR, string|null $quote_id): void {
+        /** 
+         * @var array $custom
+         */
         $custom = $parse['custom'] ?? [];
+        /** 
+         * @var string $value 
+         * @var int $custom_field_id
+         * @var int $quote_id
+         */
         foreach ($custom as $custom_field_id => $value) {
             if (($qcR->repoQuoteCustomCount((string)$quote_id, (string)$custom_field_id)) == 0) {
                 $quote_custom = new QuoteCustom();
                 $quote_custom_input = [
-                    'quote_id'=>(int)$quote_id,
-                    'custom_field_id'=>(int)$custom_field_id,
-                    'value'=>(string)$value
+                    'quote_id'=>$quote_id,
+                    'custom_field_id'=>$custom_field_id,
+                    'value'=>$value
                 ];
                 $form = new QuoteCustomForm();
                 if ($form->load($quote_custom_input) && $validator->validate($form)->isValid())
@@ -610,9 +630,9 @@ final class QuoteController
                 $quote_custom = $qcR->repoFormValuequery((string)$quote_id, (string)$custom_field_id);
                 if ($quote_custom) {
                     $quote_custom_input = [
-                        'quote_id'=>(int)$quote_id,
-                        'custom_field_id'=>(int)$custom_field_id,
-                        'value'=>(string)$value
+                        'quote_id'=>$quote_id,
+                        'custom_field_id'=>$custom_field_id,
+                        'value'=>$value
                     ];
                     $form = new QuoteCustomForm();
                     if ($form->load($quote_custom_input) && $validator->validate($form)->isValid())
@@ -653,7 +673,6 @@ final class QuoteController
                                   CCR $ccR, CFR $cfR, CVR $cvR, 
                                   ETR $etR, ICR $icR, 
                                   QR $qR, PCR $pcR, QCR $qcR, UIR $uiR) : Response {
-        $parameters = [];
         $mailer_helper = new MailerHelper($this->sR, $this->session, $this->logger, $this->mailer, $ccR, $qcR, $icR, $pcR, $cfR, $cvR);
         $template_helper = new TemplateHelper($this->sR, $ccR, $qcR, $icR, $pcR, $cfR, $cvR);
         if (!$mailer_helper->mailer_configured()) {
@@ -665,13 +684,6 @@ final class QuoteController
             $quote_id = $quote_entity->getId();
             $quote = $qR->repoQuoteUnLoadedquery((string)$quote_id);
             if ($quote) {
-                $email_template_id = $template_helper->select_email_quote_template();        
-                if ($email_template_id) {
-                    $email_template = $etR->repoEmailTemplatequery($email_template_id);
-                    $parameters['email_template'] = Json::encode($email_template);
-                } else {
-                    $parameters['email_template'] = '{}';
-                }
                 // Get all custom fields
                 $custom_fields = [];
                 $custom_tables = [
@@ -728,7 +740,7 @@ final class QuoteController
         return $this->web_service->getRedirectResponse('quote/index');
     }
     
-    public function get_inject_email_template_array(object $email_template) : array {
+    public function get_inject_email_template_array(EmailTemplate $email_template) : array {
         $email_template_array = [
                 'body' => Json::htmlEncode($email_template->getEmail_template_body()),
                 'subject'=> $email_template->getEmail_template_subject() ?? '',
@@ -736,7 +748,7 @@ final class QuoteController
                 'from_email'=> $email_template->getEmail_template_from_email() ?? '',
                 'cc'=> $email_template->getEmail_template_cc() ?? '',
                 'bcc'=> $email_template->getEmail_template_bcc() ?? '',
-                'pdf_template'=> null!==$email_template->getEmail_template_pdf_template()?$email_template->getEmail_template_pdf_template(): '',
+                'pdf_template'=> null!==$email_template->getEmail_template_pdf_template()? $email_template->getEmail_template_pdf_template(): '',
         ];
         return $email_template_array;  
     }
@@ -751,10 +763,9 @@ final class QuoteController
     public function email_templates(ETR $etR) : array {
         $email_templates = $etR->repoEmailTemplateType('quote');
         $data = [];
+        /** @var EmailTemplate $email_template */
         foreach ($email_templates as $email_template) {
-            if ($email_template instanceof EmailTemplate) {
-                $data[] = $email_template->getEmail_template_title();
-            }
+            $data[] = $email_template->getEmail_template_title();
         }
         return $data;
     }
@@ -829,7 +840,12 @@ final class QuoteController
                     $mail_subject = $template_helper->parse_template($quote_id, false, $subject, $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR);
                     $mail_cc = $template_helper->parse_template($quote_id, false, $cc, $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR);
                     $mail_bcc = $template_helper->parse_template($quote_id, false, $bcc, $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR);
-                    $mail_from = // from[0] is the from_email and from[1] is the from_name    
+                     // from[0] is the from_email and from[1] is the from_name    
+                    /**
+                     * @var string $from[0]
+                     * @var string $from[1]
+                     */
+                    $mail_from = 
                         array($template_helper->parse_template($quote_id, false, $from[0], $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR), 
                               $template_helper->parse_template($quote_id, false, $from[1], $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR));
                     // mail_from[0] is the from_email and mail_from[1] is the from_name
@@ -882,34 +898,50 @@ final class QuoteController
                     $this->flash('warning', $this->sR->trans('email_not_configured'));
                     return $this->web_service->getRedirectResponse('quote/index');
                 }
-                $to = $body['MailerQuoteForm']['to_email'] ?? '';
+                
+                /**
+                 * @var array $body['MailerQuoteForm']
+                 */
+                $to = (string)$body['MailerQuoteForm']['to_email'] ?: '';
                 if (empty($to)) {
                     return $this->factory->createResponse($this->view_renderer->renderPartialAsString('/invoice/setting/quote_message',
                     ['heading'=>'','message'=>$this->sR->trans('email_to_address_missing'),'url'=>'quote/view','id'=>$quote_id]));  
                 }
-
+                                
+                /**
+                 * @var array $from
+                 */
                 $from = [
                     $body['MailerQuoteForm']['from_email'] ?? '',
                     $body['MailerQuoteForm']['from_name'] ?? '',
                 ];
-
+                
+                
                 if (empty($from[0])) {
                     return $this->factory->createResponse($this->view_renderer->renderPartialAsString('/invoice/setting/quote_message',
                     ['heading'=>'','message'=>$this->sR->trans('email_to_address_missing'),'url'=>'quote/view','id'=>$quote_id]));  
                 }
 
-                $pdf_template = $body['MailerQuoteForm']['pdf_template'] ?? '';
-
+                /**  
+                 * @var string $subject 
+                 */
                 $subject = $body['MailerQuoteForm']['subject'] ?? '';
-                $email_body = $body['MailerQuoteForm']['body'] ?? '';
+                  /**  @var string $body */
+                $email_body = (string)$body['MailerQuoteForm']['body'];
 
                 if (strlen($email_body) !== strlen(strip_tags($email_body))) {
                     $email_body = htmlspecialchars_decode($email_body); 
                 } else {
                     $email_body = htmlspecialchars_decode(nl2br($email_body));
                 }
-
+                
+                /**  
+                 * @var string $cc 
+                 */
                 $cc = $body['MailerQuoteForm']['cc'] ?? '';
+                /**  
+                 * @var string $bcc 
+                 */
                 $bcc = $body['MailerQuoteForm']['bcc'] ?? '';
 
                 $attachFiles = $request->getUploadedFiles();
@@ -959,7 +991,7 @@ final class QuoteController
         if (!empty($quote) && ($quote->getStatus_id() == 1) && ($quote->getNumber() == "")) {
                 // Generate new quote number if applicable
                 if ($sR->get_setting('generate_quote_number_for_draft') == 0) {
-                    $quote_number = $qR->get_quote_number($quote->getGroup_id(), $gR);
+                    $quote_number = (string)$qR->get_quote_number($quote->getGroup_id(), $gR);
                     // Set new quote number and save
                     $quote->setNumber($quote_number);
                     $qR->save($quote);
@@ -983,7 +1015,7 @@ final class QuoteController
         $pageNum = (int)$currentRoute->getArgument('page', '1');
          //status 0 => 'all';
         $status = (int)$currentRoute->getArgument('status', '0');
-        $sort = Sort::only(['status_id','number','date_created','date_expires','id','client_id'])->withOrderString($query_params['sort'] ?? ''); 
+        $sort = Sort::only(['status_id','number','date_created','date_expires','id','client_id'])->withOrderString((string)$query_params['sort'] ?: ''); 
                 
         // Get the current user and determine from (@see Settings...User Account) whether they have been given 
         // either guest or admin rights. These rights are unrelated to rbac and serve as a second
@@ -1004,7 +1036,7 @@ final class QuoteController
                 // A user-quest-accountant will be allocated a series of clients
                 // A user-guest-client will be allocated their client number by the administrator so that
                 // they can view their quotes when they log in
-                $user_clients = $ucR->get_assigned_to_user($user->getId());
+                $user_clients = $ucR->get_assigned_to_user((string)$user->getId());
                 $quotes = $this->quotes_status_with_sort_guest($qR, $status, $user_clients, $sort);
                 $paginator = (new OffsetPaginator($quotes))
                 ->withPageSize((int)$this->sR->get_setting('default_list_limit'))
@@ -1018,7 +1050,7 @@ final class QuoteController
                     'page'=> $pageNum,
                     'paginator'=> $paginator,
                     's'=> $this->sR,
-                    'sortOrder' => $query_params['sort'] ?? '',             
+                    'sortOrder' => (string)$query_params['sort'] ?: '',             
                     'status'=> $status,
                 ];    
                 return $this->view_renderer->render('/invoice/quote/guest', $parameters);  
@@ -1043,13 +1075,16 @@ final class QuoteController
     {
         $query_params = $request->getQueryParams();
         $page = (int)$currentRoute->getArgument('page','1');
+        /** @psalm-suppress MixedAssignment $sort_string */
+        $sort_string = (string)$query_params['sort'] ?: '-id';
         //status 0 => 'all';
         $status = (int)$currentRoute->getArgument('status','0');
         $sort = Sort::only(['id','status_id','number','date_created','date_expires','client_id'])
                     // (@see vendor\yiisoft\data\src\Reader\Sort
                     // - => 'desc'  so -id => default descending on id
                     // Show the latest quotes first => -id
-                    ->withOrderString($query_params['sort'] ?? '-id');
+                    /** @psalm-suppress MixedArgument $sort_string */
+                    ->withOrderString($sort_string);
         $quotes = $this->quotes_status_with_sort($quoteRepo, $status, $sort); 
         $paginator = (new OffsetPaginator($quotes))
         ->withPageSize((int)$this->sR->get_setting('default_list_limit'))
@@ -1059,7 +1094,7 @@ final class QuoteController
             'page' => $page,
             'status' => $status,
             'paginator' => $paginator,
-            'sortOrder' => $query_params['sort'] ?? '', 
+            'sortOrder' => (string)$query_params['sort'] ?: '', 
             'alert'=>$this->alert(),
             'client_count'=>$clientRepo->count(),
             'quotes' => $quotes,
@@ -1092,23 +1127,24 @@ final class QuoteController
     
     public function  items(string $items, ValidatorInterface $validator, string $quote_id, int $order ,
                                      PR $pR, QIR $qir, QIAR $qiar, TRR $trr, UNR $unR) 
-                                     : void {       
+                                     : void { 
+        /** @var array $item */
         foreach (Json::decode($items) as $item) {
             if ($item['item_name'] && (empty($item['item_id'])||!isset($item['item_id']))) {
                 $ajax_content = new QuoteItemForm();
                 $quoteitem = [];
-                $quoteitem['name'] = $item['item_name'];
-                $quoteitem['quote_id']=$item['quote_id'];
-                $quoteitem['tax_rate_id']=$item['item_tax_rate_id'];
-                $quoteitem['product_id']=($item['item_product_id']);
+                $quoteitem['name'] = (string)$item['item_name'];
+                $quoteitem['quote_id']=(string)$item['quote_id'];
+                $quoteitem['tax_rate_id']=(string)$item['item_tax_rate_id'];
+                $quoteitem['product_id']=(string)($item['item_product_id']);
                 //product_id used later to get description and name of product.
                 $quoteitem['date_added']=new \DateTimeImmutable();
-                $quoteitem['quantity']=($item['item_quantity'] ? $this->number_helper->standardize_amount($item['item_quantity']) : floatval(0));
-                $quoteitem['price']=($item['item_price'] ? $this->number_helper->standardize_amount($item['item_price']) : floatval(0));
-                $quoteitem['discount_amount']= ($item['item_discount_amount']) ? $this->number_helper->standardize_amount($item['item_discount_amount']) : floatval(0);
+                $quoteitem['quantity']=(float)($item['item_quantity'] ? $this->number_helper->standardize_amount($item['item_quantity']) : floatval(0));
+                $quoteitem['price']= (float)($item['item_price'] ? $this->number_helper->standardize_amount($item['item_price']) : floatval(0));
+                $quoteitem['discount_amount']= (float)(($item['item_discount_amount']) ? $this->number_helper->standardize_amount($item['item_discount_amount']) : floatval(0));
                 $quoteitem['order']= $order;
-                $quoteitem['product_unit']=$unR->singular_or_plural_name($item['item_product_unit_id'],$item['item_quantity']);
-                $quoteitem['product_unit_id']= ($item['item_product_unit_id'] ? $item['item_product_unit_id'] : null);                
+                $quoteitem['product_unit']=$unR->singular_or_plural_name((string)$item['item_product_unit_id'],(int)$item['item_quantity']);
+                $quoteitem['product_unit_id']= (string)($item['item_product_unit_id'] ?: null);                
                 unset($item['item_id']);
                 ($ajax_content->load($quoteitem) && $validator->validate($ajax_content)->isValid()) ? 
                 $this->quote_item_service->addQuoteItem(new QuoteItem(), $ajax_content, $quote_id, $pR, $qiar, new QIAS($qiar),$unR, $trr) : false;                 
@@ -1116,22 +1152,22 @@ final class QuoteController
             }
             // Evaluate current items
             if ($item['item_name'] && (!empty($item['item_id'])||isset($item['item_id']))) {
-                $unedited = $qir->repoQuoteItemquery($item['item_id']);  
+                $unedited = $qir->repoQuoteItemquery((string)$item['item_id']);  
                 if ($unedited) {
                     $ajax_content = new QuoteItemForm();
                     $quoteitem = [];
-                    $quoteitem['name'] = $item['item_name'];
-                    $quoteitem['quote_id']=$item['quote_id'];
-                    $quoteitem['tax_rate_id']=$item['item_tax_rate_id'] ? $item['item_tax_rate_id'] : null;
-                    $quoteitem['product_id']=($item['item_product_id'] ? $item['item_product_id'] : null);
+                    $quoteitem['name'] = (string)$item['item_name'];
+                    $quoteitem['quote_id']=(string)$item['quote_id'];
+                    $quoteitem['tax_rate_id']=(string)$item['item_tax_rate_id'] ?: null;
+                    $quoteitem['product_id']=(string)($item['item_product_id'] ?: null);
                     //product_id used later to get description and name of product.
                     $quoteitem['date_added']=new \DateTimeImmutable();
-                    $quoteitem['quantity']=($item['item_quantity'] ? $this->number_helper->standardize_amount($item['item_quantity']) : floatval(0));
-                    $quoteitem['price']=($item['item_price'] ? $this->number_helper->standardize_amount($item['item_price']) : floatval(0));
-                    $quoteitem['discount_amount']= ($item['item_discount_amount']) ? $this->number_helper->standardize_amount($item['item_discount_amount']) : floatval(0);
+                    $quoteitem['quantity']=(float)($item['item_quantity'] ? $this->number_helper->standardize_amount($item['item_quantity']) : floatval(0));
+                    $quoteitem['price']=(float)($item['item_price'] ? $this->number_helper->standardize_amount($item['item_price']) : floatval(0));
+                    $quoteitem['discount_amount']= (float)($item['item_discount_amount'] ? $this->number_helper->standardize_amount($item['item_discount_amount']) : floatval(0));
                     $quoteitem['order']= $order;
-                    $quoteitem['product_unit']=$unR->singular_or_plural_name($item['item_product_unit_id'],$item['item_quantity']);
-                    $quoteitem['product_unit_id']= ($item['item_product_unit_id'] ? $item['item_product_unit_id'] : null);                
+                    $quoteitem['product_unit']=$unR->singular_or_plural_name((string)$item['item_product_unit_id'],(int)$item['item_quantity']);
+                    $quoteitem['product_unit_id']= (int)($item['item_product_unit_id'] ? $item['item_product_unit_id'] : null);                
                     unset($item['item_id']);
                     ($ajax_content->load($quoteitem) && $validator->validate($ajax_content)->isValid()) ? 
                     $this->quote_item_service->saveQuoteItem($unedited, $ajax_content, $quote_id, $pR, $unR) : false;             
@@ -1175,7 +1211,7 @@ final class QuoteController
             'quote'=>$quoteRepo->findAllPreloaded(),
             'clients'=>$clientRepo->findAllPreloaded(),
             'groups'=>$groupRepo->findAllPreloaded(),
-            'users'=>$userRepo->findAll(),
+            'users'=>$userRepo->findAllUsers(),
             'datehelper'=> new DateHelper($settingRepo)
         ];
         
@@ -1211,16 +1247,16 @@ final class QuoteController
             'success'=>1,
             // Set a client id on quote/view.php so that details can be saved later. 
             'pre_save_client_id'=>$body['client_id'],                
-            'client_address_1'=>$client->getClient_address_1().'<br>',
-            'client_address_2'=>$client->getClient_address_2().'<br>',
-            'client_townline'=>$client->getClient_city().'<br>'.$client->getClient_state().'<br>'.$client->getClient_zip().'<br>',
-            'client_country'=>$client->getClient_country(),
-            'client_phone'=> $sR->trans('phone').'&nbsp;'.$client->getClient_phone(),
-            'client_mobile'=>$sR->trans('mobile').'&nbsp;'.$client->getClient_mobile(),
-            'client_fax'=>$sR->trans('fax').'&nbsp;'.$client->getClient_fax(),
+            'client_address_1'=>($client->getClient_address_1() ?? '').'<br>',
+            'client_address_2'=>($client->getClient_address_2() ?? '').'<br>',
+            'client_townline'=>($client->getClient_city() ?? '').'<br>'.($client->getClient_state() ?? '').'<br>'.($client->getClient_zip() ?? '').'<br>',
+            'client_country'=>$client->getClient_country() ?? '',
+            'client_phone'=> $sR->trans('phone').'&nbsp;'.($client->getClient_phone() ?? ''),
+            'client_mobile'=>$sR->trans('mobile').'&nbsp;'.($client->getClient_mobile() ?? ''),
+            'client_fax'=>$sR->trans('fax').'&nbsp;'.($client->getClient_fax() ?? ''),
             'client_email'=>$sR->trans('email').'&nbsp;'. Html::link($client->getClient_email()),                
             // Reset the a href id="after_client_change_url" link to the new client url
-            'after_client_change_url'=>'/invoice/client/view/'.$body['client_id'],
+            'after_client_change_url'=>'/invoice/client/view/'.(string)$body['client_id'],
             'after_client_change_name'=>$client->getClient_name(),
         ];
         // return parameters to quote.js:client_change_confirm ajax success function for processing
@@ -1250,11 +1286,11 @@ final class QuoteController
         // include is a value of 0 or 1 passed from quote.js function quote_to_pdf_with(out)_custom_fields indicating whether the user
         // wants custom fields included on the quote or not.
         $include = $currentRoute->getArgument('include');        
-        $quote_id = $this->session->get('quote_id');
+        $quote_id = (string)$this->session->get('quote_id');
         $quote_amount = (($qaR->repoQuoteAmountCount($quote_id) > 0) ? $qaR->repoQuotequery($quote_id) : null);
         if ($quote_amount) {
             $custom = (($include===(string)1) ? true : false);
-            $quote_custom_values = $this->quote_custom_values($this->session->get('quote_id'),$qcR);
+            $quote_custom_values = $this->quote_custom_values((string)$this->session->get('quote_id'),$qcR);
             // session is passed to the pdfHelper and will be used for the locale ie. $session->get('_language') or the print_language ie $session->get('print_language')
             $pdfhelper = new PdfHelper($sR, $this->session);
             // The quote will be streamed ie. shown, and not archived
@@ -1361,12 +1397,12 @@ final class QuoteController
      * @param CurrentRoute $currentRoute
      * @param QuoteRepository $quoteRepo
      * @param bool $unloaded
-     * @return object|null
+     * @return Quote|null
      */
     
     private function quote(CurrentRoute $currentRoute, 
                            QuoteRepository $quoteRepo, 
-                           bool $unloaded = false): object|null 
+                           bool $unloaded = false): Quote|null 
     {
         $id = $currentRoute->getArgument('id');
         if (null!==$id) {
@@ -1431,6 +1467,10 @@ final class QuoteController
         $custom_field_form_values = [];
         if ($qcR->repoQuoteCount($quote_id) > 0) {
             $quote_custom_fields = $qcR->repoFields($quote_id);
+            /** 
+             * @var string $key 
+             * @var string $val
+             */ 
             foreach ($quote_custom_fields as $key => $val) {
                 $custom_field_form_values['custom[' . $key . ']'] = $val;
             }
@@ -1441,9 +1481,9 @@ final class QuoteController
     /**
      * @param CurrentRoute $currentRoute
      * @param QIR $quoteitemRepository
-     * @return object|null
+     * @return QuoteItem|null
      */
-    private function quote_item(CurrentRoute $currentRoute,QIR $quoteitemRepository): object|null 
+    private function quote_item(CurrentRoute $currentRoute,QIR $quoteitemRepository): QuoteItem|null 
     {
         $id = $currentRoute->getArgument('id');       
         if (null!==$id) {
@@ -1551,32 +1591,31 @@ final class QuoteController
     private function quote_to_invoice_quote_items(string $quote_id, string $inv_id, IIAR $iiaR, InvItemAmountService $iiaS, PR $pR, QIR $qiR, TRR $trR, ValidatorInterface $validator, SR $sR, UNR $unR): void {
         // Get all items that belong to the quote
         $items = $qiR->repoQuoteItemIdquery($quote_id);
+        /** @var QuoteItem $quote_item */
         foreach ($items as $quote_item) {
-            if ($quote_item instanceof QuoteItem) {
-                $inv_item = [
-                    'inv_id'=>$inv_id,
-                    'tax_rate_id'=>$quote_item->getTax_rate_id(),
-                    'product_id'=>$quote_item->getProduct_id(),
-                    'task_id'=>'',
-                    'name'=>$quote_item->getName(),
-                    'description'=>$quote_item->getDescription(),
-                    'quantity'=>$quote_item->getQuantity(),
-                    'price'=>$quote_item->getPrice(),
-                    'discount_amount'=>$quote_item->getDiscount_amount(),
-                    'order'=>$quote_item->getOrder(),
-                    'is_recurring'=>0,
-                    'product_unit'=>$quote_item->getProduct_unit(),
-                    'product_unit_id'=>$quote_item->getProduct_unit_id(),
-                    // Recurring date
-                    'date'=>''
-                ];
-                // Create an equivalent invoice item for the quote item
-                $invitem = new InvItem();
-                $form = new InvItemForm();
-                if ($form->load($inv_item) && $validator->validate($form)->isValid()) {
-                    $this->inv_item_service->addInvItem_product($invitem, $form, $inv_id, $pR, $trR , $iiaS, $iiaR, $sR, $unR);
-                }
-            } // quote_item    
+            $inv_item = [
+                'inv_id'=>$inv_id,
+                'tax_rate_id'=>$quote_item->getTax_rate_id(),
+                'product_id'=>$quote_item->getProduct_id(),
+                'task_id'=>'',
+                'name'=>$quote_item->getName(),
+                'description'=>$quote_item->getDescription(),
+                'quantity'=>$quote_item->getQuantity(),
+                'price'=>$quote_item->getPrice(),
+                'discount_amount'=>$quote_item->getDiscount_amount(),
+                'order'=>$quote_item->getOrder(),
+                'is_recurring'=>0,
+                'product_unit'=>$quote_item->getProduct_unit(),
+                'product_unit_id'=>$quote_item->getProduct_unit_id(),
+                // Recurring date
+                'date'=>''
+            ];
+            // Create an equivalent invoice item for the quote item
+            $invitem = new InvItem();
+            $form = new InvItemForm();
+            if ($form->load($inv_item) && $validator->validate($form)->isValid()) {
+                $this->inv_item_service->addInvItem_product($invitem, $form, $inv_id, $pR, $trR , $iiaS, $iiaR, $sR, $unR);
+            }
         } // items
     }
     
@@ -1591,21 +1630,20 @@ final class QuoteController
     private function quote_to_invoice_quote_tax_rates(string $quote_id, string|null $inv_id, QTRR $qtrR, ValidatorInterface $validator): void {
         // Get all tax rates that have been setup for the quote
         $quote_tax_rates = $qtrR->repoQuotequery($quote_id);        
+        /** @var QuoteTaxRate $quote_tax_rate */
         foreach ($quote_tax_rates as $quote_tax_rate){ 
-            if ($quote_tax_rate instanceof QuoteTaxRate) {
-                $inv_tax_rate = [
-                    'inv_id'=>(string)$inv_id,
-                    'tax_rate_id'=>$quote_tax_rate->getTax_rate_id(),
-                    'include_item_tax'=>$quote_tax_rate->getInclude_item_tax(),
-                    'inv_tax_rate_amount'=>$quote_tax_rate->getQuote_tax_rate_amount(),
-                ];
-                $entity = new InvTaxRate();
-                $form = new InvTaxRateForm();
-                if ($form->load($inv_tax_rate) && $validator->validate($form)->isValid()
-                ) {    
-                   $this->inv_tax_rate_service->saveInvTaxRate($entity,$form);
-                }
-            } // quote_tax_rate   
+            $inv_tax_rate = [
+                'inv_id'=>(string)$inv_id,
+                'tax_rate_id'=>$quote_tax_rate->getTax_rate_id(),
+                'include_item_tax'=>$quote_tax_rate->getInclude_item_tax(),
+                'inv_tax_rate_amount'=>$quote_tax_rate->getQuote_tax_rate_amount(),
+            ];
+            $entity = new InvTaxRate();
+            $form = new InvTaxRateForm();
+            if ($form->load($inv_tax_rate) && $validator->validate($form)->isValid()
+            ) {    
+               $this->inv_tax_rate_service->saveInvTaxRate($entity,$form);
+            }
         } // foreach        
     }
     
@@ -1624,35 +1662,33 @@ final class QuoteController
                                                    ValidatorInterface $validator) : void {
         $quote_customs = $qcR->repoFields($quote_id);
         // For each quote custom field, build a new custom field for 'inv_custom' using the custom_field_id to find details
+        /** @var QuoteCustom $quote_custom */
         foreach ($quote_customs as $quote_custom) {
-            if ($quote_custom instanceof QuoteCustom) {
-                // For each quote custom field, build a new custom field for 'inv_custom' 
-                // using the custom_field_id to find details
-                $existing_custom_field = $cfR->repoCustomFieldquery($quote_custom->getCustom_field_id());
-                if ($existing_custom_field) {
-                    if ($cfR->repoTableAndLabelCountquery('inv_custom',$existing_custom_field->getLabel()) !== 0) {
-                        // Build an identitcal custom field for the invoice
-                        $custom_field = new CustomField();
-                        $custom_field->setTable('inv_custom');
-                        $custom_field->setLabel($existing_custom_field->getLabel());
-                        $custom_field->setType($existing_custom_field->getType());
-                        $custom_field->setLocation($existing_custom_field->getLocation());
-                        $custom_field->setOrder($existing_custom_field->getOrder());
-                        $cfR->save($custom_field);
-                        // Build the inv_custom field record
-                        $inv_custom = [
-                            'inv_id'=>$inv_id,
-                            'custom_field_id'=>$custom_field->getId(),
-                            'value'=>$quote_custom->getValue(),
-                        ];
-                        $entity = new InvCustom();
-                        $form = new InvCustomForm();
-                        if ($form->load($inv_custom) && $validator->validate($form)->isValid()) {    
-                            $this->inv_custom_service->saveInvCustom($entity,$form);            
-                        }
-                    } // cfR->repoTable
-                } // existing_custom_field    
-            } // instanceof    
+            // For each quote custom field, build a new custom field for 'inv_custom' 
+            // using the custom_field_id to find details
+            /** @var CustomField $existing_custom_field */
+            $existing_custom_field = $cfR->repoCustomFieldquery($quote_custom->getCustom_field_id());
+            if ($cfR->repoTableAndLabelCountquery('inv_custom',(string)$existing_custom_field->getLabel()) !== 0) {
+                // Build an identitcal custom field for the invoice
+                $custom_field = new CustomField();
+                $custom_field->setTable('inv_custom');
+                $custom_field->setLabel((string)$existing_custom_field->getLabel());
+                $custom_field->setType($existing_custom_field->getType());
+                $custom_field->setLocation((int)$existing_custom_field->getLocation());
+                $custom_field->setOrder((int)$existing_custom_field->getOrder());
+                $cfR->save($custom_field);
+                // Build the inv_custom field record
+                $inv_custom = [
+                    'inv_id'=>$inv_id,
+                    'custom_field_id'=>$custom_field->getId(),
+                    'value'=>$quote_custom->getValue(),
+                ];
+                $entity = new InvCustom();
+                $form = new InvCustomForm();
+                if ($form->load($inv_custom) && $validator->validate($form)->isValid()) {    
+                    $this->inv_custom_service->saveInvCustom($entity,$form);            
+                }
+            } // existing_custom_field    
         } // foreach        
     }
     
@@ -1774,18 +1810,17 @@ final class QuoteController
      */
     private function quote_to_quote_quote_custom(string $quote_id, string|null $copy_id, QCR $qcR, ValidatorInterface $validator): void {
         $quote_customs = $qcR->repoFields($quote_id);
+        /** @var QuoteCustom $quote_custom */
         foreach ($quote_customs as $quote_custom) {
-            if ($quote_custom instanceof QuoteCustom) {
-                $copy_custom = [
-                    'quote_id'=>$copy_id,
-                    'custom_field_id'=>$quote_custom->getCustom_field_id(),
-                    'value'=>$quote_custom->getValue(),
-                ];
-                $entity = new QuoteCustom();
-                $form = new QuoteCustomForm();
-                if ($form->load($copy_custom) && $validator->validate($form)->isValid()) {    
-                    $this->quote_custom_service->saveQuoteCustom($entity,$form);            
-                }
+            $copy_custom = [
+                'quote_id'=>$copy_id,
+                'custom_field_id'=>$quote_custom->getCustom_field_id(),
+                'value'=>$quote_custom->getValue(),
+            ];
+            $entity = new QuoteCustom();
+            $form = new QuoteCustomForm();
+            if ($form->load($copy_custom) && $validator->validate($form)->isValid()) {    
+                $this->quote_custom_service->saveQuoteCustom($entity,$form);            
             }
         }        
     }
@@ -1806,32 +1841,31 @@ final class QuoteController
     private function quote_to_quote_quote_items(string $quote_id, string $copy_id, QIAR $qiaR, QIAS $qiaS, PR $pR, QIR $qiR, TRR $trR, UNR $unR, ValidatorInterface $validator): void {
         // Get all items that belong to the original quote
         $items = $qiR->repoQuoteItemIdquery($quote_id);
+        /** @var QuoteItem $quote_item */
         foreach ($items as $quote_item) {
-            if ($quote_item instanceof QuoteItem) {
-                $copy_item = [
-                    'quote_id'=>$copy_id,
-                    'tax_rate_id'=>$quote_item->getTax_rate_id(),
-                    'product_id'=>$quote_item->getProduct_id(),
-                    'task_id'=>'',
-                    'name'=>$quote_item->getName(),
-                    'description'=>$quote_item->getDescription(),
-                    'quantity'=>$quote_item->getQuantity(),
-                    'price'=>$quote_item->getPrice(),
-                    'discount_amount'=>$quote_item->getDiscount_amount(),
-                    'order'=>$quote_item->getOrder(),
-                    'is_recurring'=>0,
-                    'product_unit'=>$quote_item->getProduct_unit(),
-                    'product_unit_id'=>$quote_item->getProduct_unit_id(),
-                    // Recurring date
-                    'date'=>''
-                ];
-                // Create an equivalent invoice item for the quote item
-                $copyitem = new QuoteItem();
-                $form = new QuoteItemForm();
-                if ($form->load($copy_item) && $validator->validate($form)->isValid()) {
-                    $this->quote_item_service->addQuoteItem($copyitem, $form, $copy_id, $pR, $qiaR, $qiaS, $unR, $trR);
-                }                    
-            } // instanceof quote_item
+            $copy_item = [
+                'quote_id'=>$copy_id,
+                'tax_rate_id'=>$quote_item->getTax_rate_id(),
+                'product_id'=>$quote_item->getProduct_id(),
+                'task_id'=>'',
+                'name'=>$quote_item->getName(),
+                'description'=>$quote_item->getDescription(),
+                'quantity'=>$quote_item->getQuantity(),
+                'price'=>$quote_item->getPrice(),
+                'discount_amount'=>$quote_item->getDiscount_amount(),
+                'order'=>$quote_item->getOrder(),
+                'is_recurring'=>0,
+                'product_unit'=>$quote_item->getProduct_unit(),
+                'product_unit_id'=>$quote_item->getProduct_unit_id(),
+                // Recurring date
+                'date'=>''
+            ];
+            // Create an equivalent invoice item for the quote item
+            $copyitem = new QuoteItem();
+            $form = new QuoteItemForm();
+            if ($form->load($copy_item) && $validator->validate($form)->isValid()) {
+                $this->quote_item_service->addQuoteItem($copyitem, $form, $copy_id, $pR, $qiaR, $qiaS, $unR, $trR);
+            }
         } // items as quote_item
     }
     
@@ -1845,20 +1879,19 @@ final class QuoteController
      */
     private function quote_to_quote_quote_tax_rates(string $quote_id, string|null $copy_id, QTRR $qtrR, ValidatorInterface $validator): void {
         // Get all tax rates that have been setup for the quote
-        $quote_tax_rates = $qtrR->repoQuotequery($quote_id);        
+        $quote_tax_rates = $qtrR->repoQuotequery($quote_id);  
+        /** @var QuoteTaxRate $quote_tax_rate */
         foreach ($quote_tax_rates as $quote_tax_rate){
-            if ($quote_tax_rate instanceof QuoteTaxRate) {
-                $copy_tax_rate = [
-                    'quote_id'=>$copy_id,
-                    'tax_rate_id'=>$quote_tax_rate->getTax_rate_id(),
-                    'include_item_tax'=>$quote_tax_rate->getInclude_item_tax(),
-                    'amount'=>$quote_tax_rate->getQuote_tax_rate_amount(),
-                ];
-                $entity = new QuoteTaxRate();
-                $form = new QuoteTaxRateForm();
-                if ($form->load($copy_tax_rate) && $validator->validate($form)->isValid()) {    
-                    $this->quote_tax_rate_service->saveQuoteTaxRate($entity,$form);
-                }
+            $copy_tax_rate = [
+                'quote_id'=>$copy_id,
+                'tax_rate_id'=>$quote_tax_rate->getTax_rate_id(),
+                'include_item_tax'=>$quote_tax_rate->getInclude_item_tax(),
+                'amount'=>$quote_tax_rate->getQuote_tax_rate_amount(),
+            ];
+            $entity = new QuoteTaxRate();
+            $form = new QuoteTaxRateForm();
+            if ($form->load($copy_tax_rate) && $validator->validate($form)->isValid()) {    
+                $this->quote_tax_rate_service->saveQuoteTaxRate($entity,$form);
             }
         }        
     }
@@ -1867,9 +1900,9 @@ final class QuoteController
      * 
      * @param CurrentRoute $currentRoute
      * @param QTRR $quotetaxrateRepository
-     * @return object|null
+     * @return QuoteTaxRate|null
      */    
-    private function quotetaxrate(CurrentRoute $currentRoute, QTRR $quotetaxrateRepository): object|null 
+    private function quotetaxrate(CurrentRoute $currentRoute, QTRR $quotetaxrateRepository): QuoteTaxRate|null 
     {
         $id = $currentRoute->getArgument('id');       
         if (null!==$id) {
@@ -1888,6 +1921,9 @@ final class QuoteController
      */
     private function remove_extension(array $files) : mixed
     {
+        /**
+         * @var string $file
+         */
         foreach ($files as $key => $file) {
             $files[$key] = str_replace('.php', '', $file);
         }
@@ -1908,7 +1944,7 @@ final class QuoteController
                 'success'=>0
             ]; 
             $js_data = $request->getQueryParams();        
-            $quote_id = $js_data['quote_id'];
+            $quote_id = (int)$js_data['quote_id'];
             $custom_field_body = [            
                 'custom'=>$js_data['custom'] ?: '',            
             ];
@@ -1994,21 +2030,15 @@ final class QuoteController
             }    
             // If the quote status is sent 2, viewed 3, or approved 4, or rejected 5
             if (in_array($quote->getStatus_id(),[2,3,4,5])) { 
-                // If the user exists        
+                // If the user exists  
                 /**
-                 * @psalm-suppress PossiblyNullArgument $currentUser->getId()
+                 * @psalm-suppress PossiblyNullArgument $this->user_service->getUser()?->getId()
                  */
-                if ($uiR->repoUserInvUserIdcount($currentUser->getId()) === 1) {   
+                if ($uiR->repoUserInvUserIdcount($this->user_service->getUser()?->getId()) === 1) {   
                     // After signup the user was included in the userinv using Settings...User Account...+
-                    /**
-                     * @psalm-suppress PossiblyNullArgument $currentUser->getId()
-                     */
-                    $user_inv = $uiR->repoUserInvUserIdquery($currentUser->getId());
+                    $user_inv = $uiR->repoUserInvUserIdquery($this->user_service->getUser()?->getId());
                     // The client has been assigned to the user id using Setting...User Account...Assigned Clients
-                    /**
-                     * @psalm-suppress PossiblyNullArgument $currentUser->getId()
-                     */                    
-                    $user_client = $ucR->repoUserClientqueryCount($currentUser->getId(), $quote->getClient_id()) === 1 ? true : false;
+                    $user_client = $ucR->repoUserClientqueryCount($this->user_service->getUser()?->getId(), $quote->getClient_id()) === 1 ? true : false;
                     if ($user_inv && $user_client) {
                         // If the userinv is a Guest => type = 1 ie. NOT an administrator =>type = 0          
                         // So if the user has a type of 1 they are a guest.
@@ -2097,12 +2127,12 @@ final class QuoteController
         $quote = $this->quote($currentRoute, $qR, false);
         if ($quote) {
             $this->session->set('quote_id',$quote->getId());
-            $this->number_helper->calculate_quote($this->session->get('quote_id'), $qiR, $qiaR, $qtrR, $qaR, $qR); 
-            $quote_tax_rates = (($qtrR->repoCount($this->session->get('quote_id')) > 0) ? $qtrR->repoQuotequery($this->session->get('quote_id')) : null); 
+            $this->number_helper->calculate_quote((string)$this->session->get('quote_id'), $qiR, $qiaR, $qtrR, $qaR, $qR); 
+            $quote_tax_rates = (($qtrR->repoCount((string)$this->session->get('quote_id')) > 0) ? $qtrR->repoQuotequery((string)$this->session->get('quote_id')) : null); 
             if ($quote_tax_rates) {
-                $quote_amount = (($qaR->repoQuoteAmountCount($this->session->get('quote_id')) > 0) ? $qaR->repoQuotequery($this->session->get('quote_id')) : null);
+                $quote_amount = (($qaR->repoQuoteAmountCount((string)$this->session->get('quote_id')) > 0) ? $qaR->repoQuotequery((string)$this->session->get('quote_id')) : null);
                 if ($quote_amount) {
-                    $quote_custom_values = $this->quote_custom_values($this->session->get('quote_id'), $qcR);
+                    $quote_custom_values = $this->quote_custom_values((string)$this->session->get('quote_id'), $qcR);
                     $parameters = [
                         'title' => $this->sR->trans('view'),            
                         'body' => $this->body($quote),          
@@ -2123,23 +2153,23 @@ final class QuoteController
                                 'numberhelper'=>new NumberHelper($this->sR)
                         ]),
                         // Get all the fields that have been setup for this SPECIFIC quote in quote_custom. 
-                        'fields' => $qcR->repoFields($this->session->get('quote_id')),
+                        'fields' => $qcR->repoFields((string)$this->session->get('quote_id')),
                         // Get the standard extra custom fields built for EVERY quote. 
                         'custom_fields'=>$cfR->repoTablequery('quote_custom'),
                         'custom_values'=>$cvR->attach_hard_coded_custom_field_values_to_custom_field($cfR->repoTablequery('quote_custom')),
                         'cvH'=> new CVH($this->sR),
                         'quote_custom_values' => $quote_custom_values,
                         'quote_statuses'=> $qR->getStatuses($this->sR),  
-                        'quote'=>$qR->repoQuoteLoadedquery($this->session->get('quote_id')),   
+                        'quote'=>$qR->repoQuoteLoadedquery((string)$this->session->get('quote_id')),   
                         'partial_item_table'=>$this->view_renderer->renderPartialAsString('/invoice/quote/partial_item_table',[
                             'invEdit' => $this->user_service->hasPermission('editInv') ? true : false,    
                             'numberhelper'=> new NumberHelper($this->sR),          
                             'products'=>$pR->findAllPreloaded(),
-                            'quote_items'=>$qiR->repoQuotequery($this->session->get('quote_id')),
+                            'quote_items'=>$qiR->repoQuotequery((string)$this->session->get('quote_id')),
                             'quote_item_amount'=>$qiaR,
                             'quote_tax_rates'=>$quote_tax_rates,
                             'quote_amount'=> $quote_amount,
-                            'quote'=>$qR->repoQuoteLoadedquery($this->session->get('quote_id')),  
+                            'quote'=>$qR->repoQuoteLoadedquery((string)$this->session->get('quote_id')),  
                             's'=>$this->sR,
                             'tax_rates'=>$trR->findAllPreloaded(),
                             'units'=>$uR->findAllPreloaded(),
@@ -2158,7 +2188,7 @@ final class QuoteController
                         'modal_add_quote_tax'=>$this->view_renderer->renderPartialAsString('/invoice/quote/modal_add_quote_tax',['s'=>$this->sR,'tax_rates'=>$trR->findAllPreloaded()]),
                         //'modalhelper'=> new ModalHelper($this->sR),
                         'modal_copy_quote'=>$this->view_renderer->renderPartialAsString('/invoice/quote/modal_copy_quote',[ 's'=>$this->sR,
-                            'quote'=>$qR->repoQuoteLoadedquery($this->session->get('quote_id')),
+                            'quote'=>$qR->repoQuoteLoadedquery((string)$this->session->get('quote_id')),
                             'clients'=>$cR->findAllPreloaded(),                
                             'groups'=>$gR->findAllPreloaded(),
                         ]),
@@ -2168,7 +2198,7 @@ final class QuoteController
                         ]),            
                         'modal_delete_items'=>$this->view_renderer->renderPartialAsString('/invoice/quote/modal_delete_item',[
                                 'partial_item_table_modal'=>$this->view_renderer->renderPartialAsString('/invoice/quoteitem/_partial_item_table_modal',[
-                                    'quoteitems'=>$qiR->repoQuotequery($this->session->get('quote_id')),
+                                    'quoteitems'=>$qiR->repoQuotequery((string)$this->session->get('quote_id')),
                                     's'=>$this->sR,
                                     'numberhelper'=>new NumberHelper($this->sR),
                                 ]),

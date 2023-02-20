@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Invoice\Generator;
 
+use App\Invoice\Entity\Gentor;
 use App\Invoice\Generator\GeneratorRepository;
 use App\Invoice\Generator\GeneratorForm;
 
@@ -16,7 +17,13 @@ final class GeneratorService
         $this->repository = $repository;
     }
 
-    public function saveGenerator(object $model, GeneratorForm $form): void
+    /**
+     * 
+     * @param Gentor $model
+     * @param GeneratorForm $form
+     * @return void
+     */
+    public function saveGenerator(Gentor $model, GeneratorForm $form): void
     {
         $form->getRoute_prefix() ? $model->setRoute_prefix($form->getRoute_prefix()) : '';
         $form->getRoute_suffix() ? $model->setRoute_suffix($form->getRoute_suffix()) : '';
@@ -44,7 +51,12 @@ final class GeneratorService
         $this->repository->save($model);
     }
     
-    public function deleteGenerator(array|object|null $model): void
+    /**
+     * 
+     * @param array|Gentor|null $model
+     * @return void
+     */
+    public function deleteGenerator(array|Gentor|null $model): void
     {
         $this->repository->delete($model);
     }

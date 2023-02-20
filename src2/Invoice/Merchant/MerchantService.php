@@ -1,0 +1,77 @@
+<?php
+
+declare(strict_types=1); 
+
+namespace App\Invoice\Merchant;
+
+use App\Invoice\Helpers\DateHelper;
+use App\Invoice\Setting\SettingRepository as sR;
+
+
+final class MerchantService
+{
+
+    private MerchantRepository $repository;
+
+    public function __construct(MerchantRepository $repository)
+    {
+        $this->repository = $repository;
+    }
+    
+    /**
+     * 
+     * @param object $model
+     * @param MerchantForm $form
+     * @param sR $sR
+     * @return void
+     */
+    public function saveMerchant(object $model, MerchantForm $form, sR $sR): void
+    {
+       $form->getInv_id() ? $form->$model->setInv_id($form->getInv_id()) : '';
+       $form->getSuccessful() ? $model->setSuccessful($form->getSuccessful()) : '';
+       $model->setDate($form->getDate($sR));
+       $form->getDriver() ? $model->setDriver($form->getDriver()) : '';
+       $form->getResponse() ? $model->setResponse($form->getResponse()) : '';
+       $form->getReference() ? $model->setReference($form->getReference()) : '';
+       $this->repository->save($model);
+    }
+    
+    public function saveMerchant_via_payment_handler(object $model, array $array): void
+    {
+       $model->setInv_id((int)$array['inv_id']);
+       $model->setSuccessful($array['merchant_response_successful']);
+       $model->setDate($array['merchant_response_date']);
+       $model->setDriver($array['merchant_response_driver']);
+       // Payment success message
+       $model->setResponse($array['merchant_response']);
+       $model->setReference($array['merchant_response_reference']);
+       $this->repository->save($model);
+    }
+    
+    /**
+     * 
+     * @param object $model
+     * @return void
+     */
+    public function deleteMerchant(object $model): void
+    {
+        $this->repository->delete($model);
+    }
+    
+    /**
+     * 
+     * @param sR $sR
+     * @param string $date
+     * @return \DateTime
+     */
+    public function getDateTime(sR $sR, string $date) : \DateTime
+    {
+        $datehelper = new DateHelper($sR);         
+        $datetime = new \DateTime();
+        $datetime->setTimezone(new \DateTimeZone($sR->get_setting('time_zone') ? $sR->get_setting('time_zone') : 'Europe/London')); 
+        $datetime->format($datehelper->style());
+        $str_replace = str_replace($datehelper->separator(), '-', $date);
+        $datetime->modify($str_replace);
+        return $datetime;
+    }
+}

@@ -15,13 +15,24 @@ final class FamilyService
         $this->repository = $repository;
     }
 
-    public function saveFamily(object $model, FamilyForm $form): void
+    /**
+     * 
+     * @param Family $model
+     * @param FamilyForm $form
+     * @return void
+     */
+    public function saveFamily(Family $model, FamilyForm $form): void
     {
         $model->setFamily_name($form->getFamily_name());
         $this->repository->save($model);
     }
     
-    public function deleteFamily(object $model): void
+    /**
+     * 
+     * @param Family $model
+     * @return void
+     */
+    public function deleteFamily(Family $model): void
     {
         $this->repository->delete($model);
     }

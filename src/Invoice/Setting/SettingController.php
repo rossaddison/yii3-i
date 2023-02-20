@@ -150,7 +150,7 @@ final class SettingController
                 'date_formats'=>$datehelper->date_formats(),
                 // Used in ClientForm
                 'time_zones'=> DateTimeZone::listIdentifiers(),
-                'countries'=>$countries->get_country_list($this->session->get('_language')),
+                'countries'=>$countries->get_country_list((string)$this->session->get('_language')),
                 'gateway_currency_codes'=>CurrencyHelper::all(),
                 'number_formats'=>$this->s->number_formats(),
                 'current_date'=>new \DateTime(),
@@ -200,11 +200,15 @@ final class SettingController
         if ($request->getMethod() === Method::POST) {
             $body = $parameters['body'];
             if (is_array($body)) {
-                $settings = $body['settings'];
+                $settings = (array)$body['settings'];
+                /** 
+                 * @var string $key
+                 * @var string $value
+                 */
                 foreach ($settings as $key => $value) {
-                    $key === 'tax_rate_decimal_places' && $value !== 2 ? $this->tab_index_change_decimal_column((int)$value) : '';
+                    $key === 'tax_rate_decimal_places' && (int)$value !== 2 ? $this->tab_index_change_decimal_column((int)$value) : '';
                     // Deal with existing keys after first installation
-                    if ($sR->repoCount((string)$key) > 0) {
+                    if ($sR->repoCount($key) > 0) {
                         if (strpos($key, 'field_is_password') !== false || strpos($key, 'field_is_amount') !== false) {
                             // Skip all meta fields
                             continue;
@@ -218,15 +222,15 @@ final class SettingController
                             $this->tab_index_settings_save($key, $crypt->encode(trim($value)), $sR);
                         } elseif (isset($settings[$key . '_field_is_amount'])) {
                             // Format amount inputs
-                            $this->tab_index_settings_save($key, $numberhelper->standardize_amount($value), $sR);
-                        } else {
+                            $this->tab_index_settings_save($key, (string)$numberhelper->standardize_amount($value), $sR);
+                        } else {     
                             $this->tab_index_settings_save($key, $value, $sR);
                         }  
 
                         if ($key == 'number_format') {
                             // Set thousands_separator and decimal_point according to number_format
                             // Derive the 'decimal_point' and 'thousands_separator' setting from the chosen ..number format eg. 1000,000.00 if it has a value
-                            $this->tab_index_number_format($value, $sR);
+                           $this->tab_index_number_format($value, $sR);
                         }
                     }
                     else {
@@ -492,10 +496,10 @@ final class SettingController
     /**
      * @param CurrentRoute $currentRoute
      * @param SettingRepository $settingRepository
-     * @return object|null
+     * @return Setting|null
      */
     private function setting(CurrentRoute $currentRoute, 
-                             SettingRepository $settingRepository): object|null 
+                             SettingRepository $settingRepository): Setting|null 
     {
         $setting_id = $currentRoute->getArgument('setting_id');
         if (null!==$setting_id) {

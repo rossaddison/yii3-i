@@ -207,9 +207,9 @@ final class GroupController
     /**
      * 
      * @param SessionInterface $session
-     * @return mixed
+     * @return bool|Response
      */
-    private function rbac(SessionInterface $session) : mixed
+    private function rbac(SessionInterface $session) : bool|Response
     {
         $canEdit = $this->userService->hasPermission('editInv');
         if (!$canEdit){
@@ -222,16 +222,16 @@ final class GroupController
     /**
      * @param CurrentRoute $currentRoute
      * @param GroupRepository $groupRepository
-     * @return object|null
+     * @return Group|null
      */
-    private function group(CurrentRoute $currentRoute, GroupRepository $groupRepository) : object|null
+    private function group(CurrentRoute $currentRoute, GroupRepository $groupRepository) : Group|null
     {
         $id = $currentRoute->getArgument('id');       
         if (null!==$id) {
             $group = $groupRepository->repoGroupquery($id);
             return $group;
         }
-        return $this->webService->getRedirectResponse('group/index');
+        return null;
     }
     
     /**
@@ -247,10 +247,10 @@ final class GroupController
     
     /**
      * 
-     * @param object $group
+     * @param Group $group
      * @return array
      */
-    private function body(object $group): array {
+    private function body(Group $group): array {
         $body = [
           'id'=>$group->getId(),
           'name'=>$group->getName(),

@@ -12,7 +12,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of Family
  * @extends Select\Repository<TEntity>
  */
 final class FamilyRepository extends Select\Repository
@@ -43,26 +43,31 @@ final class FamilyRepository extends Select\Repository
             
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $family
+     * @param array|Family|null $family
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $family): void
+    public function save(array|Family|null $family): void
     {
         $this->entityWriter->write([$family]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $family
+     * @param array|Family|null $family
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $family): void
+    public function delete(array|Family|null $family): void
     {
         $this->entityWriter->delete([$family]);
     }
 
+    /**
+     * 
+     * @param Select $query
+     * @return EntityReader
+     */
     private function prepareDataReader(Select $query): EntityReader
     {
         return (new EntityReader($query))->withSort(
@@ -72,11 +77,11 @@ final class FamilyRepository extends Select\Repository
     }
     
     /**
-     * @return null|object
+     * @return null|Family
      *
      * @psalm-return TEntity|null
      */
-    public function repoFamilyquery(string $family_id): object|null
+    public function repoFamilyquery(string $family_id): Family|null
     {
         $query = $this
             ->select()
@@ -84,7 +89,12 @@ final class FamilyRepository extends Select\Repository
         return  $query->fetchOne() ?: null;        
     }
     
-    public function withName(string $family_name): object|null
+    /**
+     * @return null|Family
+     *
+     * @psalm-return TEntity|null
+     */
+    public function withName(string $family_name): Family|null
     {
         $query = $this
             ->select()

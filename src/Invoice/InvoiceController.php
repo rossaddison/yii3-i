@@ -310,7 +310,7 @@ final class InvoiceController
             'default_quote_group' => 2,
             'default_language' => $sR->get_folder_language() ?: 'English', 
             //paginator list limit
-            'default_list_limit'=>120,            
+            'default_list_limit'=>120, 
             // Prevent documents from being made non-editable. By default documents are made non-editable
             // according to the read_only_toggle which is set at paid ie 2.
             // By default this setting is on 0 ie. Invoices can be made read-only (through the 
@@ -324,7 +324,10 @@ final class InvoiceController
             'email_pdf_attachment' => 1,
             'generate_invoice_number_for_draft' => 1,
             'generate_quote_number_for_draft' => 1,
-            'install_test_data'=>0,           
+            'install_test_data'=>0,            
+            //1 => None, 2 => Cash, 3 => Cheque, 4 => Card/Direct Debit - Succeeded
+            //5 => Card/Direct Debit - Processing 6 => Card/Direct Debit - Customer Ready 
+            'invoice_default_payment_method'=>1,
             'invoices_due_after' => 30,
             'invoice_logo' => 'favicon.ico',
             'mark_invoices_sent_copy' => 0,
@@ -341,9 +344,12 @@ final class InvoiceController
             'public_invoice_template' => 'Invoice_Web',
             'public_quote_template' => 'Invoice_Web',
             'quotes_expire_after' => 15,
-            // Set the invoice to read-only on paid by default; paid => 2, sent => 1 
+            // Set the invoice to read-only on sent by default;  
             'read_only_toggle' => 2,
             'reports_in_new_tab' => true,
+            'sumex_canton' => 1,
+            'sumex_role' => 1,
+            'sumex_place' => 1,
             'tax_rate_decimal_places' => 3, 
             'thousands_separator' => ',',
             'time_zone' => 'Europe/London'

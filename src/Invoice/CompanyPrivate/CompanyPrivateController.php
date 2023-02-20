@@ -296,9 +296,9 @@ final class CompanyPrivateController
     /**
      * @param CurrentRoute $currentRoute
      * @param CompanyPrivateRepository $companyprivateRepository
-     * @return object|null
+     * @return CompanyPrivate|null
      */
-    private function companyprivate(CurrentRoute $currentRoute, CompanyPrivateRepository $companyprivateRepository): object|null
+    private function companyprivate(CurrentRoute $currentRoute, CompanyPrivateRepository $companyprivateRepository): CompanyPrivate|null
     {
         $id = $currentRoute->getArgument('id');
         if (null!==$id) {

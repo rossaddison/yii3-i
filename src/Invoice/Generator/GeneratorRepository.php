@@ -12,7 +12,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of Gentor
  * @extends Select\Repository<TEntity>
  */
 final class GeneratorRepository extends Select\Repository
@@ -42,22 +42,22 @@ final class GeneratorRepository extends Select\Repository
             
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $generator
+     * @param array|Gentor|null $generator
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $generator): void
+    public function save(array|Gentor|null $generator): void
     {
         $this->entityWriter->write([$generator]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $generator
+     * @param array|Gentor|null $generator
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $generator): void
+    public function delete(array|Gentor|null $generator): void
     {
         $this->entityWriter->delete([$generator]);
     }
@@ -71,11 +71,11 @@ final class GeneratorRepository extends Select\Repository
     }
     
     /**
-     * @return null|object
+     * @return null|Gentor
      *
      * @psalm-return TEntity|null
      */
-    public function repoGentorQuery(string $id) : object|null
+    public function repoGentorQuery(string $id) : Gentor|null
     {
         $query = $this
             ->select()

@@ -145,8 +145,7 @@ final class TaxRateController
             return $this->viewRenderer->render('__form', $parameters);
         }
         return $this->webService->getRedirectResponse('taxrate/index'); 
-    }
-    
+    }    
     
     /**
      * 
@@ -214,9 +213,9 @@ final class TaxRateController
     /**
      * @param CurrentRoute $currentRoute
      * @param TaxRateRepository $taxrateRepository
-     * @return object|null
+     * @return TaxRate|null
      */
-    private function taxrate(CurrentRoute $currentRoute, TaxRateRepository $taxrateRepository): object|null
+    private function taxrate(CurrentRoute $currentRoute, TaxRateRepository $taxrateRepository): TaxRate|null
     {
         $tax_rate_id = $currentRoute->getArgument('tax_rate_id');
         if (null!==$tax_rate_id) {

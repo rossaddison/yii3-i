@@ -12,12 +12,22 @@ final class GroupService
 
     private GroupRepository $repository;
 
+    /**
+     * 
+     * @param GroupRepository $repository
+     */
     public function __construct(GroupRepository $repository)
     {
         $this->repository = $repository;
     }
 
-    public function saveGroup(object $model, GroupForm $form): void
+    /**
+     * 
+     * @param Group $model
+     * @param GroupForm $form
+     * @return void
+     */
+    public function saveGroup(Group $model, GroupForm $form): void
     {
        $model->setName($form->getName() ?: 'Name');
        $model->setIdentifier_format($form->getIdentifier_format() ?: 'AAA{{{id}}}');
@@ -27,7 +37,12 @@ final class GroupService
        $this->repository->save($model);
     }
     
-    public function deleteGroup(object $model): void
+    /**
+     * 
+     * @param Group $model
+     * @return void
+     */
+    public function deleteGroup(Group $model): void
     {
        $this->repository->delete($model);
     }

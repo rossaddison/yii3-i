@@ -12,12 +12,22 @@ final class InvRecurringService
 
     private InvRecurringRepository $repository;
 
+    /**
+     * 
+     * @param InvRecurringRepository $repository
+     */
     public function __construct(InvRecurringRepository $repository)
     {
         $this->repository = $repository;
     }
 
-    public function saveInvRecurring(object $model, InvRecurringForm $form): void
+    /**
+     * 
+     * @param InvRecurring $model
+     * @param InvRecurringForm $form
+     * @return void
+     */
+    public function saveInvRecurring(InvRecurring $model, InvRecurringForm $form): void
     {
        $model->setInv_id($form->getInv_id());
        $model->setStart($form->getStart());
@@ -27,7 +37,12 @@ final class InvRecurringService
        $this->repository->save($model);
     }
     
-    public function deleteInvRecurring(object $model): void
+    /**
+     * 
+     * @param InvRecurring $model
+     * @return void
+     */
+    public function deleteInvRecurring(InvRecurring $model): void
     {
         $this->repository->delete($model);
     }

@@ -12,7 +12,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of ClientCustom
  * @extends Select\Repository<TEntity>
  */
 final class ClientCustomRepository extends Select\Repository
@@ -57,22 +57,22 @@ private EntityWriter $entityWriter;
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $clientcustom
+     * @param array|ClientCustom|null $clientcustom
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $clientcustom): void
+    public function save(array|ClientCustom|null $clientcustom): void
     {
         $this->entityWriter->write([$clientcustom]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $clientcustom
+     * @param array|ClientCustom|null $clientcustom
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $clientcustom): void
+    public function delete(array|ClientCustom|null $clientcustom): void
     {
         $this->entityWriter->delete([$clientcustom]);
     }
@@ -86,11 +86,11 @@ private EntityWriter $entityWriter;
     }
    
     /**
-     * @return null|object
+     * @return ClientCustom|null
      *
      * @psalm-return TEntity|null
      */
-    public function repoClientCustomquery(string $id) : null|object {
+    public function repoClientCustomquery(string $id) : ClientCustom|null{
         $query = $this->select()
                       ->load('client')
                       ->load('custom_field')
@@ -98,6 +98,11 @@ private EntityWriter $entityWriter;
         return  $query->fetchOne() ?: null;        
     }
     
+    /**
+     * 
+     * @param string $client_id
+     * @return int
+     */
     public function repoClientCount(string $client_id) : int {
         $query = $this->select()
                       ->where(['client_id' =>$client_id]);
@@ -105,17 +110,23 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @return null|object
+     * @return ClientCustom|null
      *
      * @psalm-return TEntity|null
      */
-    public function repoFormValuequery(string $client_id, string $custom_field_id): null|object {
+    public function repoFormValuequery(string $client_id, string $custom_field_id): ClientCustom|null {
         $query = $this->select()
                       ->where(['client_id' =>$client_id])
                       ->andWhere(['custom_field_id' =>$custom_field_id]);
         return  $query->fetchOne() ?: null;        
     }
     
+    /**
+     * 
+     * @param string $client_id
+     * @param string $custom_field_id
+     * @return int
+     */
     public function repoClientCustomCount(string $client_id, string $custom_field_id) : int {
         $query = $this->select()
                       ->where(['client_id' =>$client_id])

@@ -227,10 +227,10 @@ final class PaymentMethodController
     /**
      * @param CurrentRoute $currentRoute
      * @param PaymentMethodRepository $paymentmethodRepository
-     * @return object|null
+     * @return PaymentMethod|null
      */
     private function paymentmethod(CurrentRoute $currentRoute, 
-                                   PaymentMethodRepository $paymentmethodRepository) : object|null 
+                                   PaymentMethodRepository $paymentmethodRepository) : PaymentMethod|null 
     {
         $id = $currentRoute->getArgument('id');       
         if (null!==$id) {
@@ -253,10 +253,10 @@ final class PaymentMethodController
     
     /**
      * 
-     * @param object $paymentmethod
+     * @param PaymentMethod $paymentmethod
      * @return array
      */
-    private function body(object $paymentmethod): array {
+    private function body(PaymentMethod $paymentmethod): array {
         $body = [                
           'id'=>$paymentmethod->getId(),
           'name'=>$paymentmethod->getName()

@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Invoice\ItemLookup;
 
+use App\Invoice\Entity\ItemLookup;
 use Cycle\ORM\Select;
-use Throwable;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of ItemLookup
  * @extends Select\Repository<TEntity>
  */
 final class ItemLookupRepository extends Select\Repository
@@ -54,20 +54,20 @@ private EntityWriter $entityWriter;
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $itemlookup
+     * @param array|ItemLookup|null $itemlookup
      * @return void
      */
-    public function save(array|object|null $itemlookup): void
+    public function save(array|ItemLookup|null $itemlookup): void
     {
         $this->entityWriter->write([$itemlookup]);
     }
     
     /**
      * 
-     * @param array|object|null $itemlookup
+     * @param array|ItemLookup|null $itemlookup
      * @return void
      */
-    public function delete(array|object|null $itemlookup): void
+    public function delete(array|ItemLookup|null $itemlookup): void
     {
         $this->entityWriter->delete([$itemlookup]);
     }
@@ -85,7 +85,7 @@ private EntityWriter $entityWriter;
      * @param string $id
      * @return TEntity|null
      */
-    public function repoItemLookupquery(string $id):?object {
+    public function repoItemLookupquery(string $id):?ItemLookup {
         $query = $this->select()->where(['id' => $id]);
         return  $query->fetchOne();        
     }

@@ -14,7 +14,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of InvRecurring
  * @extends Select\Repository<TEntity>
  */
 final class InvRecurringRepository extends Select\Repository
@@ -56,12 +56,12 @@ private EntityWriter $entityWriter;
         return Sort::only(['id'])->withOrder(['id' => 'asc']);
     }
     
-    public function save(array|object|null $invrecurring): void
+    public function save(array|InvRecurring|null $invrecurring): void
     {
         $this->entityWriter->write([$invrecurring]);
     }
     
-    public function delete(array|object|null $invrecurring): void
+    public function delete(array|InvRecurring|null $invrecurring): void
     {
         $this->entityWriter->delete([$invrecurring]);
     }
@@ -80,7 +80,7 @@ private EntityWriter $entityWriter;
      * @param string $id
      * @return TEntity|null
      */
-    public function repoInvRecurringquery(string $id): ?object {
+    public function repoInvRecurringquery(string $id): ?InvRecurring {
         $query = $this->select()
                       ->where(['id' =>$id]);
         return  $query->fetchOne();        

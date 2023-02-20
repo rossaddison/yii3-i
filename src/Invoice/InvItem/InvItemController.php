@@ -86,7 +86,7 @@ final class InvItemController
                         IIAR $iiar,
     ) : \Yiisoft\DataResponse\DataResponse
     {
-        $inv_id = $session->get('inv_id');
+        $inv_id = (string)$session->get('inv_id');
         $parameters = [
             'title' => $this->translator->translate('invoice.add'),
             'action' => ['invitem/add'],
@@ -135,7 +135,7 @@ final class InvItemController
                         IIAR $iiar,
     ) : \Yiisoft\DataResponse\DataResponse
     {
-        $inv_id = $session->get('inv_id');
+        $inv_id = (string)$session->get('inv_id');
         $parameters = [
             'title' => $this->translator->translate('invoice.add'),
             'action' => ['invitem/add'],
@@ -166,10 +166,10 @@ final class InvItemController
     
    /**
     * 
-    * @param object $invitem
+    * @param InvItem $invitem
     * @return array
     */
-    private function body(object $invitem): array {
+    private function body(InvItem $invitem): array {
         $body = [
           'id'=>$invitem->getId(),
           'inv_id'=>$invitem->getInv_id(),
@@ -208,7 +208,7 @@ final class InvItemController
      */
     public function edit_product(ViewRenderer $head, SessionInterface $session, CurrentRoute $currentRoute, Request $request, ValidatorInterface $validator,
                         IIR $iiR, SR $sR, TRR $trR, PR $pR, TaskR $taskR, UR $uR, IR $iR, IIAS $iias, IIAR $iiar): \Yiisoft\DataResponse\DataResponse {
-        $inv_id = $session->get('inv_id');
+        $inv_id = (string)$session->get('inv_id');
         $inv_item = $this->invitem($currentRoute, $iiR);
         $parameters = [
             'title' => 'Edit',
@@ -308,7 +308,7 @@ final class InvItemController
      */
     public function edit_task(ViewRenderer $head, SessionInterface $session, CurrentRoute $currentRoute, Request $request, ValidatorInterface $validator,
                         IIR $iiR, SR $sR, TRR $trR, PR $pR, TaskR $taskR, UR $uR, IR $iR, IIAS $iias, IIAR $iiar): Response {
-        $inv_id = $session->get('inv_id');
+        $inv_id = (string)$session->get('inv_id');
         $inv_item = $this->invitem($currentRoute, $iiR);
         $parameters = [
             'title' => 'Edit',
@@ -402,11 +402,11 @@ final class InvItemController
      * 
      * @param CurrentRoute $currentRoute
      * @param IIR $iiR
-     * @return object|null
+     * @return InvItem|null
      */
-    private function invitem(CurrentRoute $currentRoute, IIR $iiR): object|null
+    private function invitem(CurrentRoute $currentRoute, IIR $iiR): InvItem|null
     {
-        $invitem = new InvItem();
+        //$invitem = new InvItem();
         $id = $currentRoute->getArgument('id');
         if (null!==$id) {
            $invitem = $iiR->repoInvItemquery($id);
@@ -436,14 +436,13 @@ final class InvItemController
         //jQuery parameters from inv.js function delete-items-confirm-inv 'item_ids' and 'inv_id'
         $select_items = $request->getQueryParams();
         $result = false;
-        $item_ids = ($select_items['item_ids'] ? $select_items['item_ids'] : []);
+        $item_ids = ($select_items['item_ids'] ? (array)$select_items['item_ids'] : []);
         $items = $iiR->findinInvItems($item_ids);
         // If one item is deleted, the result is positive
+        /** @var InvItem $item */
         foreach ($items as $item){
-           if ($item instanceof InvItem) { 
             ($this->invitemService->deleteInvItem($item));
             $result = true;
-           } 
         }
         return $this->factory->createResponse(Json::encode(($result ? ['success'=>1]:['success'=>0])));  
     }

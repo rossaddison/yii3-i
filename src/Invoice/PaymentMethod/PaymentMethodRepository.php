@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Invoice\PaymentMethod;
 
+use App\Invoice\Entity\PaymentMethod;
 use Cycle\ORM\Select;
 use Throwable;
 use Yiisoft\Data\Reader\Sort;
@@ -11,7 +12,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of PaymentMethod
  * @extends Select\Repository<TEntity>
  */
 final class PaymentMethodRepository extends Select\Repository
@@ -56,22 +57,22 @@ private EntityWriter $entityWriter;
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $paymentmethod
+     * @param array|PaymentMethod|null $paymentmethod
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $paymentmethod): void
+    public function save(array|PaymentMethod|null $paymentmethod): void
     {
         $this->entityWriter->write([$paymentmethod]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $paymentmethod
+     * @param array|PaymentMethod|null $paymentmethod
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $paymentmethod): void
+    public function delete(array|PaymentMethod|null $paymentmethod): void
     {
         $this->entityWriter->delete([$paymentmethod]);
     }
@@ -93,11 +94,11 @@ private EntityWriter $entityWriter;
      * 
      * @param string $id
      *
-     * @return null|object
+     * @return null|PaymentMethod
      *
      * @psalm-return TEntity|null
      */
-    public function repoPaymentMethodquery(string $id) : object|null    {
+    public function repoPaymentMethodquery(string $id) : PaymentMethod|null    {
         $query = $this->select()
                       ->where(['id' => $id]);
         return  $query->fetchOne() ?: null;        

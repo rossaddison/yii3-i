@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Invoice\Merchant;
 
+use App\Invoice\Entity\Merchant;
 // Cycle
 use Cycle\Database\Injection\Parameter;
 use Cycle\ORM\Select;
@@ -15,7 +16,7 @@ use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 use Throwable;
 
 /**
- * @template TEntity of object
+ * @template TEntity of Merchant
  * @extends Select\Repository<TEntity>
  */
 final class MerchantRepository extends Select\Repository
@@ -59,22 +60,22 @@ private EntityWriter $entityWriter;
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $merchant
+     * @param array|Merchant|null $merchant
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $merchant): void
+    public function save(array|Merchant|null $merchant): void
     {
         $this->entityWriter->write([$merchant]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $merchant
+     * @param array|Merchant|null $merchant
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $merchant): void
+    public function delete(array|Merchant|null $merchant): void
     {
         $this->entityWriter->delete([$merchant]);
     }
@@ -88,11 +89,11 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @return null|object
+     * @return null|Merchant
      *
      * @psalm-return TEntity|null
      */
-    public function repoMerchantquery(string $id):object|null    {
+    public function repoMerchantquery(string $id):Merchant|null    {
         $query = $this->select()->load('inv')
                                 ->where(['id' => $id]);
         return  $query->fetchOne() ?: null;        

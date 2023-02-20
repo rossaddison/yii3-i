@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Invoice\CustomValue;
 
+use App\Invoice\Entity\CustomValue;
+
 final class CustomValueService
 {
     private CustomValueRepository $repository;
@@ -13,14 +15,25 @@ final class CustomValueService
         $this->repository = $repository;
     }
 
-    public function saveCustomValue(object $model, CustomValueForm $form): void
+    /**
+     * 
+     * @param CustomValue $model
+     * @param CustomValueForm $form
+     * @return void
+     */
+    public function saveCustomValue(CustomValue $model, CustomValueForm $form): void
     { 
        null!== $form->getCustom_field_id() ? $model->setCustom_field_id($form->getCustom_field_id()) : '';
        null!== $form->getValue() ? $model->setValue($form->getValue()) : '';
        $this->repository->save($model);
     }
     
-    public function deleteCustomValue(array|object|null $model): void
+    /**
+     * 
+     * @param array|CustomValue|null $model
+     * @return void
+     */
+    public function deleteCustomValue(array|CustomValue|null $model): void
     {
        $this->repository->delete($model);
     }

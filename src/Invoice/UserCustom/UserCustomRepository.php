@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Invoice\UserCustom;
 
+use App\Invoice\Entity\UserCustom;
 use Cycle\ORM\Select;
 use Throwable;
 use Yiisoft\Data\Reader\Sort;
@@ -11,7 +12,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of UserCustom
  * @extends Select\Repository<TEntity>
  */
 final class UserCustomRepository extends Select\Repository
@@ -54,22 +55,22 @@ private EntityWriter $entityWriter;
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $usercustom
+     * @param array|UserCustom|null $usercustom
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $usercustom): void
+    public function save(array|UserCustom|null $usercustom): void
     {
         $this->entityWriter->write([$usercustom]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $usercustom
+     * @param array|UserCustom|null $usercustom
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $usercustom): void
+    public function delete(array|UserCustom|null $usercustom): void
     {
         $this->entityWriter->delete([$usercustom]);
     }
@@ -83,11 +84,11 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @return null|object
+     * @return null|UserCustom
      *
      * @psalm-return TEntity|null
      */
-    public function repoUserCustomquery(string $id):object|null    {
+    public function repoUserCustomquery(string $id):UserCustom|null    {
         $query = $this->select()->load('user')->where(['id' => $id]);
         return  $query->fetchOne() ?: null;        
     }

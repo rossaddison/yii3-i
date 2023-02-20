@@ -4,20 +4,28 @@ declare(strict_types=1);
 
 namespace App\Invoice\Task;
 
+use App\Invoice\Entity\Task;
+
 use App\Invoice\Setting\SettingRepository as sR;
 
 
 final class TaskService
 {
-
     private TaskRepository $repository;
 
     public function __construct(TaskRepository $repository)
     {
         $this->repository = $repository;
     }
-
-    public function saveTask(object $model, TaskForm $form, sR $sR): void
+    
+    /**
+     * 
+     * @param Task $model
+     * @param TaskForm $form
+     * @param sR $sR
+     * @return void
+     */
+    public function saveTask(Task $model, TaskForm $form, sR $sR): void
     {
        $form->getProject_id() ? $model->setProject_id($form->getProject_id()) : '';
        $form->getName() ? $model->setName($form->getName()) : '';
@@ -29,7 +37,12 @@ final class TaskService
        $this->repository->save($model);
     }
     
-    public function deleteTask(object $model): void
+    /**
+     * 
+     * @param Task $model
+     * @return void
+     */
+    public function deleteTask(Task $model): void
     {
         $this->repository->delete($model);
     }

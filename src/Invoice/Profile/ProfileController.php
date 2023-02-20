@@ -209,9 +209,9 @@ final class ProfileController
     /**
      * @param CurrentRoute $currentRoute
      * @param ProfileRepository $profileRepository
-     * @return object|null
+     * @return Profile|null
      */
-    private function profile(CurrentRoute $currentRoute, ProfileRepository $profileRepository): object|null
+    private function profile(CurrentRoute $currentRoute, ProfileRepository $profileRepository): Profile|null
     {
         $id = $currentRoute->getArgument('id');       
         if (null!==$id) {
@@ -234,10 +234,10 @@ final class ProfileController
     
     /**
      * 
-     * @param object $profile
+     * @param Profile $profile
      * @return array
      */
-    private function body(object $profile): array {
+    private function body(Profile $profile): array {
         $body = [                
           'id'=>$profile->getId(),
           'company_id'=>$profile->getCompany_id(),

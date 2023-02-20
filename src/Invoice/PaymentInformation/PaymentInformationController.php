@@ -8,6 +8,7 @@ use App\User\UserService;
 use App\Invoice\Helpers\DateHelper;
 //Entities
 use App\Invoice\Entity\Inv;
+use App\Invoice\Entity\InvAmount;
 use App\Invoice\Entity\InvItem;
 use App\Invoice\Entity\Merchant;
 use App\Invoice\Entity\Payment;
@@ -119,7 +120,7 @@ final class PaymentInformationController
     public function amazon_complete(Request $request, currentRoute $currentRoute) : \Yiisoft\DataResponse\DataResponse|Response {
         // Redirect to the invoice using the url key
         $invoice_url_key = $currentRoute->getArgument('url_key');
-        $invoice = new Inv();
+        /** @var Inv $invoice */
         if (null!==$invoice_url_key) {
             $sandbox_url_array = $this->sR->sandbox_url_array();
             // Get the invoice data
@@ -139,6 +140,7 @@ final class PaymentInformationController
                 // The query param in the returned Url appended by amazon to the CheckoutReviewReturnUrl
                 // set in the amazon_payload_json function.
                 // ie. https://localhost/invoice/paymentinformation/amazon_complete/{url_key}?amazonCheckoutSessionId=.....
+                /** @var string $query_params['amazonCheckoutSessionId'] */        
                 $checkout_session_id = $query_params['amazonCheckoutSessionId'];        
                 $this->iR->save($invoice);
                 $invoice_amount_record = $this->iaR->repoInvquery((int)$invoice_id);
@@ -155,7 +157,7 @@ final class PaymentInformationController
                     $this->record_online_payments_and_merchant_for_non_omnipay(
                         $checkout_session_id,
                         $inv_amount_inv_id,
-                        $balance,
+                        $balance ?? 0.00,
                         $payment_method,
                         $invoice_number,
                         'Amazon_Pay',
@@ -260,6 +262,7 @@ final class PaymentInformationController
         // $signature = $client->testPrivateKeyIntegrity() 
         //           ? $client->generateButtonSignature($this->amazon_payload_json($url_key)) 
         //           : '';
+        /** @var string $signature */
         $signature = $client->generateButtonSignature($this->amazon_payload_json($url_key));
         return $signature;
     }
@@ -270,12 +273,12 @@ final class PaymentInformationController
      */
     public function amazon_get_region() : string {
         $regions = $this->sR->amazon_regions();
-        $region_value = '';
         // Region North America => na, Japan => jp, Europe => eu
         $region = $this->sR->get_setting('gateway_amazon_pay_region');
         if (!in_array($region, $regions)) {
             $region_value = 'eu';
         } else {
+            /** @var string $regions[$region] */
             $region_value = $regions[$region];
         }
         return $region_value;
@@ -293,7 +296,6 @@ final class PaymentInformationController
     }
     
     /**
-     * 
      * @param Request $request
      * @param CurrentRoute $currentRoute
      * @param cR $cR
@@ -316,32 +318,32 @@ final class PaymentInformationController
                 $datehelper = new DateHelper($this->sR);
                 // initialize disable_form variable
                 $disable_form = false;
-                $invoice = $this->iR->repoUrl_key_guest_count($url_key) > 0 ? $this->iR->repoUrl_key_guest_loaded($url_key) : null;
-                if (!$invoice) {
+                $invoice = $this->iR->repoUrl_key_guest_loaded($url_key);
+                if (null==$invoice) {
                     return $this->webService->getNotFoundResponse();
                     } else {
-                    $invoice_id = null!=$invoice->getId() ? $invoice->getId() : '';
+                    $invoice_id = $invoice->getId();
                     // Json encode items
+                    /** @psalm-suppress PossiblyNullArgument $invoice_id */
                     $items = $iiR->repoInvquery($invoice_id);                    
                     $items_array = [];
+                    /** @var InvItem $item */
                     foreach ($items as $item) {
-                      if ($item instanceof InvItem && null!==($item->getId())) {  
-                       $items_array[] = $item->getId().' '.$item->getName(); 
-                      } 
+                      $items_array[] = ($item->getId() ?? '') .' '.($item->getName() ?? ''); 
                     }
-                    $invoice_amount_record = $this->iaR->repoInvquery((int)$invoice->getId());
+                    $invoice_amount_record = $this->iaR->repoInvquery((int)$invoice_id);
                     if (null!==$invoice_amount_record) {
                         $balance = $invoice_amount_record->getBalance();
                         $total = $invoice_amount_record->getTotal();
                         // Load details that will go with the swipe payment intent
                         $yii_invoice_array = [
-                            'id'=> $invoice->getId(),
+                            'id'=> $invoice_id,
                             'balance'=> $balance,
                             'customer_id'=> $invoice->getClient_id(),
-                            'customer' =>$invoice->getClient()->getClient_name(). ' ' .$invoice->getClient()->getClient_surname(), 
+                            'customer' =>($invoice->getClient()?->getClient_name() ?? ''). ' ' .($invoice->getClient()?->getClient_surname() ?? ''), 
                             // Default currency is needed to generate a payment intent 
                             'currency'=> !empty($this->sR->get_setting('currency_code')) ? strtolower($this->sR->get_setting('currency_code'))  : 'gbp',
-                            'customer_email'=> $invoice->getClient()->getClient_email(),
+                            'customer_email'=> $invoice->getClient()?->getClient_email(),
                             // Keep a record of the invoice items in description
                             'description' => Json::encode($items_array),
                             'number' => $invoice->getNumber(),
@@ -352,7 +354,6 @@ final class PaymentInformationController
                             $this->flash('warning', $this->sR->trans('invoice_already_paid'));
                             $disable_form = true;
                         }
-
                         // Get additional invoice information
                         $payment_method_for_this_invoice = $pmR->repoPaymentMethodquery((string)$invoice->getPayment_method());
                         if (null!==$payment_method_for_this_invoice) {
@@ -387,7 +388,7 @@ final class PaymentInformationController
                                         'partial_client_address' => $this->viewRenderer
                                                                          ->renderPartialAsString('/invoice/client/partial_client_address',
                                                                          ['client'=>$cR->repoClientquery($invoice->getClient_id())]),
-                                        'payment_method' => $payment_method_for_this_invoice instanceof PaymentMethod ? $payment_method_for_this_invoice->getName(): 'None',
+                                        'payment_method' => $payment_method_for_this_invoice->getName()?: 'None',
                                         'total' => $total,
                                         'action' => ['paymentinformation/make_payment_omnipay', ['url_key' => $url_key]],
                                         //TODO: Logo implementation 
@@ -416,6 +417,12 @@ final class PaymentInformationController
                                 {
                                     $this->flash('warning','Stripe Payment Gateway Secret Key/Api Key needs to be setup.'); 
                                     return $this->webService->getNotFoundResponse();    
+                                }
+                                $client_language = $invoice->getClient()?->getClient_language();
+                                $amazon_languages = $this->sR->amazon_languages();
+                                $client_in_language = 'en_GB';
+                                if (null!==$client_language) {
+                                $client_in_language = $amazon_languages[$client_language];
                                 } 
                                 $amazon_pci_view_data = [
                                     'action' => ['paymentinformation/make_payment_amazon_pci', ['url_key' => $url_key]],
@@ -424,12 +431,9 @@ final class PaymentInformationController
                                     'amazonPayButton' => [
                                         'amount' => $balance,                    
                                         // format eg. en_GB
-                                        'checkoutLanguage' => in_array($invoice->getClient()
-                                                                               ->getClient_language(),
-                                                                          $this->sR
-                                                                               ->amazon_languages()) ? 
-                                                                      $this->sR->amazon_languages()[$invoice->getClient()
-                                                                               ->getClient_language()] : 'en_GB',          
+                                        'checkoutLanguage' => in_array($client_language,
+                                                                       $amazon_languages) ? 
+                                                                       $client_in_language : 'en_GB',          
                                         // Settings...View...General...Currency Code
                                         'ledgerCurrency' => $this->sR->get_setting('currency_code'), 
                                         'merchantId' => $this->crypt->decode($this->sR->get_setting('gateway_amazon_pay_merchantId')),
@@ -513,7 +517,7 @@ final class PaymentInformationController
                                     $customer_gateway->find($invoice->getClient_id());
                                     } catch (\Throwable $e) {
                                     } finally {    
-                                    $result = $customer_gateway->create([
+                                    $customer_gateway->create([
                                             'id' => $invoice->getClient_id(),
                                             'firstName' => $invoice->getClient()?->getClient_name(),
                                             'lastName' => $invoice->getClient()?->getClient_surname(),
@@ -545,7 +549,6 @@ final class PaymentInformationController
                                     'logo' => '',
                                     'title' => 'Braintree - PCI Compliant - Version'. \Braintree\Version::get(). ' - is enabled. ',                
                                 ];
-                                $payment_method = 4;
                                 if ($request->getMethod() === Method::POST) 
                                 { 
                                     $body = $request->getParsedBody() ?? [];
@@ -561,32 +564,33 @@ final class PaymentInformationController
                                         $payment_method = 4;
                                         $invoice->setPayment_method($payment_method);  
                                         $invoice->setStatus_id(4);
+                                        /** @var InvAmount $invoice_amount_record */
                                         $invoice_amount_record = $this->iaR->repoInvquery((int)$invoice->getId());
-                                        if (null!==$invoice_amount_record) {
+                                        if (null!==$invoice_amount_record->getTotal()) {
                                             // The invoice amount has been paid => balance on the invoice is zero and the paid amount is full    
                                             $invoice_amount_record->setBalance(0.00);
-                                            $invoice_amount_record->setPaid($invoice_amount_record->getTotal());
+                                            $invoice_amount_record->setPaid($invoice_amount_record->getTotal() ?? 0.00);
                                             $this->iaR->save($invoice_amount_record);
-                                        }    
-                                    }
-                                    $this->record_online_payments_and_merchant_for_non_omnipay(
-                                        // Reference   
-                                        $invoice->getNumber(),
-                                        $invoice->getId(),
-                                        $balance,
-                                        $payment_method,
-                                        $invoice->getNumber(),
-                                        'Braintree',
-                                        'braintree',
-                                        $url_key,
-                                        true,
-                                        $sandbox_url_array    
-                                    );
+                                            $this->record_online_payments_and_merchant_for_non_omnipay(
+                                                // Reference   
+                                                $invoice->getNumber() ?? 'No Number',
+                                                $invoice_id,
+                                                $balance ?? 0.00,
+                                                $payment_method,
+                                                $invoice->getNumber() ?? 'No Number',
+                                                'Braintree',
+                                                'braintree',
+                                                $url_key,
+                                                true,
+                                                $sandbox_url_array    
+                                            );
+                                        } //null!==$invoice
+                                    }    
                                     $view_data = [
                                             'render' => $this->viewRenderer->renderPartialAsString('/invoice/setting/payment_message', ['heading' => '',
                                             //https://developer.paypal.com/braintree/docs/reference/general/result-objects
-                                            'message' => $result->success ? sprintf($this->sR->trans('online_payment_payment_successful'), $invoice->getNumber()) 
-                                                                          : sprintf($this->sR->trans('online_payment_payment_failed'), $invoice->getNumber()), 
+                                            'message' => $result->success ? sprintf($this->sR->trans('online_payment_payment_successful'), $invoice->getNumber() ?? '') 
+                                                                          : sprintf($this->sR->trans('online_payment_payment_failed'), $invoice->getNumber() ?? ''), 
                                             'url' =>'inv/url_key',
                                             'url_key' => $url_key, 
                                             'gateway'=>'Braintree',
@@ -596,21 +600,15 @@ final class PaymentInformationController
                                     $this->iR->save($invoice);
                                     return $this->viewRenderer->render('payment_completion_page', $view_data);
                                 } //request->getMethod Braintree  
-                            } //if amazon stripe braintree
-                            /**
-                             * @psalm-suppress PossiblyUndefinedVariable 
-                             */
-                            return $this->viewRenderer->render('payment_information_braintree_pci', $braintree_pci_view_data);
+                            return $this->viewRenderer->render('payment_information_braintree_pci', $braintree_pci_view_data);    
+                            }
                         } //null!==$payment_method_for_this_invoice
                         $this->flash('info','Payment gateway not found');
                         return $this->webService->getNotFoundResponse();
                     } //null!==$invoice_amount_record
-                    return $this->webService->getNotFoundResponse();
-                } //null!==$invoice    
-                return $this->webService->getNotFoundResponse();
-            } //null!==$url_key    
-            return $this->webService->getNotFoundResponse();
-        } //null!==$client_chosen_gateway    
+                } //!$invoice else line 319   
+            } //null!==$url_key line 312   
+        } //null!==$client_chosen_gateway line 310
         return $this->webService->getNotFoundResponse();
 }
 
@@ -637,70 +635,69 @@ public function stripe_complete(Request $request, CurrentRoute $currentRoute) : 
     if (null!==$invoice_url_key) {
         $sandbox_url_array = $this->sR->sandbox_url_array();
         // Get the invoice data
-        $invoice = $this->iR->repoUrl_key_guest_count($invoice_url_key) > 0 ? $this->iR->repoUrl_key_guest_loaded($invoice_url_key) : null;
-        if ($invoice) {
-            // Get Stripe's query param redirect_status returned in their returnUrl 
-            $query_params = $request->getQueryParams();
+        /** @var Inv $invoice */
+        $invoice = $this->iR->repoUrl_key_guest_loaded($invoice_url_key);
+        // Get Stripe's query param redirect_status returned in their returnUrl 
+        $query_params = $request->getQueryParams();
+        $redirect_status_from_stripe = (string)$query_params['redirect_status'];
+        // Set the status to paid
+        // Your stripe dashboard has the metadata invoice id and a breakdown of 'online' payment method 
+        // eg. card or bacs
+        if ($redirect_status_from_stripe === 'succeeded') {
+            $invoice->setStatus_id(4);
+            // 1 None, 2 Cash, 3 Cheque, 4 Card / Direct-debit - Succeeded, 5 Card / Direct-debit - Processing, 6 Card / Direct-debit - Customer Ready 
+            $payment_method = 4;
+            $invoice->setPayment_method(4);
+        }
 
-            $redirect_status_from_stripe = $query_params['redirect_status'];
-            // Set the status to paid
-            // Your stripe dashboard has the metadata invoice id and a breakdown of 'online' payment method 
-            // eg. card or bacs
-            if ($redirect_status_from_stripe === 'succeeded') {
-                $invoice->setStatus_id(4);
-                // 1 None, 2 Cash, 3 Cheque, 4 Card / Direct-debit - Succeeded, 5 Card / Direct-debit - Processing, 6 Card / Direct-debit - Customer Ready 
-                $payment_method = 4;
-                $invoice->setPayment_method(4);
-            }
+        if ($redirect_status_from_stripe === 'requires_payment_method') {
+            $invoice->setStatus_id(3);
 
-            if ($redirect_status_from_stripe === 'requires_payment_method') {
-                $invoice->setStatus_id(3);
-
-                // 1 None, 2 Cash, 3 Cheque, 4 Card / Direct-debit - Succeeded, 5 Card / Direct-debit - Processing, 6 Card / Direct-debit - Customer Ready  
-                $payment_method = 5;
-                $invoice->setPayment_method(5);
-                $pending_message = "Requires a payment method. ";
-            }
-
-            $heading = $redirect_status_from_stripe == 'succeeded' ? sprintf($this->sR->trans('online_payment_payment_successful'), $invoice->getNumber()) 
-                                              : sprintf($this->sR->trans('online_payment_payment_failed'), $invoice->getNumber()). ' '. $pending_message ?? '';
-            $this->iR->save($invoice);
-            $invoice_amount_record = $this->iaR->repoInvquery((int)$invoice->getId());
-            if (null!==$invoice_amount_record) {    
-                $balance = $invoice_amount_record->getBalance();
-
-                // The invoice amount has been paid => balance on the invoice is zero and the paid amount is full    
-                $invoice_amount_record->setBalance(0);
-                $invoice_amount_record->setPaid($invoice_amount_record->getTotal());
-                $this->iaR->save($invoice_amount_record);
-                $this->record_online_payments_and_merchant_for_non_omnipay(
-                    // Reference   
-                    $invoice->getNumber().'-'.$redirect_status_from_stripe,
-                    $invoice->getId(),
-                    $balance,
-                    $payment_method,
-                    $invoice->getNumber(),
-                    'Stripe',
-                    'stripe',
-                    $invoice_url_key,
-                    true,   
-                    $sandbox_url_array   
-                );
-                $view_data = [
-                    'render' => $this->viewRenderer->renderPartialAsString(
-                        '/invoice/setting/payment_message', [
-                            'heading'=> $heading,
-                            'message'=> $this->sR->trans('payment').':'.$this->sR->trans('complete'), 
-                            'url'=>'inv/url_key',
-                            'url_key'=>$invoice_url_key,'gateway'=>'Stripe',
-                            'sandbox_url'=> $sandbox_url_array['stripe']                
-                        ])
-                ];
-                return $this->viewRenderer->render('payment_completion_page', $view_data);
-            } //null!==$invoice_amount_record    
-            return $this->webService->getNotFoundResponse();           
-        } //null!==$invoice    
-        return $this->webService->getNotFoundResponse();
+            // 1 None, 2 Cash, 3 Cheque, 4 Card / Direct-debit - Succeeded, 5 Card / Direct-debit - Processing, 6 Card / Direct-debit - Customer Ready  
+            $payment_method = 5;
+            $invoice->setPayment_method(5);
+            $pending_message = "Requires a payment method. ";
+        }
+        $heading = $redirect_status_from_stripe == 'succeeded' ? sprintf($this->sR->trans('online_payment_payment_successful'), ($invoice->getNumber() ?? '')) 
+                                          : sprintf($this->sR->trans('online_payment_payment_failed'), $invoice->getNumber() ?? ''). ' '. $pending_message ?? '';
+        $this->iR->save($invoice);
+         /** @var int $invoice->getId() */
+        $invoice_amount_record = $this->iaR->repoInvquery((int)$invoice->getId());
+        /** @var InvAmount $invoice_amount_record */
+        $balance = $invoice_amount_record->getBalance();
+        if (null!==$balance) {
+            // The invoice amount has been paid => balance on the invoice is zero and the paid amount is full    
+            $invoice_amount_record->setBalance(0);
+            $invoice_amount_record->setPaid($invoice_amount_record->getTotal() ?? 0.00);
+            $this->iaR->save($invoice_amount_record);
+            $this->record_online_payments_and_merchant_for_non_omnipay(
+                // Reference   
+                ($invoice->getNumber() ?? '').'-'.$redirect_status_from_stripe,
+                $invoice_amount_record->getInv_id(),
+                $balance ?: 0.00,
+                // Card / Direct Debit - Customer Ready => 6
+                $payment_method,
+                $invoice->getNumber() ?? '',
+                'Stripe',
+                'stripe',
+                $invoice_url_key,
+                true,   
+                $sandbox_url_array   
+            );
+            $view_data = [
+                'render' => $this->viewRenderer->renderPartialAsString(
+                    '/invoice/setting/payment_message', [
+                        'heading'=> $heading,
+                        'message'=> $this->sR->trans('payment').':'.$this->sR->trans('complete'), 
+                        'url'=>'inv/url_key',
+                        'url_key'=>$invoice_url_key,'gateway'=>'Stripe',
+                        'sandbox_url'=> $sandbox_url_array['stripe']                
+                    ])
+            ];
+            return $this->viewRenderer->render('payment_completion_page', $view_data);
+        } //null!==$balance
+        return $this->webService->getNotFoundResponse();           
+        
     } //null!==$invoice_url_key    
     return $this->webService->getNotFoundResponse();
 }
@@ -714,8 +711,8 @@ public function get_stripe_pci_client_secret(array $yii_invoice) : string|null
 {
     $payment_intent = \Stripe\PaymentIntent::create([
         // convert the float amount to cents
-        'amount' => $yii_invoice['balance'] * 100,
-        'currency' =>  $yii_invoice['currency'],
+        'amount' => ((float)$yii_invoice['balance'] ?: 0.00) * 100,
+        'currency' =>  (float)$yii_invoice['currency'] ?: 0.00,
         // include the payment methods you have chosen listed in dashboard.stripe.com eg. card, bacs direct debit,
         // googlepay etc.
         'automatic_payment_methods' => [
@@ -727,7 +724,7 @@ public function get_stripe_pci_client_secret(array $yii_invoice) : string|null
         'metadata' => [
             'invoice_id' => $yii_invoice['id'],
             'invoice_customer_id' => $yii_invoice['customer_id'],
-            'invoice_number' => $yii_invoice['number'],
+            'invoice_number' => $yii_invoice['number'] ?: '',
             'invoice_payment_method' => '',
             'invoice_url_key' => $yii_invoice['url_key'],
         ]
@@ -748,60 +745,67 @@ public function make_payment_omnipay(Request $payment_request,
     if ($yii_invoice_url_key) {
         // Get the invoice data
         $invoice = $this->iR->repoUrl_key_guest_count($yii_invoice_url_key) > 0 ? $this->iR->repoUrl_key_guest_loaded($yii_invoice_url_key) : null;
-        if ($invoice) {
-            // Use the invoice amount repository   
-            $invoice_amount_record = $this->iaR->repoInvquery((int)$invoice->getId());
-            if (null!==$invoice_amount_record) {
-                $yii_invoice_id = $invoice->getId();
-                //$yii_invoice_customer_id = $invoice->getClient_id();
-                //$yii_invoice_customer_email = $invoice->getClient()->getClient_email();
-                $yii_invoice_number = $invoice->getNumber();
-                $yii_invoice_payment_method = $invoice->getPayment_method();
-                
-                /** @psalm-suppress PossiblyNullArgument */
-                $balance = $invoice_amount_record->getBalance();
-                
-                if ($this->iR->repoUrl_key_guest_count($yii_invoice_url_key) === 0) {
+        if (null!==$invoice) { 
+            $yii_invoice_id = $invoice->getId();
+            if (null!==$yii_invoice_id) {
+                // Use the invoice amount repository   
+                $invoice_amount_record = $this->iaR->repoInvquery((int)$invoice->getId());
+                if (null!==$invoice_amount_record) {
+                    //$yii_invoice_customer_id = $invoice->getClient_id();
+                    //$yii_invoice_customer_email = $invoice->getClient()->getClient_email();
+                    $yii_invoice_number = $invoice->getNumber();
+                    $yii_invoice_payment_method = $invoice->getPayment_method();
+
+
+                    $balance = $invoice_amount_record->getBalance();
+                    if (null!==$balance) {
+                        if ($this->iR->repoUrl_key_guest_count($yii_invoice_url_key) === 0) {
+                            return $this->webService->getNotFoundResponse();
+                        }
+                        if ($payment_request->getMethod() === Method::POST) {   
+                            // Initialize the gateway
+                            $body =  $payment_request->getParsedBody() ?? [];
+                            /** @var array $body['PaymentInformationForm'] */
+                            $driver = (string)$body['PaymentInformationForm']['gateway_driver'] ?: '';
+                            // eg. Stripe reduced to stripe
+                            $d = strtolower($driver);
+
+                            // Get the credit card data
+                            $cc_number = (string)$body['PaymentInformationForm']['creditcard_number'] ?: '';
+                            $cc_expire_month = (string)$body['PaymentInformationForm']['creditcard_expiry_month'] ?: '';
+                            $cc_expire_year = (string)$body['PaymentInformationForm']['creditcard_expiry_year'] ?: '';
+                            $cc_cvv = (string)$body['PaymentInformationForm']['creditcard_cvv'] ?: '';
+
+                            $driver_currency = strtolower($this->sR->get_setting('gateway_' . $d . '_currency'));
+                            $sandbox_url_array = $this->sR->sandbox_url_array();
+                            $sandbox_url = $sandbox_url_array[$d];
+                            $response  = $this->omnipay($driver,
+                                    $d,
+                                    $driver_currency,
+                                    $cc_number, 
+                                    $cc_expire_month, 
+                                    $cc_expire_year, 
+                                    $cc_cvv,
+                                    $yii_invoice_id,
+                                    //$yii_invoice_customer_id,
+                                    //$yii_invoice_customer_email,
+                                    $yii_invoice_number ?? '',
+                                    // 6 => Card / Direct Debit - Customer Ready
+                                    $yii_invoice_payment_method ?? 6,
+                                    $yii_invoice_url_key,
+                                    $balance,
+                                    $sandbox_url
+                            );        
+                            return $response;
+                        }
+                        return $this->webService->getNotFoundResponse();
+                    } //null!==$balance
                     return $this->webService->getNotFoundResponse();
-                }
-                if ($payment_request->getMethod() === Method::POST) {   
-                    // Initialize the gateway
-                    $body =  $payment_request->getParsedBody() ?? [];
-                    $driver = $body['PaymentInformationForm']['gateway_driver'] ?? '';
-                    // eg. Stripe reduced to stripe
-                    $d = strtolower($driver);
-
-                    // Get the credit card data
-                    $cc_number = $body['PaymentInformationForm']['creditcard_number'] ?? '';
-                    $cc_expire_month = $body['PaymentInformationForm']['creditcard_expiry_month'] ?? '';
-                    $cc_expire_year = $body['PaymentInformationForm']['creditcard_expiry_year'] ?? '';
-                    $cc_cvv = $body['PaymentInformationForm']['creditcard_cvv'] ?? '';
-
-                    $driver_currency = strtolower($this->sR->get_setting('gateway_' . $d . '_currency'));
-                    $sandbox_url_array = $this->sR->sandbox_url_array();
-                    $sandbox_url = $sandbox_url_array[$d];
-                    $response  = $this->omnipay($driver,
-                            $d,
-                            $driver_currency,
-                            $cc_number, 
-                            $cc_expire_month, 
-                            $cc_expire_year, 
-                            $cc_cvv,
-                            $yii_invoice_id,
-                            //$yii_invoice_customer_id,
-                            //$yii_invoice_customer_email,
-                            $yii_invoice_number,
-                            $yii_invoice_payment_method,
-                            $yii_invoice_url_key,
-                            $balance,
-                            $sandbox_url
-                    );        
-                    return $response;
-                }
+                } //null!==$invoice_amount_record    
                 return $this->webService->getNotFoundResponse();
-            } //null!==$invoice_amount_record    
+            } //null!==$invoice
             return $this->webService->getNotFoundResponse();
-        } //null!==$invoice    
+        }    
         return $this->webService->getNotFoundResponse();
     }//$yii_invoice_url_key    
     return $this->webService->getNotFoundResponse();
@@ -841,6 +845,7 @@ private function omnipay(string $driver,
                         string $sandbox_url
 ) : Response {
     $sandbox_url_array = $this->sR->sandbox_url_array();
+    /** @var \Omnipay\Common\GatewayInterface $omnipay_gateway */
     $omnipay_gateway = $this->initialize_omnipay_gateway($driver);
     
     // The $sR->payment_gateways() array now includes a subarray namely:
@@ -901,9 +906,6 @@ private function omnipay(string $driver,
             // Additional param for WorldPay
             $request_information['cartId'] = $invoice_number;
     }
-    
-    
-    
     $purchase_send_response = $omnipay_gateway->purchase($request_information)->send();
     $this->session->set($invoice_url_key . '_online_payment', $request_information);
     
@@ -911,7 +913,7 @@ private function omnipay(string $driver,
     $reference = $purchase_send_response->getTransactionReference() ? $purchase_send_response->getTransactionReference() : '[no transation reference]';
     // Process the response
     $response =  $this->record_online_payments_and_merchant_for_omnipay(
-           $reference,
+           (string)$reference,
            $invoice_id,
            $balance,
            $invoice_payment_method,
@@ -951,6 +953,7 @@ private function record_online_payments_and_merchant_for_omnipay(
                                                      mixed $response,
                                                      array $sandbox_url_array
                                                      ) : Response {
+    /** @var \Omnipay\Common\Message\RedirectResponseInterface $response */
     if ($response->isSuccessful()) {
         $payment_note = $this->sR->trans('transaction_reference') . ': ' . $reference . "\n";
         $payment_note .= $this->sR->trans('payment_provider') . ': ' . ucwords(str_replace('_', ' ', $d));
@@ -998,7 +1001,7 @@ private function record_online_payments_and_merchant_for_omnipay(
         ])); 
 
     } elseif ($response->isRedirect()) {
-        // Redirect to offsite payment gateway
+        // Redirect to offsite payment gateway       
         $response->redirect();
     } else {
         // Payment failed
@@ -1010,6 +1013,7 @@ private function record_online_payments_and_merchant_for_omnipay(
             'merchant_response_successful' => false,
             'merchant_response_date' => \DateTime::createFromImmutable(new \DateTimeImmutable('now')),
             'merchant_response_driver' => $driver,
+            /** @var \Omnipay\Common\Message\ResponseInterface $response->getMessage() */
             'merchant_response' => $response->getMessage(),
             'merchant_response_reference' => $reference,
         ];
@@ -1025,7 +1029,7 @@ private function record_online_payments_and_merchant_for_omnipay(
                $this->viewRenderer->renderPartialAsString(
                '/invoice/setting/payment_message', [
                'heading'=>'',
-               'message'=>$payment_failure_msg . ' Response: '. $response->getMessage(), 
+               'message'=>$payment_failure_msg . ' Response: '. (string)$response->getMessage(), 
                'url'=>'inv/url_key',
                'url_key'=>$invoice_url_key, 
                'gateway'=>$driver,
@@ -1156,8 +1160,8 @@ private function initialize_omnipay_gateway(string $driver) : mixed
    $gateway_settings = $gateway_driver_array[$driver] ?? '';
 
    $gateway_init = [];
-   foreach ($settings as $setting) {
-      if ($setting instanceof Setting) {  
+   /** @var Setting $setting */
+   foreach ($settings as $setting) {  
         // eg gateway_stripe_enabled
         $haystack = $setting->getSetting_key();
         // str_contains($haystack, $needle);
@@ -1184,7 +1188,6 @@ private function initialize_omnipay_gateway(string $driver) : mixed
 
             $gateway_init[$key] = $value;
        } //str contains haystack
-     } // intanceof Setting
    }
 
    // Load Omnipay and initialize the gateway
@@ -1268,24 +1271,26 @@ private function omnipay_payment_validate(string $invoice_url_key, string $drive
    // Use the invoice amount repository 
 
    $payment_success = false;
-   $response = '';
-   $message = '';
-   $response_transaction_reference = '';
    if ($invoice) {
 
        if (!$cancelled) {
+           /** @var \Omnipay\Common\GatewayInterface $gateway */
            $gateway = $this->initialize_omnipay_gateway($driver);
-
-           // Load previous settings
-           $params = $this->session->get($invoice->getUrl_key() . '_online_payment');
            
+           /** 
+            * @var array $params['metaData'] 
+            * @var string $params['metaData']['url_key']
+            */
+           $params = [
+                'metaData' => [
+                     'url_key' => $this->session->get($invoice->getUrl_key() . '_online_payment')
+                ]
+           ];
            $payment_success = true;
-           
            $response = $gateway->completePurchase($params)->send();
            $message = $response->getMessage() ?: 'No details provided';
            $response_transaction_reference = $response->getTransactionReference();
        } else {
-           $response = '';           
            $message = 'Customer cancelled the purchase process';
            $response_transaction_reference = '';
        }

@@ -1,5 +1,4 @@
 <?php
-
 declare(strict_types=1);
 
 namespace App\Invoice\QuoteTaxRate;
@@ -9,7 +8,6 @@ use Yiisoft\Validator\Rule\Required;
 
 final class QuoteTaxRateForm extends FormModel
 {    
-    
     private ?int $quote_id=null;
     private ?int $tax_rate_id=null;
     private ?int $include_item_tax=null;

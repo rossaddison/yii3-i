@@ -108,7 +108,7 @@ final class QuoteItemController
     ) : \Yiisoft\DataResponse\DataResponse
     {
         // This function is used 
-        $quote_id = $session->get('quote_id');
+        $quote_id = (string)$session->get('quote_id');
         $parameters = [
             'title' => $this->translator->translate('invoice.add'),
             'action' => ['quoteitem/add'],
@@ -152,7 +152,7 @@ final class QuoteItemController
      */
     public function edit(ViewRenderer $head, SessionInterface $session, CurrentRoute $currentRoute, Request $request, ValidatorInterface $validator,
                         QIR $qiR, SR $sR, TRR $trR, PR $pR, UR $uR, QR $qR, QIAS $qias, QIAR $qiar): \Yiisoft\DataResponse\DataResponse|Response {
-        $quote_id = $session->get('quote_id');
+        $quote_id = (string)$session->get('quote_id');
         $quote_item = $this->quoteitem($currentRoute, $qiR);
         $parameters = [
                 'title' => 'Edit',
@@ -211,7 +211,7 @@ final class QuoteItemController
        if ($quote_item_id) {
             $qias_array['quote_item_id'] = $quote_item_id;
             $sub_total = $quantity * $price;
-            $tax_total = ($sub_total * ($tax_rate_percentage/100));
+            $tax_total = ($sub_total * (($tax_rate_percentage ?? 0)/100));
             $discount_total = $quantity*$discount;
             $qias_array['discount'] = $discount_total;
             $qias_array['subtotal'] = $sub_total;
@@ -251,9 +251,11 @@ final class QuoteItemController
         //jQuery parameters from quote.js function delete-items-confirm-quote 'item_ids' and 'quote_id'
         $select_items = $request->getQueryParams();
         $result = false;
-        $item_ids = ($select_items['item_ids'] ? $select_items['item_ids'] : []);
+        /** @var array $item_ids */
+        $item_ids = ($select_items['item_ids'] ?: []);
         $items = $qiR->findinQuoteItems($item_ids);
         // If one item is deleted, the result is positive
+        /** @var QuoteItem $item */
         foreach ($items as $item){
             ($this->quoteitemService->deleteQuoteItem($item));
             $result = true;
@@ -300,9 +302,9 @@ final class QuoteItemController
     /**
      * @param CurrentRoute $currentRoute
      * @param QIR $qiR
-     * @return object|null
+     * @return QuoteItem|null
      */
-    private function quoteitem(CurrentRoute $currentRoute, QIR $qiR): object|null
+    private function quoteitem(CurrentRoute $currentRoute, QIR $qiR): QuoteItem|null
     {
         $id = $currentRoute->getArgument('id'); 
         if (null!==$id) {
@@ -327,10 +329,10 @@ final class QuoteItemController
     
     /**
      * 
-     * @param object $quoteitem
+     * @param QuoteItem $quoteitem
      * @return array
      */
-    private function body(object $quoteitem): array {
+    private function body(QuoteItem $quoteitem): array {
         $body = [
           'id'=>$quoteitem->getId(),
           'quote_id'=>$quoteitem->getQuote_id(),

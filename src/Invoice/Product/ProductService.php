@@ -16,7 +16,13 @@ final class ProductService
         $this->repository = $repository;
     }
     
-    public function addProduct(object $model, ProductForm $form): void
+    /**
+     * 
+     * @param Product $model
+     * @param ProductForm $form
+     * @return void 
+     */
+    public function addProduct(Product $model, ProductForm $form): void
     {
         null!==$form->getProduct_sku() ? $model->setProduct_sku($form->getProduct_sku()) : '';
         null!==$form->getProduct_name() ? $model->setProduct_name($form->getProduct_name()): '';
@@ -31,7 +37,13 @@ final class ProductService
         $this->repository->save($model);
     }
 
-    public function editProduct(object $model, ProductForm $form): void
+    /**
+     * 
+     * @param Product $model
+     * @param ProductForm $form
+     * @return void
+     */
+    public function editProduct(Product $model, ProductForm $form): void
     {
         null!==$form->getProduct_sku() ? $model->setProduct_sku($form->getProduct_sku()) : '';
         null!==$form->getProduct_name() ? $model->setProduct_name($form->getProduct_name()) : '';
@@ -83,7 +95,12 @@ final class ProductService
         $this->repository->save($model);
     }
     
-    public function deleteProduct(object $model): void
+    /**
+     * 
+     * @param Product $model
+     * @return void
+     */
+    public function deleteProduct(Product $model): void
     {
         $this->repository->delete($model);
     }

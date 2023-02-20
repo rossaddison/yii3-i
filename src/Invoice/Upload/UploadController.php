@@ -93,8 +93,9 @@ final class UploadController
         if ($request->getMethod() === Method::POST) {
             
             $form = new UploadForm();
+            $upload = new Upload();
             if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
-                $this->uploadService->saveUpload(new Upload(),$form);
+                $this->uploadService->saveUpload($upload, $form);
                 return $this->webService->getRedirectResponse('upload/index');
             }
             $parameters['errors'] = $form->getFormErrors();
@@ -127,7 +128,7 @@ final class UploadController
             $upload = $this->upload($currentRoute, $uploadRepository);
             if ($upload) {
                 $this->uploadService->deleteUpload($upload, $settingRepository);
-                $inv_id = $this->session->get('inv_id');
+                $inv_id = (string)$this->session->get('inv_id');
                 $this->flash('info', $settingRepository->trans('record_successfully_deleted'));
                  return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
                 ['heading'=>'','message'=>$settingRepository->trans('record_successfully_deleted'),'url'=>'inv/view','id'=>$inv_id]));  
@@ -208,9 +209,9 @@ final class UploadController
     /**
      * @param CurrentRoute $currentRoute
      * @param UploadRepository $uploadRepository
-     * @return object|null
+     * @return Upload|null
      */
-    public function upload(CurrentRoute $currentRoute, UploadRepository $uploadRepository) : object|null
+    public function upload(CurrentRoute $currentRoute, UploadRepository $uploadRepository) : Upload|null
     {
         $id = $currentRoute->getArgument('id');       
         if (null!==$id) {
@@ -235,10 +236,10 @@ final class UploadController
     
     /**
      * 
-     * @param object $upload
+     * @param Upload $upload
      * @return array
      */
-    private function body(object $upload) : array {
+    private function body(Upload $upload) : array {
         $body = [
           'id'=>$upload->getId(),
           'client_id'=>$upload->getClient_id(),

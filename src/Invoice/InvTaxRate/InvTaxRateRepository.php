@@ -11,7 +11,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of InvTaxRate
  * @extends Select\Repository<TEntity>
  */
 final class InvTaxRateRepository extends Select\Repository
@@ -54,22 +54,22 @@ private EntityWriter $entityWriter;
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $invtaxrate
+     * @param array|InvTaxRate|null $invtaxrate
      * @throwable 
      * @return void
      */
-    public function save(array|object|null $invtaxrate): void
+    public function save(array|InvTaxRate|null $invtaxrate): void
     {
         $this->entityWriter->write([$invtaxrate]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $invtaxrate
+     * @param array|InvTaxRate|null $invtaxrate
      * @throwable 
      * @return void
      */
-    public function delete(array|object|null $invtaxrate): void
+    public function delete(array|InvTaxRate|null $invtaxrate): void
     {
         $this->entityWriter->delete([$invtaxrate]);
     }
@@ -101,7 +101,7 @@ private EntityWriter $entityWriter;
      * @param string $id
      * @return TEntity|null
      */
-    public function repoInvTaxRatequery(string $id): ?object    {
+    public function repoInvTaxRatequery(string $id): ?InvTaxRate    {
         $query = $this->select()->load('inv')->load('tax_rate')->where(['id' => $id]);
         return  $query->fetchOne();        
     }
@@ -121,7 +121,7 @@ private EntityWriter $entityWriter;
      * @param string $tax_rate_id
      * @return TEntity|null
      */
-    public function repoTaxRatequery(string $tax_rate_id): ?object {
+    public function repoTaxRatequery(string $tax_rate_id): ?InvTaxRate {
         $query = $this->select()->load('tax_rate')->where(['tax_rate_id' => $tax_rate_id]);
         return  $query->fetchOne();        
     }

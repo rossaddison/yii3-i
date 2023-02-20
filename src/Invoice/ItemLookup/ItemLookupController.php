@@ -203,9 +203,9 @@ final class ItemLookupController
     /**
      * @param CurrentRoute $currentRoute
      * @param ItemLookupRepository $itemlookupRepository
-     * @return object|null
+     * @return ItemLookup|null
      */
-    private function itemlookup(CurrentRoute $currentRoute, ItemLookupRepository $itemlookupRepository): object|null 
+    private function itemlookup(CurrentRoute $currentRoute, ItemLookupRepository $itemlookupRepository): ItemLookup|null 
     {
         $itemlookup = new ItemLookup();
         $id = $currentRoute->getArgument('id');       
@@ -229,10 +229,10 @@ final class ItemLookupController
     
     /**
      * 
-     * @param object $itemlookup
+     * @param ItemLookup $itemlookup
      * @return array
      */
-    private function body(object $itemlookup): array {
+    private function body(ItemLookup $itemlookup): array {
         $body = [
           'id'=>$itemlookup->getId(),
           'name'=>$itemlookup->getName(),

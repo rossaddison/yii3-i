@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Invoice\EmailTemplate;
 
 use App\Invoice\Setting\SettingRepository;
+use App\Invoice\Entity\EmailTemplate;
 use Cycle\ORM\Select;
 use Throwable;
 use Yiisoft\Data\Reader\Sort;
@@ -13,7 +14,7 @@ use Yiisoft\Files\FileHelper;
 use Yiisoft\Files\PathMatcher\PathMatcher;
 
 /**
- * @template TEntity of object
+ * @template TEntity of EmailTemplate
  * @extends Select\Repository<TEntity>
  */
 final class EmailTemplateRepository extends Select\Repository
@@ -41,22 +42,22 @@ final class EmailTemplateRepository extends Select\Repository
 
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $emailtemplate
+     * @param array|EmailTemplate|null $emailtemplate
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $emailtemplate): void
+    public function save(array|EmailTemplate|null $emailtemplate): void
     {
         $this->entityWriter->write([$emailtemplate]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $emailtemplate
+     * @param array|EmailTemplate|null $emailtemplate
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $emailtemplate): void
+    public function delete(array|EmailTemplate|null $emailtemplate): void
     {
         $this->entityWriter->delete([$emailtemplate]);
     }
@@ -69,6 +70,11 @@ final class EmailTemplateRepository extends Select\Repository
         );
     }
     
+    /**
+     * 
+     * @param string $email_template_id
+     * @return int
+     */
     public function repoEmailTemplateCount(string $email_template_id) : int {
         $count = $this
             ->select()
@@ -78,11 +84,11 @@ final class EmailTemplateRepository extends Select\Repository
     }   
     
     /**
-     * @return null|object
+     * @return EmailTemplate|null
      *
      * @psalm-return TEntity|null
      */
-    public function repoEmailTemplatequery(string $email_template_id):object|null
+    public function repoEmailTemplatequery(string $email_template_id):EmailTemplate|null
     {
         $query = $this
             ->select()
@@ -101,6 +107,11 @@ final class EmailTemplateRepository extends Select\Repository
         return $this->prepareDataReader($query);      
     }
     
+    /**
+     * 
+     * @param SettingRepository $setting
+     * @return SettingRepository
+     */
     public static function getSettings(SettingRepository $setting): SettingRepository
     {
         $setting->load_settings();
@@ -139,6 +150,7 @@ final class EmailTemplateRepository extends Select\Repository
         }
         return $templates;
     }
+    
     /**
      * @psalm-param 'pdf' $type
      */
@@ -168,7 +180,12 @@ final class EmailTemplateRepository extends Select\Repository
         }
         return $templates;
     }
-
+    
+    /**
+     * 
+     * @param array $files
+     * @return array
+     */
     private function remove_extension(array $files) : array
     {
         foreach ($files as $key => $file) {
@@ -177,6 +194,11 @@ final class EmailTemplateRepository extends Select\Repository
         return $files;
     }
     
+    /**
+     * 
+     * @param array $files
+     * @return array
+     */
     private function remove_path(array $files) : array
     {
         //https://stackoverflow.com/questions/1418193/how-do-i-get-a-file-name-from-a-full-path-with-php

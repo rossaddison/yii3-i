@@ -12,7 +12,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of Unit
  * @extends Select\Repository<TEntity>
  */
 final class UnitRepository extends Select\Repository
@@ -43,22 +43,22 @@ final class UnitRepository extends Select\Repository
             
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $unit
+     * @param array|Unit|null $unit
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $unit): void
+    public function save(array|Unit|null $unit): void
     {
         $this->entityWriter->write([$unit]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $unit
+     * @param array|Unit|null $unit
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $unit): void
+    public function delete(array|Unit|null $unit): void
     {
         $this->entityWriter->delete([$unit]);
     }
@@ -89,11 +89,11 @@ final class UnitRepository extends Select\Repository
     }
     
     /**
-     * @return null|object
+     * @return null|Unit
      *
      * @psalm-return TEntity|null
      */
-    public function repoUnitquery(string $unit_id):object|null
+    public function repoUnitquery(string $unit_id):Unit|null
     {
         $query = $this
             ->select()
@@ -104,9 +104,9 @@ final class UnitRepository extends Select\Repository
     /**
      * 
      * @param string $unit_name
-     * @return object|null
+     * @return Unit|null
      */
-    public function withName(string $unit_name): object|null
+    public function withName(string $unit_name): Unit|null
     {
         $query = $this
             ->select()
@@ -120,9 +120,9 @@ final class UnitRepository extends Select\Repository
      * 
      * @param string $unit_id
      * @param int $quantity
-     * @return string|object|null
+     * @return string|Unit|null
      */
-    public function singular_or_plural_name(string $unit_id, int $quantity) : string|object|null
+    public function singular_or_plural_name(string $unit_id, int $quantity) : string|Unit|null
     {
         if ((int)$unit_id === 0) { 
             return '';            

@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Invoice\PaymentCustom;
 
+use App\Invoice\Entity\PaymentCustom;
+
 final class PaymentCustomService
 {
-
     private PaymentCustomRepository $repository;
 
     public function __construct(PaymentCustomRepository $repository)
@@ -14,7 +15,13 @@ final class PaymentCustomService
         $this->repository = $repository;
     }
 
-    public function savePaymentCustom(object $model, PaymentCustomForm $form): void
+    /**
+     * 
+     * @param PaymentCustom $model
+     * @param PaymentCustomForm $form
+     * @return void
+     */
+    public function savePaymentCustom(PaymentCustom $model, PaymentCustomForm $form): void
     {
         
        $form->getPayment_id() ? $model->setPayment_id($form->getPayment_id()) : '';
@@ -24,7 +31,13 @@ final class PaymentCustomService
        $this->repository->save($model);
     }
     
-    public function editPaymentCustom(object $model, PaymentCustomForm $form): void
+    /**
+     * 
+     * @param PaymentCustom $model
+     * @param PaymentCustomForm $form
+     * @return void
+     */
+    public function editPaymentCustom(PaymentCustom $model, PaymentCustomForm $form): void
     {
        null!==$form->getPayment_id() ? $model->setPayment((int)$model->getPayment()?->getId() 
                                      == $form->getPayment_id() 
@@ -45,8 +58,12 @@ final class PaymentCustomService
        $this->repository->save($model);
     }
     
-    
-    public function deletePaymentCustom(object $model): void
+    /**
+     * 
+     * @param PaymentCustom $model
+     * @return void
+     */
+    public function deletePaymentCustom(PaymentCustom $model): void
     {
         $this->repository->delete($model);
     }

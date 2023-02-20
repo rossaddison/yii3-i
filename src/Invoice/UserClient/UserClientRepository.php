@@ -20,7 +20,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of UserClient
  * @extends Select\Repository<TEntity>
  */
 final class UserClientRepository extends Select\Repository
@@ -63,22 +63,22 @@ private EntityWriter $entityWriter;
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $userclient
+     * @param array|UserClient|null $userclient
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $userclient): void
+    public function save(array|UserClient|null $userclient): void
     {
         $this->entityWriter->write([$userclient]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $userclient
+     * @param UserClient $userclient
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $userclient): void
+    public function delete(UserClient $userclient): void
     {
         $this->entityWriter->delete([$userclient]);
     }
@@ -92,11 +92,11 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @return null|object
+     * @return null|UserClient
      *
      * @psalm-return TEntity|null
      */
-    public function repoUserClientquery(string $id):object|null    {
+    public function repoUserClientquery(string $id):UserClient|null    {
         $query = $this->select()
                       ->load('user')
                       ->load('client')
@@ -139,11 +139,10 @@ private EntityWriter $entityWriter;
         $assigned_client_ids = [];
         if ($count_user_clients> 0) {
             $user_clients = $this->repoClientquery($user_id);        
+            /** @var UserClient $user_client */
             foreach ($user_clients as $user_client) {
-                if ($user_client instanceof UserClient) {
-                    // Include Non-active clients as well since these might be reactivated later 
-                    $assigned_client_ids[] = $user_client->getClient_id();                 
-                }
+                // Include Non-active clients as well since these might be reactivated later 
+                $assigned_client_ids[] = $user_client->getClient_id();                 
             }
         }
         return $assigned_client_ids;
@@ -165,11 +164,10 @@ private EntityWriter $entityWriter;
         // Get all existing clients including non-active ones
         $all_clients = $cR->findAllPreloaded();
         $every_client_ids = [];
+        /** @var Client $client */
         foreach ($all_clients as $client) {
-            if ($client instanceof Client) {
-                $client_id = $client->getClient_id();
-                $every_client_ids[] = $client_id;
-            }
+            $client_id = $client->getClient_id();
+            $every_client_ids[] = $client_id;
         }
         
         // Create unassigned client list for dropdown
@@ -191,12 +189,11 @@ private EntityWriter $entityWriter;
         // Users that have their all_clients setting active
         if ($uiR->countAllWithAllClients()>0) {
             $users = $uiR->findAllWithAllClients();
+            /** @var UserInv $user */
             foreach ($users as $user) {
-                if ($user instanceof UserInv) {
-                    $user_id = $user->getUser_id();
-                    $available_client_ids = $this->get_not_assigned_to_user($user_id, $cR); 
-                    $this->assign_to_user_client($available_client_ids, $user_id, $validator, $ucS);
-                }
+                $user_id = $user->getUser_id();
+                $available_client_ids = $this->get_not_assigned_to_user($user_id, $cR); 
+                $this->assign_to_user_client($available_client_ids, $user_id, $validator, $ucS);
             }
         }            
     }
@@ -210,13 +207,15 @@ private EntityWriter $entityWriter;
      * @return void
      */
     public function assign_to_user_client(array $available_client_ids, string $user_id, ValidatorInterface $validator, UCS $ucS): void{
-        foreach ($available_client_ids as $key => $value) {
+        /** @var int $value */
+        foreach ($available_client_ids as $_key => $value) {
                    $user_client = [
                         'user_id' => $user_id,
                         'client_id' => $value,
                     ]; 
                     $form = new UserClientForm();
-                    ($form->load($user_client) && $validator->validate($form)->isValid()) ? $ucS->saveUserClient(new UserClient(), $form) : '';
+                    $model = new UserClient();
+                    ($form->load($user_client) && $validator->validate($form)->isValid()) ? $ucS->saveUserClient($model, $form) : '';
         }
     }
     
@@ -224,9 +223,10 @@ private EntityWriter $entityWriter;
      * @param string $user_id
      */
     public function unassign_to_user_client(string $user_id) : void {
-        $clients = $this->repoClientquery($user_id);        
-        foreach ($clients as $client) {
-            $this->delete($client);
+        $user_clients = $this->repoClientquery($user_id); 
+        /** @var UserClient $user_client */
+        foreach ($user_clients as $user_client) {
+            $this->delete($user_client);
         }
     }
 }

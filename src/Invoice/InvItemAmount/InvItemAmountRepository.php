@@ -12,7 +12,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of InvItemAmount
  * @extends Select\Repository<TEntity>
  */
 final class InvItemAmountRepository extends Select\Repository
@@ -56,22 +56,22 @@ private EntityWriter $entityWriter;
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $invitemamount
+     * @param array|InvItemAmount|null $invitemamount
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $invitemamount): void
+    public function save(array|InvItemAmount|null $invitemamount): void
     {
         $this->entityWriter->write([$invitemamount]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $invitemamount
+     * @param array|InvItemAmount|null $invitemamount
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $invitemamount): void
+    public function delete(array|InvItemAmount|null $invitemamount): void
     {
         $this->entityWriter->delete([$invitemamount]);
     }
@@ -85,11 +85,11 @@ private EntityWriter $entityWriter;
     } 
     
     /**
-     * @return null|object
+     * @return null|InvItemAmount
      *
      * @psalm-return TEntity|null
      */
-    public function repoInvItemAmountquery(string $inv_item_id): object|null {
+    public function repoInvItemAmountquery(string $inv_item_id): InvItemAmount|null {
         $query = $this->select()->load(['inv_item'])->where(['inv_item_id' => $inv_item_id]);
         return  $query->fetchOne() ?: null;        
     }

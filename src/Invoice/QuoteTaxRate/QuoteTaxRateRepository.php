@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Invoice\QuoteTaxRate;
 
+use App\Invoice\Entity\QuoteTaxRate;
 use Cycle\ORM\Select;
 use Throwable;
 use Yiisoft\Data\Reader\Sort;
@@ -11,7 +12,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of QuoteTaxRate
  * @extends Select\Repository<TEntity>
  */
 final class QuoteTaxRateRepository extends Select\Repository
@@ -56,22 +57,22 @@ private EntityWriter $entityWriter;
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $quotetaxrate
+     * @param array|QuoteTaxRate|null $quotetaxrate
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $quotetaxrate): void
+    public function save(array|QuoteTaxRate|null $quotetaxrate): void
     {
         $this->entityWriter->write([$quotetaxrate]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $quotetaxrate
+     * @param array|QuoteTaxRate|null $quotetaxrate
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $quotetaxrate): void
+    public function delete(array|QuoteTaxRate|null $quotetaxrate): void
     {
         $this->entityWriter->delete([$quotetaxrate]);
     }
@@ -99,11 +100,11 @@ private EntityWriter $entityWriter;
     
     //find a specific quotes tax rate, normally to delete
     /**
-     * @return null|object
+     * @return null|QuoteTaxRate
      *
      * @psalm-return TEntity|null
      */
-    public function repoQuoteTaxRatequery(string $id):object|null    {
+    public function repoQuoteTaxRatequery(string $id):QuoteTaxRate|null    {
         $query = $this->select()
                       ->load('quote')
                       ->load('tax_rate')
@@ -116,19 +117,25 @@ private EntityWriter $entityWriter;
     // load 'tax rate' so that we can use tax_rate_id through the BelongTo relation in the Entity
     // to access the parent tax rate table's percent name and percentage 
     // which we will use in quote/view
+    
+    /**
+     * 
+     * @param string $quote_id
+     * @return EntityReader
+     */
     public function repoQuotequery(string $quote_id): EntityReader    {
         $query = $this->select()
-                      //->load('tax_rate')
+                      ->load('tax_rate')
                       ->where(['quote_id' => $quote_id]);
         return $this->prepareDataReader($query);   
     }
     
     /**
-     * @return null|object
+     * @return null|QuoteTaxRate
      *
      * @psalm-return TEntity|null
      */
-    public function repoTaxRatequery(string $tax_rate_id):object|null    {
+    public function repoTaxRatequery(string $tax_rate_id):QuoteTaxRate|null    {
         $query = $this->select()
                       ->load('tax_rate')
                       ->where(['tax_rate_id' => $tax_rate_id]);
@@ -139,18 +146,5 @@ private EntityWriter $entityWriter;
         $query = $this->select()
                       ->where(['quote_id'=>$quote_id]);
         return $this->prepareDataReader($query);   
-    }
-        
-    public function repoUpdateQuoteTaxTotal(string $quote_id): float {
-        $getTaxRateAmounts = $this->repoGetQuoteTaxRateAmounts($quote_id);        
-        $total = 0.00;
-        foreach ($getTaxRateAmounts as $item) {
-            foreach ($item as $key=>$value) {
-               if ($key === 'quote_tax_rate_amount') {             
-                  $total += $value;  
-               } 
-            }    
-        }
-        return $total;
-    }
+    }    
 }

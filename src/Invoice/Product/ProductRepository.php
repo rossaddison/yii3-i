@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Invoice\Product;
 
+use App\Invoice\Entity\Product;
 use Cycle\ORM\Select;
 use Throwable;
 use Cycle\Database\Injection\Parameter;
@@ -12,7 +13,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of Product
  * @extends Select\Repository<TEntity>
  */
 final class ProductRepository extends Select\Repository
@@ -60,22 +61,22 @@ final class ProductRepository extends Select\Repository
 
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $product
+     * @param array|Product|null $product
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $product): void
+    public function save(array|Product|null $product): void
     {
         $this->entityWriter->write([$product]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $product
+     * @param array|Product|null $product
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $product): void
+    public function delete(array|Product|null $product): void
     {
         $this->entityWriter->delete([$product]);
     }
@@ -94,11 +95,11 @@ final class ProductRepository extends Select\Repository
     /**
      * @param null|string $product_id
      *
-     * @return null|object
+     * @return null|Product
      *
      * @psalm-return TEntity|null
      */
-    public function repoProductquery(string|null $product_id): object|null
+    public function repoProductquery(string|null $product_id): Product|null
     {
         $query = $this
             ->select()
@@ -112,9 +113,9 @@ final class ProductRepository extends Select\Repository
     /**
      * 
      * @param string $product_name
-     * @return object|null
+     * @return Product|null
      */
-    public function withName(string $product_name) : object|null 
+    public function withName(string $product_name) : Product|null 
     {
         $query = $this
             ->select()

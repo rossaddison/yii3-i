@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Invoice\ProductCustom;
 
+use App\Invoice\Entity\ProductCustom;
 use Cycle\ORM\Select;
-use Throwable;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of ProductCustom
  * @extends Select\Repository<TEntity>
  */
 final class ProductCustomRepository extends Select\Repository
@@ -55,23 +55,19 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $productcustom
-     * @throws Throwable 
+     * @param array|ProductCustom|null $productcustom
      * @return void
      */
-    public function save(array|object|null $productcustom): void
+    public function save(array|ProductCustom|null $productcustom): void
     {
         $this->entityWriter->write([$productcustom]);
     }
     
     /**
-     * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $productcustom
-     * @throws Throwable 
+     * @param array|ProductCustom|null $productcustom
      * @return void
      */
-    public function delete(array|object|null $productcustom): void
+    public function delete(array|ProductCustom|null $productcustom): void
     {
         $this->entityWriter->delete([$productcustom]);
     }
@@ -85,11 +81,11 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @return null|object
-     *
-     * @psalm-return TEntity|null
+     * 
+     * @param string $id
+     * @return ProductCustom|null
      */
-    public function repoProductCustomquery(string $id):object|null    {
+    public function repoProductCustomquery(string $id):ProductCustom|null    {
         $query = $this->select()->load('custom_field')
                                 ->load('product')
                                 ->where(['id'=>$id]);
@@ -98,22 +94,34 @@ private EntityWriter $entityWriter;
     
     
     /**
-     * @return null|object
-     *
-     * @psalm-return TEntity|null
+     * 
+     * @param string $product_id
+     * @param string $custom_field_id
+     * @return ProductCustom|null
      */
-    public function repoFormValuequery(string $product_id, string $custom_field_id):object|null {
+    public function repoFormValuequery(string $product_id, string $custom_field_id):ProductCustom|null {
         $query = $this->select()->where(['inv_id' =>$product_id])
                                 ->andWhere(['custom_field_id' =>$custom_field_id]);
         return  $query->fetchOne() ?: null;        
     }
     
+    /**
+     * 
+     * @param string $product_id
+     * @param string $custom_field_id
+     * @return int
+     */
     public function repoProductCustomCount(string $product_id, string $custom_field_id) : int {
         $query = $this->select()->where(['inv_id' =>$product_id])
                                 ->andWhere(['custom_field_id' =>$custom_field_id]);
         return $query->count();
     } 
     
+    /**
+     * 
+     * @param string $product_id
+     * @return int
+     */
     public function repoProductCount(string $product_id) : int {
         $query = $this->select()->where(['product_id' =>$product_id]);
         return $query->count();

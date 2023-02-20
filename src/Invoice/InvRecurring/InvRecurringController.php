@@ -106,10 +106,10 @@ final class InvRecurringController
     
     /**
      * 
-     * @param object $invrecurring
+     * @param InvRecurring $invrecurring
      * @return array
      */
-    private function body(object $invrecurring): array {
+    private function body(InvRecurring $invrecurring): array {
         $body = [                
           'id'=>$invrecurring->getId(),
           'inv_id'=>$invrecurring->getInv_id(),
@@ -290,15 +290,15 @@ final class InvRecurringController
     /**
      * @param CurrentRoute $currentRoute
      * @param IRR $invrecurringRepository
-     * @return object|null
+     * @return InvRecurring|null
      */
-    private function invrecurring(CurrentRoute $currentRoute,IRR $invrecurringRepository): ?object
+    private function invrecurring(CurrentRoute $currentRoute,IRR $invrecurringRepository): ?InvRecurring
     {
         $invrecurring = new InvRecurring();        
         $id = $currentRoute->getArgument('id');       
         if (null!==$id) {    
             $invrecurring = $invrecurringRepository->repoInvRecurringquery($id);
-            // object/null can be returned here
+            // InvRecurring/null can be returned here
             return $invrecurring;
         }
         return $invrecurring;

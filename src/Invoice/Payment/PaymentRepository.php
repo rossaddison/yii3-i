@@ -16,7 +16,7 @@ use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 use Throwable;
 
 /**
- * @template TEntity of object
+ * @template TEntity of Payment
  * @extends Select\Repository<TEntity>
  */
 final class PaymentRepository extends Select\Repository
@@ -77,22 +77,22 @@ private EntityWriter $entityWriter;
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $payment
+     * @param array|Payment|null $payment
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $payment): void
+    public function save(array|Payment|null $payment): void
     {
         $this->entityWriter->write([$payment]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $payment
+     * @param array|Payment|null $payment
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $payment): void
+    public function delete(array|Payment|null $payment): void
     {
         $this->entityWriter->delete([$payment]);
     }
@@ -116,11 +116,11 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @return null|object
+     * @return null|Payment
      *
      * @psalm-return TEntity|null
      */
-    public function repoPaymentquery(string $id): object|null    {
+    public function repoPaymentquery(string $id): Payment|null    {
         $query = $this->select()
                       ->load('inv')
                       ->load('payment_method')

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Invoice\UserClient;
 
+use App\Invoice\Entity\UserClient;
+
 final class UserClientService
 {
     private UserClientRepository $repository;
@@ -12,15 +14,26 @@ final class UserClientService
     {
         $this->repository = $repository;
     }
-
-    public function saveUserClient(object $model, UserClientForm $form): void
+    
+    /**
+     * 
+     * @param UserClient $model
+     * @param UserClientForm $form
+     * @return void
+     */
+    public function saveUserClient(UserClient $model, UserClientForm $form): void
     {        
        $form->getUser_id() ? $model->setUser_id($form->getUser_id()) : '';
        $form->getClient_id() ? $model->setClient_id($form->getClient_id()) : '';
        $this->repository->save($model);
     }
     
-    public function deleteUserClient(object $model): void
+    /**
+     * 
+     * @param UserClient $model
+     * @return void
+     */
+    public function deleteUserClient(UserClient $model): void
     {       
        $this->repository->delete($model);
     }

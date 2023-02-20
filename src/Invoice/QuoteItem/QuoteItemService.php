@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Invoice\QuoteItem;
 
 use App\Invoice\Entity\QuoteItemAmount;
+use App\Invoice\Entity\QuoteItem;
 use App\Invoice\Product\ProductRepository as PR;
 use App\Invoice\QuoteItemAmount\QuoteItemAmountRepository as QIAR;
 use App\Invoice\QuoteItemAmount\QuoteItemAmountService as QIAS;
@@ -22,7 +23,7 @@ final class QuoteItemService
     
     /**
      * 
-     * @param object $model
+     * @param QuoteItem $model
      * @param QuoteItemForm $form
      * @param string $quote_id
      * @param PR $pr
@@ -32,7 +33,7 @@ final class QuoteItemService
      * @param TRR $trr
      * @return void
      */
-    public function addQuoteItem(object $model, QuoteItemForm $form, string $quote_id, PR $pr, QIAR $qiar, QIAS $qias, UR $uR, TRR $trr): void
+    public function addQuoteItem(QuoteItem $model, QuoteItemForm $form, string $quote_id, PR $pr, QIAR $qiar, QIAS $qias, UR $uR, TRR $trr): void
     {  
        // This function is used in product/save_product_lookup_item_quote when adding a quote using the modal 
        $tax_rate_id = ((null !==($form->getTax_rate_id())) ? $form->getTax_rate_id() : '');
@@ -46,18 +47,18 @@ final class QuoteItemService
             if (null !==$form->getProduct_id() && $pr->repoCount($product_id)> 0) {
                $name = $product->getProduct_name();            
             }
-            $model->setName($name);
+            null!==$name ? $model->setName($name) : $model->setName('');
             // If the user has changed the description on the form => override default product description
             $description = ((null !==($form->getDescription())) ? 
                                       $form->getDescription() : 
                                       $product->getProduct_description());
                  
-            $model->setDescription($description);
+            null!==$description ? $model->setDescription($description) : $model->setDescription('') ;
        }
-       $model->setQuantity($form->getQuantity());
-       $model->setPrice($form->getPrice());
-       $model->setDiscount_amount($form->getDiscount_amount());
-       $model->setOrder($form->getOrder());
+       null!==$form->getQuantity() ? $model->setQuantity($form->getQuantity()) : $model->setQuantity(0);
+       null!==$form->getPrice() ? $model->setPrice($form->getPrice()) : $model->setPrice(0.00);
+       null!==$form->getDiscount_amount() ? $model->setDiscount_amount($form->getDiscount_amount()) : $model->setDiscount_amount(0.00);
+       null!==$form->getOrder() ? $model->setOrder($form->getOrder()) : $model->setOrder(0) ;
        // Product_unit is a string which we get from unit's name field using the unit_id
        $unit = $uR->repoUnitquery((string)$form->getProduct_unit_id());
        if ($unit) {
@@ -76,39 +77,39 @@ final class QuoteItemService
     
     /**
      * 
-     * @param object $model
+     * @param QuoteItem $model
      * @param QuoteItemForm $form
      * @param string $quote_id
      * @param PR $pr
      * @param UR $uR
      * @return int
      */
-    public function saveQuoteItem(object $model, QuoteItemForm $form, string $quote_id, PR $pr, UR $uR): int
+    public function saveQuoteItem(QuoteItem $model, QuoteItemForm $form, string $quote_id, PR $pr, UR $uR): int
     {        
        // This function is used in quoteitem/edit when editing an item on the quote view
        // see https://github.com/cycle/orm/issues/348
-       null!==$form->getTax_rate_id() ? $model->setTaxRate($model->getTaxRate()->getTax_rate_id() == $form->getTax_rate_id() ? $model->getTaxRate() : null): '';
+       null!==$form->getTax_rate_id() ? $model->setTaxRate($model->getTaxRate()?->getTax_rate_id() == $form->getTax_rate_id() ? $model->getTaxRate() : null): '';
        $tax_rate_id = ((null !==($form->getTax_rate_id())) ? $form->getTax_rate_id() : '');
        $model->setTax_rate_id((int)$tax_rate_id);
-       null!==$form->getProduct_id() ? $model->setProduct($model->getProduct()->getProduct_id() == $form->getProduct_id() ? $model->getProduct() : null): '';
+       null!==$form->getProduct_id() ? $model->setProduct($model->getProduct()?->getProduct_id() == $form->getProduct_id() ? $model->getProduct() : null): '';
        $product_id = ((null !==($form->getProduct_id())) ? $form->getProduct_id() : '');
        $model->setProduct_id((int)$product_id);
-       $model->setQuote($model->getQuote()->getId() == $quote_id ? $model->getQuote() : null); 
+       $model->setQuote($model->getQuote()?->getId() == $quote_id ? $model->getQuote() : null); 
        $model->setQuote_id((int)$quote_id);
        $product = $pr->repoProductquery($form->getProduct_id());
        if ($product) {
             $name = (( (null !==($form->getProduct_id())) && ($pr->repoCount($product_id)> 0) ) ? $product->getProduct_name() : '');  
-            $model->setName($name);
+            $model->setName($name ?? '');
             // If the user has changed the description on the form => override default product description
             $description = ((null !==($form->getDescription())) ? 
                                       $form->getDescription() : 
                                       $product->getProduct_description());
-            $model->setDescription($description);
+            $model->setDescription($description ?? '');
        }
-       $model->setQuantity($form->getQuantity());
-       $model->setPrice($form->getPrice());
-       $model->setDiscount_amount($form->getDiscount_amount());
-       $model->setOrder($form->getOrder());
+       $model->setQuantity($form->getQuantity() ?? 0.00);
+       $model->setPrice($form->getPrice() ?? 0.00);
+       null!==$form->getDiscount_amount() ? $model->setDiscount_amount($form->getDiscount_amount()) : $model->setDiscount_amount(0.00);
+       $model->setOrder($form->getOrder() ?? 0);
        // Product_unit is a string which we get from unit's name field using the unit_id
        $unit = $uR->repoUnitquery((string)$form->getProduct_unit_id());
        if ($unit) {
@@ -154,7 +155,11 @@ final class QuoteItemService
        $qias_array = [];
        $qias_array['quote_item_id'] = $quote_item_id;
        $sub_total = $quantity * $price;
-       $tax_total = ($sub_total * ($tax_rate_percentage/100));
+       if (null!==$tax_rate_percentage) {
+         $tax_total = ($sub_total * ($tax_rate_percentage/100));
+       } else {
+           $tax_total = 0.00;           
+       } 
        $discount_total = $quantity*$discount;
        $qias_array['discount'] = $discount_total;
        $qias_array['subtotal'] = $sub_total;
@@ -171,10 +176,10 @@ final class QuoteItemService
     
     /**
      * 
-     * @param array|object|null $model
+     * @param array|QuoteItem|null $model
      * @return void
      */
-    public function deleteQuoteItem(array|object|null $model): void 
+    public function deleteQuoteItem(array|QuoteItem|null $model): void 
     {
         $this->repository->delete($model);
     }

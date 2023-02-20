@@ -162,31 +162,30 @@ class ReportController
             'total_balance'=>0.00,
         ];
         if (null!==$clients) {
+            /** @var Client $client */
             foreach ($clients as $client) {
-                        $row['client']=$clienthelper->format_client($client);
-                        if ($client instanceof Client) {
-                            if (null!== $fifteens) {
-                                $row['range_1']=$numberhelper->format_amount($this->invoice_aging_sum($fifteens, $client->getClient_id()));
-                            } else {
-                                $row['range_1']=0.00;
-                            }
-                            if (null!== $thirties) {
-                                $row['range_2']= $numberhelper->format_amount($this->invoice_aging_sum($thirties, $client->getClient_id()));    
-                            } else {
-                                $row['range_2']=0.00;
-                            }
-                            if (null!== $overthirties) {
-                                $row['range_3']= $numberhelper->format_amount($this->invoice_aging_sum($overthirties, $client->getClient_id()));
-                            } else {
-                                $row['range_3']=0.00;
-                            }
-                            if (null!== $one_to_year) {
-                                $row['total_balance']= $numberhelper->format_amount($this->invoice_aging_sum($one_to_year, $client->getClient_id()));
-                            } else {
-                                $row['total_balance']=0.00;
-                            }
-                        }
-                        array_push($results,$row); 
+                $row['client']=$clienthelper->format_client($client);
+                if (null!== $fifteens) {
+                    $row['range_1']=$numberhelper->format_amount($this->invoice_aging_sum($fifteens, $client->getClient_id()));
+                } else {
+                    $row['range_1']=0.00;
+                }
+                if (null!== $thirties) {
+                    $row['range_2']= $numberhelper->format_amount($this->invoice_aging_sum($thirties, $client->getClient_id()));    
+                } else {
+                    $row['range_2']=0.00;
+                }
+                if (null!== $overthirties) {
+                    $row['range_3']= $numberhelper->format_amount($this->invoice_aging_sum($overthirties, $client->getClient_id()));
+                } else {
+                    $row['range_3']=0.00;
+                }
+                if (null!== $one_to_year) {
+                    $row['total_balance']= $numberhelper->format_amount($this->invoice_aging_sum($one_to_year, $client->getClient_id()));
+                } else {
+                    $row['total_balance']=0.00;
+                }
+                array_push($results,$row); 
             }        
         }
         return $results;
@@ -210,9 +209,9 @@ class ReportController
             'invoice_number' => '',
             'invoice_balance' => 0.00
         ];
-        if (null!== $fifteens) {  
+        if (null!== $fifteens) { 
+            /** @var InvAmount $fifteen */
             foreach ($fifteens as $fifteen) {
-              if ($fifteen instanceof InvAmount) {   
                 if ($fifteen->getBalance() > 0) {
                     $row = [
                         'range_index' => 1,
@@ -221,12 +220,11 @@ class ReportController
                     ];
                 } 
                 array_push($results, $row);
-              }  
             }
         }
         if (null!== $thirties) {  
-            foreach ($thirties as $thirty) {
-              if ($thirty instanceof InvAmount) {  
+            /** @var InvAmount $thirty */
+            foreach ($thirties as $thirty) {  
                 if ($thirty->getBalance() > 0) {
                     $row = [
                         'range_index' => 2,
@@ -235,12 +233,11 @@ class ReportController
                     ];
                 } 
                 array_push($results, $row);
-              }  
             }
         }
         if (null!== $overthirties) {  
+            /** @var InvAmount $overthirty */
             foreach ($overthirties as $overthirty) {
-               if ($overthirty instanceof InvAmount) {
                 if ($overthirty->getBalance() > 0) {
                     $row = [
                         'range_index' => 3,
@@ -249,7 +246,6 @@ class ReportController
                     ];
                 } 
                 array_push($results, $row);
-               } 
             }
         }    
         return $results;
@@ -262,7 +258,7 @@ class ReportController
         $sum = 0.00;
         foreach ($invamounts as $invamount) {
            if ($invamount instanceof InvAmount) 
-            $sum += ($client_id == $invamount->getInv()?->getClient_id()) ? $invamount->getBalance() : 0.00; 
+            $sum += ($client_id == $invamount->getInv()?->getClient_id()) ? ($invamount->getBalance() ?? 0.00) : 0.00; 
         } 
         return $sum;
     }
@@ -291,8 +287,8 @@ class ReportController
         if ($request->getMethod() === Method::POST) { 
             $body = $request->getParsedBody();
             if (is_array($body)) {
-                $from_date = $body['from_date'];
-                $to_date = $body['to_date'];
+                $from_date = (string)$body['from_date'];
+                $to_date = (string)$body['to_date'];
                 $data = [
                     'from_date' => $from_date,
                     'to_date' => $to_date,
@@ -338,8 +334,8 @@ class ReportController
             'payment_amount'=>''
         ];
         if (null!==$payments) {
-            foreach ($payments as $payment) {
-              if ($payment instanceof Payment) {  
+            /** @var Payment $payment */
+            foreach ($payments as $payment) {  
                 $row['payment_date']=$payment->getPayment_date();
                 $row['payment_invoice']=$payment->getInv()?->getNumber();
                 // Client Name and Surname
@@ -348,7 +344,6 @@ class ReportController
                 $row['payment_note']=$payment->getNote();
                 $row['payment_amount']=$payment->getAmount();
                 array_push($results,$row); 
-              }  
             }        
             return $results;
         }
@@ -383,8 +378,8 @@ class ReportController
         if ($request->getMethod() === Method::POST) { 
             $body = $request->getParsedBody();
             if (is_array($body)) {
-                $from_date = $body['from_date'];
-                $to_date = $body['to_date'];
+                $from_date = (string)$body['from_date'];
+                $to_date = (string)$body['to_date'];
                 $data = [
                     'from_date' => $from_date,
                     'to_date' => $to_date,
@@ -436,31 +431,32 @@ class ReportController
         ];
         $clienthelper = new ClientHelper($sR);
         $clients = $cR->findAllPreloaded();
+        /**
+         * @var Client $client
+         */
         foreach ($clients as $client) {
-            if ($client instanceof Client) {
-                $client_id = $client->getClient_id();
-                if (null!==$client_id) {
-                    // Client Name and Surname
-                    $row['client_name_surname'] = $clienthelper->format_client($client);
-                    $row['inv_count'] = $iR->repoCountByClient($client_id);
-                    $row['sales_no_tax'] = $iR->repoCountByClient($client_id) > 0 
-                                  ? $iR->with_item_subtotal_from_to($client_id, $from, $to, $iaR) 
-                                  : 0.00;
-                    // plus
-                    $row['item_tax_total'] = $iR->repoCountByClient($client_id) > 0 
-                                  ? $iR->with_item_tax_total_from_to($client_id, $from, $to, $iaR) 
-                                  : 0.00;
-                    // plus
-                    $row['tax_total'] = $iR->repoCountByClient($client_id) > 0 
-                                  ? $iR->with_tax_total_from_to($client_id, $from, $to, $iaR) 
-                                  : 0.00;
-                    // equals
-                    $row['sales_with_tax'] = $iR->repoCountByClient($client_id) > 0 
-                                  ? $iR->with_total_from_to($client_id, $from, $to, $iaR) 
-                                  : 0.00;                
-                    array_push($results,$row); 
-                } // null!==$client_id;
-            }    
+            $client_id = $client->getClient_id();
+            if (null!==$client_id) {
+                // Client Name and Surname
+                $row['client_name_surname'] = $clienthelper->format_client($client);
+                $row['inv_count'] = $iR->repoCountByClient($client_id);
+                $row['sales_no_tax'] = $iR->repoCountByClient($client_id) > 0 
+                              ? $iR->with_item_subtotal_from_to($client_id, $from, $to, $iaR) 
+                              : 0.00;
+                // plus
+                $row['item_tax_total'] = $iR->repoCountByClient($client_id) > 0 
+                              ? $iR->with_item_tax_total_from_to($client_id, $from, $to, $iaR) 
+                              : 0.00;
+                // plus
+                $row['tax_total'] = $iR->repoCountByClient($client_id) > 0 
+                              ? $iR->with_tax_total_from_to($client_id, $from, $to, $iaR) 
+                              : 0.00;
+                // equals
+                $row['sales_with_tax'] = $iR->repoCountByClient($client_id) > 0 
+                              ? $iR->with_total_from_to($client_id, $from, $to, $iaR) 
+                              : 0.00;                
+                array_push($results,$row); 
+            } // null!==$client_id;
         }        
         return $results;
     }
@@ -493,8 +489,8 @@ class ReportController
         if ($request->getMethod() === Method::POST) { 
             $body = $request->getParsedBody();
             if (is_array($body)) {
-                $from_date = $body['from_date'];
-                $to_date = $body['to_date'];
+                $from_date = (string)$body['from_date'];
+                $to_date = (string)$body['to_date'];
                 $data = [
                     'from_date' => $from_date,
                     'to_date' => $to_date,
@@ -581,26 +577,22 @@ class ReportController
         $datehelper = new DateHelper($sR);
         $clients = $cR->count() > 0 ? $cR->findAllPreloaded() : null;
         if (null!==$clients){
+            /** @var Client $client */
             foreach ($clients as $client) {
-                if ($client instanceof Client) { 
-                    // Convert the mysql $from which is a string into an immutable so that we can use the add function 
-                    // associated with immutable dates
+                // Convert the mysql $from which is a string into an immutable so that we can use the add function 
+                // associated with immutable dates
 
-                    $immutable_from = $datehelper->ymd_to_immutable($from);
-                    $immutable_to = $datehelper->ymd_to_immutable($to);
+                $immutable_from = $datehelper->ymd_to_immutable($from);
+                $immutable_to = $datehelper->ymd_to_immutable($to);
 
-                    $interval = new \DateInterval('P1Y');                
-
-                    $daterange = new \DatePeriod($immutable_from, $interval, $immutable_to);
-                    $client_id = (int)$client->getClient_id();
-                    foreach($daterange as $current_year){
-
-                        $additional_year = $this->quarters($year,  $immutable_from, $current_year, $client,  $clienthelper, $client_id, $iR, $iaR);   
-
-                        array_push($results, $additional_year);
-                        $immutable_from = $immutable_from->add(new \DateInterval('P1Y'));
-                    }
-                }    
+                $interval = new \DateInterval('P1Y'); 
+                $daterange = new \DatePeriod($immutable_from, $interval, $immutable_to);
+                $client_id = (int)$client->getClient_id();
+                foreach($daterange as $current_year){
+                    $additional_year = $this->quarters($year,  $immutable_from, $current_year, $client,  $clienthelper, $client_id, $iR, $iaR);   
+                    array_push($results, $additional_year);
+                    $immutable_from = $immutable_from->add(new \DateInterval('P1Y'));
+                }   
             }        
             return $results;
         }
@@ -608,93 +600,101 @@ class ReportController
     }
     
     /**
-     * @param ((float|string)[][]|float|string)[] $year
-     *
-     * @psalm-param array{year: '', Name: '', VAT_ID: '', period_sales_no_tax: float, period_item_tax_total: float, period_tax_total: float, period_sales_with_tax: float, period_total_paid: float, quarters: array{first: array{beginning: '', end: '', sales_no_tax: float, item_tax_total: float, tax_total: float, sales_with_tax: float, paid: float}, second: array{beginning: '', end: '', sales_no_tax: float, item_tax_total: float, tax_total: float, sales_with_tax: float, paid: float}, third: array{beginning: '', end: '', sales_no_tax: float, item_tax_total: float, tax_total: float, sales_with_tax: float, paid: float}, fourth: array{beginning: '', end: '', sales_no_tax: float, item_tax_total: float, tax_total: float, sales_with_tax: float, paid: float}}} $year
-     * @psalm-param InvRepository<object> $iR
-     * @psalm-param InvAmountRepository<object> $iaR
+     * 
+     * @param ((float|string)[][]|float|string)[] $year $year
+     * @param \DateTimeImmutable $immutable_from
+     * @param \DateTimeImmutable $current_year
+     * @param Client $client
+     * @param ClientHelper $clienthelper
+     * @param int $client_id
+     * @param InvRepository $iR
+     * @param InvAmountRepository $iaR
+     * @return array
      */
-    private function quarters(array $year, \DateTimeImmutable $immutable_from, \DateTimeImmutable $current_year, object $client, 
+    private function quarters(array $year, \DateTimeImmutable $immutable_from, \DateTimeImmutable $current_year, Client $client, 
                               ClientHelper $clienthelper, int $client_id, InvRepository $iR, InvAmountRepository $iaR) : array 
     {
-        $quarters = ['first' => 3, 'second' => 6, 'third' => 9, 'fourth' => 12];
-        // Develop all the quarters from ONE immutable (unchangeable) start date
-        // Each immutable date is presented in the mysql Y-m-d format for comparison with the mysql dates
-        $immutable_from_start_date = $immutable_from;
-        
-        foreach ($quarters as $quarter => $month_ending) {
-            $quarter_from = $immutable_from_start_date->add(new \DateInterval('P'.(string)$month_ending.'M'))
-                                                      ->sub(new \DateInterval('P3M'))
-                                                      ->add(new \DateInterval('P1D'))
-                                                      ->format('Y-m-d');
-            
-            $quarter_to  =  $immutable_from_start_date->add(new \DateInterval('P'.(string)$month_ending.'M'))
-                                                      ->format('Y-m-d');
+        if ($client_id) {
+            $quarters = ['first' => 3, 'second' => 6, 'third' => 9, 'fourth' => 12];
+            // Develop all the quarters from ONE immutable (unchangeable) start date
+            // Each immutable date is presented in the mysql Y-m-d format for comparison with the mysql dates
+            $immutable_from_start_date = $immutable_from;
 
-            $year['quarters'][$quarter]['beginning'] = $quarter_from;
-            $year['quarters'][$quarter]['end'] = $quarter_to;
-            
-            $sales_no_tax = $iR->repoCountByClient($client_id) > 0 
-                          ? $iR->with_item_subtotal_from_to($client_id, 
-                                $quarter_from, 
-                                $quarter_to, $iaR) 
-                          : 0.00;    
-            $year['quarters'][$quarter]['sales_no_tax'] = $sales_no_tax;
-            
-            $item_tax_total = $iR->repoCountByClient($client_id) > 0 
-                            ? $iR->with_item_tax_total_from_to($client_id, 
-                                $quarter_from, 
-                                $quarter_to, $iaR) 
-                            : 0.00;
-            $year['quarters'][$quarter]['item_tax_total'] = $item_tax_total;
-            
-            $tax_total = $iR->repoCountByClient($client_id) > 0 
-                          ? $iR->with_tax_total_from_to($client_id, 
-                                $quarter_from, 
-                                $quarter_to, $iaR) 
+            foreach ($quarters as $quarter => $month_ending) {
+                $quarter_from = $immutable_from_start_date->add(new \DateInterval('P'.(string)$month_ending.'M'))
+                                                          ->sub(new \DateInterval('P3M'))
+                                                          ->add(new \DateInterval('P1D'))
+                                                          ->format('Y-m-d');
+
+                $quarter_to  =  $immutable_from_start_date->add(new \DateInterval('P'.(string)$month_ending.'M'))
+                                                          ->format('Y-m-d');
+
+                $year['quarters'][$quarter]['beginning'] = $quarter_from;
+                $year['quarters'][$quarter]['end'] = $quarter_to;
+
+                $sales_no_tax = $iR->repoCountByClient($client_id) > 0 
+                              ? $iR->with_item_subtotal_from_to($client_id, 
+                                    $quarter_from, 
+                                    $quarter_to, $iaR) 
+                              : 0.00;    
+                $year['quarters'][$quarter]['sales_no_tax'] = $sales_no_tax;
+
+                $item_tax_total = $iR->repoCountByClient($client_id) > 0 
+                                ? $iR->with_item_tax_total_from_to($client_id, 
+                                    $quarter_from, 
+                                    $quarter_to, $iaR) 
+                                : 0.00;
+                $year['quarters'][$quarter]['item_tax_total'] = $item_tax_total;
+
+                $tax_total = $iR->repoCountByClient($client_id) > 0 
+                              ? $iR->with_tax_total_from_to($client_id, 
+                                    $quarter_from, 
+                                    $quarter_to, $iaR) 
+                              : 0.00;
+                $year['quarters'][$quarter]['tax_total'] = $tax_total;
+
+                $sales_with_tax = $iR->repoCountByClient($client_id) > 0 
+                              ? $iR->with_total_from_to($client_id, 
+                                    $quarter_from, 
+                                    $quarter_to, $iaR) 
+                              : 0.00;           
+                $year['quarters'][$quarter]['sales_with_tax'] = $sales_with_tax;
+
+                $paid = $iR->repoCountByClient($client_id) > 0 
+                              ? $iR->with_paid_from_to($client_id, 
+                                    $quarter_from, 
+                                    $quarter_to, $iaR) 
+                              : 0.00;           
+                $year['quarters'][$quarter]['paid'] = $paid;
+            }
+            $from = $year['quarters']['first']['beginning'];
+            $to = $year['quarters']['fourth']['end'];
+            $year['year'] = $current_year->format('Y');
+            // Client Name and Surname
+            $year['Name'] = $clienthelper->format_client($client);
+            // Item subtotal = Sales without taxes
+            $year['VAT_ID'] = $client->getClient_vat_id();
+            $year['period_sales_no_tax'] = $iR->repoCountByClient($client_id) > 0 
+                          ? $iR->with_item_subtotal_from_to($client_id, $from, $to, $iaR) 
                           : 0.00;
-            $year['quarters'][$quarter]['tax_total'] = $tax_total;
-            
-            $sales_with_tax = $iR->repoCountByClient($client_id) > 0 
-                          ? $iR->with_total_from_to($client_id, 
-                                $quarter_from, 
-                                $quarter_to, $iaR) 
-                          : 0.00;           
-            $year['quarters'][$quarter]['sales_with_tax'] = $sales_with_tax;
-            
-            $paid = $iR->repoCountByClient($client_id) > 0 
-                          ? $iR->with_paid_from_to($client_id, 
-                                $quarter_from, 
-                                $quarter_to, $iaR) 
-                          : 0.00;           
-            $year['quarters'][$quarter]['paid'] = $paid;
+            // plus
+            $year['period_item_tax_total'] = $iR->repoCountByClient($client_id) > 0 
+                          ? $iR->with_item_tax_total_from_to($client_id, $from, $to, $iaR) 
+                          : 0.00;
+            // plus
+            $year['period_tax_total'] = $iR->repoCountByClient($client_id) > 0 
+                          ? $iR->with_tax_total_from_to($client_id, $from, $to, $iaR) 
+                          : 0.00;
+            // equals
+            $year['period_sales_with_tax'] = $iR->repoCountByClient($client_id) > 0 
+                          ? $iR->with_total_from_to($client_id, $from, $to, $iaR) 
+                          : 0.00;
+            // what the customer has actually paid towards the annual sales with tax
+            $year['period_total_paid'] = $iR->repoCountByClient($client_id) > 0 
+                          ? $iR->with_paid_from_to($client_id, $from, $to, $iaR) 
+                          : 0.00;        
+            return $year;
         }
-        $from = $year['quarters']['first']['beginning'];
-        $to = $year['quarters']['fourth']['end'];
-        $year['year'] = $current_year->format('Y');
-        // Client Name and Surname
-        $year['Name'] = $clienthelper->format_client($client);
-        // Item subtotal = Sales without taxes
-        $year['VAT_ID'] = $client->getClient_vat_id();
-        $year['period_sales_no_tax'] = $iR->repoCountByClient($client->getClient_id()) > 0 
-                      ? $iR->with_item_subtotal_from_to($client->getClient_id(), $from, $to, $iaR) 
-                      : 0.00;
-        // plus
-        $year['period_item_tax_total'] = $iR->repoCountByClient($client->getClient_id()) > 0 
-                      ? $iR->with_item_tax_total_from_to($client->getClient_id(), $from, $to, $iaR) 
-                      : 0.00;
-        // plus
-        $year['period_tax_total'] = $iR->repoCountByClient($client->getClient_id()) > 0 
-                      ? $iR->with_tax_total_from_to($client->getClient_id(), $from, $to, $iaR) 
-                      : 0.00;
-        // equals
-        $year['period_sales_with_tax'] = $iR->repoCountByClient($client->getClient_id()) > 0 
-                      ? $iR->with_total_from_to($client->getClient_id(), $from, $to, $iaR) 
-                      : 0.00;
-        // what the customer has actually paid towards the annual sales with tax
-        $year['period_total_paid'] = $iR->repoCountByClient($client->getClient_id()) > 0 
-                      ? $iR->with_paid_from_to($client->getClient_id(), $from, $to, $iaR) 
-                      : 0.00;        
-        return $year;
+        return [];
     }
 }

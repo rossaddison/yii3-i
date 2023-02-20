@@ -267,9 +267,9 @@ final class CustomValueController
     /**
      * @param CurrentRoute $currentRoute
      * @param CustomValueRepository $customvalueRepository
-     * @return object|null
+     * @return CustomValue|null
      */
-    private function customvalue(CurrentRoute $currentRoute,CustomValueRepository $customvalueRepository): object|null
+    private function customvalue(CurrentRoute $currentRoute,CustomValueRepository $customvalueRepository): CustomValue|null
     {
         $id = $currentRoute->getArgument('id');
         if (null!==$id) {

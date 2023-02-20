@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Invoice\Setting;
 
-use Yiisoft\Yii\Runner\Http\HttpApplicationRunner;
 use App\Invoice\Entity\Setting;
 use App\Invoice\Inv\InvRepository as IR;
 use App\Invoice\Libraries\Lang;
@@ -12,7 +11,6 @@ use App\Invoice\Quote\QuoteRepository as QR;
 use Cycle\ORM\Select;
 use Throwable;
 use Yiisoft\Aliases\Aliases;
-use Yiisoft\Config\ConfigPaths;
 use Yiisoft\Config\ConfigInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Files\FileHelper;
@@ -20,9 +18,10 @@ use Yiisoft\Files\PathMatcher\PathMatcher;
 use Yiisoft\Session\SessionInterface;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
+use Yiisoft\Yii\Runner\Http\HttpApplicationRunner;
 
 /**
- * @template TEntity of object
+ * @template TEntity of Setting
  * @extends Select\Repository<TEntity>
  */
 final class SettingRepository extends Select\Repository
@@ -71,11 +70,11 @@ final class SettingRepository extends Select\Repository
             
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param object|null $setting
+     * @param Setting|null $setting
      * @throws Throwable 
      * @return void
      */
-    public function save(object|null $setting): void
+    public function save(Setting|null $setting): void
     {
         if (null!==$setting) {
             if ($setting->getSetting_key() === 'default_language') {
@@ -87,11 +86,11 @@ final class SettingRepository extends Select\Repository
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param object|null $setting
+     * @param Setting|null $setting
      * @throws Throwable 
      * @return void
      */
-    public function delete(object|null $setting): void
+    public function delete(Setting|null $setting): void
     {
         $this->entityWriter->delete([$setting]);
     }
@@ -112,9 +111,9 @@ final class SettingRepository extends Select\Repository
     /**
      * 
      * @param string $setting_id
-     * @return object|null
+     * @return Setting|null
      */
-    public function repoSettingquery(string $setting_id): object|null
+    public function repoSettingquery(string $setting_id): Setting|null
     {
         $query = $this
             ->select()
@@ -125,9 +124,9 @@ final class SettingRepository extends Select\Repository
     /**
      * 
      * @param string $setting_key
-     * @return object|null
+     * @return Setting|null
      */
-    public function withKey(string $setting_key): object|null
+    public function withKey(string $setting_key): Setting|null
     {
         $query = $this
             ->select()
@@ -138,9 +137,9 @@ final class SettingRepository extends Select\Repository
     /**
      * 
      * @param string $setting_value
-     * @return object|null
+     * @return Setting|null
      */
-    public function withValue(string $setting_value): object|null
+    public function withValue(string $setting_value): Setting|null
     {
         $query = $this
             ->select()
@@ -149,31 +148,15 @@ final class SettingRepository extends Select\Repository
     }
     
     /**
-     * 
-     * @param string $setting_key
-     * @return string
-     */
-    public function load_setting(string $setting_key) : string
-    {
-        $setting = $this->select()
-                        ->where(['setting_key' => $setting_key]);
-        foreach ($setting as $data) {
-            $this->settings[$data->setting_key] = $data->setting_value;
-        }
-        return $this->settings['default_language'];              
-    }
-    
-    /**
-     * 
      * @return void
      */
     public function load_settings(): void
     {
-        $all_settings = $this->findAllPreloaded();  
-        foreach ($all_settings as $data) {
-            if ($data instanceof Setting) { 
-                $this->settings[$data->getSetting_key()] = $data->getSetting_value();
-            }
+        $all_settings = $this->findAllPreloaded();
+        /** @var Setting $setting */
+        foreach ($all_settings as $setting) {
+            /** @var string $this->settings[$setting->getSetting_key()] */
+            $this->settings[$setting->getSetting_key()] = $setting->getSetting_value();
         }        
     }
     
@@ -185,7 +168,9 @@ final class SettingRepository extends Select\Repository
     public function get_setting(string $key) : string
     {
         $this->load_settings();
-        return (isset($this->settings[$key])) ? $this->settings[$key] : '';
+        /** @var string $this->settings[$key] */
+        $setting = $this->settings[$key];
+        return $setting;
     }
     
     /**
@@ -195,8 +180,10 @@ final class SettingRepository extends Select\Repository
      */
     public function setting(string $key) : string
     {
-        $this->load_settings();
-        return (isset($this->settings[$key])) ? $this->settings[$key] : '';
+         $this->load_settings();
+        /** @var string $this->settings[$key] */
+        $setting = $this->settings[$key];
+        return $setting;
     }    
     
     /**
@@ -270,7 +257,7 @@ final class SettingRepository extends Select\Repository
         echo $echo_selected ? $select : '';
     }
     
-    /**
+   /**
      * @return (mixed|string)[]
      *
      * @psalm-return array{esmtp_scheme: mixed, esmtp_host: mixed, esmtp_port: mixed, use_send_mail: string}
@@ -322,14 +309,7 @@ final class SettingRepository extends Select\Repository
                 ['events'],
         );
         $params = $http_runner->getConfig();
-        //$config_array = [
-        //    'esmtp_scheme' =>$params['symfony/mailer']['esmtpTransport']['scheme'],
-        //    'esmtp_host'=>$params['symfony/mailer']['esmtpTransport']['host'],
-        //    'esmtp_port'=>$params['symfony/mailer']['esmtpTransport']['port'],
-        //    'use_send_mail'=>$params['yiisoft/mailer']['useSendmail'] == 1 ? $this->trans('true') : $this->trans('false'),           
-        //];
         return $params;
-        //return $config_array;
     }
     
     /**
@@ -421,23 +401,20 @@ final class SettingRepository extends Select\Repository
      */
     public function get_folder_language() : string {
         // Prioritise the use of the locale dropdown since it will always be set. config/params/locales
-        $sess_lang = $this->session->get('_language'); 
+        $sess_lang = (string)$this->session->get('_language'); 
         // The print language is set under the get_print_language function in pdfHelper which uses the clients language as priority
-        $print_lang = $this->session->get('print_language');
+        $print_lang = (string)$this->session->get('print_language');
         // Use the print language if it is not empty over the locale language
         if (empty($print_lang)) {
             return (!empty($sess_lang) && (array_key_exists($sess_lang, $this->locale_language_array()))) 
-                             ? $this->locale_language_array()[$sess_lang] 
-            : $this->get_setting('default_language');         
-        }
-        if (!empty($print_lang)) {
+                             ? (string)$this->locale_language_array()[$sess_lang] 
+            : ($this->get_setting('default_language') ?: "English");         
+        } else {
             return $print_lang;
-        }
-        return 'English';         
+        }   
     }       
     
     /**
-     * 
      * @return array
      */
     public function load_language_folder(): array
@@ -460,7 +437,12 @@ final class SettingRepository extends Select\Repository
      */
     public function trans(string $words) : string
     {
-        foreach ($this->load_language_folder() as $key => $value){
+        $language_folder = $this->load_language_folder();
+        /** 
+         * @var string $value 
+         * @var string $key
+         */
+        foreach ($language_folder as $key => $value){
              if ($words === $key){
                   return $value;                                    
              }
@@ -513,17 +495,6 @@ final class SettingRepository extends Select\Repository
                 //set the quote to viewed status ie 3
                 $quote->setStatus_id(3);
                 $qR->save($quote);
-            }
-
-            //set the quote to 'read only' only once it has been viewed according to 'Other settings' 
-            //2 sent, 3 viewed, 
-            if ($this->get_setting('read_only_toggle') == 3)
-            {
-                $quote = $qR->repoQuoteUnloadedquery($quote_id);
-                if ($quote) {
-                    $quote->setIs_read_only(true);
-                    $qR->save($quote);
-                }
             }
         }    
     }
@@ -782,10 +753,9 @@ final class SettingRepository extends Select\Repository
     }
     
     /**
-     * @return string[]
-     *
-     * @psalm-return array<string>
-     * @psalm-param '' $invoice_number
+     * 
+     * @param string $invoice_number
+     * @return array
      */
     public function get_invoice_archived_files_with_filter(string $invoice_number): array
     {        
@@ -816,6 +786,9 @@ final class SettingRepository extends Select\Repository
      */
     private function remove_extension(array $files) : array
     {
+        /**
+         * @var string $file
+         */
         foreach ($files as $key => $file) {
             $files[$key] = str_replace('.php', '', $file);
         }
@@ -1062,7 +1035,7 @@ final class SettingRepository extends Select\Repository
     public function payment_gateways_enabled_DriverList(): array {
         $available_drivers = [];
         $gateways = $this->payment_gateways();
-        foreach ($gateways as $driver => $fields) {
+        foreach ($gateways as $driver => $_fields) {
             $d = strtolower($driver);
             if ($this->get_setting('gateway_' . $d . '_enabled') === '1') {
                 $available_drivers[] = $driver;                
@@ -1298,10 +1271,29 @@ final class SettingRepository extends Select\Repository
         ],
         ''    
         ];
-        /**
-         * @psalm-suppress PossiblyInvalidArrayOffset
+        $why = '';
+        $where = '';
+        /** 
+         * @var array $value 
+         * @var string $key
          */
-        $information = 'data-toggle = "tooltip"'.' '.'title = "'. $tooltip[$setting]['why'].' and is used in '.$tooltip[$setting]['where'].'"';
+        foreach ($tooltip as $key => $value) {
+            if ($key === $setting) {
+                /** 
+                 * @var string $_value 
+                 * @var string $_key
+                 */
+                foreach ($value as $_key => $_value) {
+                    if ($_key === 'why') {
+                        $why = $_value;
+                    }
+                    if ($_key === 'where') {
+                        $where = $_value;
+                    }
+                }
+            }
+        }
+        $information = 'data-toggle = "tooltip"'.' '.'title = "'. $why .' and is used in '.$where.'"';
         $build = $debug_mode ? $information : '';
         return $build;
     }

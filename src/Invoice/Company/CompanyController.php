@@ -169,9 +169,9 @@ final class CompanyController
      * 
      * @param CurrentRoute $currentRoute
      * @param CompanyRepository $companyRepository
-     * @return object|null
+     * @return Company|null
      */
-    private function company(CurrentRoute $currentRoute, CompanyRepository $companyRepository): object|null 
+    private function company(CurrentRoute $currentRoute, CompanyRepository $companyRepository): Company|null 
     {
         $id = $currentRoute->getArgument('id');
         if (null!==$id) { 
@@ -194,10 +194,10 @@ final class CompanyController
     
     /**
      * 
-     * @param object $company
+     * @param Company $company
      * @return array
      */
-    private function body(object $company): array {
+    private function body(Company $company): array {
         $body = [
                 
           'id'=>$company->getId(),

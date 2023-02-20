@@ -75,13 +75,12 @@ final class FamilyController
     }
     
     /**
-     * 
      * @param Request $request
      * @param SettingRepository $settingRepository
      * @param ValidatorInterface $validator
      * @return Response
      */
-    public function add(Request $request,SettingRepository $settingRepository,ValidatorInterface $validator): Response
+    public function add(Request $request, SettingRepository $settingRepository, ValidatorInterface $validator): Response
     {
         $parameters = [
             'title' => 'Add Family',
@@ -90,22 +89,15 @@ final class FamilyController
             'body' => $request->getParsedBody(),
             's'=>$settingRepository
         ];        
-        try { 
-                if ($request->getMethod() === Method::POST) {
-                    $form = new FamilyForm();
-                    if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
-                        $this->familyService->saveFamily(new Family(), $form);
-                        return $this->webService->getRedirectResponse('family/index');  
-                    } 
-                    $parameters['errors'] = $form->getFormErrors();
-                }
-                return $this->viewRenderer->render('__form', $parameters);
-        } catch (\Exception $e) {
-                unset($e);
-                $this->flash('info', 'Fill in all the fields.');
-                return $this->viewRenderer->render('__form', $parameters);
+        if ($request->getMethod() === Method::POST) {
+            $form = new FamilyForm();
+            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+                $this->familyService->saveFamily(new Family(), $form);
+                return $this->webService->getRedirectResponse('family/index');  
+            } 
+            $parameters['errors'] = $form->getFormErrors();
         }
-        return $this->viewRenderer->render('__form', $parameters);        
+        return $this->viewRenderer->render('__form', $parameters);
     }
     
     /**
@@ -196,9 +188,9 @@ final class FamilyController
     /**
      * @param CurrentRoute $currentRoute
      * @param FamilyRepository $familyRepository
-     * @return object|null
+     * @return Family|null
      */
-    private function family(CurrentRoute $currentRoute, FamilyRepository $familyRepository): object|null
+    private function family(CurrentRoute $currentRoute, FamilyRepository $familyRepository): Family|null
     {
         $family_id = $currentRoute->getArgument('id');
         if (null!==$family_id) {

@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Invoice\InvItem;
 
 use App\Invoice\Entity\InvItem;
-use App\Invoice\Helpers\DateHelper;
 use App\Invoice\Entity\InvItemAmount;
 use App\Invoice\InvItemAmount\InvItemAmountRepository as IIAR;
 use App\Invoice\InvItemAmount\InvItemAmountService as IIAS;
@@ -25,7 +24,7 @@ final class InvItemService
     
     /**
      * 
-     * @param object $model
+     * @param InvItem $model
      * @param InvItemForm $form
      * @param string $inv_id
      * @param PR $pr
@@ -36,7 +35,7 @@ final class InvItemService
      * @param UNR $unR
      * @return void
      */
-    public function addInvItem_product(object $model, InvItemForm $form, string $inv_id,PR $pr, TRR $trr , IIAS $iias, IIAR $iiar, SR $s, UNR $unR): void
+    public function addInvItem_product(InvItem $model, InvItemForm $form, string $inv_id,PR $pr, TRR $trr , IIAS $iias, IIAR $iiar, SR $s, UNR $unR): void
     {        
        // This function is used in product/save_product_lookup_item_product when adding a product using the modal 
        $tax_rate_id = ((null !==($form->getTax_rate_id())) ? $form->getTax_rate_id() : '');
@@ -83,7 +82,7 @@ final class InvItemService
     
     /**
      * 
-     * @param object $model
+     * @param InvItem $model
      * @param InvItemForm $form
      * @param string $inv_id
      * @param PR $pr
@@ -91,7 +90,7 @@ final class InvItemService
      * @param UNR $unR
      * @return int
      */
-    public function saveInvItem_product(object $model, InvItemForm $form, string $inv_id,PR $pr, SR $s, UNR $unR): int
+    public function saveInvItem_product(InvItem $model, InvItemForm $form, string $inv_id,PR $pr, SR $s, UNR $unR): int
     {        
        // This function is used in invitem/edit_product when editing an item on the inv view
        // see https://github.com/cycle/orm/issues/348
@@ -135,7 +134,7 @@ final class InvItemService
     }
     
     /**
-     * @param object $model
+     * @param InvItem $model
      * @param InvItemForm $form
      * @param string $inv_id
      * @param taskR $taskR
@@ -145,7 +144,7 @@ final class InvItemService
      * @param SR $s
      * @return void
      */
-    public function addInvItem_task(object $model, InvItemForm $form, string $inv_id, taskR $taskR, TRR $trr , IIAS $iias, IIAR $iiar, SR $s): void
+    public function addInvItem_task(InvItem $model, InvItemForm $form, string $inv_id, taskR $taskR, TRR $trr , IIAS $iias, IIAR $iiar, SR $s): void
     {        
        // This function is used in task/selection_inv when adding a new task from the modal
        // see https://github.com/cycle/orm/issues/348
@@ -189,14 +188,14 @@ final class InvItemService
     }
     
     /**
-     * @param object $model
+     * @param InvItem $model
      * @param InvItemForm $form
      * @param string $inv_id
      * @param taskR $taskR
      * @param SR $s
      * @return int
      */
-    public function saveInvItem_task(object $model, InvItemForm $form, string $inv_id, taskR $taskR, SR $s): int
+    public function saveInvItem_task(InvItem $model, InvItemForm $form, string $inv_id, taskR $taskR, SR $s): int
     {        
        // This function is used in invitem/edit_task when editing an item on the inv view
        // see https://github.com/cycle/orm/issues/348
@@ -274,10 +273,10 @@ final class InvItemService
     
     /**
      * 
-     * @param object $model
+     * @param InvItem $model
      * @return void
      */
-    public function deleteInvItem(object $model): void 
+    public function deleteInvItem(InvItem $model): void 
     {
         $this->repository->delete($model);
     }

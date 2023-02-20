@@ -17,8 +17,15 @@ final class CompanyPrivateService
     {
         $this->repository = $repository;
     }
-
-    public function saveCompanyPrivate(object $model, CompanyPrivateForm $form, SettingRepository $s): void
+    
+    /**
+     * 
+     * @param CompanyPrivate $model
+     * @param CompanyPrivateForm $form
+     * @param SettingRepository $s
+     * @return void
+     */
+    public function saveCompanyPrivate(CompanyPrivate $model, CompanyPrivateForm $form, SettingRepository $s): void
     {
        //null!==$form->getCompany_id() ? $model->setCompany($model->getCompany()->getId() == $form->getCompany_id() ? $model->getCompany() : null): ''; 
        null!==$form->getCompany_id() ? $model->setCompany_id($form->getCompany_id()) : '';
@@ -33,6 +40,13 @@ final class CompanyPrivateService
        $this->repository->save($model);
     }
     
+    /**
+     * 
+     * @param CompanyPrivate $model
+     * @param CompanyPrivateForm $form
+     * @param SettingRepository $s
+     * @return void
+     */
     public function addCompanyPrivate(CompanyPrivate $model, CompanyPrivateForm $form, SettingRepository $s): void
     {
        null!==$form->getCompany_id() ? $model->setCompany_id($form->getCompany_id()) : '';
@@ -47,7 +61,12 @@ final class CompanyPrivateService
        $this->repository->save($model);
     }
     
-    public function deleteCompanyPrivate(array|object|null $model): void
+    /**
+     * 
+     * @param array|CompanyPrivate|null $model
+     * @return void
+     */
+    public function deleteCompanyPrivate(array|CompanyPrivate|null $model): void
     {
         $this->repository->delete($model);
     }

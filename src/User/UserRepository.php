@@ -6,13 +6,12 @@ namespace App\User;
 
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of User
  * @extends Select\Repository<TEntity>
  */
 final class UserRepository extends Select\Repository
@@ -61,7 +60,13 @@ final class UserRepository extends Select\Repository
         return $this->prepareDataReader($query);
     }
 
-    public function findAll(array $scope = [], array $orderBy = []): EntityReader
+    /**
+     * 
+     * @param array $scope
+     * @param array $orderBy
+     * @return EntityReader
+     */
+    public function findAllUsers(array $scope = [], array $orderBy = []): EntityReader
     {
         return new EntityReader($this
             ->select()
@@ -72,28 +77,32 @@ final class UserRepository extends Select\Repository
     /**
      * @param string $id
      *
-     * @return object|null
+     * @return User|null
+     * @psalm-return TEntity|null
      */
-    public function findById(string $id): object|null
+    public function findById(string $id): User|null
     {
         return $this->findByPK($id);
     }
 
-    public function findByLogin(string $login): ?User
+    /**
+     * @param string $login
+     *
+     * @return User|null
+     * @psalm-return TEntity|null
+     */
+    public function findByLogin(string $login): User|null
     {
         return $this->findBy('login', $login);
     }
 
     /**
-     * @psalm-suppress MoreSpecificReturnType ?User
      * @param string $login
      * @return User|null
+     * @psalm-return TEntity|null
      */
-    public function findByLoginWithAuthIdentity(string $login): ?User
+    public function findByLoginWithAuthIdentity(string $login): User|null
     {
-        /**
-         * @psalm-suppress LessSpecificReturnStatement
-         */
         return $this
             ->select()
             ->where(['login' => $login])
@@ -110,16 +119,13 @@ final class UserRepository extends Select\Repository
     }
     
     /**
-     * @psalm-suppress MoreSpecificReturnType ?User
      * @param string $field
      * @param string $value
      * @return User|null
+     * @psalm-return TEntity|null
      */
-    private function findBy(string $field, string $value): ?User
+    private function findBy(string $field, string $value): User|null
     {
-        /**
-         * @psalm-suppress LessSpecificReturnStatement 
-         */
         return $this->findOne([$field => $value]);
     }
 }

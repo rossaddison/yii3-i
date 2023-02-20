@@ -14,8 +14,14 @@ final class TaxRateService
     {
         $this->repository = $repository;
     }
-
-    public function saveTaxRate(object $model, TaxRateForm $form): void
+    
+    /**
+     * 
+     * @param TaxRate $model
+     * @param TaxRateForm $form
+     * @return void
+     */
+    public function saveTaxRate(TaxRate $model, TaxRateForm $form): void
     {
         $form->getTax_rate_name() ? $model->setTax_rate_name($form->getTax_rate_name()) : '';
         $form->getTax_rate_percent() ? $model->setTax_rate_percent($form->getTax_rate_percent()) : '';
@@ -28,7 +34,12 @@ final class TaxRateService
         $this->repository->save($model);
     }
     
-    public function deleteTaxRate(object $model): void
+    /**
+     * 
+     * @param TaxRate $model
+     * @return void
+     */
+    public function deleteTaxRate(TaxRate $model): void
     {
         $this->repository->delete($model);
     }

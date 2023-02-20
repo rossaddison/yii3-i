@@ -88,8 +88,9 @@ final class UnitController
         ];
         if ($request->getMethod() === Method::POST) {
             $form = new UnitForm();
+            $unit = new Unit();
             if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
-                $this->unitService->saveUnit(new Unit(), $form);
+                $this->unitService->saveUnit($unit, $form);
                 $this->flash($session, 'info', $settingRepository->trans('record_successfully_created'));
                 return $this->webService->getRedirectResponse('unit/index');
             }
@@ -149,10 +150,9 @@ final class UnitController
     public function delete(Session $session, CurrentRoute $currentRoute, UnitRepository $unitRepository): Response 
     {
         try {
+              /** @var Unit $unit */
               $unit = $this->unit($currentRoute, $unitRepository);              
-              if ($unit) {
-                $this->unitService->deleteUnit($unit);
-              }
+              $this->unitService->deleteUnit($unit);
               return $this->webService->getRedirectResponse('unit/index');
 	} catch (\Exception $e) {
               unset($e);
@@ -191,9 +191,9 @@ final class UnitController
     /**
      * @param CurrentRoute $currentRoute
      * @param UnitRepository $unitRepository
-     * @return object|null
+     * @return Unit|null
      */
-    private function unit(CurrentRoute $currentRoute, UnitRepository $unitRepository): object|null
+    private function unit(CurrentRoute $currentRoute, UnitRepository $unitRepository): Unit|null
     {
         $unit_id = $currentRoute->getArgument('id');
         if (null!==$unit_id) {

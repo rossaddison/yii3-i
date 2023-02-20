@@ -12,7 +12,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of QuoteItemAmount
  * @extends Select\Repository<TEntity>
  */
 final class QuoteItemAmountRepository extends Select\Repository
@@ -56,22 +56,22 @@ private EntityWriter $entityWriter;
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $quoteitemamount
+     * @param array|QuoteItemAmount|null $quoteitemamount
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $quoteitemamount): void
+    public function save(array|QuoteItemAmount|null $quoteitemamount): void
     {
         $this->entityWriter->write([$quoteitemamount]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $quoteitemamount
+     * @param array|QuoteItemAmount|null $quoteitemamount
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $quoteitemamount): void
+    public function delete(array|QuoteItemAmount|null $quoteitemamount): void
     {
         $this->entityWriter->delete([$quoteitemamount]);
     }
@@ -85,11 +85,11 @@ private EntityWriter $entityWriter;
     } 
     
     /**
-     * @return null|object
+     * @return null|QuoteItemAmount
      *
      * @psalm-return TEntity|null
      */
-    public function repoQuoteItemAmountquery(string $quote_item_id): object|null {
+    public function repoQuoteItemAmountquery(string $quote_item_id): QuoteItemAmount|null {
         $query = $this->select()
                       ->load(['quote_item'])
                       ->where(['quote_item_id' => $quote_item_id]);

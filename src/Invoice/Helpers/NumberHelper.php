@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Invoice\Helpers;
 
-
 use App\Invoice\Entity\InvAmount;
 use App\Invoice\Entity\InvTaxRate;
 use App\Invoice\Entity\Payment;

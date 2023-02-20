@@ -35,14 +35,16 @@ final class UserController
          
         /** @var array */
         $body = $request->getParsedBody();
+        
         $sortOrderString = $request->getQueryParams();
-
+        /** @var string $sortOrderString['sort'] */
         $sort = Sort::only(['id', 'login'])->withOrderString($sortOrderString['sort'] ?? 'id');
 
         $dataReader = $this->users_with_sort($userRepository, $sort); 
 
         $page = (int) $currentRoute->getArgument('page', '1');
-
+        
+        /** @var null|string $body['pageSize'] */
         $pageSize = (int) $currentRoute->getArgument(
             'pagesize',
             $body['pageSize'] ?? (string) OffSetPaginator::DEFAULT_PAGE_SIZE,

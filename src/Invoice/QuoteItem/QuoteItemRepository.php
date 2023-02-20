@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Invoice\QuoteItem;
 
+use App\Invoice\Entity\QuoteItem;
 use Cycle\ORM\Select;
 use Cycle\Database\Injection\Parameter;
 use Throwable;
@@ -12,7 +13,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of QuoteItem
  * @extends Select\Repository<TEntity>
  */
 final class QuoteItemRepository extends Select\Repository
@@ -58,22 +59,22 @@ private EntityWriter $entityWriter;
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $quoteitem
+     * @param array|QuoteItem|null $quoteitem
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $quoteitem): void
+    public function save(array|QuoteItem|null $quoteitem): void
     {
         $this->entityWriter->write([$quoteitem]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $quoteitem
+     * @param array|QuoteItem|null $quoteitem
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $quoteitem): void
+    public function delete(array|QuoteItem|null $quoteitem): void
     {
         $this->entityWriter->delete([$quoteitem]);
     }
@@ -87,11 +88,11 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @return null|object
+     * @return null|QuoteItem
      *
      * @psalm-return TEntity|null
      */
-    public function repoQuoteItemquery(string $id):object|null    {
+    public function repoQuoteItemquery(string $id):QuoteItem|null    {
         $query = $this->select()->load(['tax_rate','product','quote'])->where(['id' => $id]);
         return  $query->fetchOne() ?: null;        
     }    

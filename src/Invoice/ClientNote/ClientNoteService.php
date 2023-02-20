@@ -28,12 +28,12 @@ final class ClientNoteService
     
     /**
      * 
-     * @param object $model
+     * @param ClientNote $model
      * @param ClientNoteForm $form
      * @param SettingRepository $s
      * @return void
      */
-    public function saveClientNote(object $model, ClientNoteForm $form, SettingRepository $s): void
+    public function saveClientNote(ClientNote $model, ClientNoteForm $form, SettingRepository $s): void
     {
        //Psalm Level 3: ERROR: PossiblyNullReference - src/Invoice/ClientNote/ClientNoteService.php:58:33 - Cannot call method getClient_id on possibly null value (see https://psalm.dev/083)
        //&& $model->getClient()->getClient_id() == $form->getClient_id()
@@ -56,10 +56,10 @@ final class ClientNoteService
     
     /**
      * 
-     * @param array|object|null $model
+     * @param array|ClientNote|null $model
      * @return void
      */
-    public function deleteClientNote(array|object|null $model): void
+    public function deleteClientNote(array|ClientNote|null $model): void
     {
         $this->repository->delete($model);
     }

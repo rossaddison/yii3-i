@@ -17,7 +17,13 @@ final class InvAmountService
         $this->repository = $repository;
     }
     
-    public function initializeInvAmount(object $model, string $inv_id) : void
+    /**
+     * 
+     * @param InvAmount $model
+     * @param string $inv_id
+     * @return void
+     */
+    public function initializeInvAmount(InvAmount $model, string $inv_id) : void
     {
        $inv_id ? $model->setInv_id((int)$inv_id) : '';
        $model->setSign(1);
@@ -30,7 +36,14 @@ final class InvAmountService
        $this->repository->save($model);
     }
 
-    public function initializeCreditInvAmount(object $model, int $basis_inv_id, string $new_inv_id) : void
+    /**
+     * 
+     * @param InvAmount $model
+     * @param int $basis_inv_id
+     * @param string $new_inv_id
+     * @return void
+     */
+    public function initializeCreditInvAmount(InvAmount $model, int $basis_inv_id, string $new_inv_id) : void
     {
        $basis_invoice = $this->repository->repoInvquery($basis_inv_id);
        if (null!==$basis_invoice) {
@@ -46,7 +59,14 @@ final class InvAmountService
        }
     }
 
-    public function initializeCopyInvAmount(object $model, int $basis_inv_id, string $new_inv_id) : void
+    /**
+     * 
+     * @param InvAmount $model
+     * @param int $basis_inv_id
+     * @param string $new_inv_id
+     * @return void
+     */
+    public function initializeCopyInvAmount(InvAmount $model, int $basis_inv_id, string $new_inv_id) : void
     {
         $basis_invoice = $this->repository->repoInvquery($basis_inv_id);
         if ($basis_invoice) {
@@ -63,7 +83,13 @@ final class InvAmountService
         }
     } 
 
-    public function saveInvAmount(object $model, InvAmountForm $form): void
+    /**
+     * 
+     * @param InvAmount $model
+     * @param InvAmountForm $form
+     * @return void
+     */
+    public function saveInvAmount(InvAmount $model, InvAmountForm $form): void
     {  
        $form->getInv_id() ? $model->setInv_id($form->getInv_id()) : '';
        $model->setSign(1);
@@ -76,7 +102,13 @@ final class InvAmountService
        $this->repository->save($model);
     }
     
-    public function saveInvAmountViaCalculations(object $model, array  $array): void
+    /**
+     * 
+     * @param InvAmount $model
+     * @param array $array
+     * @return void
+     */
+    public function saveInvAmountViaCalculations(InvAmount $model, array  $array): void
     {        
        $model->setInv_id($array['inv_id']);
        $model->setItem_subtotal($array['item_subtotal']);
@@ -88,7 +120,12 @@ final class InvAmountService
        $this->repository->save($model);
     }
     
-    public function deleteInvAmount(object $model): void
+    /**
+     * 
+     * @param InvAmount $model
+     * @return void
+     */
+    public function deleteInvAmount(InvAmount $model): void
     {
         $this->repository->delete($model);
     }

@@ -249,9 +249,9 @@ final class GeneratorController
     /**
      * @param CurrentRoute $currentRoute
      * @param GeneratorRepository $generatorRepository
-     * @return object|null
+     * @return Gentor|null
      */
-    private function generator(CurrentRoute $currentRoute, GeneratorRepository $generatorRepository): object|null{
+    private function generator(CurrentRoute $currentRoute, GeneratorRepository $generatorRepository): Gentor|null{
         $id = $currentRoute->getArgument('id');
         if (null!==$id) {
             $generator = $generatorRepository->repoGentorQuery($id);
@@ -284,10 +284,10 @@ final class GeneratorController
     
     /**
      * 
-     * @param object $generator
+     * @param Gentor $generator
      * @return array
      */
-    private function body(object $generator): array {
+    private function body(Gentor $generator): array {
         $body = [
                 'route_prefix' => $generator->getRoute_prefix(),
                 'route_suffix' => $generator->getRoute_suffix(),
@@ -876,13 +876,13 @@ final class GeneratorController
     /**
      * 
      * @param View $view
-     * @param object $generator
+     * @param Gentor $generator
      * @param \Yiisoft\Data\Reader\DataReaderInterface $relations
      * @param \Cycle\Database\TableInterface $orm_schema
      * @param string $file
      * @return string
      */
-    private function getContent(View $view, object $generator,\Yiisoft\Data\Reader\DataReaderInterface $relations,\Cycle\Database\TableInterface $orm_schema,string $file): string{
+    private function getContent(View $view, Gentor $generator,\Yiisoft\Data\Reader\DataReaderInterface $relations,\Cycle\Database\TableInterface $orm_schema,string $file): string{
         return $content = $view->render("//invoice/generator/templates_protected/".$file,['generator' => $generator,
                 'relations'=>$relations,
                 'orm_schema'=>$orm_schema,

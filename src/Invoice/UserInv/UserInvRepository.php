@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace App\Invoice\UserInv;
 
 use Cycle\ORM\Select;
+use App\Invoice\Entity\UserInv;
 use Throwable;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of UserInv
  * @extends Select\Repository<TEntity>
  */
 final class UserInvRepository extends Select\Repository
@@ -57,22 +58,22 @@ private EntityWriter $entityWriter;
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $userinv
+     * @param array|UserInv|null $userinv
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $userinv): void
+    public function save(array|UserInv|null $userinv): void
     {
         $this->entityWriter->write([$userinv]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $userinv
+     * @param array|UserInv|null $userinv
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $userinv): void
+    public function delete(array|UserInv|null $userinv): void
     {
         $this->entityWriter->delete([$userinv]);
     }
@@ -85,7 +86,7 @@ private EntityWriter $entityWriter;
         );
     }
     
-    public function repoUserInvquery(string $id): object|null {
+    public function repoUserInvquery(string $id): UserInv|null {
         $query = $this->select()
                       ->where(['id'=>$id]);
         return  $query->fetchOne() ?: null;        
@@ -97,7 +98,7 @@ private EntityWriter $entityWriter;
         return  $query->count();
     }
     
-    public function repoUserInvUserIdquery(string $user_id): object|null    {
+    public function repoUserInvUserIdquery(string $user_id): UserInv|null    {
         $query = $this->select()
                       ->where(['user_id'=>$user_id]);
         return  $query->fetchOne() ?: null;        

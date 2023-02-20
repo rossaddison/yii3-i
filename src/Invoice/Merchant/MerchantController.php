@@ -215,9 +215,9 @@ final class MerchantController
     /**
      * @param CurrentRoute $currentRoute
      * @param MerchantRepository $merchantRepository
-     * @return object|null
+     * @return Merchant|null
      */
-    private function merchant(CurrentRoute $currentRoute, MerchantRepository $merchantRepository): object|null
+    private function merchant(CurrentRoute $currentRoute, MerchantRepository $merchantRepository): Merchant|null
     {
         $id = $currentRoute->getArgument('id');       
         if (null!==$id) {
@@ -240,10 +240,10 @@ final class MerchantController
     
     /**
      * 
-     * @param object $merchant
+     * @param Merchant $merchant
      * @return array
      */
-    private function body(object $merchant): array {
+    private function body(Merchant $merchant): array {
         $body = [
           'inv_id'=>$merchant->getInv_id(),
           'successful'=>$merchant->getSuccessful(),

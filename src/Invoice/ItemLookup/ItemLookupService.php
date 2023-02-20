@@ -17,7 +17,13 @@ final class ItemLookupService
         $this->repository = $repository;
     }
 
-    public function saveItemLookup(object $model, ItemLookupForm $form): void
+    /**
+     * 
+     * @param ItemLookup $model
+     * @param ItemLookupForm $form
+     * @return void
+     */
+    public function saveItemLookup(ItemLookup $model, ItemLookupForm $form): void
     {
         
        $model->setName($form->getName());
@@ -27,7 +33,12 @@ final class ItemLookupService
         $this->repository->save($model);
     }
     
-    public function deleteItemLookup(object $model): void
+    /**
+     * 
+     * @param ItemLookup $model
+     * @return void
+     */
+    public function deleteItemLookup(ItemLookup $model): void
     {
         $this->repository->delete($model);
     }

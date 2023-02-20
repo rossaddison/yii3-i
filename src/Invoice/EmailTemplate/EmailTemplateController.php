@@ -227,6 +227,7 @@ final class EmailTemplateController
     public function get_content(Request $request, EmailTemplateRepository $etR) : \Yiisoft\DataResponse\DataResponse {
         //views/invoice/inv/mailer_invoice'
         $get_content = $request->getQueryParams();
+        /** @var int $get_content['email_template_id'] */
         $email_template_id = $get_content['email_template_id'];
         $email_template = $etR->repoEmailTemplateCount((string)$email_template_id) > 0 ? $etR->repoEmailTemplatequery((string)$email_template_id) : null;
         return $this->factory->createResponse(Json::htmlEncode(($email_template ? 
@@ -280,7 +281,7 @@ final class EmailTemplateController
     }
     
     private function emailtemplate(CurrentRoute $currentRoute, 
-                                   EmailTemplateRepository $emailtemplateRepository): object|null {
+                                   EmailTemplateRepository $emailtemplateRepository): EmailTemplate|null {
         $email_template_id = $currentRoute->getArgument('email_template_id');       
         if (null!==$email_template_id) {
             $emailtemplate = $emailtemplateRepository->repoEmailTemplatequery($email_template_id);
@@ -301,10 +302,10 @@ final class EmailTemplateController
     
     /**
      * 
-     * @param object $emailtemplate
+     * @param EmailTemplate $emailtemplate
      * @return array
      */
-    private function body(object $emailtemplate): array {
+    private function body(EmailTemplate $emailtemplate): array {
         $body = [
                 'email_template_title'=>$emailtemplate->getEmail_template_title(),
                 'email_template_type'=>$emailtemplate->getEmail_template_type(),

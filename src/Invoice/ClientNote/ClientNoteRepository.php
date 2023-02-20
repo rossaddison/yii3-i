@@ -12,7 +12,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of ClientNote
  * @extends Select\Repository<TEntity>
  */
 final class ClientNoteRepository extends Select\Repository
@@ -55,22 +55,22 @@ private EntityWriter $entityWriter;
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $clientnote
+     * @param array|ClientNote|null $clientnote
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $clientnote): void
+    public function save(array|ClientNote|null $clientnote): void
     {
         $this->entityWriter->write([$clientnote]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $clientnote
+     * @param array|ClientNote|null $clientnote
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $clientnote): void
+    public function delete(array|ClientNote|null $clientnote): void
     {
         $this->entityWriter->delete([$clientnote]);
     }
@@ -84,11 +84,11 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @return null|object
+     * @return null|ClientNote
      *
      * @psalm-return TEntity|null
      */
-    public function repoClientNotequery(string $id): object|null    {
+    public function repoClientNotequery(string $id): ClientNote|null    {
         $query = $this->select()->load('client')->where(['id' => $id]);
         return  $query->fetchOne() ?: null;        
     }    

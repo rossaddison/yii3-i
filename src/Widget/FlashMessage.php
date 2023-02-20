@@ -17,11 +17,13 @@ final class FlashMessage extends Widget
         $flashes = $this->flash->getAll();
 
         $html = [];
+        /** @var array $data */
         foreach ($flashes as $type => $data) {
+            /** @var array $message */
             foreach ($data as $message) {
                 $html[] = Alert::widget()
                     ->options(['class' => "alert-{$type} shadow"])
-                    ->body($message['body']);
+                    ->body((string)$message['body']);
             }
         }
         return implode($html);

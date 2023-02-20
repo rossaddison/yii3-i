@@ -97,8 +97,9 @@ final class UserClientController
         ];
         if ($request->getMethod() === Method::POST) {
             $form = new UserClientForm();
+            $user_client = new UserClient();
             if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
-                $this->userclientService->saveUserClient(new UserClient(),$form);
+                $this->userclientService->saveUserClient($user_client, $form);
                 return $this->webService->getRedirectResponse('userclient/index');
             }
             $parameters['errors'] = $form->getFormErrors();
@@ -120,13 +121,11 @@ final class UserClientController
         $user_client = $this->userclient($currentRoute, $userclientRepository);
         if (null!==$user_client) {
             $user_id = $user_client->getUser_Id();
-            if (null!==$user_id) {
-                $this->userclientService->deleteUserClient($user_client);               
-                $user_inv = $uiR->repoUserInvUserIdquery($user_id);
-                if (null!==$user_inv) {
-                    return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/userclient_successful',
-                    ['heading'=>$sR->trans('client'),'message'=>$sR->trans('record_successfully_deleted'),'url'=>'userinv/client','id'=>$user_inv->getId()]));  
-                }
+            $this->userclientService->deleteUserClient($user_client);               
+            $user_inv = $uiR->repoUserInvUserIdquery($user_id);
+            if (null!==$user_inv) {
+                return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/userclient_successful',
+                ['heading'=>$sR->trans('client'),'message'=>$sR->trans('record_successfully_deleted'),'url'=>'userinv/client','id'=>$user_inv->getId()]));  
             }
             return $this->webService->getRedirectResponse('userclient/index');
         }
@@ -162,6 +161,7 @@ final class UserClientController
             if ($request->getMethod() === Method::POST) {
                 $form = new UserClientForm();
                 $body = $request->getParsedBody();
+                $user_client = new UserClient();
                 if ($form->load($body) && $validator->validate($form)->isValid()) {
                     $this->userclientService->saveUserClient($user_client, $form);
                     return $this->webService->getRedirectResponse('userclient/index');
@@ -214,9 +214,10 @@ final class UserClientController
             if ($request->getMethod() === Method::POST) {
                 $body = $request->getParsedBody();
                 if (is_array($body)) {
+                    /** @var string $value */
                     foreach ($body as $key => $value) {
                         // If the user is allowed to see all clients eg. An Accountant
-                        if (((string)$key === 'user_all_clients') && ((string)$value === '1')) {
+                        if (((string)$key === 'user_all_clients') && ($value === '1')) {
                             // Unassign currently assigned clients
                             $ucR->unassign_to_user_client($user_id);
                             // Search for all clients, including new clients and assign them aswell
@@ -231,12 +232,12 @@ final class UserClientController
                             $form = new UserClientForm();
                             if ($form->load($form_array) && $validator->validate($form)->isValid()
                                 // Check that the user client does not exist    
-                                                         && !$ucR->repoUserClientqueryCount($user_id,(string)$value) > 0){
+                                                         && !$ucR->repoUserClientqueryCount($user_id, $value) > 0){
                                 $this->userclientService->saveUserClient(new UserClient(),$form);
                                 $this->flash($session, 'info' , $sR->trans('record_successfully_updated'));
                                 return $this->webService->getRedirectResponse('userinv/index');
                             }
-                            if ($ucR->repoUserClientqueryCount($user_id,(string)$value) > 0) {
+                            if ($ucR->repoUserClientqueryCount($user_id, $value) > 0) {
                                 $this->flash($session, 'info' , $sR->trans('client_already_exists'));
                                 return $this->webService->getRedirectResponse('userinv/index');
                             }
@@ -289,9 +290,9 @@ final class UserClientController
      * 
      * @param CurrentRoute $currentRoute
      * @param UIR $uiR
-     * @return object|null
+     * @return UserInv|null
      */
-    private function user(CurrentRoute $currentRoute, UIR $uiR): object|null 
+    private function user(CurrentRoute $currentRoute, UIR $uiR): UserInv|null 
     {
         $user_id = $currentRoute->getArgument('user_id');       
         if (null!==$user_id) {
@@ -304,9 +305,9 @@ final class UserClientController
     /**
      * @param CurrentRoute $currentRoute
      * @param UserClientRepository $userclientRepository
-     * @return object|null
+     * @return UserClient|null
      */
-    private function userclient(CurrentRoute $currentRoute,UserClientRepository $userclientRepository): object|null 
+    private function userclient(CurrentRoute $currentRoute,UserClientRepository $userclientRepository): UserClient|null 
     {
         $id = $currentRoute->getArgument('id');       
         if (null!==$id) {
@@ -329,10 +330,10 @@ final class UserClientController
     
     /**
      * 
-     * @param object $userclient
+     * @param UserClient $userclient
      * @return array
      */
-    private function body(object $userclient): array {
+    private function body(UserClient $userclient): array {
         $body = [
           'id'=>$userclient->getId(),
           'user_id'=>$userclient->getUser_id(),

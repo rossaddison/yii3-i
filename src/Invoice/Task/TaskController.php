@@ -106,17 +106,17 @@ final class TaskController
         return $this->viewRenderer->render('index', $parameters);  
     }
     
-    /**
-     * 
-     * @param ViewRenderer $head
-     * @param SessionInterface $session
-     * @param Request $request
-     * @param ValidatorInterface $validator
-     * @param sR $sR
-     * @param prjctR $projectRepository
-     * @param trR $trR
-     * @return Response
-     */
+   /**
+    * 
+    * @param ViewRenderer $head
+    * @param SessionInterface $session
+    * @param Request $request
+    * @param ValidatorInterface $validator
+    * @param sR $sR
+    * @param prjctR $projectRepository
+    * @param trR $trR
+    * @return Response
+    */
     public function add(ViewRenderer $head,SessionInterface $session, Request $request, 
                         ValidatorInterface $validator,
                         sR $sR,                        
@@ -140,9 +140,8 @@ final class TaskController
         if ($request->getMethod() === Method::POST) {
             $form = new TaskForm();
             if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
-                $this->taskService->saveTask(new Task(),$form, $sR);
+                $this->taskService->saveTask(new Task(), $form, $sR);
                 $this->flash($session, 'info', $sR->trans('record_successfully_created'));
-                return $this->webService->getRedirectResponse('task/index');
             }
             $parameters['errors'] = $form->getFormErrors();
         }
@@ -169,7 +168,7 @@ final class TaskController
                         prjctR $projectRepository,
                         trR $tax_rateRepository
     ): Response {
-        $task = $this->task($currentRoute, $tR);
+            $task = $this->task($currentRoute, $tR);
             if ($task) {
             $parameters = [
                 'title' => 'Edit',
@@ -185,8 +184,8 @@ final class TaskController
                 'tax_rates'=>$tax_rateRepository->findAllPreloaded(),
             ];
             if ($request->getMethod() === Method::POST) {
-                $form = new TaskForm();
                 $body = $request->getParsedBody();
+                $form = new TaskForm();
                 if ($form->load($body) && $validator->validate($form)->isValid()) {
                     $this->taskService->saveTask($task, $form, $sR);
                     $this->flash($session, 'info', $sR->trans('record_successfully_updated'));
@@ -211,10 +210,9 @@ final class TaskController
     public function delete(SessionInterface $session, CurrentRoute $currentRoute, sR $sR, tR $tR 
     ): Response {
             $task = $this->task($currentRoute, $tR);
-            if ($task) {
-                $this->taskService->deleteTask($task); 
-                $this->flash($session, 'info', $sR->trans('record_successfully_deleted'));
-            }
+            /** @var Task $task */
+            $this->taskService->deleteTask($task); 
+            $this->flash($session, 'info', $sR->trans('record_successfully_deleted'));
             return $this->webService->getRedirectResponse('task/index'); 	
     }
     
@@ -265,28 +263,28 @@ final class TaskController
                                   tR $taskR, sR $sR, trR $trR, iiaR $iiaR, iiR $iiR, itrR $itrR, iaR $iaR, iR $iR, pymR $pymR)
                                   : \Yiisoft\DataResponse\DataResponse {        
         $select_items = $request->getQueryParams();
+        /** @var array $task_ids */
         $task_ids = ($select_items['task_ids'] ? $select_items['task_ids'] : []);
-        $inv_id = $select_items['inv_id'];
+        $inv_id = (string)$select_items['inv_id'];
         // Use Spiral||Cycle\Database\Injection\Parameter to build 'IN' array of tasks.
         $tasks = $taskR->findinTasks($task_ids);
         $numberHelper = new NumberHelper($sR);
         // Format the task prices according to comma or point or other setting choice.
         $order = 1;
-        foreach ($tasks as $task) {
-           if ($task instanceof Task) { 
+        /** @var Task $task */ 
+        foreach ($tasks as $task) {           
             $task->setPrice((float)$numberHelper->format_amount($task->getPrice()));
             $this->save_task_lookup_item_inv($order, $task, $inv_id, $taskR, $trR, $iiaR, $sR, $validator);
-           } 
             $order++;          
         }
-        $numberHelper->calculate_inv($session->get('inv_id'), $iiR, $iiaR, $itrR, $iaR, $iR, $pymR);
+        $numberHelper->calculate_inv((string)$session->get('inv_id'), $iiR, $iiaR, $itrR, $iaR, $iR, $pymR);
         return $this->factory->createResponse(Json::encode($tasks));        
     }
     
 /**
  * 
  * @param int $order
- * @param object $task
+ * @param Task $task
  * @param string $inv_id
  * @param tR $taskR
  * @param trR $trR
@@ -295,7 +293,7 @@ final class TaskController
  * @param ValidatorInterface $validator
  * @return void
  */    
-private function save_task_lookup_item_inv(int $order, object $task, string $inv_id, tR $taskR, trR $trR, iiaR $iiaR, sR $sR, ValidatorInterface $validator) : void {
+private function save_task_lookup_item_inv(int $order, Task $task, string $inv_id, tR $taskR, trR $trR, iiaR $iiaR, sR $sR, ValidatorInterface $validator) : void {
            $form = new InvItemForm();
            $ajax_content = [
                 'name'=> $task->getName(),        
@@ -351,9 +349,9 @@ private function save_task_lookup_item_inv(int $order, object $task, string $inv
     /**
      * @param CurrentRoute $currentRoute
      * @param tR $tR
-     * @return object|null
+     * @return Task|null
      */
-    private function task(CurrentRoute $currentRoute, tR $tR): object|null
+    private function task(CurrentRoute $currentRoute, tR $tR): Task|null
     {
         $id = $currentRoute->getArgument('id');       
         if (null!==$id) {
@@ -376,10 +374,10 @@ private function save_task_lookup_item_inv(int $order, object $task, string $inv
     
     /**
      * 
-     * @param object $task
+     * @param Task $task
      * @return array
      */
-    private function body(object $task): array {
+    private function body(Task $task): array {
         $body = [                
           'id'=>$task->getId(),
           'project_id'=>$task->getProject_id(),

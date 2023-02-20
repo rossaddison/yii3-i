@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Invoice\ProductCustom;
 
+use App\Invoice\Entity\ProductCustom;
+
 final class ProductCustomService
 {
     private ProductCustomRepository $repository;
@@ -13,7 +15,13 @@ final class ProductCustomService
         $this->repository = $repository;
     }
 
-    public function saveProductCustom(object $model, ProductCustomForm $form): void
+    /**
+     * 
+     * @param ProductCustom $model
+     * @param ProductCustomForm $form
+     * @return void
+     */
+    public function saveProductCustom(ProductCustom $model, ProductCustomForm $form): void
     { 
        $form->getProduct_id() ? $model->setProduct_id($form->getProduct_id()) : '';
        $form->getCustom_field_id() ? $model->setCustom_field_id($form->getCustom_field_id()) : '';
@@ -21,7 +29,12 @@ final class ProductCustomService
        $this->repository->save($model);
     }
     
-    public function deleteProductCustom(object $model): void
+    /**
+     * 
+     * @param ProductCustom $model
+     * @return void
+     */
+    public function deleteProductCustom(ProductCustom $model): void
     {
         $this->repository->delete($model);
     }

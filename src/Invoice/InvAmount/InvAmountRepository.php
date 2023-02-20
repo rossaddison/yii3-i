@@ -14,7 +14,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of InvAmount
  * @extends Select\Repository<TEntity>
  */
 final class InvAmountRepository extends Select\Repository
@@ -56,24 +56,29 @@ private EntityWriter $entityWriter;
     
     /**
      * 
-     * @param array|object|null $invamount
+     * @param array|InvAmount|null $invamount
      * @return void
      */
-    public function save(array|object|null $invamount): void
+    public function save(array|InvAmount|null $invamount): void
     {
         $this->entityWriter->write([$invamount]);
     }
     
     /**
      * 
-     * @param array|object|null $invamount
+     * @param array|InvAmount|null $invamount
      * @return void
      */
-    public function delete(array|object|null $invamount): void
+    public function delete(array|Invamount|null $invamount): void
     {
         $this->entityWriter->delete([$invamount]);
     }
     
+    /**
+     * 
+     * @param Select $query
+     * @return EntityReader
+     */
     private function prepareDataReader(Select $query): EntityReader
     {
         return (new EntityReader($query))->withSort(
@@ -82,6 +87,11 @@ private EntityWriter $entityWriter;
         );
     }
     
+    /**
+     * 
+     * @param int $inv_id
+     * @return int
+     */
     public function repoInvAmountCount(int $inv_id) : int {
         $count = $this->select()
                       ->where(['inv_id' => $inv_id])
@@ -89,7 +99,12 @@ private EntityWriter $entityWriter;
         return $count;
     }
     
-    public function repoCreditInvoicequery(string $inv_id): null|object {
+    /**
+     * 
+     * @param string $inv_id
+     * @return null|InvAmount
+     */
+    public function repoCreditInvoicequery(string $inv_id): null|InvAmount {
         $query = $this->select()
                       ->load('inv')
                       ->where(['inv_id' => $inv_id])
@@ -97,7 +112,12 @@ private EntityWriter $entityWriter;
         return  $query->fetchOne() ?: null;        
     }
     
-    public function repoInvAmountquery(int $id): null|object {
+    /**
+     * 
+     * @param int $id
+     * @return null|InvAmount
+     */
+    public function repoInvAmountquery(int $id): null|InvAmount {
         $query = $this->select()
                       ->load('inv')
                       ->where(['id' => $id]);
@@ -122,6 +142,12 @@ private EntityWriter $entityWriter;
         return $count;
     }
     
+    /**
+     * 
+     * @param int $interval_end
+     * @param int $interval_start
+     * @return EntityReader
+     */
     public function Aging(int $interval_end, int $interval_start) : EntityReader {
         $end = (new \DateTimeImmutable('now'))->sub(new \DateInterval('P'.$interval_end.'D'))
                                               ->format('Y-m-d');
@@ -139,16 +165,27 @@ private EntityWriter $entityWriter;
     /**
      * 
      * @param int $inv_id
-     * @return object|null
+     * @return InvAmount|null
      */
-    public function repoInvquery(int $inv_id): object|null {
+    public function repoInvquery(int $inv_id): InvAmount|null {
         $query = $this->select()
                       ->where(['inv_id' => $inv_id]);
         return  $query->fetchOne() ?: null;    
     } 
     
+    /**
+     * 
+     * @param int $key
+     * @param array $range
+     * @param SR $sR
+     * @return EntityReader
+     */
     public function repoStatusTotals(int $key, array $range, SR $sR) : EntityReader {        
         $datehelper = new DateHelper($sR);
+        /** 
+         * @var \DateTimeImmutable $range['lower']
+         * @var \DateTimeImmutable $range['upper']
+         */
         $query = $this->select()
                       ->load('inv')
                       ->where(['inv.status_id' => $key])
@@ -158,10 +195,18 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @psalm-param SR<object> $sR
+     * 
+     * @param int $key
+     * @param array $range
+     * @param SR $sR
+     * @return int
      */
     public function repoStatusTotals_Num_Total(int $key, array $range, SR $sR) : int {        
         $datehelper = new DateHelper($sR);
+        /** 
+         * @var \DateTimeImmutable $range['lower']
+         * @var \DateTimeImmutable $range['upper']
+         */
         $query = $this->select()
                       ->load('inv')                
                       ->where(['inv.status_id' => $key])
@@ -181,9 +226,7 @@ private EntityWriter $entityWriter;
     public function get_status_totals(IR $iR, SR $sR, string $period) : array
     {
         $return = [];
-        $range = $sR->range($period);  
-        $this_total = 0;
-        
+        $range = $sR->range($period);          
         // 1 => class: 'draft', href: 1},
         // 2 => class: 'sent', href: 2}, 
         // 3 => class: 'viewed', href: 3}, 
@@ -191,10 +234,9 @@ private EntityWriter $entityWriter;
         foreach ($iR->getStatuses($sR) as $key => $status) {
             $status_specific_invoices = $this->repoStatusTotals($key, $range, $sR);
             $total = 0.00;
-            foreach ($status_specific_invoices as $invoice) {
-              if ($invoice instanceof InvAmount)  
-                $this_total = $invoice->getTotal();
-                $total += $this_total;
+             /** @var InvAmount $inv_amount */
+            foreach ($status_specific_invoices as $inv_amount) {
+               $total = $total + (float)$inv_amount->getTotal();
             }
             $return[$key] = [
                 'inv_status_id' => $key,

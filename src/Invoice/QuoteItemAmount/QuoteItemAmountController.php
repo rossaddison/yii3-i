@@ -203,10 +203,10 @@ final class QuoteItemAmountController
     /**
      * @param CurrentRoute $currentRoute
      * @param QuoteItemAmountRepository $quoteitemamountRepository
-     * @return object|null
+     * @return QuoteItemAmount|null
      */
     private function quoteitemamount(CurrentRoute $currentRoute, 
-                                     QuoteItemAmountRepository $quoteitemamountRepository): object|null 
+                                     QuoteItemAmountRepository $quoteitemamountRepository): QuoteItemAmount|null 
     {
         $id = $currentRoute->getArgument('id');       
         if (null!==$id) {
@@ -229,10 +229,10 @@ final class QuoteItemAmountController
     
     /**
      * 
-     * @param object $quoteitemamount
+     * @param QuoteItemAmount $quoteitemamount
      * @return array
      */
-    private function body(object $quoteitemamount): array {
+    private function body(QuoteItemAmount $quoteitemamount): array {
         $body = [
           'id'=>$quoteitemamount->getId(),
           'quote_item_id'=>$quoteitemamount->getQuote_item_id(),

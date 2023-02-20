@@ -3,7 +3,12 @@ declare(strict_types=1);
 
 namespace App\Invoice\Quote;
 // Entities
+use App\User\User;
 use App\Invoice\Entity\Quote;
+use App\Invoice\Entity\QuoteCustom;
+use App\Invoice\Entity\QuoteItem;
+use App\Invoice\Entity\QuoteTaxRate;
+
 // Repositories
 use App\Invoice\Group\GroupRepository as GR;
 use App\Invoice\QuoteAmount\QuoteAmountRepository as QAR;
@@ -35,13 +40,13 @@ final class QuoteService
     
     /**
      * 
-     * @param object $currentUser
-     * @param object $model
+     * @param User $user
+     * @param Quote $model
      * @param QuoteForm $form
      * @param SR $s
      * @return void
      */
-    public function addQuote(object $currentUser, object $model, QuoteForm $form, SR $s): void
+    public function addQuote(User $user, Quote $model, QuoteForm $form, SR $s): void
     { 
         null!==$form->getInv_id() ? $model->setInv_id((int)$form->getInv_id()) : '';
         null!==$form->getGroup_id() ? $model->setGroup_id($form->getGroup_id()) : '';
@@ -56,7 +61,7 @@ final class QuoteService
              $model->setInv_id(0);             
              !empty($form->getNumber()) ? $model->setNumber($form->getNumber()) : '';
              $model->setStatus_id(1);
-             $model->setUser_id((int)$currentUser->getId());
+             $model->setUser_id((int)$user->getId());
              $model->setUrl_key(Random::string(32));            
              $model->setDate_created(new \DateTimeImmutable('now'));
              $model->setDate_expires($s);
@@ -66,13 +71,13 @@ final class QuoteService
     }
     
     /**
-     * @param object $user
-     * @param object $model
+     * @param User $user
+     * @param Quote $model
      * @param QuoteForm $form
      * @param SR $s
-     * @return object
+     * @return Quote
      */
-    public function saveQuote(object $user, object $model, QuoteForm $form, SR $s, GR $gR): object
+    public function saveQuote(User $user, Quote $model, QuoteForm $form, SR $s, GR $gR): Quote
     { 
         $model->setInv_id((int)$form->getInv_id());
         
@@ -100,14 +105,14 @@ final class QuoteService
         }
         // Regenerate quote numbers if the setting is changed
         if (!$model->isNewRecord() && $s->get_setting('generate_quote_number_for_draft') === '1') {
-             null!==$form->getGroup_id() ? $model->setNumber($gR->generate_number($form->getGroup_id(), true)) : '';  
+             null!==$form->getGroup_id() ? $model->setNumber((string)$gR->generate_number($form->getGroup_id(), true)) : '';  
         }
         $this->repository->save($model);
         return $model;
     }
     
     /**
-     * @param object $model
+     * @param Quote $model
      * @param QCR $qcR
      * @param QCS $qcS
      * @param QIR $qiR
@@ -118,7 +123,8 @@ final class QuoteService
      * @param QAS $qaS
      * @return void
      */
-    public function deleteQuote(object $model, QCR $qcR, QCS $qcS, QIR $qiR, QIS $qiS, QTRR $qtrR, QTRS $qtrS, QAR $qaR, QAS $qaS): void
+    
+    public function deleteQuote(Quote $model, QCR $qcR, QCS $qcS, QIR $qiR, QIS $qiS, QTRR $qtrR, QTRS $qtrS, QAR $qaR, QAS $qaS): void
     {
         $quote_id = $model->getId();
         // Quotes with no items: If there are no quote items there will be no quote amount record
@@ -131,12 +137,18 @@ final class QuoteService
                     $qaS->deleteQuoteAmount($quote_amount);
                 }    
             }
+            
+            /** @var QuoteItem $item */
             foreach ($qiR->repoQuoteItemIdquery($quote_id) as $item) {
                      $qiS->deleteQuoteItem($item);
             }        
+            
+            /** @var QuoteTaxRate $quote_tax_rate */
             foreach ($qtrR->repoQuotequery($quote_id) as $quote_tax_rate) {
                      $qtrS->deleteQuoteTaxRate($quote_tax_rate);
             }
+            
+            /** @var QuoteCustom $quote_custom */
             foreach ($qcR->repoFields($quote_id) as $quote_custom) {
                      $qcS->deleteQuoteCustom($quote_custom);
             }

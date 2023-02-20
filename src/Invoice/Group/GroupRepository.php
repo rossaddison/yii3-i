@@ -12,7 +12,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of Group
  * @extends Select\Repository<TEntity>
  */
 final class GroupRepository extends Select\Repository
@@ -55,22 +55,22 @@ private EntityWriter $entityWriter;
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $group
+     * @param array|Group|null $group
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $group): void
+    public function save(array|Group|null $group): void
     {
         $this->entityWriter->write([$group]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $group
+     * @param array|Group|null $group
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $group): void
+    public function delete(array|Group|null $group): void
     {
         $this->entityWriter->delete([$group]);
     }
@@ -145,11 +145,11 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @return null|object
+     * @return null|Group
      *
      * @psalm-return TEntity|null
      */
-    public function repoGroupquery(string $id): object|null    {
+    public function repoGroupquery(string $id): Group|null    {
         $query = $this->select()
                       ->where(['id' => $id]);
         return  $query->fetchOne() ?: null;        

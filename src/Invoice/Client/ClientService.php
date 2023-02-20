@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Invoice\Client;
 
+use App\Invoice\Entity\Client;
+
 use App\Invoice\Setting\SettingRepository;
 
 final class ClientService
@@ -14,8 +16,15 @@ final class ClientService
     {
         $this->repository = $repository;
     }
-
-    public function saveClient(object $model, ClientForm $form, SettingRepository $s): void
+    
+    /**
+     * 
+     * @param Client $model
+     * @param ClientForm $form
+     * @param SettingRepository $s
+     * @return void
+     */
+    public function saveClient(Client $model, ClientForm $form, SettingRepository $s): void
     {
         null!==$form->getClient_name() ? $model->setClient_name($form->getClient_name()) : '';
         null!==$form->getClient_address_1() ? $model->setClient_address_1($form->getClient_address_1()): '';
@@ -49,10 +58,10 @@ final class ClientService
     
     /**
      * 
-     * @param array|object|null $model
+     * @param array|Client|null $model
      * @return void
      */
-    public function deleteClient(array|object|null $model): void
+    public function deleteClient(array|Client|null $model): void
     {
         $this->repository->delete($model);
     }

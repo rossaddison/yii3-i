@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Invoice\UserInv;
 
 use App\Invoice\Entity\UserInv;
+use App\Invoice\Entity\UserClient;
 use App\Invoice\Helpers\CountryHelper;
 use App\Invoice\UserInv\UserInvService;
 use App\Invoice\Client\ClientRepository;
@@ -79,6 +80,7 @@ final class UserInvController
         $query_params = $request->getQueryParams();
         $page = (int)$currentRoute->getArgument('page', '1');        
         $active = (int)$currentRoute->getArgument('active', '2');         
+        /** @var string $query_params['sort'] */
         $sort = Sort::only(['user_id', 'name', 'email'])          
                      ->withOrderString($query_params['sort'] ?? '-user_id');
         $repo = $this->userinvs_active_with_sort($uiR,$active,$sort); 
@@ -145,7 +147,7 @@ final class UserInvController
             'body' => $request->getParsedBody(),
             's'=>$sR,
             'head'=>$head,            
-            'users'=>$uR->findAll(),
+            'users'=>$uR->findAllUsers(),
             'selected_country' => $sR->get_setting('default_country'),            
             'selected_language' => $sR->get_setting('default_language'),
             'countries'=> $countries->get_country_list($sR->get_setting('cldr'))
@@ -153,8 +155,9 @@ final class UserInvController
         
         if ($request->getMethod() === Method::POST) {            
             $form = new UserInvForm();
+            $userinv = new UserInv();
             if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
-                $this->userinvService->saveUserInv(new UserInv(),$form);
+                $this->userinvService->saveUserInv($userinv,$form);
                 return $this->webService->getRedirectResponse('userinv/index');
             }
             $parameters['errors'] = $form->getFormErrors();
@@ -190,7 +193,7 @@ final class UserInvController
                 'body' => $this->body($user_inv),
                 'head'=>$head,
                 'aliases'=>$aliases,
-                'users'=>$uR->findAll(),
+                'users'=>$uR->findAllUsers(),
                 's'=>$settingRepository,
 
             ];
@@ -314,9 +317,9 @@ final class UserInvController
     /**
      * @param CurrentRoute $currentRoute
      * @param UserInvRepository $userinvRepository
-     * @return object|null
+     * @return UserInv|null
      */
-    private function userinv(CurrentRoute $currentRoute, UserInvRepository $userinvRepository): object|null
+    private function userinv(CurrentRoute $currentRoute, UserInvRepository $userinvRepository): UserInv|null
     {
         $id = $currentRoute->getArgument('id');       
         if (null!==$id) {
@@ -330,9 +333,9 @@ final class UserInvController
      * 
      * @param CurrentRoute $currentRoute
      * @param UserClientRepository $userclientRepository
-     * @return object|null
+     * @return UserClient|null
      */
-    private function userclient(CurrentRoute $currentRoute, UserClientRepository $userclientRepository) : object|null
+    private function userclient(CurrentRoute $currentRoute, UserClientRepository $userclientRepository) : UserClient|null
     {
         $id = $currentRoute->getArgument('id');       
         if (null!==$id) {
@@ -347,10 +350,10 @@ final class UserInvController
     
     /**
      * 
-     * @param object $userinv
+     * @param UserInv $userinv
      * @return array
      */
-    private function body(object $userinv): array {
+    private function body(UserInv $userinv): array {
         $body = [
           'id'=>$userinv->getId(),
           'user_id'=>$userinv->getUser_id(),

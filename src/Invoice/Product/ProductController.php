@@ -146,10 +146,10 @@ class ProductController
     
     /**
      * 
-     * @param object $product
+     * @param Product $product
      * @return array
      */
-    private function body(object $product): array {
+    private function body(Product $product): array {
         $body = [
                 'id'=>$product->getProduct_id(),
                 'product_sku'=>$product->getProduct_sku(),
@@ -230,19 +230,18 @@ class ProductController
             'units'=>$uR->findAllPreloaded(),
             'tax_rates'=>$trR->findAllPreloaded()    
         ];
+        $body = $request->getParsedBody();
         if ($request->getMethod() === Method::POST) {
-            $form = new ProductForm();
-            $body = $request->getParsedBody();
+            $form = new ProductForm();            
             if ($form->load($body) && $validator->validate($form)->isValid()) {
                 $this->productService->editProduct($product, $form); 
                 return $this->responseFactory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
                 ['heading'=>'','message'=>$sR->trans('record_successfully_updated'),'url'=>'product/view',
                     'id'=>$product->getProduct_id()]));  
-            } else {            
-                return $this->webService->getRedirectResponse('product/index');   
+            } else {
+                $parameters['errors'] = $form->getFormErrors();
+                $parameters['body'] = $body;
             }
-            $parameters['body'] = $body;
-            $parameters['errors'] = $form->getFormErrors();
         }
         return $this->viewRenderer->render('_form_edit', $parameters);
     } //if $product 
@@ -259,6 +258,7 @@ class ProductController
     {
         $canEdit = $this->rbac(); 
         $query_params = $request->getQueryParams();
+        /** @var string $query_params['sort'] */
         $page = (int)$currentRoute->getArgument('page', '1');
         $sort = Sort::only(['id','family_id','unit_id','tax_rate_id','product_name','product_sku'])
                     // (@see vendor\yiisoft\data\src\Reader\Sort
@@ -290,8 +290,14 @@ class ProductController
      */
     public function lookup(ViewRenderer $head, Request $request, fR $fR, sR $sR, pR $pR): \Yiisoft\DataResponse\DataResponse {
         $queryparams = $request->getQueryParams();
+        /** @var string $queryparams[$this->fpc] */
+        /** @var string $queryparams[$this->ffc] */
+        /** @var string $queryparams[$this->rtc] */
+        /** @var string $fp */
         $fp = $queryparams[$this->fpc] ?? '';
+        /** @var string $ff */
         $ff = $queryparams[$this->ffc] ?? '';
+        /** @var string $rt */
         $rt = $queryparams[$this->rtc] ?? '';
         $parameters = [
             'numberhelper'=>new NumberHelper($sR),
@@ -324,7 +330,7 @@ class ProductController
     /**
      * 
      * @param int $order
-     * @param object $product
+     * @param Product $product
      * @param string $quote_id
      * @param pR $pR
      * @param trR $trR
@@ -334,7 +340,7 @@ class ProductController
      * @param ValidatorInterface $validator
      * @return void
      */
-    private function save_product_lookup_item_quote(int $order, object $product, string $quote_id, pR $pR, trR $trR, uR $unR, QIAR $qiaR, QIAS $qiaS, ValidatorInterface $validator) : void {
+    private function save_product_lookup_item_quote(int $order, Product $product, string $quote_id, pR $pR, trR $trR, uR $unR, QIAR $qiaR, QIAS $qiaS, ValidatorInterface $validator) : void {
            $form = new QuoteItemForm();
            $ajax_content = [
                 'name'=>$product->getProduct_name(),        
@@ -361,7 +367,7 @@ class ProductController
     /**
      * 
      * @param int $order
-     * @param object $product
+     * @param Product $product
      * @param string $inv_id
      * @param pR $pR
      * @param sR $sR
@@ -372,7 +378,7 @@ class ProductController
      * @param ValidatorInterface $validator
      * @return void
      */
-    private function save_product_lookup_item_inv(int $order, object $product, string $inv_id, pR $pR, sR $sR, trR $trR, uR $unR, iiaR $iiaR, uR $uR, ValidatorInterface $validator) : void {
+    private function save_product_lookup_item_inv(int $order, Product $product, string $inv_id, pR $pR, sR $sR, trR $trR, uR $unR, iiaR $iiaR, uR $uR, ValidatorInterface $validator) : void {
            $form = new InvItemForm();
            $ajax_content = [
                 'name'=> $product->getProduct_name(),        
@@ -417,21 +423,22 @@ class ProductController
                                    pR $pR, qaR $qaR, qiR $qiR, qR $qR, qtrR $qtrR,
                                    sR $sR, trR $trR, uR $uR, qiaR $qiaR, qiaS $qiaS) : \Yiisoft\DataResponse\DataResponse {        
         $select_items = $request->getQueryParams();
-        $product_ids = ($select_items['product_ids'] ? $select_items['product_ids'] : []);
+        /** @var array $select_items['product_ids'] */
+        $product_ids = ($select_items['product_ids'] ?: []);
+        /** @var string $quote_id */
         $quote_id = $select_items['quote_id'];
         // Use Spiral||Cycle\Database\Injection\Parameter to build 'IN' array of products.
         $products = $pR->findinProducts($product_ids);
         $numberHelper = new NumberHelper($sR);
         // Format the product prices according to comma or point or other setting choice.
         $order = 1;
+        /** @var Product $product */
         foreach ($products as $product) {
-            if ($product instanceof Product) {
-                $product->setProduct_price((float)$numberHelper->format_amount($product->getProduct_price()));
-                $this->save_product_lookup_item_quote($order, $product, $quote_id, $pR, $trR, $uR, $qiaR, $qiaS, $validator);            
-            }
+            $product->setProduct_price((float)$numberHelper->format_amount($product->getProduct_price()));
+            $this->save_product_lookup_item_quote($order, $product, $quote_id, $pR, $trR, $uR, $qiaR, $qiaS, $validator);            
             $order++;          
         } 
-        $numberHelper->calculate_quote($this->session->get('quote_id'), $qiR, $qiaR, $qtrR, $qaR, $qR); 
+        $numberHelper->calculate_quote((string)$this->session->get('quote_id'), $qiR, $qiaR, $qtrR, $qaR, $qR); 
         return $this->responseFactory->createResponse(Json::encode($products));
 }
     
@@ -453,30 +460,31 @@ class ProductController
      */
     public function selection_inv(ValidatorInterface $validator, Request $request, pR $pR, sR $sR, trR $trR, uR $uR, iiaR $iiaR, iiR $iiR, itrR $itrR, iaR $iaR, iR $iR, pymR $pymR) : \Yiisoft\DataResponse\DataResponse {        
         $select_items = $request->getQueryParams();
-        $product_ids = ($select_items['product_ids'] ? $select_items['product_ids'] : []);
+        /** @var array $select_items['product_ids'] */
+        $product_ids = ($select_items['product_ids'] ?: []);
+        /** @var string $inv_id */
         $inv_id = $select_items['inv_id'];
         // Use Spiral||Cycle\Database\Injection\Parameter to build 'IN' array of products.
         $products = $pR->findinProducts($product_ids);
         $numberHelper = new NumberHelper($sR);
         // Format the product prices according to comma or point or other setting choice.
         $order = 1;
+        /** @var Product $product */
         foreach ($products as $product) {
-            if ($product instanceof Product) {
                 $product->setProduct_price((float)$numberHelper->format_amount($product->getProduct_price()));
                 $this->save_product_lookup_item_inv($order, $product, $inv_id, $pR, $sR, $trR, $uR, $iiaR, $uR, $validator);
                 $order++;          
-            }
         }
-        $numberHelper->calculate_inv($this->session->get('inv_id'), $iiR, $iiaR, $itrR, $iaR, $iR, $pymR);
+        $numberHelper->calculate_inv((string)$this->session->get('inv_id'), $iiR, $iiaR, $itrR, $iaR, $iR, $pymR);
         return $this->responseFactory->createResponse(Json::encode($products));        
     }   
     
     /**
      * @param CurrentRoute $currentRoute
      * @param pR $pR
-     * @return object|null
+     * @return Product|null
      */
-    private function product(CurrentRoute $currentRoute, pR $pR): object|null {        
+    private function product(CurrentRoute $currentRoute, pR $pR): Product|null {        
         $id = $currentRoute->getArgument('id');
         if (null!==$id) {
             $product = $pR->repoProductquery($id);

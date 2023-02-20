@@ -228,9 +228,9 @@ final class CustomFieldController
     /**
      * @param CurrentRoute $currentRoute
      * @param CustomFieldRepository $customfieldRepository
-     * @return object|null
+     * @return CustomField|null
      */
-    private function customfield(CurrentRoute $currentRoute, CustomFieldRepository $customfieldRepository): object|null 
+    private function customfield(CurrentRoute $currentRoute, CustomFieldRepository $customfieldRepository): CustomField|null 
     {
         $id = $currentRoute->getArgument('id');       
         if (null!==$id) {

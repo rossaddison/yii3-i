@@ -12,7 +12,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of Upload
  * @extends Select\Repository<TEntity>
  */
 final class UploadRepository extends Select\Repository
@@ -85,22 +85,22 @@ private EntityWriter $entityWriter;
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $upload
+     * @param array|Upload|null $upload
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $upload): void
+    public function save(array|Upload|null $upload): void
     {
         $this->entityWriter->write([$upload]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $upload
+     * @param array|Upload|null $upload
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $upload): void
+    public function delete(array|Upload|null $upload): void
     {
         $this->entityWriter->delete([$upload]);
     }
@@ -116,9 +116,9 @@ private EntityWriter $entityWriter;
     /**
      * 
      * @param string $id
-     * @return object|null
+     * @return Upload|null
      */
-    public function repoUploadquery(string $id) : object|null {
+    public function repoUploadquery(string $id) : Upload|null {
         $query = $this->select()
                       ->where(['id' => $id]);
         return  $query->fetchOne() ?: null;

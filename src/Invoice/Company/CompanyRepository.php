@@ -12,7 +12,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of Company
  * @extends Select\Repository<TEntity>
  */
 final class CompanyRepository extends Select\Repository
@@ -56,22 +56,22 @@ private EntityWriter $entityWriter;
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $company
+     * @param array|Company|null $company
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $company): void
+    public function save(array|Company|null $company): void
     {
         $this->entityWriter->write([$company]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $company
+     * @param array|Company|null $company
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $company): void
+    public function delete(array|Company|null $company): void
     {
         $this->entityWriter->delete([$company]);
     }
@@ -85,11 +85,11 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @return null|object
+     * @return null|Company
      *
      * @psalm-return TEntity|null
      */
-    public function repoCompanyquery(string $id): object|null    {
+    public function repoCompanyquery(string $id): Company|null    {
         $query = $this->select()->where(['id' =>$id]);
         return  $query->fetchOne() ?: null;        
     }

@@ -16,8 +16,14 @@ final class CustomFieldService
     {
         $this->repository = $repository;
     }
-
-    public function saveCustomField(object $model, CustomFieldForm $form): void
+    
+    /**
+     * 
+     * @param CustomField $model
+     * @param CustomFieldForm $form
+     * @return void
+     */
+    public function saveCustomField(CustomField $model, CustomFieldForm $form): void
     {
        null!==$form->getTable() ? $model->setTable($form->getTable()) : '';
        null!==$form->getLabel() ? $model->setLabel($form->getLabel()) : '';
@@ -27,7 +33,12 @@ final class CustomFieldService
        $this->repository->save($model);
     }
     
-    public function deleteCustomField(object $model): void
+    /**
+     * 
+     * @param CustomField $model
+     * @return void
+     */
+    public function deleteCustomField(CustomField $model): void
     {
         $this->repository->delete($model);
     }

@@ -12,7 +12,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of QuoteCustom
  * @extends Select\Repository<TEntity>
  */
 final class QuoteCustomRepository extends Select\Repository
@@ -59,22 +59,22 @@ private EntityWriter $entityWriter;
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $quotecustom
+     * @param array|QuoteCustom|null $quotecustom
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $quotecustom): void
+    public function save(array|QuoteCustom|null $quotecustom): void
     {
         $this->entityWriter->write([$quotecustom]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $quotecustom
+     * @param array|QuoteCustom|null $quotecustom
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $quotecustom): void
+    public function delete(array|QuoteCustom|null $quotecustom): void
     {
         $this->entityWriter->delete([$quotecustom]);
     }
@@ -87,7 +87,7 @@ private EntityWriter $entityWriter;
         );
     }
     
-    public function repoQuoteCustomquery(string $id): object|null {
+    public function repoQuoteCustomquery(string $id): QuoteCustom|null {
         $query = $this->select()
                       ->load('custom_field')
                       ->load('quote')
@@ -96,7 +96,7 @@ private EntityWriter $entityWriter;
     }
     
     
-    public function repoFormValuequery(string $quote_id, string $custom_field_id): object|null {
+    public function repoFormValuequery(string $quote_id, string $custom_field_id): QuoteCustom|null {
         $query = $this->select()
                       ->where(['quote_id' =>$quote_id])
                       ->andWhere(['custom_field_id' =>$custom_field_id]);

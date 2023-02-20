@@ -12,7 +12,13 @@ final class GeneratorRelationService
         $this->repository = $repository;
     }
 
-    public function saveGeneratorRelation(object $model, GeneratorRelationForm $form): void
+    /**
+     * 
+     * @param GeneratorRelation $model
+     * @param GeneratorRelationForm $form
+     * @return void
+     */
+    public function saveGeneratorRelation(GeneratorRelation $model, GeneratorRelationForm $form): void
     {
         null!==$form->getLowercase_name() ? $model->setLowercase_name($form->getLowercase_name()) : '';
         null!==$form->getCamelcase_name() ? $model->setCamelcase_name($form->getCamelcase_name()) : '';
@@ -21,7 +27,12 @@ final class GeneratorRelationService
         $this->repository->save($model);
     }
     
-    public function deleteGeneratorRelation(object $model): void
+    /**
+     * 
+     * @param GeneratorRelation $model
+     * @return void
+     */
+    public function deleteGeneratorRelation(GeneratorRelation $model): void
     {
         $this->repository->delete($model);
     }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Invoice\Task;
 
+use App\Invoice\Entity\Task;
 use Cycle\ORM\Select;
 use Throwable;
 use Cycle\Database\Injection\Parameter;
@@ -12,7 +13,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of Task
  * @extends Select\Repository<TEntity>
  */
 final class TaskRepository extends Select\Repository
@@ -57,22 +58,22 @@ private EntityWriter $entityWriter;
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $task
+     * @param array|Task|null $task
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $task): void
+    public function save(array|Task|null $task): void
     {
         $this->entityWriter->write([$task]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $task
+     * @param array|Task|null $task
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $task): void
+    public function delete(array|Task|null $task): void
     {
         $this->entityWriter->delete([$task]);
     }
@@ -90,11 +91,11 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @return null|object
+     * @return null|Task
      *
      * @psalm-return TEntity|null
      */
-    public function repoTaskquery(string $id):object|null    {
+    public function repoTaskquery(string $id):Task|null    {
         $query = $this->select()->load('tax_rate')
                                 ->where(['id' =>$id]);
         return  $query->fetchOne() ?: null;        
@@ -136,11 +137,9 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @return (mixed|string)[][]
-     *
-     * @psalm-param \App\Invoice\Setting\SettingRepository<object> $sR
-     *
-     * @psalm-return array{1: array{label: mixed, class: 'draft'}, 2: array{label: mixed, class: 'viewed'}, 3: array{label: mixed, class: 'sent'}, 4: array{label: mixed, class: 'paid'}}
+     * 
+     * @param \App\Invoice\Setting\SettingRepository $sR
+     * @return array
      */
     public function getTask_statuses(\App\Invoice\Setting\SettingRepository $sR): array
     {
