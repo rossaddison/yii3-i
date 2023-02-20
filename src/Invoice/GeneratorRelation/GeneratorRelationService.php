@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Invoice\GeneratorRelation;
 
+use App\Invoice\Entity\GentorRelation;
+
 final class GeneratorRelationService
 {
     private GeneratorRelationRepository $repository;
@@ -14,11 +16,11 @@ final class GeneratorRelationService
 
     /**
      * 
-     * @param GeneratorRelation $model
+     * @param GentorRelation $model
      * @param GeneratorRelationForm $form
      * @return void
      */
-    public function saveGeneratorRelation(GeneratorRelation $model, GeneratorRelationForm $form): void
+    public function saveGeneratorRelation(GentorRelation $model, GeneratorRelationForm $form): void
     {
         null!==$form->getLowercase_name() ? $model->setLowercase_name($form->getLowercase_name()) : '';
         null!==$form->getCamelcase_name() ? $model->setCamelcase_name($form->getCamelcase_name()) : '';
@@ -29,10 +31,10 @@ final class GeneratorRelationService
     
     /**
      * 
-     * @param GeneratorRelation $model
+     * @param GentorRelation $model
      * @return void
      */
-    public function deleteGeneratorRelation(GeneratorRelation $model): void
+    public function deleteGeneratorRelation(GentorRelation $model): void
     {
         $this->repository->delete($model);
     }
