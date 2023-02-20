@@ -9,75 +9,33 @@ use App\ViewInjection\MetaTagsViewInjection;
 use Cycle\Database\Config\SQLite\FileConnectionConfig;
 use Cycle\Database\Config\SQLiteDriverConfig;
 use Yiisoft\Assets\AssetManager;
-use Yiisoft\Cookies\CookieMiddleware;
 use Yiisoft\Definitions\Reference;
-use Yiisoft\ErrorHandler\Middleware\ErrorCatcher;
 use Yiisoft\Form\Field\SubmitButton;
 use Yiisoft\Router\CurrentRoute;
-use Yiisoft\Router\Middleware\Router;
 use Yiisoft\Router\UrlGeneratorInterface;
-use Yiisoft\Session\SessionMiddleware;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\User\Login\Cookie\CookieLoginMiddleware;
-use Yiisoft\Yii\Console\Application;
-use Yiisoft\Yii\Console\Command\Serve;
 use Yiisoft\Yii\Cycle\Schema\Conveyor\AttributedSchemaConveyor;
 use Yiisoft\Yii\Cycle\Schema\Provider\FromConveyorSchemaProvider;
 use Yiisoft\Yii\Cycle\Schema\Provider\PhpFileSchemaProvider;
-use Yiisoft\Yii\Middleware\Locale;
-use Yiisoft\Yii\Sentry\SentryMiddleware;
 use Yiisoft\Yii\View\CsrfViewInjection;
 
 // yii3-i
-use App\Invoice\Setting\SettingRepository;
 use App\Invoice\Helpers\DateHelper;
+use App\Invoice\Setting\SettingRepository;
 use Yiisoft\Session\SessionInterface;
 
 return [
-    'locale' => [
-        'locales' => [
-            'af' => 'af', 
-            'ar' => 'ar-BH', 
-            'az' => 'az-AZ', 
-            'de' => 'de-DE', 
-            'en' => 'en-US', 
-            'es' => 'es-ES',
-            'fr' => 'fr-FR',
-            'id' => 'id-ID', 
-            'ja' => 'ja-JP', 
-            'nl' => 'nl-NL', 
-            'ru' => 'ru-RU', 
-            'sk' => 'sk-SK',
-            'uk' => 'uk-UA', 
-            'uz' => 'uz-UZ',
-            'vi' => 'vi-VN', 
-            'zh' => 'zh-CN'
-        ],
-        'ignoredRequests' => [
-            '/debug**',
-            '/inspect**',
-        ],
-    ],
     'mailer' => [
         'adminEmail' => 'admin@example.com',
         'senderEmail' => 'sender@example.com',
     ],
-    'middlewares' => [
-        ErrorCatcher::class,
-        SentryMiddleware::class,
-        SessionMiddleware::class,
-        CookieMiddleware::class,
-        CookieLoginMiddleware::class,
-        Locale::class,
-        Router::class,
-    ],
 
     'yiisoft/aliases' => [
         'aliases' => [
-            '@root' => dirname(__DIR__),
+            '@root' => dirname(__DIR__, 2),
             '@assets' => '@root/public/assets',
             '@assetsUrl' => '@baseUrl/assets',
-            '@baseUrl' => '/',
+            '@baseUrl' => $_ENV['BASE_URL'],
             '@messages' => '@resources/messages',
             '@npm' => '@root/node_modules',
             '@public' => '@root/public',
@@ -156,21 +114,6 @@ return [
             Reference::to(LinkTagsViewInjection::class),
             Reference::to(MetaTagsViewInjection::class),
             Reference::to(SettingRepository::class)
-        ],
-    ],
-
-    'yiisoft/yii-console' => [
-        'name' => Application::NAME,
-        'version' => Application::VERSION,
-        'autoExit' => false,
-        'commands' => [
-            'serve' => Serve::class,
-            'user/create' => App\User\Console\CreateCommand::class,
-            'user/assignRole' => App\User\Console\AssignRoleCommand::class,
-            'fixture/add' => App\Command\Fixture\AddCommand::class,
-            'fixture/schema/clear' => App\Command\Fixture\SchemaClearCommand::class,
-            'router/list' => App\Command\Router\ListCommand::class,
-            'translator/translate' => App\Command\Translation\TranslateCommand::class,
         ],
     ],
 
