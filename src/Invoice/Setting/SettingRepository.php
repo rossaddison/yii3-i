@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Invoice\Setting;
 
+use Yiisoft\Yii\Runner\Http\HttpApplicationRunner;
 use App\Invoice\Entity\Setting;
 use App\Invoice\Inv\InvRepository as IR;
 use App\Invoice\Libraries\Lang;
@@ -12,13 +13,13 @@ use Cycle\ORM\Select;
 use Throwable;
 use Yiisoft\Aliases\Aliases;
 use Yiisoft\Config\ConfigPaths;
+use Yiisoft\Config\ConfigInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Files\FileHelper;
 use Yiisoft\Files\PathMatcher\PathMatcher;
 use Yiisoft\Session\SessionInterface;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
-use Yiisoft\Yii\Runner\ConfigFactory;
 
 /**
  * @template TEntity of object
@@ -275,7 +276,7 @@ final class SettingRepository extends Select\Repository
      * @psalm-return array{esmtp_scheme: mixed, esmtp_host: mixed, esmtp_port: mixed, use_send_mail: string}
      */
     public function config_params() : array {     
-        $config = ConfigFactory::create(new ConfigPaths(dirname(dirname(dirname(__DIR__))), 'config/'), null);
+        $config = $this->get_config_params();
         $params = $config->get('params');
         $config_array = [
             'esmtp_scheme' =>$params['symfony/mailer']['esmtpTransport']['scheme'],
@@ -284,6 +285,51 @@ final class SettingRepository extends Select\Repository
             'use_send_mail'=>$params['yiisoft/mailer']['useSendmail'] == 1 ? $this->trans('true') : $this->trans('false'),           
         ];
         return $config_array;
+    }
+    
+    /**
+     * 
+     * @return ConfigInterface
+     */
+    public function get_config_params() : ConfigInterface {
+        $rootPath = dirname(dirname(dirname(__DIR__)));
+        $http_runner = new HttpApplicationRunner(
+                //$rootPath
+                $rootPath,
+                //$debug 
+                false, 
+                //$checkEvents
+                false,
+                //$environment
+                null,
+                //$bootstrapGroup
+                'bootstrap-web',
+                //$eventsGroup
+                'events-web',
+                //$diGroup
+                'di-web',
+                //$diProvidersGroup
+                'di-providers-web',
+                //$diDelegatesGroup
+                'di-delegates-web',
+                //$diTagsGroup
+                'di-tags-web',
+                //$paramsGroup
+                'params-web',
+                //$nestedParamsGroups
+                ['params'],
+                //$nestedEventsGroups
+                ['events'],
+        );
+        $params = $http_runner->getConfig();
+        //$config_array = [
+        //    'esmtp_scheme' =>$params['symfony/mailer']['esmtpTransport']['scheme'],
+        //    'esmtp_host'=>$params['symfony/mailer']['esmtpTransport']['host'],
+        //    'esmtp_port'=>$params['symfony/mailer']['esmtpTransport']['port'],
+        //    'use_send_mail'=>$params['yiisoft/mailer']['useSendmail'] == 1 ? $this->trans('true') : $this->trans('false'),           
+        //];
+        return $params;
+        //return $config_array;
     }
     
     /**

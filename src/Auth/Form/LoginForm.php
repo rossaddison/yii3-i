@@ -22,11 +22,6 @@ final class LoginForm extends FormModel
         parent::__construct();
     }
 
-    /**
-     * @return string[]
-     *
-     * @psalm-return array{login: string, password: string, rememberMe: string}
-     */
     public function getAttributeLabels(): array
     {
         return [
@@ -36,21 +31,11 @@ final class LoginForm extends FormModel
         ];
     }
 
-    /**
-     * @return string
-     *
-     * @psalm-return 'Login'
-     */
     public function getFormName(): string
     {
         return 'Login';
     }
 
-    /**
-     * @return array[]
-     *
-     * @psalm-return array{login: list{Required}, password: array}
-     */
     public function getRules(): array
     {
         return [
@@ -59,11 +44,6 @@ final class LoginForm extends FormModel
         ];
     }
 
-    /**
-     * @return (Callback|Required)[]
-     *
-     * @psalm-return list{Required, Callback}
-     */
     private function passwordRules(): array
     {
         return [
