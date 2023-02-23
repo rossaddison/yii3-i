@@ -76,14 +76,14 @@ Class InvoiceHelper
             $this->flash('danger', $this->s->trans('Invalid amount'));
         }
 
-        $amountLine = sprintf("%010d", $amount * 100);
+        $amountLine = sprintf("%010d", (float)$amount * 100);
         $checkSlAmount = $this->invoice_recMod10($slipType . $amountLine);
 
-        if (!preg_match("/\d{2}-\d{1,6}-\d{1}/", $subNumb)) {
+        if (!preg_match("/\d{2}-\d{1,6}-\d{1}/", (string)$subNumb)) {
             $this->flash('danger', $this->s->trans('Invalid subscriber number'));
         }
 
-        $subNumb_exploded = explode("-", $subNumb);
+        $subNumb_exploded = explode("-", (string)$subNumb);
         $fullSub = $subNumb_exploded[0] . sprintf("%06d", $subNumb_exploded[1]) . $subNumb_exploded[2];
         $rnumb_preg_replace = preg_replace('/\s+/', '', $rnumb);
 
@@ -104,6 +104,10 @@ Class InvoiceHelper
         $chars = str_split($in);
 
         foreach ($chars as $char) {
+            /** 
+             * @var int $carry
+             * @psalm-suppress InvalidArrayOffset
+             */ 
             $carry = $line[($carry + intval($char)) % 10];
         }
 

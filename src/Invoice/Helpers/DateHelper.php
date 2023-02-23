@@ -317,13 +317,14 @@ public function increment_date(string $date, string $increment): string
  * @return string|false|null|DateTime
  */
 public function get_or_set_with_style(mixed $input): string|false|null|DateTime {
+    /** @var mixed|null|\DateTimeImmutable $date */
     $date = $input ?? null;
     // Get with style
     if ($date instanceof \DateTimeImmutable) {
         $return_date = $this->date_from_mysql($date);
     // Set with style   
     } elseif (!empty($date)) {
-        $return_date = $this->datetime_zone_style($date);
+        $return_date = $this->datetime_zone_style((string)$date);
     } else {
         $return_date = null;
     }

@@ -219,7 +219,7 @@ final class SettingController
                         }
                         if (isset($settings[$key . '_field_is_password']) && $value !=='') {
                             // Encrypt passwords but don't save empty passwords
-                            $this->tab_index_settings_save($key, $crypt->encode(trim($value)), $sR);
+                            $this->tab_index_settings_save($key, (string)$crypt->encode(trim($value)), $sR);
                         } elseif (isset($settings[$key . '_field_is_amount'])) {
                             // Format amount inputs
                             $this->tab_index_settings_save($key, (string)$numberhelper->standardize_amount($value), $sR);

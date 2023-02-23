@@ -84,7 +84,7 @@ use Yiisoft\Router\CurrentRoute;
             DataColumn::create()
                 ->label($s->trans('product_description'))                
                 ->attribute('product_description')     
-                ->value(static fn ($model): string => Html::encode($model->getProduct_description())                        
+                ->value(static fn ($model): string => Html::encode(ucfirst($model->getProduct_description()))                        
             ),
             DataColumn::create()
                 ->label($s->trans('product_price'))                
@@ -94,7 +94,7 @@ use Yiisoft\Router\CurrentRoute;
             DataColumn::create()
                 ->label($s->trans('product_unit'))                
                 ->attribute('product_unit')     
-                ->value(static fn ($model): string => Html::encode($s->format_currency($model->getUnit()->getUnit_name()))                        
+                ->value(static fn ($model): string => Html::encode((ucfirst($model->getUnit()->getUnit_name())))                        
             ),
             DataColumn::create()
                 ->label($s->trans('tax_rate'))                

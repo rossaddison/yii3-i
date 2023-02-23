@@ -29,11 +29,11 @@ final class InvRecurringService
      */
     public function saveInvRecurring(InvRecurring $model, InvRecurringForm $form): void
     {
-       $model->setInv_id($form->getInv_id());
-       $model->setStart($form->getStart());
-       $model->setEnd($form->getEnd());
-       $model->setFrequency($form->getFrequency());
-       $model->setNext($form->getNext());
+       null!==$form->getInv_id() ? $model->setInv_id($form->getInv_id()) : '';
+       null!==$form->getStart() ? $model->setStart($form->getStart()) : '';
+       null!==$form->getEnd() ? $model->setEnd($form->getEnd()) : '';
+       null!==$form->getFrequency() ? $model->setFrequency($form->getFrequency()) : '';
+       null!==$form->getNext() ?$model->setNext($form->getNext()) : '';
        $this->repository->save($model);
     }
     

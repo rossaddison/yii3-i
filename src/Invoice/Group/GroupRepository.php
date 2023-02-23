@@ -90,20 +90,18 @@ private EntityWriter $entityWriter;
    */
     public function generate_number(int $id, bool $set_next = true) : mixed
     {
-        $group = $this->repoGroupquery((string)$id) ?: null;
-        if ($group) {
-            $my_result = $this->parse_identifier_format(
-                (string)$group->getIdentifier_format(),
-                (int)$group->getNext_id(),
-                (int)$group->getLeft_pad()) ?? null ;
-            if ($set_next) {
-                $this->set_next_number($id);
-            }
-            if (!empty($my_result) && gettype($my_result)){
-                return $my_result;        
-            } 
-            return '';
+        /** @var Group $group */
+        $group = $this->repoGroupquery((string)$id);
+        $my_result = $this->parse_identifier_format(
+            (string)$group->getIdentifier_format(),
+            (int)$group->getNext_id(),
+            (int)$group->getLeft_pad());
+        if ($set_next) {
+            $this->set_next_number($id);
         }
+        if (!empty($my_result) && gettype($my_result)){
+            return $my_result;        
+        } 
         return '';
     }
     
@@ -111,9 +109,9 @@ private EntityWriter $entityWriter;
      * @param string $identifier_format
      * @param int $next_id
      * @param int $left_pad
-     * @return string|null
+     * @return string
      */
-    private function parse_identifier_format(string $identifier_format = '', int $next_id = 1, int  $left_pad = 1): string|null
+    private function parse_identifier_format(string $identifier_format = '', int $next_id = 1, int  $left_pad = 1): string
     {
         $template_vars = [];
         $var = '';
@@ -175,7 +173,7 @@ private EntityWriter $entityWriter;
     {
         $result = $this->repoGroupquery((string)$id) ?: null;
         if (null!==$result) {
-            $incremented_next_id = $result->getNext_id() + 1;
+            $incremented_next_id = (int)$result->getNext_id() + 1;
             $result->setNext_id($incremented_next_id); 
             $this->save($result);
             return (int)$result->getNext_id();

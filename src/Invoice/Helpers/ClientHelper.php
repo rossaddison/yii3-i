@@ -19,7 +19,7 @@ Class ClientHelper
     {
         if ($client instanceof Client) {
             if (null!==$client->getClient_surname()){
-                return $client->getClient_name() . " " . $client->getClient_surname();
+                return rtrim($client->getClient_name() . " " . ($client->getClient_surname() ?? ''));
             } else {
                 return $client->getClient_name();        
             }

@@ -253,10 +253,10 @@ final class CustomFieldController
     
     /**
      * 
-     * @param object $customfield
+     * @param CustomField $customfield
      * @return array
      */
-    private function body(object $customfield): array {
+    private function body(CustomField $customfield): array {
         $body = [
           'table' => $customfield->getTable(),
           'label' => $customfield->getLabel(),

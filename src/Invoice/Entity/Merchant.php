@@ -92,7 +92,8 @@ use \DateTimeImmutable;
     
     public function getDate(): DateTimeImmutable
     {
-      return $this->date;     
+       /** @var DateTimeImmutable $this->date */
+       return $this->date;     
     }
     
     public function setDate(DateTime $date) : void

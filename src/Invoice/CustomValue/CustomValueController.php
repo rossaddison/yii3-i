@@ -46,18 +46,18 @@ final class CustomValueController
     }
     
     /**
+     * 
      * @param SessionInterface $session
      * @param CustomValueRepository $customvalueRepository
      * @param CustomFieldRepository $customfieldRepository
      * @param SettingRepository $settingRepository
-     * @param Request $request
-     * @param CustomValueService $service
+     * @return Response
      */
-    public function index(SessionInterface $session, CustomValueRepository $customvalueRepository, CustomFieldRepository $customfieldRepository, SettingRepository $settingRepository, Request $request, CustomValueService $service): \Yiisoft\DataResponse\DataResponse
+    public function index(SessionInterface $session, CustomValueRepository $customvalueRepository, CustomFieldRepository $customfieldRepository, SettingRepository $settingRepository): Response
     {
          $canEdit = $this->rbac($session);
          $flash = $this->flash($session, '','');
-         $custom_field_id = $session->get('custom_field_id');
+         $custom_field_id = (string)$session->get('custom_field_id');
          $custom_values = $customvalueRepository->repoCustomFieldquery((int)$custom_field_id);
          $parameters = [
           'custom_field' => $customfieldRepository->repoCustomFieldquery($custom_field_id),
@@ -72,12 +72,14 @@ final class CustomValueController
     }
      
     /**
+     * 
      * @param SessionInterface $session
      * @param CustomFieldRepository $customfieldRepository
      * @param CustomValueRepository $customvalueRepository
      * @param SettingRepository $settingRepository
      * @param CurrentRoute $currentRoute
      * @param CustomValueService $service
+     * @return Response
      */
     public function field(SessionInterface $session, CustomFieldRepository $customfieldRepository, CustomValueRepository $customvalueRepository, SettingRepository $settingRepository, CurrentRoute $currentRoute, CustomValueService $service): Response
     {      
@@ -170,7 +172,7 @@ final class CustomValueController
                         SettingRepository $settingRepository,                        
                         CustomFieldRepository $custom_fieldRepository
     ): Response {
-        $custom_field_id = $session->get('custom_field_id');
+        $custom_field_id = (string)$session->get('custom_field_id');
         $custom_field = $custom_fieldRepository->repoCustomFieldquery($custom_field_id);
         $custom_value = $this->customvalue($currentRoute, $customvalueRepository);
         if ($custom_field && $custom_value) {
@@ -292,10 +294,10 @@ final class CustomValueController
     
     /**
      * 
-     * @param object $customvalue
+     * @param CustomValue $customvalue
      * @return array
      */
-    private function body(object $customvalue): array {
+    private function body(CustomValue $customvalue): array {
         $body = [                
           'id'=>$customvalue->getId(),             
           'custom_field_id'=>$customvalue->getCustom_field_id(),

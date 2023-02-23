@@ -188,6 +188,10 @@ final class EmailTemplateRepository extends Select\Repository
      */
     private function remove_extension(array $files) : array
     {
+        /** 
+         * @var string $key
+         * @var string $file
+         */
         foreach ($files as $key => $file) {
             $files[$key] = str_replace('.php', '', $file);
         }
@@ -202,6 +206,10 @@ final class EmailTemplateRepository extends Select\Repository
     private function remove_path(array $files) : array
     {
         //https://stackoverflow.com/questions/1418193/how-do-i-get-a-file-name-from-a-full-path-with-php
+        /** 
+         * @var string $key
+         * @var string $file
+         */
         foreach ($files as $key => $file) {
             $files[$key] = basename($file);
         }

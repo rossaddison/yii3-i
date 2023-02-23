@@ -56,9 +56,11 @@ class Lang
 	{
 		if (is_array($langfile))
 		{
-			foreach ($langfile as $value)
+			/** @var string $value */
+                        foreach ($langfile as $value)
 			{
-				$this->load($value, $idiom, $return, $add_suffix, $alt_path);
+			    // Recursive	
+                            $this->load($value, $idiom, $return, $add_suffix, $alt_path);
 			}
 			return;
 		}
@@ -124,7 +126,8 @@ class Lang
 	 */
 	public function line($line, $log_errors = true)
 	{
-		$value = isset($this->_language[$line]) ? $this->_language[$line] : FALSE;
+		/** @var string|false|mixed $value */
+                $value = isset($this->_language[$line]) ? $this->_language[$line] : FALSE;
 
 		// Because killer robots like unicorns!
 		if ($value === FALSE && $log_errors === true)

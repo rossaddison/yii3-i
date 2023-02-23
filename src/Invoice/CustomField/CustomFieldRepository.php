@@ -12,7 +12,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of CustomField
  * @extends Select\Repository<TEntity>
  */
 final class CustomFieldRepository extends Select\Repository
@@ -56,22 +56,22 @@ private EntityWriter $entityWriter;
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $customfield
+     * @param array|CustomField|null $customfield
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $customfield): void
+    public function save(array|CustomField|null $customfield): void
     {
         $this->entityWriter->write([$customfield]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $customfield
+     * @param array|CustomField|null $customfield
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $customfield): void
+    public function delete(array|CustomField|null $customfield): void
     {
         $this->entityWriter->delete([$customfield]);
     }
@@ -85,11 +85,11 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @return null|object
-     *
-     * @psalm-return TEntity|null
+     * 
+     * @param string $id
+     * @return CustomField|null
      */
-    public function repoCustomFieldquery(string $id): object|null    {
+    public function repoCustomFieldquery(string $id): CustomField|null    {
         $query = $this->select()
                       ->where(['id' => $id]);
         return  $query->fetchOne() ?: null;        

@@ -40,9 +40,8 @@ final class UserCustomForm extends FormModel
     }
 
     /**
-     * @return Required[][][]
-     *
-     * @psalm-return array{fieldvalue: list{list{Required}}}
+     * @psalm-suppress ImplementedReturnTypeMismatch  
+     * @return array
      */
     public function getRules(): array    {
       return [

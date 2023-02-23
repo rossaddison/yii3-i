@@ -167,6 +167,7 @@ class QuoteItem
     
     public function getDate_added(): DateTimeImmutable
     {
+      /** @var DateTimeImmutable $this->date_added */
       return $this->date_added;
     }
     

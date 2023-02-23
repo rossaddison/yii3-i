@@ -199,9 +199,9 @@ final class GeneratorRelationController
     /**
      * @param CurrentRoute $currentRoute
      * @param GeneratorRelationRepository $generatorrelationRepository
-     * @return object|null
+     * @return GentorRelation|null
      */
-    private function generatorrelation(CurrentRoute $currentRoute, GeneratorRelationRepository $generatorrelationRepository): object|null
+    private function generatorrelation(CurrentRoute $currentRoute, GeneratorRelationRepository $generatorrelationRepository): GentorRelation |null
     {
         $generatorrelation_id = $currentRoute->getArgument('id');
         if (null!==$generatorrelation_id) {

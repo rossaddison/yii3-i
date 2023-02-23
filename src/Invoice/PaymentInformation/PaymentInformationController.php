@@ -614,6 +614,7 @@ final class PaymentInformationController
 
 // Omnipay and PCI Compliant versions use the same ApiKey
 private function stripe_setApiKey() : bool {
+    /** @var string $sk_test */
     $sk_test = !empty($this->sR->get_setting('gateway_stripe_secretKey')) ? $this->crypt->decode($this->sR->get_setting('gateway_stripe_secretKey'))
                    : '';
     !empty($this->sR->get_setting('gateway_stripe_secretKey')) ? \Stripe\Stripe::setApiKey($sk_test) : '';
@@ -1177,9 +1178,14 @@ private function initialize_omnipay_gateway(string $driver) : mixed
             }
 
             // Decode password fields and checkboxes
-            /** @psalm-suppress PossiblyInvalidArrayOffset */
+            
+            /** 
+             * @var array $gateway_settings[$key] 
+             * @var string $gateway_settings[$key]['type']
+             */
+            
             if (isset($gateway_settings[$key]) && $gateway_settings[$key]['type'] == 'password') {
-                $value = $this->crypt->decode($setting->getSetting_value());
+                $value = (string)$this->crypt->decode($setting->getSetting_value());
             } elseif (isset($gateway_settings[$key]) && $gateway_settings[$key]['type'] == 'checkbox') {
                 $value = $setting->getSetting_value() == '1' ? true : false;
             } else {

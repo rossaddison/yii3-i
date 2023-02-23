@@ -46,7 +46,7 @@ class CurrencyHelper
      */
     public function getDecimals() : int
     {
-        return $this->decimals;
+        return (int)$this->decimals;
     }
 
     /**
@@ -59,8 +59,11 @@ class CurrencyHelper
     {
         $code = strtoupper($currency_code);
         $currencies = static::all();
-
         if (!empty($currencies[$code])) {
+            /** 
+             * @var string $currencies[$code]['numeric']
+             * @var string $currencies[$code]['decimals']
+             */
             return new CurrencyHelper($code, $currencies[$code]['numeric'], $currencies[$code]['decimals']);
         }
         return null;

@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Invoice\Helpers;
 
+use App\Invoice\Entity\InvAmount;
+use App\Invoice\Entity\QuoteAmount;
 use App\Invoice\Entity\QuoteItem;
 use App\Invoice\Entity\InvItem;
 use App\Invoice\Helpers\MpdfHelper;
@@ -27,7 +29,9 @@ Class PdfHelper
      */
     private function locale_to_language() : string|null {
         $dropdown_locale = (string)$this->session->get('_language');
+        /** @var array $session_list */
         $session_list = $this->s->locale_language_array();
+        /** @var string $session_list[$dropdown_locale] */
         return $session_list[$dropdown_locale] ?? null;
     }
         
@@ -54,7 +58,7 @@ Class PdfHelper
      * @param string $user_id
      * @param bool $stream
      * @param bool $custom
-     * @param object|null $quote_amount
+     * @param QuoteAmount|null $quote_amount
      * @param array $quote_custom_values
      * @param \App\Invoice\Client\ClientRepository $cR
      * @param \App\Invoice\CustomValue\CustomValueRepository $cvR
@@ -65,14 +69,16 @@ Class PdfHelper
      * @param \App\Invoice\QuoteTaxRate\QuoteTaxRateRepository $qtrR
      * @param \App\Invoice\UserInv\UserInvRepository $uiR
      * @param \Yiisoft\Yii\View\ViewRenderer $viewrenderer
-     * @return \Mpdf\Mpdf|array|string
+     * @psalm-suppress MissingReturnType
      */
     public function generate_quote_pdf(string|null $quote_id, string $user_id, bool $stream, bool $custom, object|null $quote_amount, array $quote_custom_values,\App\Invoice\Client\ClientRepository $cR, \App\Invoice\CustomValue\CustomValueRepository $cvR, \App\Invoice\CustomField\CustomFieldRepository $cfR, \App\Invoice\QuoteItem\QuoteItemRepository $qiR, \App\Invoice\QuoteItemAmount\QuoteItemAmountRepository $qiaR, \App\Invoice\Quote\QuoteRepository $qR, \App\Invoice\QuoteTaxRate\QuoteTaxRateRepository $qtrR, \App\Invoice\UserInv\UserInvRepository $uiR,
-                                \Yiisoft\Yii\View\ViewRenderer $viewrenderer) : \Mpdf\Mpdf|array|string
+                                \Yiisoft\Yii\View\ViewRenderer $viewrenderer)
     {       
             if ($quote_id) {
+            
             $quote = $qR->repoCount($quote_id) > 0 ? $qR->repoQuoteLoadedquery($quote_id) : null;
-            if ($quote){
+            
+            if (null!==$quote){
                 // If userinv details have been filled, use these details
                 $userinv = ($uiR->repoUserInvcount($user_id)>0 ? $uiR->repoUserInvquery($user_id) : null);
                 // If a template has been selected in the dropdown use it otherwise use the default 'quote' template under
@@ -85,18 +91,17 @@ Class PdfHelper
                 $show_item_discounts = false;
                 // Determine if any of the items have a discount, if so then the discount amount row will have to be shown.
                 if (null!==$items) {
+                    /** @var QuoteItem $item */
                     foreach ($items as $item) {
-                      if ($item instanceof QuoteItem) { 
-                        if ($item->getDiscount_amount() !== 0.00) {
+                       if ($item->getDiscount_amount() !== 0.00) {
                             $show_item_discounts = true;
-                        }
-                      }  
+                       }
                     }
                 }
                 // Get all data related to building the quote including custom fields
                 $data = [
                     'quote' => $quote,
-                    'quote_tax_rates' => (($qtrR->repoCount($this->session->get('quote_id')) > 0) ? $qtrR->repoQuotequery($this->session->get('quote_id')) : null), 
+                    'quote_tax_rates' => (($qtrR->repoCount((string)$this->session->get('quote_id')) > 0) ? $qtrR->repoQuotequery((string)$this->session->get('quote_id')) : null), 
                     'items' => $items,
                     'qiaR'=>$qiaR,
                     'output_type' => 'pdf',
@@ -136,11 +141,10 @@ Class PdfHelper
                 // Set the print language to null for future use
                 $this->session->set('print_language','');
                 $mpdfhelper = new MpdfHelper(); 
-                $filename = $this->s->trans('quote') . '_' . str_replace(['\\', '/'], '_', $quote->getNumber());
+                $filename = $this->s->trans('quote') . '_' . str_replace(['\\', '/'], '_', ($quote->getNumber() ?? (string)rand(0, 10)));
                 return $mpdfhelper->pdf_create($html, $filename, $stream, $quote->getPassword(), $this->s, $isInvoice = false, $quote);
             }    
-        }    
-        return '';
+        } 
     }   //generate_quote_pdf
     
     /**
@@ -148,7 +152,7 @@ Class PdfHelper
      * @param string $user_id
      * @param bool $stream
      * @param bool $custom
-     * @param object|null $inv_amount
+     * @param InvAmount|null $inv_amount
      * @param array $inv_custom_values
      * @param \App\Invoice\Client\ClientRepository $cR
      * @param \App\Invoice\CustomValue\CustomValueRepository $cvR
@@ -159,18 +163,18 @@ Class PdfHelper
      * @param \App\Invoice\InvTaxRate\InvTaxRateRepository $itrR
      * @param \App\Invoice\UserInv\UserInvRepository $uiR
      * @param \Yiisoft\Yii\View\ViewRenderer $viewrenderer
-     * @return \Mpdf\Mpdf|array|string
+     * @psalm-suppress MissingReturnType
      */
-    public function generate_inv_pdf(string|null $inv_id, string $user_id, bool $stream, bool $custom, object|null $inv_amount, array $inv_custom_values,\App\Invoice\Client\ClientRepository $cR, \App\Invoice\CustomValue\CustomValueRepository $cvR, \App\Invoice\CustomField\CustomFieldRepository $cfR, \App\Invoice\InvItem\InvItemRepository $iiR, \App\Invoice\InvItemAmount\InvItemAmountRepository $iiaR, \App\Invoice\Inv\InvRepository $iR, \App\Invoice\InvTaxRate\InvTaxRateRepository $itrR, \App\Invoice\UserInv\UserInvRepository $uiR,
-                                \Yiisoft\Yii\View\ViewRenderer $viewrenderer) : \Mpdf\Mpdf|array|string
+    public function generate_inv_pdf(string|null $inv_id, string $user_id, bool $stream, bool $custom, InvAmount|null $inv_amount, array $inv_custom_values,\App\Invoice\Client\ClientRepository $cR, \App\Invoice\CustomValue\CustomValueRepository $cvR, \App\Invoice\CustomField\CustomFieldRepository $cfR, \App\Invoice\InvItem\InvItemRepository $iiR, \App\Invoice\InvItemAmount\InvItemAmountRepository $iiaR, \App\Invoice\Inv\InvRepository $iR, \App\Invoice\InvTaxRate\InvTaxRateRepository $itrR, \App\Invoice\UserInv\UserInvRepository $uiR,
+                                \Yiisoft\Yii\View\ViewRenderer $viewrenderer)
     {       
        if ($inv_id) { 
             $inv = $iR->repoCount($inv_id) > 0 ? $iR->repoInvLoadedquery($inv_id) : null;
             if ($inv) {
                 // If userinv details have been filled, use these details
                 $userinv = ($uiR->repoUserInvcount($user_id)>0 ? $uiR->repoUserInvquery($user_id) : null);
-
-                $inv_template = $this->generate_inv_pdf_template_normal_paid_overdue_watermark($inv->getStatus_id());
+                // 'draft' => status_id => 1 
+                $inv_template = $this->generate_inv_pdf_template_normal_paid_overdue_watermark($inv->getStatus_id() ?? 1);
                       
                 // Determine if discounts should be displayed if there are items on the invoice      
                 $items = ($iiR->repoCount($inv_id) > 0 ? $iiR->repoInvItemIdquery($inv_id) : null);
@@ -178,19 +182,18 @@ Class PdfHelper
                 $show_item_discounts = false;
                 // Determine if any of the items have a discount, if so then the discount amount row will have to be shown.
                 if (null!==$items) {
-                    foreach ($items as $item) {
-                      if ($item instanceof InvItem) {  
+                    /** @var InvItem $item */ 
+                    foreach ($items as $item) {  
                         if ($item->getDiscount_amount() !== 0.00) {
                             $show_item_discounts = true;
                         }
-                      } 
                     }
                 }
 
                 // Get all data related to building the inv including custom fields
                 $data = [
                     'inv' => $inv,
-                    'inv_tax_rates' => (($itrR->repoCount($this->session->get('inv_id')) > 0) ? $itrR->repoInvquery($this->session->get('inv_id')) : null), 
+                    'inv_tax_rates' => (($itrR->repoCount((string)$this->session->get('inv_id')) > 0) ? $itrR->repoInvquery((string)$this->session->get('inv_id')) : null), 
                     'items' => $items,
                     'iiaR'=>$iiaR,
                     'output_type' => 'pdf',
@@ -220,7 +223,7 @@ Class PdfHelper
                     's'=>$this->s,
                     'countryhelper'=>new CountryHelper(),
                     'userinv'=>$userinv,
-                    'client'=>$cR->repoClientquery((string)$inv->getClient()->getClient_id()),
+                    'client'=>$cR->repoClientquery((string)$inv->getClient()?->getClient_id()),
                     'inv_amount'=>$inv_amount,            
                     // Use the temporary print language to define cldr            
                     'cldr'=> array_keys($this->s->locale_language_array(), $this->get_print_language($inv)),
@@ -230,7 +233,7 @@ Class PdfHelper
                 // Set the print language to null for future use
                 $this->session->set('print_language','');
                 $mpdfhelper = new MpdfHelper(); 
-                $filename = $this->s->trans('invoice') . '_' . str_replace(['\\', '/'], '_', $inv->getNumber());
+                $filename = $this->s->trans('invoice') . '_' . str_replace(['\\', '/'], '_', ($inv->getNumber() ?? (string)rand(0, 10)));
                 //$isInvoice is assigned to true as it is an invoice
                 // If stream is true return the pdf as a string using mpdf otherwise save to local file and 
                 // return the filename inclusive target_path to be used to attach to email attachments
@@ -238,7 +241,6 @@ Class PdfHelper
                 
             }
        }
-       return '';
     } //generate_inv_pdf
     
     /**

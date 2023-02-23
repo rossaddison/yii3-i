@@ -26,6 +26,7 @@ final class Installer
             new DirIterator($path, FSIterator::SKIP_DOTS | FSIterator::CURRENT_AS_PATHNAME),
             RIterator::SELF_FIRST
         );
+        /** @var string $item */
         foreach ($iterator as $item) {
             chmod($item, $mode);
         }

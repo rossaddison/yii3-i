@@ -382,9 +382,14 @@ final class ClientController
 }
     
     /**
+     * 
      * @param array $edited_body
+     * @param Client $client
+     * @param ValidatorInterface $validator
+     * @param sR $sR
+     * @return ClientForm
      */
-    public function edit_save_form_fields(array $edited_body, object $client, ValidatorInterface $validator, sR $sR) : ClientForm {
+    public function edit_save_form_fields(array $edited_body, Client $client, ValidatorInterface $validator, sR $sR) : ClientForm {
         $form = new ClientForm();
         if ($form->load($edited_body) && $validator->validate($form)->isValid()) {
            $this->clientService->saveClient($client, $form, $sR);

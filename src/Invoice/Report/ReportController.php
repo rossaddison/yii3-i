@@ -107,6 +107,7 @@ class ReportController
      * @param InvAmountRepository $iaR
      * @param SettingRepository $sR
      * @return Response|\Mpdf\Mpdf|array|string
+     * @psalm-suppress MixedInferredReturnType
      */
     public function invoice_aging_index(Request $request, 
                                         ViewRenderer $head, 
@@ -130,6 +131,7 @@ class ReportController
             // Forth parameter $password is empty because these reports are intended for management only
             // Sixth parameter $isInvoice is false because reports and not Invoices are being generated            
             // Last parameter $quote_or_invoice is false because reports are being generated which are not meant for clients
+            /** @psalm-suppress MixedReturnStatement */
             return $mpdfhelper->pdf_create($this->viewRenderer->renderPartialAsString('/invoice/report/invoice_aging', $data), 
                    $sR->trans('invoice_aging'), true, '', $sR, false);             
         }
@@ -271,6 +273,7 @@ class ReportController
      * @param PaymentRepository $pymtR
      * @param SettingRepository $sR
      * @return Response|\Mpdf\Mpdf|array|string
+     * @psalm-suppress MixedInferredReturnType
      */
     public function payment_history_index(Request $request, ViewRenderer $head, SessionInterface $session,                                         
                                     PaymentRepository $pymtR,
@@ -298,7 +301,8 @@ class ReportController
                     'datehelper'=>$datehelper,
                     'numberhelper' => new NumberHelper($sR),
                 ];
-                $mpdfhelper = new MpdfHelper(); 
+                $mpdfhelper = new MpdfHelper();
+                /** @psalm-suppress MixedReturnStatement */
                 return $mpdfhelper->pdf_create($this->viewRenderer->renderPartialAsString('/invoice/report/payment_history', $data), 
                                                $sR->trans('payment_history'), true, '', $sR, false);            
             } //is_array body
@@ -360,6 +364,7 @@ class ReportController
      * @param InvAmountRepository $iaR
      * @param SettingRepository $sR
      * @return Response|\Mpdf\Mpdf|array|string
+     * @psalm-suppress MixedInferredReturnType
      */
     public function sales_by_client_index(Request $request, ViewRenderer $head, SessionInterface $session,                                         
                                     ClientRepository $cR,
@@ -388,6 +393,7 @@ class ReportController
                     'clienthelper' => new ClientHelper($sR),
                 ];
                 $mpdfhelper = new MpdfHelper(); 
+                /** @psalm-suppress MixedReturnStatement */
                 return $mpdfhelper->pdf_create(
                          $this->viewRenderer->renderPartialAsString('/invoice/report/sales_by_client', $data), 
                          $sR->trans('sales_by_client'), true, '', $sR, false
@@ -471,6 +477,7 @@ class ReportController
      * @param InvAmountRepository $iaR
      * @param SettingRepository $sR
      * @return Response|\Mpdf\Mpdf|array|string
+     * @psalm-suppress MixedInferredReturnType
      */
     public function sales_by_year_index(Request $request, ViewRenderer $head, SessionInterface $session,                                         
                                     ClientRepository $cR,
@@ -503,6 +510,7 @@ class ReportController
                 // Forth parameter $password is empty because these reports are intended for management only
                 // Sixth parameter $isInvoice is false because reports and not Invoices are being generated            
                 // Last parameter $quote_or_invoice is false because reports are being generated which are not meant for clients
+                /** @psalm-suppress MixedReturnStatement */
                 return $mpdfhelper->pdf_create(
                                                $this->viewRenderer->renderPartialAsString('/invoice/report/sales_by_year', $data),
                                                $sR->trans('sales_by_date'), true, '', $sR, false

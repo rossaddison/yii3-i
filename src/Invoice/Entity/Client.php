@@ -340,6 +340,7 @@ class Client
     //cycle 
     public function getClient_birthdate() : ?DateTimeImmutable  
     {
+        /** @var DateTimeImmutable $this->client_birthdate */
         return $this->client_birthdate;
     }    
     

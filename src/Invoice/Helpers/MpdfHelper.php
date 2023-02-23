@@ -152,6 +152,9 @@ Class MpdfHelper
             'tabSpaces' => 4,
         ];
         
+        // The mpdf->Output command currently has no return type therefore
+        // psalm-suppress MissingReturnType
+        
         /**
          * @param string $html
          * @param string $filename
@@ -160,6 +163,7 @@ Class MpdfHelper
          * @param sR $sR
          * @param bool $isInvoice
          * @param object|null $quote_or_invoice
+         * @psalm-suppress MissingReturnType
          */
         public function pdf_create(string $html,
                                    string $filename, 
@@ -168,7 +172,7 @@ Class MpdfHelper
                                    sR $sR, 
                                    bool $isInvoice = false, 
                                    object|null $quote_or_invoice = null) 
-        : \Mpdf\Mpdf|array|string
+        
         {
             $sR->load_settings();
             $invoice_array = [];            
@@ -190,6 +194,9 @@ Class MpdfHelper
             }
         }
         
+        // The mpdf->Output command currently has no return type therefore
+        // psalm-suppress MissingReturnType
+        
         /**
          * 
          * @param string $filename
@@ -198,10 +205,10 @@ Class MpdfHelper
          * @param \Mpdf\Mpdf $mpdf
          * @param Aliases $aliases
          * @param SR $sR
-         * @return \Mpdf\Mpdf|array|string
+         * @psalm-suppress MissingReturnType
          */
         private function isInvoice(string $filename, array $invoice_array, bool $stream, \Mpdf\Mpdf $mpdf, Aliases $aliases, SR $sR)
-        : \Mpdf\Mpdf|array|string {
+        {
             foreach (glob($aliases->get('@uploads').$sR::getUploadsArchiveholderRelativeUrl() . '*' . $filename . '.pdf') as $file) {
                 array_push($invoice_array, $file);
             }
@@ -212,6 +219,7 @@ Class MpdfHelper
                 if ($stream) {
                     return $mpdf->Output($filename . '.pdf', self::DEST_BROWSER);
                 } else {
+                    /** @var string $invoice_array[0] */
                     return $invoice_array[0];
                 }
             }

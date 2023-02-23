@@ -115,7 +115,8 @@ class Upload
     
     public function getUploaded_date(): DateTimeImmutable
     {
-       return $this->uploaded_date;      
+        /** @var DateTimeImmutable $this->uploaded_date */
+        return $this->uploaded_date;      
     }
     
     public function setUploaded_date(DateTime $uploaded_date) : void

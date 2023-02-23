@@ -83,14 +83,14 @@ final class InvService
     
     /**
      * 
-     * @param object $user
-     * @param object $model
+     * @param User $user
+     * @param Inv $model
      * @param InvForm $form
      * @param SR $s
      * @param GR $gR
      * @return Inv $model
      */
-    public function saveInv(object $user, object $model, InvForm $form, SR $s, GR $gR): Inv 
+    public function saveInv(User $user, Inv $model, InvForm $form, SR $s, GR $gR): Inv 
     {  
        //$before_save = $model; 
        $datehelper = new DateHelper($s);
@@ -116,7 +116,7 @@ final class InvService
        if ($model->isNewRecord()) {
             $model->setStatus_id(1);            
             null!==$form->getNumber() ? $model->setNumber($form->getNumber()) : '';
-            $model->setUser_id($user->getId());
+            $model->setUser_id((int)$user->getId());
             $model->setUrl_key(Random::string(32));            
             $model->setDate_created(new \DateTimeImmutable('now'));
             $model->setTime_created((new \DateTimeImmutable('now'))->format('H:i:s'));
@@ -126,7 +126,7 @@ final class InvService
        }
        $this->repository->save($model);// Regenerate invoice numbers if the setting is changed
        if (!$model->isNewRecord() && $s->get_setting('generate_invoice_number_for_draft') === '1') {
-            $model->setNumber($gR->generate_number((int)$form->getGroup_id(), true));  
+            $model->setNumber((string)$gR->generate_number((int)$form->getGroup_id(), true));  
        }
        $this->repository->save($model);
        return $model;
@@ -155,20 +155,17 @@ final class InvService
                 $inv_amount = $iaR->repoInvquery((int)$inv_id);
                 null!==$inv_amount ? $iaS->deleteInvAmount($inv_amount) : '';            
             }
+            /** @var InvItem $item */
             foreach ($iiR->repoInvItemIdquery($inv_id) as $item) {
-                if ($item instanceof InvItem) {
-                    $iiS->deleteInvItem($item);
-                }     
+                $iiS->deleteInvItem($item);
             }        
+            /** @var InvTaxRate */
             foreach ($itrR->repoInvquery($inv_id) as $inv_tax_rate) {
-                if ($inv_tax_rate instanceof InvTaxRate) {
-                    $itrS->deleteInvTaxRate($inv_tax_rate);
-                }     
+                $itrS->deleteInvTaxRate($inv_tax_rate);
             }
+            /** @var InvCustom */
             foreach ($icR->repoFields($inv_id) as $inv_custom) {
-                if ($inv_custom instanceof InvCustom) {
-                    $icS->deleteInvCustom($inv_custom);
-                }     
+                $icS->deleteInvCustom($inv_custom);
             }
         }
         $this->repository->delete($model);
@@ -189,19 +186,19 @@ final class InvService
        $model->setDate_created($datetimeimmutable);
        $model->setDate_due($s);
        //$model->setDate_created($form->getDate_created());
-       $model->setClient_id($details['client_id']);
-       $model->setGroup_id($details['group_id']);
-       $model->setStatus_id($details['status_id']);
-       $model->setDiscount_percent($details['discount_percent']);
-       $model->setDiscount_amount($details['discount_amount']);
-       $model->setUrl_key($details['url_key']);
-       $model->setPassword($details['password']);
-       $model->setPayment_method($details['payment_method']);
-       $model->setTerms($details['terms']); 
-       $model->setCreditinvoice_parent_id($details['creditinvoice_parent_id'] ?? 0);
+       $model->setClient_id((int)$details['client_id']);
+       $model->setGroup_id((int)$details['group_id']);
+       $model->setStatus_id((int)$details['status_id']);
+       $model->setDiscount_percent((float)$details['discount_percent']);
+       $model->setDiscount_amount((float)$details['discount_amount']);
+       $model->setUrl_key((string)$details['url_key']);
+       $model->setPassword((string)$details['password']);
+       $model->setPayment_method((int)$details['payment_method']);
+       $model->setTerms((string)$details['terms']); 
+       $model->setCreditinvoice_parent_id((int)$details['creditinvoice_parent_id'] ?: 0);
        if ($model->isNewRecord()) {
             $model->setStatus_id(1);            
-            $model->setNumber($details['number']);
+            $model->setNumber((string)$details['number']);
             $random = new Random();            
             $model->setUser($user);
             $model->setUrl_key($random::string(32));            

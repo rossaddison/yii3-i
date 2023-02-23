@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Invoice\GeneratorRelation;
 
+use App\Invoice\Entity\GentorRelation;
 use Cycle\ORM\Select;
 use Throwable;
 use Yiisoft\Data\Reader\Sort;
@@ -11,7 +12,7 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of GentorRelation
  * @extends Select\Repository<TEntity>
  */
 final class GeneratorRelationRepository extends Select\Repository
@@ -48,22 +49,22 @@ final class GeneratorRelationRepository extends Select\Repository
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $generatorrelation
+     * @param array|GentorRelation|null $generatorrelation
      * @throws Throwable 
      * @return void
      */
-    public function save(array|object|null $generatorrelation): void
+    public function save(array|GentorRelation|null $generatorrelation): void
     {
         $this->entityWriter->write([$generatorrelation]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|object|null $generatorrelation
+     * @param array|GentorRelation|null $generatorrelation
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|object|null $generatorrelation): void
+    public function delete(array|GentorRelation|null $generatorrelation): void
     {
         $this->entityWriter->delete([$generatorrelation]);
     }
@@ -77,11 +78,11 @@ final class GeneratorRelationRepository extends Select\Repository
     }
     
     /**
-     * @return null|object
+     * @return null|GentorRelation
      *
      * @psalm-return TEntity|null
      */
-    public function repoGeneratorRelationquery(string $id):object|null
+    public function repoGeneratorRelationquery(string $id):GentorRelation|null
     {
         $query = $this
             ->select()
@@ -91,9 +92,9 @@ final class GeneratorRelationRepository extends Select\Repository
     }
     
     /**
-     * @return object[]
-     *
-     * @psalm-return array<int, TEntity>
+     * 
+     * @param string $id
+     * @return array
      */
     public function repoGeneratorquery(string $id): array
     {
@@ -103,6 +104,11 @@ final class GeneratorRelationRepository extends Select\Repository
         return  $query->fetchAll();        
     }
     
+    /**
+     * 
+     * @param string $generatorrelation_lowercase_name
+     * @return object|null
+     */
     public function withLowercaseName(string $generatorrelation_lowercase_name): object|null
     {
         $query = $this

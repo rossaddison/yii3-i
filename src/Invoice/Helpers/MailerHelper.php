@@ -85,18 +85,18 @@ Class MailerHelper
             $base_url = $urlGenerator->generate('quote/view',['id'=>$quote_id]);
             $user_id = $quote->getUser()?->getId() ?? null;
             $user_inv = null!==$user_id ? $uiR->repoUserInvUserIdquery($user_id) : null;
-            if (null!==$user_inv && $user_inv instanceof UserInv) {
-                if (null!==$quote->getClient()->getClient_name()) {  
+            if (null!==$user_inv) {
+                if (null!==$quote->getClient()?->getClient_name()) {  
                     $from_email = $user_inv->getEmail() ?? '';        
                     $from_name = $user_inv->getName() ?? '';        
                     $subject = sprintf($this->s->trans('quote_status_email_subject'),
-                        $quote->getClient()->getClient_name() ?? '',
+                        $quote->getClient()?->getClient_name() ?? '',
                         $quote->getNumber() ?? ''
                     );                
                     $body = sprintf(nl2br($this->s->trans('quote_status_email_body')),
-                        $quote->getClient()->getClient_name() ?? '',
+                        $quote->getClient()?->getClient_name() ?? '',
                         // TODO: Hyperlink for base url in Html
-                        $quote->getNumber(), $base_url
+                        $quote->getNumber() ?? '', $base_url
                     );
 
                     if ($this->s->get_setting('email_send_method') == 'yiimail') {
@@ -152,20 +152,26 @@ Class MailerHelper
             ->withDate(new \DateTimeImmutable('now'))
             ->withFrom([$from_email=>$from_name])
             ->withTo($to);
-        
-        (is_array($cc) || is_string($cc)) && !empty($cc) ? $email->withCC($cc) : '';
-        (is_array($bcc) || is_string($bcc)) && !empty($bcc) ? $email->withBcc($bcc) : '';
+        /** @var array<array-key, string>|string $cc */
+        is_array($cc) && !empty($cc) ? $email->withCC($cc) : '';
+        /** @var array<array-key, string>|string $bcc */
+        is_array($bcc) && !empty($bcc) ? $email->withBcc($bcc) : '';
         !empty($html_body) ? $email->withHtmlBody($html_body) : '';
         !empty($html_body) ? $email->withTextBody(strip_tags($html_body)) : '';
-                
+        /** @var array $attachFile */
         foreach ($attachFiles as $attachFile) {
+            /** 
+             * @var array $file 
+             * @psalm-suppress MixedMethodCall 
+             */
             foreach ($attachFile as $file) {
-                if ($file[0]?->getError() === UPLOAD_ERR_OK) {
+                if ($file[0]?->getError() === UPLOAD_ERR_OK && (null!==$file[0]?->getStream())) {
+                    /** @psalm-suppress MixedAssignment $email */
                     $email = $email->withAttached(
                         File::fromContent(
                             (string)$file[0]?->getStream(),
-                            $file[0]?->getClientFilename(),
-                            $file[0]?->getClientMediaType()
+                            (string)$file[0]?->getClientFilename(),
+                            (string)$file[0]?->getClientMediaType()
                         ),
                     );
                 }

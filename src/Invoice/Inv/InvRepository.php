@@ -410,9 +410,9 @@ private EntityWriter $entityWriter;
     
     /**
      * @param string $group_id
-     * @return string
+     * @return mixed
      */
-    public function get_inv_number(string $group_id, GR $gR) : string
+    public function get_inv_number(string $group_id, GR $gR) : mixed
     {   
         return $gR->generate_number((int) $group_id);
     }

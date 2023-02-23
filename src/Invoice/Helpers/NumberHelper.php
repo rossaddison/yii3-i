@@ -4,10 +4,16 @@ declare(strict_types=1);
 
 namespace App\Invoice\Helpers;
 
+use App\Invoice\Entity\Inv;
 use App\Invoice\Entity\InvAmount;
+use App\Invoice\Entity\InvItem;
+use App\Invoice\Entity\InvItemAmount;
 use App\Invoice\Entity\InvTaxRate;
 use App\Invoice\Entity\Payment;
+use App\Invoice\Entity\Quote;
 use App\Invoice\Entity\QuoteAmount;
+use App\Invoice\Entity\QuoteItem;
+use App\Invoice\Entity\QuoteItemAmount;
 use App\Invoice\Entity\QuoteTaxRate;
 use App\Invoice\Setting\SettingRepository as SRepo;
 use App\Invoice\QuoteItem\QuoteItemRepository as QIR;
@@ -80,7 +86,7 @@ public function standardize_amount(mixed $amount)
     $this->s->load_settings();
     $thousands_separator = $this->s->get_setting('thousands_separator');
     $decimal_point = $this->s->get_setting('decimal_point');
-
+    /** @var array<array-key, float|int|string>|string $amount */
     $amt = str_replace($thousands_separator, '', $amount);
     $final_amount = str_replace($decimal_point, '.', $amt);
 
@@ -98,8 +104,8 @@ public function calculate_quote(string $quote_id, QIR $qiR, QIAR $qiaR, QTRR $qt
         // Quote Subtotal + Item Tax
         // -------------------------    
         $quote_item_amounts = $this->quote_calculateTotalsofItemTotals($quote_id, $qiR, $qiaR);    
-        $quote_item_subtotal_discount_inclusive = $quote_item_amounts['subtotal'] - $quote_item_amounts['discount'];
-        $quote_subtotal_discount_and_tax_included = $quote_item_subtotal_discount_inclusive + $quote_item_amounts['tax_total'];
+        $quote_item_subtotal_discount_inclusive = (float)$quote_item_amounts['subtotal'] - (float)$quote_item_amounts['discount'];
+        $quote_subtotal_discount_and_tax_included = $quote_item_subtotal_discount_inclusive + (float)$quote_item_amounts['tax_total'];
         //----------
         // Quote Tax
         // ---------
@@ -124,7 +130,7 @@ public function calculate_quote(string $quote_id, QIR $qiR, QIAR $qiaR, QTRR $qt
             if ($quote_amount){
                 $quote_amount->setQuote_id((int)$quote_id);
                 $quote_amount->setItem_subtotal($quote_item_subtotal_discount_inclusive ?: 0.00);
-                $quote_amount->setItem_tax_total($quote_item_amounts['tax_total'] ?: 0.00);
+                $quote_amount->setItem_tax_total((float)$quote_item_amounts['tax_total'] ?: 0.00);
                 $quote_amount->setTax_total($quote_tax_rate_total ?: 0.00);
                 $quote_amount->setTotal($quote_total ?: 0.00);
                 $qaR->save($quote_amount);
@@ -165,8 +171,8 @@ public function calculate_inv(string $inv_id, IIR $iiR, IIAR $iiaR, ITRR $itrR, 
         // Invoice Subtotal + Item Tax
         // -------------------------    
         $inv_item_amounts = $this->inv_calculateTotalsofItemTotals($inv_id, $iiR, $iiaR);    
-        $inv_item_subtotal_discount_inclusive = $inv_item_amounts['subtotal'] - $inv_item_amounts['discount'];
-        $inv_subtotal_discount_and_tax_included = $inv_item_subtotal_discount_inclusive + $inv_item_amounts['tax_total'];
+        $inv_item_subtotal_discount_inclusive = (float)$inv_item_amounts['subtotal'] - (float)$inv_item_amounts['discount'];
+        $inv_subtotal_discount_and_tax_included = $inv_item_subtotal_discount_inclusive + (float)$inv_item_amounts['tax_total'];
         //----------
         // Invoice Tax
         // ---------
@@ -191,17 +197,16 @@ public function calculate_inv(string $inv_id, IIR $iiR, IIAR $iiaR, ITRR $itrR, 
             if ($inv_amount) {
                 $inv_amount->setInv_id((int)$inv_id);
                 $inv_amount->setItem_subtotal($inv_item_subtotal_discount_inclusive ?: 0.00);
-                $inv_amount->setItem_tax_total($inv_item_amounts['tax_total'] ?: 0.00);
+                $inv_amount->setItem_tax_total((float)$inv_item_amounts['tax_total'] ?: 0.00);
                 $inv_amount->setTax_total($inv_tax_rate_total ?: 0.00);
                 $inv_amount->setTotal($inv_total ?: 0.00);
                 // The balance will be reduced with each payment
                 $payments = ($pymR->repoCount($inv_id) > 0 ? $pymR->repoInvquery($inv_id) : []);
                 $total_paid = 0.00;
+                /** @var Payment $payment */
                 foreach ($payments as $payment) {
-                    if ($payment instanceof Payment) {
-                        $paid = (float)$payment->getAmount();
-                        $total_paid = $total_paid + $paid;                           
-                    }
+                    $paid = (float)$payment->getAmount();
+                    $total_paid = $total_paid + $paid;                           
                 }
                 $inv_amount->setPaid($total_paid);
                 $balance = $inv_total - $total_paid;
@@ -253,18 +258,28 @@ public function calculate_inv(string $inv_id, IIR $iiR, IIAR $iiaR, ITRR $itrR, 
                 'tax_total'=>$grand_taxtotal,
                 'discount'=>$grand_discount,
                 'total'=>$grand_total,
-        ];    
+        ];
+        
+        /** @var QuoteItem $item */
         foreach ($get_all_items_in_quote as $item){
+            /** 
+             * @psalm-suppress RawObjectIteration $item
+             * @var string $key
+             * @var string $value
+             */
             foreach ($item as $key => $value){
                 if ($key === 'id'){
                    //use the id value to retrieve quote_item_amount subtotal 
+                   /** 
+                    * @var QuoteItemAmount $quote_item_amount  
+                    * @psalm-suppress RedundantCastGivenDocblockType $value
+                    */
                    $quote_item_amount = $qiaR->repoQuoteItemAmountquery((string)$value);
-                   if ($quote_item_amount) {
-                    $grand_sub_total = $grand_sub_total + ($quote_item_amount->getSubTotal() ?: 0.00);
-                    $grand_taxtotal = $grand_taxtotal + ($quote_item_amount->getTax_total() ?: 0.00);
-                    $grand_discount = $grand_discount + ($quote_item_amount->getDiscount() ?: 0.00);
-                    $grand_total = $grand_total + ($quote_item_amount->getTotal() ?: 0.00);
-                   }
+                   $grand_sub_total = $grand_sub_total + ($quote_item_amount->getSubTotal() ?? 0.00) ;
+                                     
+                   $grand_taxtotal = $grand_taxtotal + ($quote_item_amount->getTax_total() ?: 0.00);
+                   $grand_discount = $grand_discount + ($quote_item_amount->getDiscount() ?: 0.00);
+                   $grand_total = $grand_total + ($quote_item_amount->getTotal() ?: 0.00);
                 }
             }
             $totals = [
@@ -278,9 +293,9 @@ public function calculate_inv(string $inv_id, IIR $iiR, IIAR $iiaR, ITRR $itrR, 
     }
     
     /**
-     * @psalm-param IR<object> $iR
+     * @psalm-param IR<Inv> $iR
      */
-    private function inv_balance_zero_set_to_read_only_if_fully_paid(IR $iR, SRepo $sR, object|null $invoice, float $balance) : void {
+    private function inv_balance_zero_set_to_read_only_if_fully_paid(IR $iR, SRepo $sR, Inv|null $invoice, float $balance) : void {
         if (($sR->get_setting('read_only_toggle') === (string)2) && null!==$invoice) {
             if ($balance == 0.00) {
                 $invoice->setIs_read_only(true);
@@ -309,18 +324,26 @@ public function calculate_inv(string $inv_id, IIR $iiR, IIAR $iiaR, ITRR $itrR, 
                 'tax_total'=>$grand_taxtotal,
                 'discount'=>$grand_discount,
                 'total'=>$grand_total,
-        ];    
+        ];
+        /** @var InvItem $item */
         foreach ($get_all_items_in_inv as $item){
+            /** 
+             * @psalm-suppress RawObjectIteration $item
+             * @var string $key
+             * @var string $value
+             */
             foreach ($item as $key => $value){
                 if ($key === 'id'){
                    //use the id value to retrieve inv_item_amount subtotal 
+                   /** 
+                    * @var InvItemAmount $inv_item_amount 
+                    * @psalm-suppress RedundantCastGivenDocblockType $value
+                    */
                    $inv_item_amount = $iiaR->repoInvItemAmountquery((string)$value);
-                   if (null!==$inv_item_amount) {
-                        $grand_sub_total = $grand_sub_total + ($inv_item_amount->getSubTotal() ?: 0.00);
-                        $grand_taxtotal = $grand_taxtotal + ($inv_item_amount->getTax_total() ?: 0.00);
-                        $grand_discount = $grand_discount + ($inv_item_amount->getDiscount() ?: 0.00);
-                        $grand_total = $grand_total + ($inv_item_amount->getTotal() ?: 0.00);
-                   }     
+                   $grand_sub_total = $grand_sub_total + ($inv_item_amount->getSubTotal() ?: 0.00);
+                   $grand_taxtotal = $grand_taxtotal + ($inv_item_amount->getTax_total() ?: 0.00);
+                   $grand_discount = $grand_discount + ($inv_item_amount->getDiscount() ?: 0.00);
+                   $grand_total = $grand_total + ($inv_item_amount->getTotal() ?: 0.00);
                 }
             }
             $totals = [
@@ -402,26 +425,24 @@ public function calculate_inv(string $inv_id, IIR $iiR, IIAR $iiaR, ITRR $itrR, 
         // At least one quote tax rate has been set and the quote has amounts that quote tax rates can be applied to
         if (($quote_tax_rates_count > 0) && ($qaR->repoQuoteAmountCount($quote_id)>0)) {
             // There are quote taxes applied
-            
             $quote_amount = $qaR->repoQuotequery($quote_id);
             if ($quote_amount) {
                 // Loop through the quote taxes and update quote_tax_rate_amount for each of the applied quote taxes
+                /** @var QuoteTaxRate $quote_tax_rate */
                 foreach ($quote_tax_rates as $quote_tax_rate) {
                     // If the include item tax has been checked
-                    if ($quote_tax_rate instanceof QuoteTaxRate) {
-                        $quote_tax_rate_amount = (
-                                ($quote_tax_rate->getInclude_item_tax())
-                                ? 
-                                    // The quote tax rate should include the applied item tax
-                                    (($quote_amount->getItem_subtotal() + $quote_amount->getItem_tax_total()) * ($quote_tax_rate->getTaxRate()?->getTax_rate_percent() / 100))
-                                :
-                                    // The quote tax rate should not include the applied item tax so get the general tax rate from Tax Rate table
-                                    ($quote_amount->getItem_subtotal() * ($quote_tax_rate->getTaxRate()?->getTax_rate_percent() / 100))
-                        );
-                        // Update the quote tax rate amount                    
-                        $quote_tax_rate->setQuote_tax_rate_amount($quote_tax_rate_amount);
-                        $qtrR->save($quote_tax_rate);
-                    }    
+                    $quote_tax_rate_amount = (
+                            ($quote_tax_rate->getInclude_item_tax())
+                            ? 
+                                // The quote tax rate should include the applied item tax
+                                (($quote_amount->getItem_subtotal() ?? 0.00) + ($quote_amount->getItem_tax_total() ?? 0.00) * (($quote_tax_rate->getTaxRate()?->getTax_rate_percent() ?? 0.00)  / 100))
+                            :
+                                // The quote tax rate should not include the applied item tax so get the general tax rate from Tax Rate table
+                                (($quote_amount->getItem_subtotal() ?? 0.00) * (($quote_tax_rate->getTaxRate()?->getTax_rate_percent() ?? 0.00) / 100))
+                    );
+                    // Update the quote tax rate amount                    
+                    $quote_tax_rate->setQuote_tax_rate_amount($quote_tax_rate_amount);
+                    $qtrR->save($quote_tax_rate);
                     $total_quote_tax_rate_amount += $quote_tax_rate_amount;
                 }
             }
@@ -450,23 +471,22 @@ public function calculate_inv(string $inv_id, IIR $iiR, IIAR $iiaR, ITRR $itrR, 
             $inv_amount = $iaR->repoInvquery((int)$inv_id);
             if ($inv_amount) {
                 // Loop through the invoice taxes and update inv_tax_rate_amount for each of the applied inv taxes
+                /** @var InvTaxRate  $inv_tax_rate */
                 foreach ($inv_tax_rates as $inv_tax_rate) {
                     // If the include item tax has been checked
-                    if ($inv_tax_rate instanceof InvTaxRate) {
-                        $inv_tax_rate_amount = (
-                                ($inv_tax_rate->getInclude_item_tax())
-                                ? 
-                                    // The inv tax rate should include the applied item tax
-                                    (($inv_amount->getItem_subtotal() + $inv_amount->getItem_tax_total()) * ($inv_tax_rate->getTaxRate()?->getTax_rate_percent() / 100))
-                                :
-                                    // The invoice tax rate should not include the applied item tax so get the general tax rate from Tax Rate table
-                                    ($inv_amount->getItem_subtotal() * ($inv_tax_rate->getTaxRate()?->getTax_rate_percent() / 100))
-                        ); 
-                        // Update the invoice tax rate amount                    
-                        $inv_tax_rate->setInv_tax_rate_amount($inv_tax_rate_amount);
-                        $itrR->save($inv_tax_rate);
-                        $total_inv_tax_rate_amount += $inv_tax_rate_amount;
-                    }    
+                    $inv_tax_rate_amount = (
+                            ($inv_tax_rate->getInclude_item_tax())
+                            ? 
+                                // The inv tax rate should include the applied item tax
+                                (($inv_amount->getItem_subtotal() ?? 0.00) + (($inv_amount->getItem_tax_total() ?? 0.00) * (($inv_tax_rate->getTaxRate()?->getTax_rate_percent() ?? 0.00) / 100)))
+                            :
+                                // The invoice tax rate should not include the applied item tax so get the general tax rate from Tax Rate table
+                                (($inv_amount->getItem_subtotal() ?? 0.00) * (($inv_tax_rate->getTaxRate()?->getTax_rate_percent() ?? 0.00) / 100))
+                    ); 
+                    // Update the invoice tax rate amount                    
+                    $inv_tax_rate->setInv_tax_rate_amount($inv_tax_rate_amount);
+                    $itrR->save($inv_tax_rate);
+                    $total_inv_tax_rate_amount += $inv_tax_rate_amount;
                 }         
             }
         }

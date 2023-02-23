@@ -126,6 +126,7 @@ class Task
     
     public function getFinish_date(): DateTimeImmutable
     {
+      /** @var DateTimeImmutable $this->finish_date */ 
       return $this->finish_date;
     }
     

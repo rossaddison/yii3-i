@@ -204,12 +204,12 @@ final class InvRecurringController
      */
     public function get_recur_start_date(Request $request): \Yiisoft\DataResponse\DataResponse{
         $body = $request->getQueryParams();
-        $invoice_date = $body['invoice_date'];
+        $invoice_date = (string)$body['invoice_date'];
         // DateTimeImmutable::__construct(): Failed to parse time string (22-04-202222-04-2022) at position 10 (2): Double date specification
         $sub_str = substr($invoice_date,0,10);
         $immutable_invoice_date = new \DateTimeImmutable($sub_str);
         // see InvRecurringRepository recur_frequencies eg. '8M' => 'calendar_month_8',
-        $recur_frequency = $body['recur_frequency'];
+        $recur_frequency = (string)$body['recur_frequency'];
         $dateHelper = new DateHelper($this->s);
         $parameters = [
                     'success'=>1,

@@ -833,7 +833,8 @@ final class QuoteController
             $quote_custom_values = $this->quote_custom_values($quote_id, $qcR);
             $quote_entity = $qR->repoCount($quote_id) > 0 ? $qR->repoQuoteUnLoadedquery($quote_id) : null;
             if ($quote_entity) {
-                $stream = false;        
+                $stream = false;   
+                /** @psalm-suppress MixedAssignment $pdf_template_target_path */
                 $pdf_template_target_path = $this->pdf_helper->generate_quote_pdf($quote_id, $quote_entity->getUser_id(), $stream, true, $quote_amount, $quote_custom_values, $cR, $cvR, $cfR, $qiR, $qiaR, $qR, $qtrR, $uiR, $viewrenderer); 
                 if (is_string($pdf_template_target_path)) {
                     $mail_message = $template_helper->parse_template($quote_id, false, $email_body, $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR);
@@ -1063,6 +1064,7 @@ final class QuoteController
     // Only users with editInv permission can access this index. Refer to config/routes accesschecker.
     
     /**
+     * 
      * @param Request $request
      * @param QAR $qaR
      * @param QR $quoteRepo
@@ -1070,21 +1072,22 @@ final class QuoteController
      * @param GR $groupRepo
      * @param CurrentRoute $currentRoute
      * @param sR $sR
+     * @return \Yiisoft\DataResponse\DataResponse
      */
     public function index(Request $request, QAR $qaR, QR $quoteRepo, CR $clientRepo, GR $groupRepo, CurrentRoute $currentRoute, sR $sR): \Yiisoft\DataResponse\DataResponse
     {
         $query_params = $request->getQueryParams();
         $page = (int)$currentRoute->getArgument('page','1');
-        /** @psalm-suppress MixedAssignment $sort_string */
-        $sort_string = (string)$query_params['sort'] ?: '-id';
         //status 0 => 'all';
         $status = (int)$currentRoute->getArgument('status','0');
+        /** @psalm-suppress MixedAssignment $sort_string */
+        $sort_string = $query_params['sort'] ?? '-id';
         $sort = Sort::only(['id','status_id','number','date_created','date_expires','client_id'])
                     // (@see vendor\yiisoft\data\src\Reader\Sort
                     // - => 'desc'  so -id => default descending on id
                     // Show the latest quotes first => -id
                     /** @psalm-suppress MixedArgument $sort_string */
-                    ->withOrderString($sort_string);
+                    ->withOrderString((string)$sort_string);
         $quotes = $this->quotes_status_with_sort($quoteRepo, $status, $sort); 
         $paginator = (new OffsetPaginator($quotes))
         ->withPageSize((int)$this->sR->get_setting('default_list_limit'))
@@ -1094,7 +1097,7 @@ final class QuoteController
             'page' => $page,
             'status' => $status,
             'paginator' => $paginator,
-            'sortOrder' => (string)$query_params['sort'] ?: '', 
+            'sortOrder' => $query_params['sort'] ?? '', 
             'alert'=>$this->alert(),
             'client_count'=>$clientRepo->count(),
             'quotes' => $quotes,

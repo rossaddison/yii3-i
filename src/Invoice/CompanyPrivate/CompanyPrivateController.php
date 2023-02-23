@@ -211,17 +211,18 @@ final class CompanyPrivateController
                     $after_save = $companyprivateRepository->repoCompanyPrivatequery((string)$company_private->getId());
                     if ($after_save) {
                         // A new file upload must replace the previous one or keep existing file 
+                        $tmp_name = $_FILES['file']['tmp_name'];
                         $after_save->setLogo_filename(
                             // 1. tmp is an uploaded file and not a security risk
                             // 2. the target file name does not exist
                             // 3. tmp has been moved into the target destination   
-                            !$this->file_uploading_errors($_FILES['file']['tmp_name'], $target_file_name, $settingRepository)
+                            !$this->file_uploading_errors($tmp_name, $target_file_name, $settingRepository)
 
                             // New file upload
                             ? $modified_original_file_name 
 
                             // or Existing database file name        
-                            :  $parameters['body']['logo_filename']
+                            :  (string)$parameters['body']['logo_filename']
                         );                
                         $companyprivateRepository->save($after_save);
 
@@ -321,10 +322,10 @@ final class CompanyPrivateController
     
     /**
      * 
-     * @param object $companyprivate
+     * @param CompanyPrivate $companyprivate
      * @return array
      */
-    private function body(object $companyprivate): array {
+    private function body(CompanyPrivate $companyprivate): array {
         $body = [                
                     'id'=>$companyprivate->getId(),
                     'company_id'=>$companyprivate->getCompany_id(),

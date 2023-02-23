@@ -47,9 +47,8 @@ final class LoginForm extends FormModel
     }
 
     /**
-     * @return array[]
-     *
-     * @psalm-return array{login: list{Required}, password: array}
+     * @return array
+     * @psalm-suppress ImplementedReturnTypeMismatch 
      */
     public function getRules(): array
     {

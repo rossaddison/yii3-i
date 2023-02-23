@@ -94,6 +94,7 @@ class Payment
     
     public function getPayment_date(): ?DateTimeImmutable
     {
+       /** @var DateTimeImmutable $this->payment_date */
        return $this->payment_date;
     }
     

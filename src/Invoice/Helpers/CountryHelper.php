@@ -43,7 +43,9 @@ public function get_country_list(string $cldr) : mixed
  */
 public function get_country_name(string $cldr, string $countrycode)
 {
+    /** @var array $countries */
     $countries = $this->get_country_list($cldr);
+    /** @var string $countries[$countrycode] */
     return (isset($countries[$countrycode]) ? $countries[$countrycode] : $countrycode);
 }
 }

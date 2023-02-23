@@ -28,7 +28,7 @@ final class MerchantService
      */
     public function saveMerchant(Merchant $model, MerchantForm $form, sR $sR): void
     {
-       $form->getInv_id() ? $form->$model->setInv_id($form->getInv_id()) : '';
+       $form->getInv_id() ? $model->setInv_id($form->getInv_id()) : '';
        $form->getSuccessful() ? $model->setSuccessful($form->getSuccessful()) : '';
        $model->setDate($form->getDate($sR));
        $form->getDriver() ? $model->setDriver($form->getDriver()) : '';
@@ -46,11 +46,16 @@ final class MerchantService
     public function saveMerchant_via_payment_handler(Merchant $model, array $array): void
     {
        $model->setInv_id((int)$array['inv_id']);
+       /** @var bool $array['merchant_response_successful'] */
        $model->setSuccessful($array['merchant_response_successful']);
+       /** @var \DateTime $array['merchant_response_date'] */
        $model->setDate($array['merchant_response_date']);
+       /** @var string $array['merchant_response_driver'] */
        $model->setDriver($array['merchant_response_driver']);
        // Payment success message
+       /** @var string $array['merchant_response'] */
        $model->setResponse($array['merchant_response']);
+       /** @var string $array['merchant_response_reference'] */
        $model->setReference($array['merchant_response_reference']);
        $this->repository->save($model);
     }

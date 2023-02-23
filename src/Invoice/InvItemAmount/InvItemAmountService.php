@@ -24,10 +24,10 @@ final class InvItemAmountService
     public function saveInvItemAmountNoForm(InvItemAmount $model, array $invitem): void
     {        
        $model->setInv_item_id((int)$invitem['inv_item_id']);
-       $model->setSubtotal($invitem['subtotal']);
-       $model->setTax_total($invitem['taxtotal']);
-       $model->setDiscount($invitem['discount']);
-       $model->setTotal($invitem['total']); 
+       $model->setSubtotal((float)$invitem['subtotal']);
+       $model->setTax_total((float)$invitem['taxtotal']);
+       $model->setDiscount((float)$invitem['discount']);
+       $model->setTotal((float)$invitem['total']); 
        $this->repository->save($model);
     }
     

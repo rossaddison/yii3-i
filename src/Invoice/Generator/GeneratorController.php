@@ -182,7 +182,7 @@ final class GeneratorController
             }
             return $this->viewRenderer->render('__form', $parameters);
         } else {
-                    return $this->webService->getRedirectResponse('generator/index');
+            return $this->webService->getRedirectResponse('generator/index');
         }    
     }
     
@@ -330,29 +330,31 @@ final class GeneratorController
                             ): Response {
         $file = self::ENTITY;
         $path = $this->getAliases();
+        /** @var Gentor $g */
         $g = $this->generator($currentRoute, $gr);
-        if (null!==$g) {
-            $id = $g->getGentor_id();
-            $relations = $grr->findRelations($id);
-            $orm = $dbal->database('default')
-                        ->table($g->getPre_entity_table());
-            $content = $this->getContent($view,$g,$relations,$orm,$file);
-            $flash = $this->flash('success',$g->getCamelcase_capital_name().$file.' generated at '.$path.'/'.$g->getCamelcase_capital_name().$file);
-            $build_file = $this->build_and_save($path,$content,$file,$g->getCamelcase_capital_name());
-            $parameters = [
-                'canEdit'=>$this->rbac(),
-                's'=> $settingRepository,
-                'title' => 'Generate '.$file,
-                'body' => $this->body($g),
-                'generator'=> $g,
-                'orm_schema'=>$orm,
-                'relations'=>$relations,
-                'flash'=> $flash,
-                'generated'=>$build_file,
-            ];
-            return $this->viewRenderer->render('__results', $parameters);
+        $table_name = $g->getPre_entity_table();
+        if (null==$table_name) {
+            return $this->webService->getRedirectResponse('generator/index');
         }
-        return $this->webService->getRedirectResponse('site/index');
+        $id = $g->getGentor_id();
+        $relations = $grr->findRelations($id);
+        $orm = $dbal->database('default')
+                    ->table($table_name);
+        $content = $this->getContent($view,$g,$relations,$orm,$file);
+        $flash = $this->flash('success',($g->getCamelcase_capital_name() ?? '').$file.' generated at '.$path.'/'.($g->getCamelcase_capital_name() ?? '').$file);
+        $build_file = $this->build_and_save($path,$content,$file,($g->getCamelcase_capital_name() ?? 'Unknown'));
+        $parameters = [
+            'canEdit'=>$this->rbac(),
+            's'=> $settingRepository,
+            'title' => 'Generate '.$file,
+            'body' => $this->body($g),
+            'generator'=> $g,
+            'orm_schema'=>$orm,
+            'relations'=>$relations,
+            'flash'=> $flash,
+            'generated'=>$build_file,
+        ];
+        return $this->viewRenderer->render('__results', $parameters);
     }
     
     /**
@@ -369,29 +371,31 @@ final class GeneratorController
                             ): Response {
         $file = self::REPO;
         $path = $this->getAliases();
+        /** @var Gentor $g */
         $g = $this->generator($currentRoute, $gr);
-        if ($g) {
-            $id = $g->getGentor_id();
-            $relations = $grr->findRelations($id);
-            $orm = $dbal->database('default')
-                        ->table($g->getPre_entity_table());
-            $content = $this->getContent($view,$g,$relations,$orm,$file);
-            $flash = $this->flash('success',$g->getCamelcase_capital_name().$file.' generated at '.$path.'/'.$g->getCamelcase_capital_name().$file);
-            $build_file = $this->build_and_save($path,$content,$file,$g->getCamelcase_capital_name());
-            $parameters = [
-                'canEdit'=>$this->rbac(),
-                's'=> $settingRepository,
-                'title' => 'Generate '.$file,
-                'body' => $this->body($g),
-                'generator'=> $g,
-                'orm_schema'=>$orm,
-                'relations'=>$relations,
-                'flash'=> $flash,
-                'generated'=>$build_file,
-            ];
-            return $this->viewRenderer->render('__results', $parameters);
+        $table_name = $g->getPre_entity_table();
+        if (null==$table_name) {
+            return $this->webService->getRedirectResponse('generator/index');
         }
-        return $this->webService->getRedirectResponse('site/index');
+        $id = $g->getGentor_id();
+        $relations = $grr->findRelations($id);
+        $orm = $dbal->database('default')
+                    ->table($table_name);
+        $content = $this->getContent($view,$g,$relations,$orm,$file);
+        $flash = $this->flash('success',($g->getCamelcase_capital_name() ?? '').$file.' generated at '.$path.'/'.($g->getCamelcase_capital_name() ?? '').$file);
+        $build_file = $this->build_and_save($path,$content,$file,$g->getCamelcase_capital_name() ?? 'Unknown');
+        $parameters = [
+            'canEdit'=>$this->rbac(),
+            's'=> $settingRepository,
+            'title' => 'Generate '.$file,
+            'body' => $this->body($g),
+            'generator'=> $g,
+            'orm_schema'=>$orm,
+            'relations'=>$relations,
+            'flash'=> $flash,
+            'generated'=>$build_file,
+        ];
+        return $this->viewRenderer->render('__results', $parameters);
     }
     
     /**
@@ -408,29 +412,31 @@ final class GeneratorController
                             ): Response {
         $file = self::SERVICE;
         $path = $this->getAliases();
+        /** @var Gentor $g */
         $g = $this->generator($currentRoute, $gr);
-        if ($g) {
-            $id = $g->getGentor_id();
-            $relations = $grr->findRelations($id);
-            $orm = $dbal->database('default')
-                        ->table($g->getPre_entity_table());
-            $content = $this->getContent($view,$g,$relations,$orm,$file);
-            $flash = $this->flash('success',$g->getCamelcase_capital_name().$file.' generated at '.$path.'/'.$g->getCamelcase_capital_name().$file);
-            $build_file = $this->build_and_save($path,$content,$file,$g->getCamelcase_capital_name());
-            $parameters = [
-                'canEdit'=>$this->rbac(),
-                's'=> $settingRepository,
-                'title' => 'Generate '.$file,
-                'body' => $this->body($g),
-                'generator'=> $g,
-                'orm_schema'=>$orm,
-                'relations'=>$relations,
-                'flash'=> $flash,
-                'generated'=>$build_file,
-            ];
-            return $this->viewRenderer->render('__results', $parameters);
+        $table_name = $g->getPre_entity_table();
+        if (null==$table_name) {
+            return $this->webService->getRedirectResponse('generator/index');
         }
-        return $this->webService->getRedirectResponse('site/index');
+        $id = $g->getGentor_id();
+        $relations = $grr->findRelations($id);
+        $orm = $dbal->database('default')
+                    ->table($table_name);
+        $content = $this->getContent($view,$g,$relations,$orm,$file);
+        $flash = $this->flash('success',($g->getCamelcase_capital_name() ?? '').$file.' generated at '.$path.'/'.($g->getCamelcase_capital_name() ?? '').$file);
+        $build_file = $this->build_and_save($path,$content,$file,($g->getCamelcase_capital_name() ?? 'Unknown'));
+        $parameters = [
+            'canEdit'=>$this->rbac(),
+            's'=> $settingRepository,
+            'title' => 'Generate '.$file,
+            'body' => $this->body($g),
+            'generator'=> $g,
+            'orm_schema'=>$orm,
+            'relations'=>$relations,
+            'flash'=> $flash,
+            'generated'=>$build_file,
+        ];
+        return $this->viewRenderer->render('__results', $parameters);
     }
     
     /**
@@ -447,29 +453,32 @@ final class GeneratorController
                             ): Response {
         $file = self::FORM;
         $path = $this->getAliases();
+        /** @var Gentor $g */
         $g = $this->generator($currentRoute, $gr);
-        if ($g) {
-                $id = $g->getGentor_id();
-                $relations = $grr->findRelations($id);
-                $orm = $dbal->database('default')
-                            ->table($g->getPre_entity_table());
-                $content = $this->getContent($view,$g,$relations,$orm,$file);
-                $flash = $this->flash('success',$g->getCamelcase_capital_name().$file.' generated at '.$path.'/'.$g->getCamelcase_capital_name().$file);
-                $build_file = $this->build_and_save($path,$content,$file,$g->getCamelcase_capital_name());
-                $parameters = [
-                    'canEdit'=>$this->rbac(),
-                    's'=> $settingRepository,
-                    'title' => 'Generate '.$file,
-                    'body' => $this->body($g),
-                    'generator'=> $g,
-                    'orm_schema'=>$orm,
-                    'relations'=>$relations,
-                    'flash'=> $flash,
-                    'generated'=>$build_file,
-                ];
-                return $this->viewRenderer->render('__results', $parameters);
+        $table_name = $g->getPre_entity_table();
+        if (null==$table_name) {
+            return $this->webService->getRedirectResponse('generator/index');
         }
-        return $this->webService->getRedirectResponse('site/index');
+        $id = $g->getGentor_id();
+        $relations = $grr->findRelations($id);
+        /** @psalm-suppress ArgumentTypeCoercion $g->getPre_entity_table() */
+        $orm = $dbal->database('default')
+                    ->table($table_name);
+        $content = $this->getContent($view,$g,$relations,$orm,$file);
+        $flash = $this->flash('success',($g->getCamelcase_capital_name() ?? '').$file.' generated at '.$path.'/'.($g->getCamelcase_capital_name() ?? '').$file);
+        $build_file = $this->build_and_save($path,$content,$file,($g->getCamelcase_capital_name() ?? 'Unknown' ));
+        $parameters = [
+            'canEdit'=>$this->rbac(),
+            's'=> $settingRepository,
+            'title' => 'Generate '.$file,
+            'body' => $this->body($g),
+            'generator'=> $g,
+            'orm_schema'=>$orm,
+            'relations'=>$relations,
+            'flash'=> $flash,
+            'generated'=>$build_file,
+        ];
+        return $this->viewRenderer->render('__results', $parameters);
     }
     
     /**
@@ -486,29 +495,32 @@ final class GeneratorController
                             ): Response {
         $file = self::CONTROLLER;
         $path = $this->getAliases();
+        /** @var Gentor $g */
         $g = $this->generator($currentRoute, $gr);
-        if ($g) {
-            $id = $g->getGentor_id();
-            $relations = $grr->findRelations($id);
-            $orm = $dbal->database('default')
-                        ->table($g->getPre_entity_table());
-            $content = $this->getContent($view,$g,$relations,$orm,$file);
-            $flash = $this->flash('success',$g->getCamelcase_capital_name().$file.' generated at '.$path.'/'.$g->getCamelcase_capital_name().$file);
-            $build_file = $this->build_and_save($path,$content,$file,$g->getCamelcase_capital_name());
-            $parameters = [
-                'canEdit'=>$this->rbac(),
-                's'=> $settingRepository,
-                'title' => 'Generate '.$file,
-                'body' => $this->body($g),
-                'generator'=> $g,
-                'orm_schema'=>$orm,
-                'relations'=>$relations,
-                'flash'=> $flash,
-                'generated'=>$build_file,
-            ];
-            return $this->viewRenderer->render('__results', $parameters);
+        $table_name = $g->getPre_entity_table();
+        if (null==$table_name) {
+            return $this->webService->getRedirectResponse('generator/index');
         }
-        return $this->webService->getRedirectResponse('site/index');
+        $id = $g->getGentor_id();
+        $relations = $grr->findRelations($id);
+        /** @psalm-suppress ArgumentTypeCoercion $g->getPre_entity_table() */
+        $orm = $dbal->database('default')
+                    ->table($table_name);
+        $content = $this->getContent($view,$g,$relations,$orm,$file);
+        $flash = $this->flash('success',($g->getCamelcase_capital_name() ?? '').$file.' generated at '.$path.'/'.($g->getCamelcase_capital_name() ?? '').$file);
+        $build_file = $this->build_and_save($path,$content,$file,($g->getCamelcase_capital_name() ?? 'Unknown'));
+        $parameters = [
+            'canEdit'=>$this->rbac(),
+            's'=> $settingRepository,
+            'title' => 'Generate '.$file,
+            'body' => $this->body($g),
+            'generator'=> $g,
+            'orm_schema'=>$orm,
+            'relations'=>$relations,
+            'flash'=> $flash,
+            'generated'=>$build_file,
+        ];
+        return $this->viewRenderer->render('__results', $parameters);
     }
     
     /**
@@ -525,29 +537,32 @@ final class GeneratorController
                             ): Response {
         $file = self::INDEX;
         $path = $this->getAliases();
+        /** @var Gentor $g */
         $g = $this->generator($currentRoute, $gr);
-        if ($g) {
-            $id = $g->getGentor_id();
-            $relations = $grr->findRelations($id);
-            $orm = $dbal->database('default')
-                        ->table($g->getPre_entity_table());
-            $content = $this->getContent($view,$g,$relations,$orm,$file);
-            $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
-            $build_file = $this->build_and_save($path,$content,$file,'');
-            $parameters = [
-                'canEdit'=>$this->rbac(),
-                's'=> $settingRepository,
-                'title' => 'Generate '.$file,
-                'body' => $this->body($g),
-                'generator'=> $g,
-                'orm_schema'=>$orm,
-                'relations'=>$relations,
-                'flash'=> $flash,
-                'generated'=>$build_file,
-            ];
-            return $this->viewRenderer->render('__results', $parameters);
+        $table_name = $g->getPre_entity_table();
+        if (null==$table_name) {
+            return $this->webService->getRedirectResponse('generator/index');
         }
-        return $this->webService->getRedirectResponse('site/index');
+        $id = $g->getGentor_id();
+        $relations = $grr->findRelations($id);
+        /** @psalm-suppress ArgumentTypeCoercion $g->getPre_entity_table() */
+        $orm = $dbal->database('default')
+                    ->table($table_name);
+        $content = $this->getContent($view,$g,$relations,$orm,$file);
+        $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
+        $build_file = $this->build_and_save($path,$content,$file,'');
+        $parameters = [
+            'canEdit'=>$this->rbac(),
+            's'=> $settingRepository,
+            'title' => 'Generate '.$file,
+            'body' => $this->body($g),
+            'generator'=> $g,
+            'orm_schema'=>$orm,
+            'relations'=>$relations,
+            'flash'=> $flash,
+            'generated'=>$build_file,
+        ];
+        return $this->viewRenderer->render('__results', $parameters);
     }
     
     /**
@@ -564,29 +579,32 @@ final class GeneratorController
                             ): Response {
         $file = self::INDEX_ADV_PAGINATOR;
         $path = $this->getAliases();
+        /** @var Gentor $g */
         $g = $this->generator($currentRoute, $gr);
-        if ($g) {
-            $id = $g->getGentor_id();
-            $relations = $grr->findRelations($id);
-            $orm = $dbal->database('default')
-                        ->table($g->getPre_entity_table());
-            $content = $this->getContent($view,$g,$relations,$orm,$file);
-            $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
-            $build_file = $this->build_and_save($path,$content,$file,'');
-            $parameters = [
-                'canEdit'=>$this->rbac(),
-                's'=> $settingRepository,
-                'title' => 'Generate '.$file,
-                'body' => $this->body($g),
-                'generator'=> $g,
-                'orm_schema'=>$orm,
-                'relations'=>$relations,
-                'flash'=> $flash,
-                'generated'=>$build_file,
-            ];
-            return $this->viewRenderer->render('__results', $parameters);
+        $table_name = $g->getPre_entity_table();
+        if (null==$table_name) {
+            return $this->webService->getRedirectResponse('generator/index');
         }
-        return $this->webService->getRedirectResponse('site/index');   
+        $id = $g->getGentor_id();
+        $relations = $grr->findRelations($id);
+        /** @psalm-suppress ArgumentTypeCoercion $g->getPre_entity_table() */
+        $orm = $dbal->database('default')
+                    ->table($table_name);
+        $content = $this->getContent($view,$g,$relations,$orm,$file);
+        $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
+        $build_file = $this->build_and_save($path,$content,$file,'');
+        $parameters = [
+            'canEdit'=>$this->rbac(),
+            's'=> $settingRepository,
+            'title' => 'Generate '.$file,
+            'body' => $this->body($g),
+            'generator'=> $g,
+            'orm_schema'=>$orm,
+            'relations'=>$relations,
+            'flash'=> $flash,
+            'generated'=>$build_file,
+        ];
+        return $this->viewRenderer->render('__results', $parameters);
     }    
     /**
      * @param CurrentRoute $currentRoute
@@ -602,29 +620,31 @@ final class GeneratorController
                             ): Response {
         $file = self::INDEX_ADV_PAGINATOR_WITH_FILTER;
         $path = $this->getAliases();
+        /** @var Gentor $g */
         $g = $this->generator($currentRoute, $gr);
-        if ($g) {
-            $id = $g->getGentor_id();
-            $relations = $grr->findRelations($id);
-            $orm = $dbal->database('default')
-                        ->table($g->getPre_entity_table());
-            $content = $this->getContent($view,$g,$relations,$orm,$file);
-            $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
-            $build_file = $this->build_and_save($path,$content,$file,'');
-            $parameters = [
-                'canEdit'=>$this->rbac(),
-                's'=> $settingRepository,
-                'title' => 'Generate '.$file,
-                'body' => $this->body($g),
-                'generator'=> $g,
-                'orm_schema'=>$orm,
-                'relations'=>$relations,
-                'flash'=> $flash,
-                'generated'=>$build_file,
-            ];
-            return $this->viewRenderer->render('__results', $parameters);
+        $table_name = $g->getPre_entity_table();
+        if (null==$table_name) {
+            return $this->webService->getRedirectResponse('generator/index');
         }
-        return $this->webService->getRedirectResponse('site/index');
+        $id = $g->getGentor_id();
+        $relations = $grr->findRelations($id);
+        $orm = $dbal->database('default')
+                    ->table($table_name);
+        $content = $this->getContent($view,$g,$relations,$orm,$file);
+        $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
+        $build_file = $this->build_and_save($path,$content,$file,'');
+        $parameters = [
+            'canEdit'=>$this->rbac(),
+            's'=> $settingRepository,
+            'title' => 'Generate '.$file,
+            'body' => $this->body($g),
+            'generator'=> $g,
+            'orm_schema'=>$orm,
+            'relations'=>$relations,
+            'flash'=> $flash,
+            'generated'=>$build_file,
+        ];
+        return $this->viewRenderer->render('__results', $parameters);
     }
     
     /**
@@ -641,29 +661,31 @@ final class GeneratorController
                             ): Response {
         $file = self::_FORM;
         $path = $this->getAliases();
+        /** @var Gentor $g */
         $g = $this->generator($currentRoute, $gr);
-        if ($g) {
-            $id = $g->getGentor_id();
-            $relations = $grr->findRelations($id);
-            $orm = $dbal->database('default')
-                        ->table($g->getPre_entity_table());
-            $content = $this->getContent($view,$g,$relations,$orm,$file);
-            $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
-            $build_file = $this->build_and_save($path,$content,$file,'');
-            $parameters = [
-                'canEdit'=>$this->rbac(),
-                's'=> $settingRepository,
-                'title' => 'Generate '.$file,
-                'body' => $this->body($g),
-                'generator'=> $g,
-                'orm_schema'=>$orm,
-                'relations'=>$relations,
-                'flash'=> $flash,
-                'generated'=>$build_file,
-            ];
-            return $this->viewRenderer->render('__results', $parameters);
+        $table_name = $g->getPre_entity_table();
+        if (null==$table_name) {
+            return $this->webService->getRedirectResponse('generator/index');
         }
-        return $this->webService->getRedirectResponse('site/index');
+        $id = $g->getGentor_id();
+        $relations = $grr->findRelations($id);
+        $orm = $dbal->database('default')
+                    ->table($table_name);
+        $content = $this->getContent($view,$g,$relations,$orm,$file);
+        $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
+        $build_file = $this->build_and_save($path,$content,$file,'');
+        $parameters = [
+            'canEdit'=>$this->rbac(),
+            's'=> $settingRepository,
+            'title' => 'Generate '.$file,
+            'body' => $this->body($g),
+            'generator'=> $g,
+            'orm_schema'=>$orm,
+            'relations'=>$relations,
+            'flash'=> $flash,
+            'generated'=>$build_file,
+        ];
+        return $this->viewRenderer->render('__results', $parameters);
     }
     
     /**
@@ -681,29 +703,31 @@ final class GeneratorController
         Response {
         $file = self::_VIEW;
         $path = $this->getAliases();
+        /** @var Gentor $g */
         $g = $this->generator($currentRoute, $gr);
-        if ($g) {
-            $id = $g->getGentor_id();
-            $relations = $grr->findRelations($id);
-            $orm = $dbal->database('default')
-                        ->table($g->getPre_entity_table());
-            $content = $this->getContent($view,$g,$relations,$orm,$file);
-            $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
-            $build_file = $this->build_and_save($path,$content,$file,'');
-            $parameters = [
-                'canEdit'=>$this->rbac(),
-                's'=> $settingRepository,
-                'title' => 'Generate '.$file,
-                'body' => $this->body($g),
-                'generator'=> $g,
-                'orm_schema'=>$orm,
-                'relations'=>$relations,
-                'flash'=> $flash,
-                'generated'=>$build_file,
-            ];
-            return $this->viewRenderer->render('__results', $parameters);
-        }        
-        return $this->webService->getRedirectResponse('site/index');
+        $table_name = $g->getPre_entity_table();
+        if (null==$table_name) {
+            return $this->webService->getRedirectResponse('generator/index');
+        }
+        $id = $g->getGentor_id();
+        $relations = $grr->findRelations($id);
+        $orm = $dbal->database('default')
+                    ->table($table_name);
+        $content = $this->getContent($view,$g,$relations,$orm,$file);
+        $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
+        $build_file = $this->build_and_save($path,$content,$file,'');
+        $parameters = [
+            'canEdit'=>$this->rbac(),
+            's'=> $settingRepository,
+            'title' => 'Generate '.$file,
+            'body' => $this->body($g),
+            'generator'=> $g,
+            'orm_schema'=>$orm,
+            'relations'=>$relations,
+            'flash'=> $flash,
+            'generated'=>$build_file,
+        ];
+        return $this->viewRenderer->render('__results', $parameters);        
     }
     
     //generate this individual route. Append to config/routes file.  
@@ -722,29 +746,31 @@ final class GeneratorController
                            ): Response {
         $file = self::_ROUTE;
         $path = $this->getAliases();
+        /** @var Gentor $g */
         $g = $this->generator($currentRoute, $gr);
-            if ($g) {
-            $id = $g->getGentor_id();
-            $relations = $grr->findRelations($id);
-            $orm = $dbal->database('default')
-                        ->table($g->getPre_entity_table());
-            $content = $this->getContent($view,$g,$relations,$orm,$file);
-            $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
-            $build_file = $this->build_and_save($path,$content,$file,'');
-            $parameters = [
-                'canEdit'=>$this->rbac(),
-                's'=> $settingRepository,
-                'title' => 'Generate '.$file,
-                'body' => $this->body($g),
-                'generator'=> $g,
-                'orm_schema'=>$orm,
-                'relations'=>$relations,
-                'flash'=> $flash,
-                'generated'=>$build_file,
-            ];
-            return $this->viewRenderer->render('__results', $parameters);
+        $table_name = $g->getPre_entity_table();
+        if (null==$table_name) {
+            return $this->webService->getRedirectResponse('generator/index');
         }
-        return $this->webService->getRedirectResponse('site/index');
+        $id = $g->getGentor_id();
+        $relations = $grr->findRelations($id);
+        $orm = $dbal->database('default')
+                    ->table($table_name);
+        $content = $this->getContent($view,$g,$relations,$orm,$file);
+        $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
+        $build_file = $this->build_and_save($path,$content,$file,'');
+        $parameters = [
+            'canEdit'=>$this->rbac(),
+            's'=> $settingRepository,
+            'title' => 'Generate '.$file,
+            'body' => $this->body($g),
+            'generator'=> $g,
+            'orm_schema'=>$orm,
+            'relations'=>$relations,
+            'flash'=> $flash,
+            'generated'=>$build_file,
+        ];
+        return $this->viewRenderer->render('__results', $parameters);
     }
     
     /**
@@ -789,8 +815,9 @@ final class GeneratorController
                 throw new GoogleTranslateJsonFileNotFoundException(); 
             }
             $data = file_get_contents(FileHelper::normalizePath($path_and_filename));
+            /** @var array $json */
             $json = Json::decode($data, true);
-            $projectId = $json['project_id']; 
+            $projectId = (string)$json['project_id']; 
             putenv("GOOGLE_APPLICATION_CREDENTIALS=$path_and_filename");
             $translationClient = new TranslationServiceClient();
             // Use the ..src/Invoice/Language/English/ip_lang.php associative array as template
@@ -810,13 +837,23 @@ final class GeneratorController
                 throw new GoogleTranslateLocaleSettingNotFoundException(); 
             }
             // https://github.com/googleapis/google-cloud-php-translate
+            /** @var array<array-key, string> $content */ 
             $response = $translationClient->translateText(
                 $content,
                 $targetLanguage,
                 TranslationServiceClient::locationName($projectId, 'global')
             );
             $result_array = [];
-            foreach ($response->getTranslations() as $key => $translation) {
+            /** 
+             * @var \Google\Cloud\Translate\V3\TranslateTextResponse $response_get_translations                        
+             */
+            $response_get_translations = $response->getTranslations();
+            /** 
+             * @psalm-suppress RawObjectIteration $response_get_translations 
+             * @var \Google\Cloud\Translate\V3\Translation $translation
+             * @var string $key
+             */
+            foreach ($response_get_translations as $key => $translation) {
                 $result_array[$key] = $translation->getTranslatedText();
             }
             $combined_array = array_combine($content_keys_array, $result_array);

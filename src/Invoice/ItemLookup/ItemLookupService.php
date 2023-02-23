@@ -26,9 +26,9 @@ final class ItemLookupService
     public function saveItemLookup(ItemLookup $model, ItemLookupForm $form): void
     {
         
-       $model->setName($form->getName());
-       $model->setDescription($form->getDescription());
-       $model->setPrice($form->getPrice());
+       $model->setName($form->getName() ?? '');
+       $model->setDescription($form->getDescription() ?? '');
+       $model->setPrice($form->getPrice() ?? 0.00);
  
         $this->repository->save($model);
     }

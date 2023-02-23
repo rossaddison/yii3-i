@@ -61,13 +61,14 @@ class Cryptor
     }
 
     /**
-     * Encrypt a string.
-     * @param  string $in  String to encrypt.
-     * @param  string $key Encryption key.
-     * @param  int $fmt Optional override for the output encoding. One of FORMAT_RAW, FORMAT_B64 or FORMAT_HEX.
-     * @return string      The encrypted string.
+     * 
+     * @param string $in
+     * @param string $key
+     * @param int|null $fmt
+     * @return mixed
+     * @throws \Exception
      */
-    public function encryptString(string $in, string $key, int|null $fmt = null)
+    public function encryptString(string $in, string $key, int|null $fmt = null) : mixed
     {
         if ($fmt === null)
         {
@@ -102,6 +103,7 @@ class Cryptor
         }
         else if ($fmt == Cryptor::FORMAT_HEX)
         {
+            /** @var array|false|string $res */
             $res = unpack('H*', $res)[1];
         }
 
@@ -113,9 +115,10 @@ class Cryptor
      * @param  string $in  String to decrypt.
      * @param  string $key Decryption key.
      * @param  int $fmt Optional override for the input encoding. One of FORMAT_RAW, FORMAT_B64 or FORMAT_HEX.
-     * @return string      The decrypted string.
+     * @throws \Exception
+     * @return mixed 
      */
-    public function decryptString($in, $key, $fmt = null)
+    public function decryptString($in, $key, $fmt = null) : mixed
     {
         if ($fmt === null)
         {
@@ -165,9 +168,9 @@ class Cryptor
      * @param  string $in  String to encrypt.
      * @param  string $key Encryption key.
      * @param  int $fmt Optional override for the output encoding. One of FORMAT_RAW, FORMAT_B64 or FORMAT_HEX.
-     * @return string      The encrypted string.
+     * @return mixed 
      */
-    public static function Encrypt($in, $key, $fmt = null)
+    public static function Encrypt($in, $key, $fmt = null) : mixed
     {
         $c = new Cryptor();
         return $c->encryptString($in, $key, $fmt);
@@ -178,9 +181,9 @@ class Cryptor
      * @param  string $in  String to decrypt.
      * @param  string $key Decryption key.
      * @param  int $fmt Optional override for the input encoding. One of FORMAT_RAW, FORMAT_B64 or FORMAT_HEX.
-     * @return string      The decrypted string.
+     * @return mixed 
      */
-    public static function Decrypt($in, $key, $fmt = null)
+    public static function Decrypt($in, $key, $fmt = null) : mixed
     {
         $c = new Cryptor();
         return $c->decryptString($in, $key, $fmt);

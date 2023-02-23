@@ -106,6 +106,7 @@ class Sumex
     
     public function getTreatmentstart(): DateTimeImmutable|null
     {
+      /** @var DateTimeImmutable $this->treatmentstart */
       return $this->treatmentstart;
     }
     
@@ -116,6 +117,7 @@ class Sumex
     
     public function getTreatmentend(): DateTimeImmutable|null
     {
+      /** @var DateTimeImmutable $this->treatmentend */
       return $this->treatmentend;
     }
     
@@ -126,6 +128,7 @@ class Sumex
     
     public function getCasedate(): DateTimeImmutable
     {
+      /** @var DateTimeImmutable $this->casedate */
       return $this->casedate;
     }
     

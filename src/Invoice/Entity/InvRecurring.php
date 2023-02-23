@@ -70,6 +70,7 @@ class InvRecurring
     
     public function getStart() : DateTimeImmutable  
     {
+        /** @var DateTimeImmutable $this->start */
         return $this->start;
     }    
     
@@ -80,6 +81,7 @@ class InvRecurring
     
     public function getEnd() : DateTimeImmutable  
     {
+        /** @var DateTimeImmutable $this->end */
         return $this->end;
     }    
     
@@ -90,6 +92,7 @@ class InvRecurring
     
     public function getNext() : DateTimeImmutable|null  
     {
+        /** @var DateTimeImmutable $this->next */
         return $this->next;
     }    
     

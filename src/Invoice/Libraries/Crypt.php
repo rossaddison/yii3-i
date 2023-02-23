@@ -49,15 +49,16 @@ class Crypt
 
     /**
      * @param string $data
-     * @return string
+     * @return mixed $encrypted
      */
-    public function encode($data)
+    public function encode(string $data) : mixed
     {
         $key = '';
         if (preg_match("/^base64:(.*)$/", $this->decrypt_key, $matches)) {
             $key = base64_decode($matches[1]);
         }
 
+        /** @var mixed $encrypted */
         $encrypted = Cryptor::Encrypt($data, $key);
         return $encrypted;
 
@@ -65,9 +66,9 @@ class Crypt
 
     /**
      * @param string $data
-     * @return string
+     * @return mixed $decrypted
      */
-    public function decode($data)
+    public function decode(string $data) : mixed
     {
         $key = '';
         if (empty($data)) {
@@ -78,6 +79,7 @@ class Crypt
             $key = base64_decode($matches[1]);
         }
 
+        /** @var mixed $decrypted */
         $decrypted = Cryptor::Decrypt($data, $key);
         return $decrypted;
 

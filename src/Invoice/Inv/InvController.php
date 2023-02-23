@@ -1016,6 +1016,7 @@ final class InvController
                 $stream = false;
                 // true => invoice ie. not quote
                 // $stream is false => pdfhelper->generate_inv_pdf => mpdfhelper->pdf_Create => filename returned 
+                /** @psalm-suppress MixedAssignment $pdf_template_target_path */
                 $pdf_template_target_path = $this->pdf_helper->generate_inv_pdf($inv_id, $inv->getUser_id(), $stream, true, $inv_amount, $inv_custom_values, $cR, $cvR, $cfR, $iiR, $iiaR, $iR, $itrR, $uiR, $viewrenderer); 
                 if (is_string($pdf_template_target_path)) {
                     $mail_message = $template_helper->parse_template($inv_id, true, $email_body, $cR, $cvR, $iR, $iaR, $qR,  $qaR, $uiR);
@@ -1222,6 +1223,7 @@ final class InvController
     }
     
     /**
+     * 
      * @param Request $request
      * @param IAR $iaR
      * @param IR $invRepo
@@ -1229,6 +1231,7 @@ final class InvController
      * @param CR $clientRepo
      * @param GR $groupRepo
      * @param CurrentRoute $currentRoute
+     * @return \Yiisoft\DataResponse\DataResponse
      */
     public function index(Request $request, IAR $iaR, IR $invRepo, IRR $irR, CR $clientRepo, GR $groupRepo, CurrentRoute $currentRoute): \Yiisoft\DataResponse\DataResponse
     {
@@ -1477,6 +1480,7 @@ final class InvController
                     $inv = $iR->repoInvUnloadedquery((string)$inv_id);
                     if ($inv) {
                         // Because the invoice is not streamed an aliase of temporary folder file location is returned        
+                        /** @psalm-suppress MixedAssignment $temp_aliase */
                         $temp_aliase = $pdfhelper->generate_inv_pdf($inv_id, $inv->getUser_id(), $stream, $c_f, $inv_amount, $inv_custom_values, $cR, $cvR, $cfR, $iiR, $iiaR, $iR, $itrR, $uiR, $this->view_renderer);                
                         if (is_string($temp_aliase)) {
                             $path_parts = pathinfo($temp_aliase);
@@ -1557,6 +1561,7 @@ final class InvController
                     $inv = $iR->repoInvUnloadedquery((string)$inv_id);
                     if ($inv) {
                         // Because the invoice is not streamed an aliase of temporary folder file location is returned        
+                        /** @psalm-suppress MixedAssignment $temp_aliase */
                         $temp_aliase = $pdfhelper->generate_inv_pdf($inv_id, $inv->getUser_id(), $stream, $c_f , $inv_amount, $inv_custom_values, $cR, $cvR, $cfR, $iiR, $iiaR, $iR, $itrR, $uiR, $this->view_renderer);                
                         if (is_string($temp_aliase)) {
                             $path_parts = pathinfo($temp_aliase);
@@ -1620,7 +1625,7 @@ final class InvController
                 if ($iR->repoCount($inv_id)>0) {
                     if ($inv->getStatus_id() === 1 && $inv->getNumber() === "") {
                         // Generate new inv number if applicable
-                        $inv->setNumber($this->generate_inv_get_number($group_id, $sR, $iR, $gR));
+                        $inv->setNumber((string)$this->generate_inv_get_number($group_id, $sR, $iR, $gR));
                         $iR->save($inv);
                     }
                 }
@@ -1633,11 +1638,12 @@ final class InvController
      * @param SR $sR
      * @param IR $iR
      * @param GR $gR
-     * @return string
+     * @return mixed $inv_number
      */
-    public function generate_inv_get_number(string $group_id, SR $sR, IR $iR, GR $gR) : string {
+    public function generate_inv_get_number(string $group_id, SR $sR, IR $iR, GR $gR) : mixed {
         $inv_number = '';
         if ($sR->get_setting('generate_invoice_number_for_draft') == '0') {
+            /** @var mixed $inv_number */
             $inv_number = $iR->get_inv_number($group_id, $gR);
         }
         return $inv_number;        

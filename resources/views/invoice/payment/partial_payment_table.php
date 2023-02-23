@@ -27,13 +27,13 @@
 
         <tbody>
         <?php foreach ($payments as $payment) { ?>
-            <?php if ($payment->getInv()->getClient_id() === $client->getClient_id()) { ?>
+            <?php if ($payment->getInv()?->getClient_id() === $client->getClient_id()) { ?>
             <tr>
                 <td><?=  $s->date_from_mysql($payment->getPayment_date()); ?></td>
-                <td><?=  $s->date_from_mysql($payment->getInv()->getDate_created()); ?></td>                
+                <td><?=  $s->date_from_mysql($payment->getInv()?->getDate_created()); ?></td>                
                 <td>
                     <a href="<?=  $urlGenerator->generate('inv/view',['id'=>$payment->getInv_id()]); ?>">
-                        <?= Html::encode($payment->getInv()->getNumber()); ?>
+                        <?= Html::encode($payment->getInv()?->getNumber()); ?>
                     </a>
                 </td>
                 <td>

@@ -185,6 +185,7 @@ use App\Invoice\Entity\Company;
      //cycle 
     public function getStart_date() : ?DateTimeImmutable  
     {
+        /** @var DateTimeImmutable $this->start_date */
         return $this->start_date;
     }    
     
@@ -196,6 +197,7 @@ use App\Invoice\Entity\Company;
      //cycle 
     public function getEnd_date() : ?DateTimeImmutable  
     {
+        /** @var DateTimeImmutable $this->end_date */
         return $this->end_date;
     }    
     

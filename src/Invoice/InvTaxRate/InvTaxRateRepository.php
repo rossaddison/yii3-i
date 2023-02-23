@@ -47,6 +47,10 @@ private EntityWriter $entityWriter;
             ->withSort($this->getSort());
     }
     
+    /**
+     * 
+     * @return Sort
+     */
     private function getSort(): Sort
     {
         return Sort::only(['id'])->withOrder(['id' => 'asc']);
@@ -74,6 +78,11 @@ private EntityWriter $entityWriter;
         $this->entityWriter->delete([$invtaxrate]);
     }
     
+    /**
+     * 
+     * @param Select $query
+     * @return EntityReader
+     */
     private function prepareDataReader(Select $query): EntityReader
     {
         return (new EntityReader($query))->withSort(
@@ -125,17 +134,32 @@ private EntityWriter $entityWriter;
         $query = $this->select()->load('tax_rate')->where(['tax_rate_id' => $tax_rate_id]);
         return  $query->fetchOne();        
     }
-        
+    
+    /**
+     * 
+     * @param string $inv_id
+     * @return EntityReader
+     */
     public function repoGetInvTaxRateAmounts(string $inv_id): EntityReader  {
         $query = $this->select()
                       ->where(['inv_id'=>$inv_id]);
         return $this->prepareDataReader($query);   
     }
-        
+    
+    /**
+     * 
+     * @param string $inv_id
+     * @return float
+     */
     public function repoUpdateInvTaxTotal(string $inv_id): float {
         $getTaxRateAmounts = $this->repoGetInvTaxRateAmounts($inv_id);        
         $total = 0.00;
+        /** @var array $item */
         foreach ($getTaxRateAmounts as $item) {
+            /** 
+             * @var string $key 
+             * @var float $value
+             */
             foreach ($item as $key=>$value) {
                if ($key === 'inv_tax_rate_amount') {             
                   $total += $value;  

@@ -32,7 +32,7 @@ final class ProductService
         null!==$form->getProvider_name() ? $model->setProvider_name($form->getProvider_name()): '';
         null!==$form->getProduct_tariff() ? $model->setProduct_tariff($form->getProduct_tariff()): '';        
         null!==$form->getTax_rate_id() ? $model->setTax_rate_id((int)$form->getTax_rate_id()): '';               
-        null!==$form->getunit_id() ? $model->setUnit_id((int)$form->getUnit_id()): '';
+        null!==$form->getUnit_id() ? $model->setUnit_id((int)$form->getUnit_id()): '';
         null!==$form->getFamily_id() ? $model->setFamily_id((int)$form->getFamily_id()): '';
         $this->repository->save($model);
     }

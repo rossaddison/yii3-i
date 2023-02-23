@@ -87,7 +87,7 @@ final class SignupForm extends FormModel
                 new Length(min: 1, max: 48, skipOnError: true),
                 function (mixed $value): Result {
                     $result = new Result();
-                    if ($this->userRepository->findByLogin($value) !== null) {
+                    if ($this->userRepository->findByLogin((string)$value) !== null) {
                         $result->addError('User with this login already exists.');
                     }
 

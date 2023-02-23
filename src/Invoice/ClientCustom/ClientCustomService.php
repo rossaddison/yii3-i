@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Invoice\ClientCustom;
 
+use App\Invoice\Entity\ClientCustom;
+
 final class ClientCustomService
 {
     private ClientCustomRepository $repository;
@@ -13,7 +15,13 @@ final class ClientCustomService
        $this->repository = $repository;
     }
 
-    public function saveClientCustom(object $model, ClientCustomForm $form): void
+    /**
+     * 
+     * @param ClientCustom $model
+     * @param ClientCustomForm $form
+     * @return void
+     */
+    public function saveClientCustom(ClientCustom $model, ClientCustomForm $form): void
     {
        null!==$form->getClient_id() ? $model->setClient_id($form->getClient_id()) : '';
        null!==$form->getCustom_field_id() ? $model->setCustom_field_id($form->getCustom_field_id()) : '';
@@ -21,7 +29,11 @@ final class ClientCustomService
        $this->repository->save($model);
     }
     
-    public function deleteClientCustom(object $model): void
+    /**
+     * @param ClientCustom $model
+     * @return void
+     */
+    public function deleteClientCustom(ClientCustom $model): void
     {
         $this->repository->delete($model);
     }

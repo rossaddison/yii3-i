@@ -265,6 +265,13 @@ final class SettingRepository extends Select\Repository
     public function config_params() : array {     
         $config = $this->get_config_params();
         $params = $config->get('params');
+        /**
+         * @var array $params['symfony/mailer']
+         * @var string $params['yiisoft/mailer']['useSendmail']
+         * @var string $params['symfony/mailer']['esmtpTransport']['scheme']
+         * @var string $params['symfony/mailer']['esmtpTransport']['host']
+         * @var string $params['symfony/mailer']['esmtpTransport']['port']
+         */
         $config_array = [
             'esmtp_scheme' =>$params['symfony/mailer']['esmtpTransport']['scheme'],
             'esmtp_host'=>$params['symfony/mailer']['esmtpTransport']['host'],

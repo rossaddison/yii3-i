@@ -41,8 +41,8 @@ class Inv
     #[Column(type: 'tinyInteger', nullable: false, default:1)]
     private ?int $status_id =  null;
      
-    #[Column(type: 'boolean', nullable: true)]
-    private ?bool $is_read_only =  false;
+    #[Column(type: 'boolean', nullable: false)]
+    private bool $is_read_only =  false;
      
     #[Column(type: 'string(90)', nullable: true)]
     private ?string $password =  '';
@@ -218,7 +218,7 @@ class Inv
     
     public function getIs_read_only(): bool
     {
-     return $this->is_read_only;
+        return $this->is_read_only ? true : false ;
     }
     
     public function setIs_read_only(bool $is_read_only) : void
@@ -253,12 +253,13 @@ class Inv
     
     public function getTime_created(): DateTimeImmutable
     {
+        /** @var DateTimeImmutable $this->time_created */
         return $this->time_created;
     }
     
     public function getDate_modified(): DateTimeImmutable
     {
-       return $this->date_modified;
+        return $this->date_modified;
     }
     
     public function setDate_due(\App\Invoice\Setting\SettingRepository $sR) : void

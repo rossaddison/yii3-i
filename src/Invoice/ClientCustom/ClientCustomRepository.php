@@ -85,11 +85,11 @@ private EntityWriter $entityWriter;
         );
     }
    
-    /**
-     * @return ClientCustom|null
-     *
-     * @psalm-return TEntity|null
-     */
+   /**
+    * 
+    * @param string $id
+    * @return ClientCustom|null
+    */
     public function repoClientCustomquery(string $id) : ClientCustom|null{
         $query = $this->select()
                       ->load('client')
@@ -110,9 +110,10 @@ private EntityWriter $entityWriter;
     }
     
     /**
+     * 
+     * @param string $client_id
+     * @param string $custom_field_id
      * @return ClientCustom|null
-     *
-     * @psalm-return TEntity|null
      */
     public function repoFormValuequery(string $client_id, string $custom_field_id): ClientCustom|null {
         $query = $this->select()

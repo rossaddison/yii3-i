@@ -37,20 +37,26 @@ final class ContactMailer
                     'content' => $form->getAttributeValue('body'),
                 ]
             )
-            ->withSubject($form->getAttributeValue('subject'))
-            ->withFrom([$form->getAttributeValue('email') => $form->getAttributeValue('name')])
+            ->withSubject((string)$form->getAttributeValue('subject'))
+            ->withFrom((string)$form->getAttributeValue('email'))
             ->withSender($this->sender)
             ->withTo($this->to);
-
+                
         $attachFiles = $request->getUploadedFiles();
+        /** @var array $attachFile */
         foreach ($attachFiles as $attachFile) {
+            /** 
+             * @var array $file 
+             * @psalm-suppress MixedMethodCall 
+             */
             foreach ($attachFile as $file) {
-                if ($file[0]?->getError() === UPLOAD_ERR_OK) {
+                if ($file[0]?->getError() === UPLOAD_ERR_OK && (null!==$file[0]?->getStream())) {
+                    /** @psalm-suppress MixedAssignment $message */
                     $message = $message->withAttached(
                         File::fromContent(
-                            (string) $file->getStream(),
-                            $file->getClientFilename(),
-                            $file->getClientMediaType()
+                            (string)$file[0]?->getStream(),
+                            (string)$file[0]?->getClientFilename(),
+                            (string)$file[0]?->getClientMediaType()
                         ),
                     );
                 }

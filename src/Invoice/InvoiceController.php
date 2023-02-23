@@ -242,7 +242,7 @@ final class InvoiceController
         // The cldr is saved from the $session->get('_language') parameter in the Invoice/Layout/main.php file as soon as the user changes the locale.
         // The below line is an additional line of code to ensure that the locale (session runtime file) is saved to database 'cldr' and may be removed in future. 
         // The cldr setting is not accessible in non debug mode by means of the tab-index
-        $sR->repoCount('cldr') === 1 && $sR->get_setting('cldr') !== $session->get('_language') ? $this->cldr($session->get('_language') ?? 'en',$sR) : '';
+        $sR->repoCount('cldr') === 1 && $sR->get_setting('cldr') !== (string)$session->get('_language') ? $this->cldr((string)$session->get('_language') ?: 'en',$sR) : '';
         $parameters = [
             'alerts'=> $this->alert($session),
         ];
@@ -366,6 +366,10 @@ final class InvoiceController
     private function install_default_settings(array $default_settings, SettingRepository $sR) : void
     {
         $this->remove_all_settings($sR);        
+        /** 
+         * @var string $key
+         * @var string $value
+         */
         foreach ($default_settings as $key => $value) {
             $form = new SettingForm();
             $array = [
@@ -516,18 +520,9 @@ final class InvoiceController
         $product->setProduct_price(100.00);
         $product->setPurchase_price(30.00);
         $product->setProvider_name('We Provide');
-        $taxrate = $trR->withName('Standard');
-        if ($taxrate) {
-            $product->setTax_rate_id($taxrate->getTax_rate_id());
-        }
-        $unit = $uR->withName('unit');
-        if ($unit) {
-            $product->setUnit_id($unit->getUnit_id());
-        }
-        $family = $fR->withName('Product');
-        if ($family) {
-            $product->setFamily_id($family->getFamily_id());
-        }
+        $product->setTax_rate_id(2);
+        $product->setUnit_id(1);
+        $product->setFamily_id(1);        
         $product->setProduct_tariff(5);
         $pR->save($product);
     }
@@ -548,18 +543,12 @@ final class InvoiceController
         $service->setProduct_price(5.00);
         $service->setPurchase_price(0.00);
         $service->setProvider_name('Employee');
-        $taxrate = $trR->withName('Zero');
-        if ($taxrate) {
-           $service->setTax_rate_id($taxrate->getTax_rate_id());
-        }
-        $unit = $uR->withName('service');
-        if ($unit) {
-            $service->setUnit_id($unit->getUnit_id());
-        }
-        $family = $fR->withName('Service');
-        if ($family) {
-            $service->setFamily_id($family->getFamily_id());
-        }
+         // Zero => tax_rate_id => 1
+        $service->setTax_rate_id(1);
+        // Service => unit_id = 2; Product => unit_id = 1
+        $service->setUnit_id(2);
+        // Service => family_id 2; Product => family_id = 1
+        $service->setFamily_id(2);
         $service->setProduct_tariff(3);
         $pR->save($service);
     }
@@ -676,11 +665,10 @@ final class InvoiceController
      */
     private function remove_all_settings(SettingRepository $sR): void {
         // Completely remove any currently existing settings
-        $all_settings = $sR->findAllPreloaded();
-        foreach ($all_settings as $setting) {
-           if ($setting instanceof Setting) { 
-            $sR->delete($setting);
-           } 
+        $settings = $sR->findAllPreloaded();
+        /** @var Setting $setting */
+        foreach ($settings as $setting) {
+           $sR->delete($setting);
         }
     }
     
@@ -836,7 +824,7 @@ final class InvoiceController
         $gR->repoCountAll() === 0 ? $this->install_default_invoice_and_quote_group($gR) : '';
         $sR->repoCount('default_settings_exist') === 0 ? $this->install_default_settings_on_first_run($session, $sR) : ''; 
         $sR->repoCount('install_test_data') === 1 && $sR->get_setting('install_test_data') === '1' ? $this->install_test_data($trR, $uR, $fR, $pR, $cR, $sR) : '';
-        $sR->repoCount('cldr') === 1 && $sR->get_setting('cldr') !== $session->get('_language') ? $this->cldr($session->get('_language') ?? 'en',$sR) : '';
+        $sR->repoCount('cldr') === 1 && $sR->get_setting('cldr') !== (string)$session->get('_language') ? $this->cldr((string)$session->get('_language') ?: 'en',$sR) : '';
         $data = [
             'isGuest' => $currentUser->isGuest(),
             'canEdit' => $canEdit,
