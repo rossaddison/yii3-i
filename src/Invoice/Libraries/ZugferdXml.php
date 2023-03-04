@@ -11,6 +11,8 @@ use App\Invoice\Setting\SettingRepository as sR;
 use App\Invoice\InvItemAmount\InvItemAmountRepository as iiaR;
 use Yiisoft\Html\Html;
 use Doctrine\Common\Collections\ArrayCollection;
+use DOMDocument;
+use DOMElement;
 
 class ZugferdXml
 {
@@ -53,8 +55,8 @@ class ZugferdXml
      */
     public function xml() : string
     {
-        /** @var \DOMDocument $doc */
-        $doc = new \DOMDocument('1.0', 'UTF-8');
+        /** @var DOMDocument $doc */
+        $doc = new DOMDocument('1.0', 'UTF-8');
         $doc->formatOutput = true;
         $root = $doc->createElement('rsm:CrossIndustryDocument');
         $root->setAttribute('xmlns:xsi', 'http://www.w3.org/2001/XMLSchema-instance');
@@ -69,10 +71,10 @@ class ZugferdXml
     }
     
     /**
-     * @param \DOMDocument $doc
-     * @return \DOMElement
+     * @param DOMDocument $doc
+     * @return DOMElement
      */
-    protected function xmlSpecifiedExchangedDocumentContext(\DOMDocument $doc) : \DOMElement
+    protected function xmlSpecifiedExchangedDocumentContext(DOMDocument $doc) : DOMElement
     {
         $node = $doc->createElement('rsm:SpecifiedExchangedDocumentContext');
         $guidelineNode = $doc->createElement('ram:GuidelineSpecifiedDocumentContextParameter');
@@ -83,10 +85,10 @@ class ZugferdXml
 
     /**
      * 
-     * @param \DOMDocument $doc
-     * @return \DOMElement
+     * @param DOMDocument $doc
+     * @return DOMElement
      */
-    protected function xmlHeaderExchangedDocument(\DOMDocument $doc) : \DOMElement
+    protected function xmlHeaderExchangedDocument(DOMDocument $doc) : DOMElement
     {
         $node = $doc->createElement('rsm:HeaderExchangedDocument');
         $node->appendChild($doc->createElement('ram:ID', $this->invoice->getNumber() ?? ''));
@@ -108,11 +110,11 @@ class ZugferdXml
 
     /**
      * 
-     * @param \DOMDocument $doc
+     * @param DOMDocument $doc
      * @param \DateTimeImmutable $date
-     * @return \DOMElement
+     * @return DOMElement
      */
-    protected function dateElement(\DOMDocument $doc, \DateTimeImmutable $date) : \DOMElement
+    protected function dateElement(DOMDocument $doc, \DateTimeImmutable $date) : DOMElement
     {
         $el = $doc->createElement('udt:DateTimeString', $this->zugferdFormattedDate($date) ?? 'YYYYmmdd');
         $el->setAttribute('format', (string)102);
@@ -131,9 +133,9 @@ class ZugferdXml
     }
 
     /**
-     * @return \DOMElement
+     * @return DOMElement
      */
-    protected function xmlSpecifiedSupplyChainTradeTransaction(\DOMDocument $doc) : \DOMElement
+    protected function xmlSpecifiedSupplyChainTradeTransaction(DOMDocument $doc) : DOMElement
     {
         $node = $doc->createElement('rsm:SpecifiedSupplyChainTradeTransaction');
         $node->appendChild($this->xmlApplicableSupplyChainTradeAgreement($doc));
@@ -150,9 +152,9 @@ class ZugferdXml
     }
 
     /**
-     * @return \DOMElement
+     * @return DOMElement
      */
-    protected function xmlApplicableSupplyChainTradeAgreement(\DOMDocument $doc) : \DOMElement
+    protected function xmlApplicableSupplyChainTradeAgreement(DOMDocument $doc) : DOMElement
     {
         $node = $doc->createElement('ram:ApplicableSupplyChainTradeAgreement');
         $node->appendChild($this->xmlSellerTradeParty($doc));
@@ -162,10 +164,10 @@ class ZugferdXml
 
     /**
      * 
-     * @param \DOMDocument $doc
-     * @return \DOMElement
+     * @param DOMDocument $doc
+     * @return DOMElement
      */
-    protected function xmlSellerTradeParty(\DOMDocument $doc) : \DOMElement
+    protected function xmlSellerTradeParty(DOMDocument $doc) : DOMElement
     {
         /** @var string $this->company['name'] */        
         $name = $this->company['name'];
@@ -196,9 +198,9 @@ class ZugferdXml
     }
 
     /**
-     * @return \DOMElement
+     * @return DOMElement
      */
-    protected function xmlBuyerTradeParty(\DOMDocument $doc) : \DOMElement
+    protected function xmlBuyerTradeParty(DOMDocument $doc) : DOMElement
     {
         $node = $doc->createElement('ram:BuyerTradeParty');
         $node->appendChild($doc->createElement('ram:Name', Html::encode($this->invoice->getClient()?->getClient_name())));
@@ -221,12 +223,12 @@ class ZugferdXml
 
     /**
      * 
-     * @param \DOMDocument $doc
+     * @param DOMDocument $doc
      * @param string $schemeID
      * @param string $content
-     * @return \DOMElement
+     * @return DOMElement
      */
-    protected function xmlSpecifiedTaxRegistration(\DOMDocument $doc, string $schemeID, string $content) : \DOMElement
+    protected function xmlSpecifiedTaxRegistration(DOMDocument $doc, string $schemeID, string $content) : DOMElement
     {
         $node = $doc->createElement('ram:SpecifiedTaxRegistration');
         $el = $doc->createElement('ram:ID', $content);
@@ -236,10 +238,10 @@ class ZugferdXml
     }
 
     /**
-     * @param \DOMDocument $doc
-     * @return \DOMElement
+     * @param DOMDocument $doc
+     * @return DOMElement
      */
-    protected function xmlApplicableSupplyChainTradeDelivery(\DOMDocument $doc) : \DOMElement
+    protected function xmlApplicableSupplyChainTradeDelivery(DOMDocument $doc) : DOMElement
     {
         $node = $doc->createElement('ram:ApplicableSupplyChainTradeDelivery');
 
@@ -255,10 +257,10 @@ class ZugferdXml
 
     /**
      * 
-     * @param \DOMDocument $doc
-     * @return \DOMElement
+     * @param DOMDocument $doc
+     * @return DOMElement
      */
-    protected function xmlApplicableSupplyChainTradeSettlement(\DOMDocument $doc) : \DOMElement
+    protected function xmlApplicableSupplyChainTradeSettlement(DOMDocument $doc) : DOMElement
     {
         $node = $doc->createElement('ram:ApplicableSupplyChainTradeSettlement');
 
@@ -307,12 +309,12 @@ class ZugferdXml
 
     /**
      * 
-     * @param \DOMDocument $doc
+     * @param DOMDocument $doc
      * @param float $percent
      * @param float $subtotal
-     * @return \DOMElement
+     * @return DOMElement
      */
-    protected function xmlApplicableTradeTax(\DOMDocument $doc, float $percent, float $subtotal) : \DOMElement
+    protected function xmlApplicableTradeTax(DOMDocument $doc, float $percent, float $subtotal) : DOMElement
     {
         $node = $doc->createElement('ram:ApplicableTradeTax');        $node->appendChild($this->currencyElement($doc, 'ram:CalculatedAmount', $subtotal * $percent / 100));
         $node->appendChild($doc->createElement('ram:TypeCode', 'VAT'));
@@ -324,13 +326,13 @@ class ZugferdXml
 
     /**
      * 
-     * @param \DOMDocument $doc
+     * @param DOMDocument $doc
      * @param string $name
      * @param float $amount
      * @param int $nb_decimals
-     * @return \DOMElement
+     * @return DOMElement
      */
-    protected function currencyElement(\DOMDocument $doc, string $name, float $amount, int $nb_decimals = 2) : \DOMElement
+    protected function currencyElement(DOMDocument $doc, string $name, float $amount, int $nb_decimals = 2) : DOMElement
     {
         $el = $doc->createElement($name, $this->zugferdFormattedFloat($amount, $nb_decimals));
         $el->setAttribute('currencyID', $this->currencyCode);
@@ -350,10 +352,10 @@ class ZugferdXml
 
     /**
      * 
-     * @param \DOMDocument $doc
-     * @return \DOMElement
+     * @param DOMDocument $doc
+     * @return DOMElement
      */
-    protected function xmlSpecifiedTradeSettlementMonetarySummation(\DOMDocument $doc) : \DOMElement
+    protected function xmlSpecifiedTradeSettlementMonetarySummation(DOMDocument $doc) : DOMElement
     {
         $node = $doc->createElement('ram:SpecifiedTradeSettlementMonetarySummation');
         $node->appendChild($this->currencyElement($doc, 'ram:LineTotalAmount', $this->inv_amount->getItem_subtotal() ?? 0.00));
@@ -369,12 +371,12 @@ class ZugferdXml
 
     /**
      * 
-     * @param \DOMDocument $doc
+     * @param DOMDocument $doc
      * @param int $lineNumber
      * @param InvItem $item
-     * @return \DOMElement
+     * @return DOMElement
      */
-    protected function xmlIncludedSupplyChainTradeLineItem(\DOMDocument $doc, int $lineNumber, InvItem $item) : \DOMElement
+    protected function xmlIncludedSupplyChainTradeLineItem(DOMDocument $doc, int $lineNumber, InvItem $item) : DOMElement
     {
         $node = $doc->createElement('ram:IncludedSupplyChainTradeLineItem');
 
@@ -404,11 +406,11 @@ class ZugferdXml
     
     /**
      * 
-     * @param \DOMDocument $doc
+     * @param DOMDocument $doc
      * @param InvItem $item
-     * @return \DOMElement
+     * @return DOMElement
      */
-    protected function xmlSpecifiedSupplyChainTradeAgreement(\DOMDocument $doc, InvItem $item) : \DOMElement
+    protected function xmlSpecifiedSupplyChainTradeAgreement(DOMDocument $doc, InvItem $item) : DOMElement
     {
         $node = $doc->createElement('ram:SpecifiedSupplyChainTradeAgreement');
 
@@ -427,12 +429,12 @@ class ZugferdXml
 
     /**
      * 
-     * @param \DOMDocument $doc
+     * @param DOMDocument $doc
      * @param string $name
      * @param float $quantity
-     * @return \DOMElement
+     * @return DOMElement
      */
-    protected function quantityElement(\DOMDocument $doc, string $name, float $quantity) : \DOMElement
+    protected function quantityElement(DOMDocument $doc, string $name, float $quantity) : DOMElement
     {
         $el = $doc->createElement($name, $this->zugferdFormattedFloat($quantity, 4));
         $el->setAttribute('unitCode', 'C62');
@@ -441,11 +443,11 @@ class ZugferdXml
 
     /**
      * 
-     * @param \DOMDocument $doc
+     * @param DOMDocument $doc
      * @param InvItem $item
-     * @return \DOMElement
+     * @return DOMElement
      */
-    protected function xmlSpecifiedSupplyChainTradeSettlement(\DOMDocument $doc, InvItem $item) : \DOMElement
+    protected function xmlSpecifiedSupplyChainTradeSettlement(DOMDocument $doc, InvItem $item) : DOMElement
     {
         $node = $doc->createElement('ram:SpecifiedSupplyChainTradeSettlement');
 
