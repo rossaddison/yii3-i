@@ -396,7 +396,7 @@ final class InvController
             'discount_percent'=>floatval(0),
             'url_key'=>Random::string(32),
             'password'=>$body['inv_password'], 
-            'payment_method'=>$this->sR->get_setting('default_payment_method') ?: 1, 
+            'payment_method'=>$this->sR->get_setting('invoice_default_payment_method') ?: 1, 
             'terms'=>$this->sR->get_setting('default_invoice_terms'),
         ];
         $ajax_content = new InvForm();

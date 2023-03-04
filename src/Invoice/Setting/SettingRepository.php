@@ -282,6 +282,32 @@ final class SettingRepository extends Select\Repository
     }
     
     /**
+     * @return array
+     */
+    public function get_config_company_details() : array {
+        $config = $this->get_config_params();
+        $params = $config->get('params');
+        /**
+         * @var array $params['company']
+         * @var string $params['company']['name']
+         * @var string $params['company']['address_1']
+         * @var string $params['company']['address_2']
+         * @var string $params['company']['zip']
+         * @var string $params['company']['city']
+         * @var string $params['company']['country']
+         */
+        $company_array = [
+            'name' => $params['company']['name'],
+            'address_1' => $params['company']['address_1'],
+            'address_2' => $params['company']['address_2'],
+            'zip' => $params['company']['zip'],
+            'city' => $params['company']['city'],
+            'country' => $params['company']['country']
+        ];
+        return $company_array;
+    }
+    
+    /**
      * 
      * @return ConfigInterface
      */
@@ -554,60 +580,65 @@ final class SettingRepository extends Select\Repository
     // Add to src/Invoice
     public static function getPlaceholderRelativeUrl(): string
     {
-        return '/Uploads/';
+        return DIRECTORY_SEPARATOR.'Uploads'.DIRECTORY_SEPARATOR;
     } 
     
     public static function getAssetholderRelativeUrl(): string
     {        
-        return '/Asset/';
+        return DIRECTORY_SEPARATOR.'Asset'.DIRECTORY_SEPARATOR;
     }
     
     public static function getCustomerfolderRelativeUrl(): string
     {        
-        return '/Customer_files';
+        return DIRECTORY_SEPARATOR.'Customer_files';
     }
     
     public static function getPemFileFolder(): string {
-        return '/Pem_unique_folder';
+        return DIRECTORY_SEPARATOR.'Pem_unique_folder';
     }
     
     public static function getGoogleTranslateJsonFileFolder(): string {
-        return '/Google_translate_unique_folder';
+        return DIRECTORY_SEPARATOR.'Google_translate_unique_folder';
     }
     
     public static function getCompanyPrivateLogosRelativefolderUrl(): string
     {        
-        return '/Company_private_logos';
+        return DIRECTORY_SEPARATOR.'Company_private_logos';
     }
     
     // Append to uploads folder
     public static function getTempMpdffolderRelativeUrl(): string
     {        
-        return '/Temp/Mpdf/';
+        return DIRECTORY_SEPARATOR.'Temp'.DIRECTORY_SEPARATOR.'Mpdf/';
+    }
+    
+    public static function getTempZugferdfolderRelativeUrl(): string
+    {        
+        return DIRECTORY_SEPARATOR.'Temp'.DIRECTORY_SEPARATOR.'Zugferd'.DIRECTORY_SEPARATOR;
     }
     
     
     public static function getTemplateholderRelativeUrl(): string
     {
-        return '/Invoice_templates/Pdf/';
+        return DIRECTORY_SEPARATOR.'Invoice_templates'.DIRECTORY_SEPARATOR.'Pdf'.DIRECTORY_SEPARATOR;
     }        
     
     // Append to uploads folder
     public static function getUploadsArchiveholderRelativeUrl(): string
     {
-        return '/Archive';
+        return DIRECTORY_SEPARATOR.'Archive';
     }
     
     // Append to uploads folder
     public static function getUploadsCustomerFilesRelativeUrl(): string
     {
-        return '/Customer_files';
+        return DIRECTORY_SEPARATOR.'Customer_files';
     }
     
     // Append to uploads folder
     public static function getAttachmentsCustomerFilesRelativeUrl(): string
     {
-        return 'src/Invoice/Uploads/Customer_files/';
+        return 'src'.DIRECTORY_SEPARATOR.'Invoice'.DIRECTORY_SEPARATOR.'Uploads'.DIRECTORY_SEPARATOR.'Customer_files'.DIRECTORY_SEPARATOR;
     }
     
     /**
@@ -672,7 +703,12 @@ final class SettingRepository extends Select\Repository
     public function get_img() : Aliases
     {
         $aliases = new Aliases(['@base' => dirname(dirname(dirname(__DIR__))), 
-                                '@img' => '@base/src/Invoice/Asset/core/img',
+                                '@img' => dirname(dirname(dirname(__DIR__)))
+                                          .DIRECTORY_SEPARATOR. 'src'
+                                          .DIRECTORY_SEPARATOR. 'Invoice'
+                                          .DIRECTORY_SEPARATOR. 'Asset'
+                                          .DIRECTORY_SEPARATOR. 'core'
+                                          .DIRECTORY_SEPARATOR. 'img',
                                ]);
         return $aliases;
     }
@@ -1082,48 +1118,17 @@ final class SettingRepository extends Select\Repository
            $line = $this->trans($in_line);
            return $line;
     }
-   
-    /**
-     * 
-     * @param string $setting
-     * @param bool $debug_mode
-     * @return string
-     */
-    public function where(string $setting, bool $debug_mode = true) : string {
+    
+    public function tooltip_array() : array {
         $tooltip = [
          // General Settings   
-        'install_test_data' => [
-          'why'=>'This is used by Generator..Reset Data and Generator..Remove Data during the testing of data',
-          'where'=>'invoice/test_data_reset and invoice/test_data_remove'
-        ],
-        'use_test_data' => [
-          'why'=>'This is used by Generator..Reset Data and Generator..Remove Data during the testing of data',
-          'where'=>'invoice/test_data_reset and invoice/test_data_remove'
-        ],
-         'default_language' => [
-          'why'=>'This is the language used if the session print language or the locale dropdown language are not set',
-          'where'=>'setting/get_folder_language'
-        ],
-        'time_zone' => [
-          'why'=>'This is used in the DateHelper function datetime_zone_style which is used in TaskForm to get an accurate Finish Date for a Task.' .'/n'
-               . 'It is also used in paymentinformation/amazon_signature to get a region from a time zone.' ,
-          'where'=>'setting/get_folder_language'
-        ],
-        'first_day_of_week' => [
-          'why'=>'This is used in the javascript function on views/layout/invoice.php along with the datehelper datepicker function.',
-          'where'=>'views/layout/invoice.php'
-        ],
-        'date_format' => [
-          'why'=>'This is used exclusively in DateHelper functions.',
-          'where'=>'App/Invoice/Helpers/DateHelper.php'
-        ],
-        'default_country' => [
-          'why'=>'If a user, or client, do not have a country linked to them, this is the default country used',
-          'where'=>'ClientController/Edit and UserInvController'
-        ],
-        'default_list_limit' => [
-          'why'=>'This value is used with the Paginator to limit the number of records viewed',
-          'where'=>'ClientController/Edit'
+        'bcc_mails_to_admin'=>[
+          'why'=>'A blind carbon copy email, unseen to the recipient of the email, is sent to the administrator.',
+          'where'=>' Helpers/MailerHelper yii_mailer_send function.'
+        ],       
+        'cron_key'=>[
+          'why'=>'A cron job is used on the server to automatically email recurring invoices to clients.',
+          'where'=>'This will be setup later.'
         ],
         'currency_symbol' => [
           'why'=>'Used in NumberHelper/format_amount.',
@@ -1136,55 +1141,27 @@ final class SettingRepository extends Select\Repository
         'currency_code' => [
           'why'=>'Used in PaymentInformationController and the dropdown array is constructed in src/Invoice/Helpers/CurrencyHelper',
           'where'=>'PaymentInformationController and CurrencyHelper'
-        ], 
-        'tax_rate_decimal_places'=>[
-          'why'=>'TODO: Currency decimal places vary per country. The decimal column of the TaxRate table, tax_rate_percent column has to be adjusted during runtime using the ALTER COMMAND sql statement preferably in a FRAGMENT',
-          'where'=>'SettingController/tab_index_change_decimal_column'
-        ],
-        'number_format'=>[
-          'why'=>'When the number format is chosen, the decimal point, and thousands_separator settings have to be derived from the number_format array located in SettingsRepository using the tab_index_number_format function in the SettingController',
-          'where'=>'SettingController/tab_index_number_format'
-        ],   
-        'quote_overview_period'=>[
-          'why'=>'This setting is used on the dashboard so that the quotes that are shown will either be this-month, last-month, this-quarter, last-quarter, this-year, or last-year',
-          'where'=>'views/invoice/dashboard/index.php and also in InvoiceController/dashboard function'
-        ],   
-        'invoice_overview_period'=>[
-          'why'=>'This setting is used on the dashboard so that the invoices that are shown will either be this-month, last-month, this-quarter, last-quarter, this-year, or last-year',
-          'where'=>'views/invoice/dashboard/index.php and also in InvoiceController/dashboard function', 
-        ],   
-        'disable_quickactions'=>[
-          'why'=>'This setting is used in the dashboard.',
-          'where'=>'views/invoice/dashboard/index.php and also in InvoiceController/dashboard function', 
-        ],   
-        'disable_sidebar'=>[
-          'why'=>'Enable or disable sidebar.',
-          'where'=>'views/layout/invoice and also in InvoiceController/install_default_settings_on_first_run'
-        ],   
+        ],    
         'custom_title'=>[
           'why'=>'This custom designed title appears in the top left corner of the current browser tab.',
           'where'=>'layout/invoice'
-        ],   
-        'monospace_amounts'=>[
-          'why'=>'Evenly spaced characters for better presentation.',
-          'where'=>'views/layout/invoice.php and views/layout/guest.php'
-        ],   
-        'login_logo'=>[
-          'why'=>'',
-          'where'=>''
-        ],   
-        'open_reports_in_new_tab'=>[
-          'why'=>'Open reports up in a new tab. Featured in eg. Reports...invoice_aging_index.php',  
-          'where'=>' eg. views/invoice/invoice_aging_index.php'
-        ],         
-        'bcc_mails_to_admin'=>[
-          'why'=>'A blind carbon copy email, unseen to the recipient of the email, is sent to the administrator.',
-          'where'=>' Helpers/MailerHelper yii_mailer_send function.'
-        ],       
-        'cron_key'=>[
-          'why'=>'A cron job is used on the server to automatically email recurring invoices to clients.',
-          'where'=>'This will be setup later.'
         ],
+        'date_format' => [
+          'why'=>'This is used exclusively in DateHelper functions.',
+          'where'=>'App/Invoice/Helpers/DateHelper.php'
+        ],    
+        'default_country' => [
+          'why'=>'If a user, or client, do not have a country linked to them, this is the default country used',
+          'where'=>'ClientController/Edit and UserInvController'
+        ],
+        'default_language' => [
+          'why'=>'This is the language used if the session print language or the locale dropdown language are not set',
+          'where'=>'setting/get_folder_language'
+        ],    
+        'default_list_limit' => [
+          'why'=>'This value is used with the Paginator to limit the number of records viewed',
+          'where'=>'ClientController/Edit'
+        ],    
         'default_invoice_group'=>[
           'why'=>'When a new invoice or quote is created, the package uses invoice groups to determine the next invoice or quote number,'.
                  'and how it should be structured. The package comes with two default invoice groups namely Invoice Default and Quote Default. '. 
@@ -1197,6 +1174,44 @@ final class SettingRepository extends Select\Repository
             'why'=>'You can enter the default terms here for any invoice.',
             'where'=>' views\invoice\inv\_form'
         ],
+        // Note: Appears as 'public_invoice_template' under settings table but as 'default_invoice_template' for language purposes =>ip_lang.php
+        'default_public_template'=>[
+            'why'=>'This is the HTML template that the client will see online prior to payment. The template has a pay-now button. The client must log in having been assigned observer role status in order to see this html invoice template. Different HTML Templates can be created in this folder and chosen in this dropdown.',
+            'where'=>'views/invoice/template/invoice/public/Invoice_Web.php (subsequent to client gateway selection from inv/view) and also InvController/url_key function that receives the url_key and gateway query parameters in the Url from inv/view. This HTML template holds the pay-now button with the chosen gateway (passed from inv/view) which at this point cannot be changed. If the payment is successful the template and therefore the pay-now button will reflect as paid.'
+        ],           
+        'disable_quickactions'=>[
+          'why'=>'This setting is used in the dashboard.',
+          'where'=>'views/invoice/dashboard/index.php and also in InvoiceController/dashboard function', 
+        ],   
+        'disable_sidebar'=>[
+          'why'=>'Enable or disable sidebar.',
+          'where'=>'views/layout/invoice and also in InvoiceController/install_default_settings_on_first_run'
+        ],  
+        'email_send_method'=>[
+            'why'=>'Symfony mailer is now the default mailer. '.
+            'What is ESMTP? In response to the rampant spam problem on the internet, '.
+            'an extension of SMTP was released in 1995: extended SMTP (ESMTP for short). '. 
+            'It adds additional commands to the protocol in 8-bit ASCII code, enabling many '.
+            'new functions to save bandwidth and protect servers. These include, for example: '.
+            'Authentication of the sender, SSL encryption of e-mails, Possibility of attaching multimedia files to e-mails '.
+            'Restrictions on the size of e-mails according to server specifications, '.
+            'Simultaneous transmission to several recipients, '.
+            'Standardised error messages in case of undeliverability',
+            'where'=>'src/Invoice/Helpers/MailerHelper/mailer_configured function.'
+        ],
+        'email_pdf_attachment'=>[
+            'why'=>'When an email is sent to a customer/client, the relevant invoice is automatically archived at'.
+            ' src/Invoice/Uploads/Archive/Invoice. '.
+            'Send this archived pdf to the customer along with any attachments when using the button ' .
+            'Options...Send on the view/invoice.' . 
+            'This setting is enabled by default under the InvoiceController',
+            'where'=>'src/Invoice/Helpers/MailerHelper/yii_mailer_send function variable email_attachment_with_pdf_template. ' .
+            'Run with view/invoice Options...Send  using MailerInvForm'
+        ],
+        'first_day_of_week' => [
+          'why'=>'This is used in the javascript function on views/layout/invoice.php along with the datehelper datepicker function.',
+          'where'=>'views/layout/invoice.php'
+        ],    
         'generate_invoice_number_for_draft'=>[
             'why'=>'Automatically generate an Invoice Number by means of the Group Identifier. '.
             'When an invoice is first created, it is placed in Draft status by default. Sending an invoice by email will automatically change the status from Draft to Sent. Clients cannot view any invoices when they are in Draft status. ',
@@ -1225,6 +1240,30 @@ final class SettingRepository extends Select\Repository
         'google_translate_locale'=>[
             'why'=>'To save time manually translating an ip_lang file using Google Translate Online, the Google Translate API https://github.com/googleapis/google-cloud-php-translate can be used to translate to your chosen locale. eg. es / Spanish',
             'where'=>'GeneratorController/google_translate_lang'
+        ],        
+        'install_test_data' => [
+          'why'=>'This is used by Generator..Reset Data and Generator..Remove Data during the testing of data',
+          'where'=>'invoice/test_data_reset and invoice/test_data_remove'
+        ],    
+        'invoice_default_payment_method'=>[
+            'why'=>'Default: 1 => None, 2 => Cash, 3 => Cheque, 4 => Card/Direct Debit - Succeeded ' .
+                 '5 => Card/Direct Debit - Processing 6 => Card/Direct Debit - Customer Ready.',
+            'where'=>'InvoiceController/install_default_settings_on_first_run and '.
+                   'InvController/create_confirm function which assigns the default of 1 to all invoices when created. ' .
+                   'See src/Invoice/Asset/rebuild-1.13/js/inv.js #inv_create_confirm function and '.
+                   'resources/views/invoice/inv/modal_create_inv.php as well.'            
+        ],
+        'invoices_due_after'=>[
+          'why'=>'The number of days after the original invoice date when invoices become due for payment.',
+          'where'=>'InvRepository/get_date_due and Entity/Inv/setDate_due().'
+        ], 
+        'invoice_overview_period'=>[
+          'why'=>'This setting is used on the dashboard so that the invoices that are shown will either be this-month, last-month, this-quarter, last-quarter, this-year, or last-year',
+          'where'=>'views/invoice/dashboard/index.php and also in InvoiceController/dashboard function', 
+        ],  
+        'login_logo'=>[
+          'why'=>'',
+          'where'=>''
         ],    
         'mark_invoices_sent_pdf'=>[
             'why'=>'If the invoice is downloaded it will be marked as sent.',
@@ -1233,7 +1272,19 @@ final class SettingRepository extends Select\Repository
         'mark_invoices_sent_copy'=>[
             'why'=>'Clients do not have access to draft invoices. Mark a copied invoice as sent so that the client can view it. Normally used for testing purposes. By default copied invoices are marked as draft and therefore can not be viewed by the client online.',
             'where'=>'InvController/inv_to_inv'
-        ],
+        ],    
+        'monospace_amounts'=>[
+          'why'=>'Evenly spaced characters for better presentation.',
+          'where'=>'views/layout/invoice.php and views/layout/guest.php'
+        ],        
+        'number_format'=>[
+          'why'=>'When the number format is chosen, the decimal point, and thousands_separator settings have to be derived from the number_format array located in SettingsRepository using the tab_index_number_format function in the SettingController',
+          'where'=>'SettingController/tab_index_number_format'
+        ],  
+        'open_reports_in_new_tab'=>[
+          'why'=>'Open reports up in a new tab. Featured in eg. Reports...invoice_aging_index.php',  
+          'where'=>' eg. views/invoice/invoice_aging_index.php'
+        ],    
         'pdf_watermark'=>[
             'why'=>'eg. If an invoice is paid, a watermark with the word paid will appear across it. The same applies to overdue invoices.',
             'where'=>'src/Invoice/Helpers/MpdfHelper/initialize_pdf function.'
@@ -1245,39 +1296,37 @@ final class SettingRepository extends Select\Repository
         'pdf_invoice_template_paid'=>[
             'why'=>'Clients can download pdfs online if logged in and given observer status. This represents the paid template. ie. if an invoice is paid and is used alongside the normal and overdue template.',
             'where'=>'src/Invoice/Helpers/TemplateHelper/select_pdf_invoice_template function.'
-        ],
+        ],        
         'pdf_invoice_template_overdue'=>[
             'why'=>'Clients can download pdfs online if logged in and given observer status. This represents the overdue template. ie. if an invoice is overdue and is used alongside the normal and paid template.',
             'where'=>'src/Invoice/Helpers/TemplateHelper/select_pdf_invoice_template function.'
+        ],           
+        'quote_overview_period'=>[
+          'why'=>'This setting is used on the dashboard so that the quotes that are shown will either be this-month, last-month, this-quarter, last-quarter, this-year, or last-year',
+          'where'=>'views/invoice/dashboard/index.php and also in InvoiceController/dashboard function'
         ],
-        // Note: Appears as 'public_invoice_template' under settings table but as 'default_invoice_template' for language purposes =>ip_lang.php
-        'default_public_template'=>[
-            'why'=>'This is the HTML template that the client will see online prior to payment. The template has a pay-now button. The client must log in having been assigned observer role status in order to see this html invoice template. Different HTML Templates can be created in this folder and chosen in this dropdown.',
-            'where'=>'views/invoice/template/invoice/public/Invoice_Web.php (subsequent to client gateway selection from inv/view) and also InvController/url_key function that receives the url_key and gateway query parameters in the Url from inv/view. This HTML template holds the pay-now button with the chosen gateway (passed from inv/view) which at this point cannot be changed. If the payment is successful the template and therefore the pay-now button will reflect as paid.'
+        'tax_rate_decimal_places'=>[
+          'why'=>'TODO: Currency decimal places vary per country. The decimal column of the TaxRate table, tax_rate_percent column has to be adjusted during runtime using the ALTER COMMAND sql statement preferably in a FRAGMENT',
+          'where'=>'SettingController/tab_index_change_decimal_column'
         ],
-        'email_send_method'=>[
-            'why'=>'Symfony mailer is now the default mailer. '.
-            'What is ESMTP? In response to the rampant spam problem on the internet, '.
-            'an extension of SMTP was released in 1995: extended SMTP (ESMTP for short). '. 
-            'It adds additional commands to the protocol in 8-bit ASCII code, enabling many '.
-            'new functions to save bandwidth and protect servers. These include, for example: '.
-            'Authentication of the sender, SSL encryption of e-mails, Possibility of attaching multimedia files to e-mails '.
-            'Restrictions on the size of e-mails according to server specifications, '.
-            'Simultaneous transmission to several recipients, '.
-            'Standardised error messages in case of undeliverability',
-            'where'=>'src/Invoice/Helpers/MailerHelper/mailer_configured function.'
-        ],
-        'email_pdf_attachment'=>[
-            'why'=>'When an email is sent to a customer/client, the relevant invoice is automatically archived at'.
-            ' src/Invoice/Uploads/Archive/Invoice. '.
-            'Send this archived pdf to the customer along with any attachments when using the button ' .
-            'Options...Send on the view/invoice.' . 
-            'This setting is enabled by default under the InvoiceController',
-            'where'=>'src/Invoice/Helpers/MailerHelper/yii_mailer_send function variable email_attachment_with_pdf_template. ' .
-            'Run with view/invoice Options...Send  using MailerInvForm'
-        ],
-        ''    
+        'time_zone' => [
+          'why'=>'This is used in the DateHelper function datetime_zone_style which is used in TaskForm to get an accurate Finish Date for a Task.' .'/n'
+               . 'It is also used in paymentinformation/amazon_signature to get a region from a time zone.' ,
+          'where'=>'setting/get_folder_language'
+        ],    
         ];
+        return $tooltip;
+    }
+   
+    /**
+     * 
+     * @param string $setting
+     * @param bool $debug_mode
+     * @return string
+     */
+    public function where(string $setting, bool $debug_mode = true) : string {
+        
+        $tooltip = $this->tooltip_array();
         $why = '';
         $where = '';
         /** 

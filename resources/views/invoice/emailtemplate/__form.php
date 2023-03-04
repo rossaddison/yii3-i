@@ -84,7 +84,7 @@ if (!empty($errors)) {
                             <?php foreach ($invoice_templates as $template): ?>
                                 <option class="hidden-invoice" value="<?= $template; ?>"
                                     <?php $s->check_select($body['email_template_pdf_template'] ?? $selected_pdf_template, $template); ?>>
-                                    <?= $template; ?>
+                                    <?= ucfirst($template); ?>
                                 </option>
                             <?php endforeach; ?>
                         </optgroup>
@@ -93,7 +93,7 @@ if (!empty($errors)) {
                             <?php foreach ($quote_templates as $template): ?>
                                 <option class="hidden-quote" value="<?= $template; ?>"
                                     <?php $s->check_select($body['email_template_pdf_template'] ?? $selected_pdf_template, $template); ?>>
-                                    <?= $template; ?>
+                                    <?= ucfirst($template); ?>
                                 </option>
                             <?php endforeach; ?>
                         </optgroup>

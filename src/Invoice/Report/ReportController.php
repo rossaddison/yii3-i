@@ -133,7 +133,7 @@ class ReportController
             // Last parameter $quote_or_invoice is false because reports are being generated which are not meant for clients
             /** @psalm-suppress MixedReturnStatement */
             return $mpdfhelper->pdf_create($this->viewRenderer->renderPartialAsString('/invoice/report/invoice_aging', $data), 
-                   $sR->trans('invoice_aging'), true, '', $sR, false);             
+                   $sR->trans('invoice_aging'), true, '', $sR, null, null, false, false, [], null);             
         }
         return $this->viewRenderer->render('invoice_aging_index', $parameters);
     }
@@ -304,7 +304,7 @@ class ReportController
                 $mpdfhelper = new MpdfHelper();
                 /** @psalm-suppress MixedReturnStatement */
                 return $mpdfhelper->pdf_create($this->viewRenderer->renderPartialAsString('/invoice/report/payment_history', $data), 
-                                               $sR->trans('payment_history'), true, '', $sR, false);            
+                                               $sR->trans('payment_history'), true, '', $sR, null, null, false, false, [], null);            
             } //is_array body
             return $this->webService->getNotFoundResponse();
         }
@@ -396,7 +396,7 @@ class ReportController
                 /** @psalm-suppress MixedReturnStatement */
                 return $mpdfhelper->pdf_create(
                          $this->viewRenderer->renderPartialAsString('/invoice/report/sales_by_client', $data), 
-                         $sR->trans('sales_by_client'), true, '', $sR, false
+                         $sR->trans('sales_by_client'), true, '', $sR, null, null, false, false, [], null
                 );
             } // is_array body
             return $this->webService->getNotFoundResponse();
@@ -513,7 +513,7 @@ class ReportController
                 /** @psalm-suppress MixedReturnStatement */
                 return $mpdfhelper->pdf_create(
                                                $this->viewRenderer->renderPartialAsString('/invoice/report/sales_by_year', $data),
-                                               $sR->trans('sales_by_date'), true, '', $sR, false
+                                               $sR->trans('sales_by_date'), true, '', $sR, null, null, false, false, [], null
                 );
             } // is_array body
             return $this->webService->getNotFoundResponse();

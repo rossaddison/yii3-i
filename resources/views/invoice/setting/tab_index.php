@@ -1,6 +1,5 @@
 <?php
-declare(strict_types=1);   
-use Yiisoft\Yii\Bootstrap5\Alert;
+declare(strict_types=1);  
 
  /**
  * @var \Yiisoft\Router\UrlGeneratorInterface $urlGenerator

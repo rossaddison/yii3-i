@@ -29,7 +29,9 @@ Class InvoiceHelper
     
     public function invoice_logo(): string
     {
-        $aliases = new Aliases(['@invoice' => dirname(__DIR__), '@img' => '@invoice/Asset/core/img']);
+        $aliases = new Aliases(['@invoice' => dirname(__DIR__), 
+                                '@img' => dirname(__DIR__). DIRECTORY_SEPARATOR
+                                          .'Asset/core/img']);
         if (!empty($this->s->get_setting('invoice_logo'))) {
             return '<img src="'. $aliases->get('@img') . $this->s->get_setting('invoice_logo') . '">';
         }
@@ -43,7 +45,13 @@ Class InvoiceHelper
      */
     public function invoice_logo_pdf()
     {
-        $aliases = new Aliases(['@invoice' => dirname(__DIR__), '@img' => '@invoice/Asset/core/img']);
+        $aliases = new Aliases(['@invoice' => dirname(__DIR__),
+                                '@img' => dirname(__DIR__). DIRECTORY_SEPARATOR
+                                          .'Asset'
+                                          .DIRECTORY_SEPARATOR.
+                                          'core'
+                                          .DIRECTORY_SEPARATOR.  
+                                          'img']);
         if (!empty($this->s->get_setting('invoice_logo'))) {
             return '<img src="file://' . getcwd() . $aliases->get('@img'). $this->s->get_setting('invoice_logo')  . '" id="invoice-logo">';
         }

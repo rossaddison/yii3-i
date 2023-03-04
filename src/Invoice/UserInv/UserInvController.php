@@ -137,7 +137,8 @@ final class UserInvController
                         uR $uR, 
     ) : Response
     {        
-        $aliases = new Aliases(['@invoice' => dirname(__DIR__), '@language' => '@invoice/Language']);
+        $aliases = new Aliases(['@invoice' => dirname(__DIR__), 
+                                '@language' => dirname(__DIR__). DIRECTORY_SEPARATOR. 'Language']);
         $countries = new CountryHelper();
         $parameters = [
             'title' => $sR->trans('add'),
@@ -183,7 +184,8 @@ final class UserInvController
                         uR $uR,
 
     ): Response {
-        $aliases = new Aliases(['@invoice' => dirname(__DIR__), '@language' => '@invoice/Language']);
+        $aliases = new Aliases(['@invoice' => dirname(__DIR__), 
+                                '@language' => dirname(__DIR__). DIRECTORY_SEPARATOR. 'Language']);
         $user_inv = $this->userinv($currentRoute, $userinvRepository);
         if ($user_inv) {
             $parameters = [

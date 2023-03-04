@@ -4,8 +4,11 @@ declare(strict_types=1);
 namespace App\Invoice\Helpers;
 
 use App\Invoice\Setting\SettingRepository as SR;
+use App\Invoice\InvItemAmount\InvItemAmountRepository as iiaR;
 use App\Invoice\Entity\Inv;
+use App\Invoice\Entity\InvAmount;
 use App\Invoice\Entity\Quote;
+use App\Invoice\Helpers\ZugFerdHelper;
 use Yiisoft\Aliases\Aliases;
 use Yiisoft\Files\FileHelper;
 
@@ -161,29 +164,39 @@ Class MpdfHelper
          * @param bool $stream
          * @param null|string $password
          * @param sR $sR
+         * @param null|iiaR $iiaR
          * @param bool $isInvoice
-         * @param object|null $quote_or_invoice
+         * @param bool $zugferd_invoice
+         * @param array $associated_files
+         * @param null|object $quote_or_invoice
          * @psalm-suppress MissingReturnType
          */
         public function pdf_create(string $html,
                                    string $filename, 
                                    bool $stream, 
                                    null|string $password , 
-                                   sR $sR, 
+                                   sR $sR,
+                                   // ZugferdXml is not created for a quote => null
+                                   // but iiaR is necessary for the invoice item amounts
+                                   // along with the entity InvAmount
+                                   null|iiaR $iiaR,
+                                   null|InvAmount $inv_amount,
                                    bool $isInvoice = false, 
-                                   object|null $quote_or_invoice = null) 
+                                   bool $zugferd_invoice = false,
+                                   array $associated_files = [],
+                                   null|object $quote_or_invoice = null) 
         
         {
             $sR->load_settings();
             $invoice_array = [];            
             $aliases = $this->ensure_temp_mpdf_folder_and_uploads_folder_exist($sR);  
             $title = ($stream ? $sR::getTempMpdffolderRelativeUrl() . $filename . '.pdf':$filename . '.pdf');
-            $start_mpdf = $this->initialize_pdf($password, $sR, $title, $quote_or_invoice, $aliases);
+            $start_mpdf = $this->initialize_pdf($password, $sR, $title, $quote_or_invoice, $iiaR, $inv_amount, $aliases, $zugferd_invoice, $associated_files);
             $css = $this->get_css_file($aliases);
             $mpdf = $this->write_html_to_pdf($css,$html,$start_mpdf);            
             if ($isInvoice) {
                 $this->isInvoice($filename, $invoice_array, $stream, $mpdf, $aliases, $sR); 
-            }            
+            }
             if ($stream == true) {
                 // send the file inline to the browser. The plug-in is used if available.
                 return $mpdf->Output($filename . '.pdf', self::DEST_BROWSER);
@@ -238,7 +251,8 @@ Class MpdfHelper
         }
         
         private function ensure_temp_mpdf_folder_and_uploads_folder_exist(SR $sR): Aliases {
-            $aliases = new Aliases(['@invoice' => dirname(__DIR__), '@uploads' => '@invoice/Uploads']);
+            $aliases = new Aliases(['@invoice' => dirname(__DIR__), 
+                                    '@uploads' => dirname(__DIR__).DIRECTORY_SEPARATOR.'Uploads'.DIRECTORY_SEPARATOR]);
             // Invoice/Uploads/Temp/Mpdf
             $temp_mpdf_folder = $aliases->get('@uploads').$sR::getTempMpdffolderRelativeUrl();            
             if (!is_dir($temp_mpdf_folder)){
@@ -255,15 +269,19 @@ Class MpdfHelper
         }
         
        /**
-        * 
         * @param string|null $password
         * @param SR $sR
         * @param string $title
         * @param object|null $quote_or_invoice
+        * @param IIAR|null $iiaR
+        * @param InvAmount|null $inv_amount
         * @param Aliases $aliases
+        * @param bool $zugferd_invoice
+        * @param array $associated_files
         * @return \Mpdf\Mpdf
         */
-        private function initialize_pdf(string|null $password, SR $sR, string $title, object|null $quote_or_invoice, Aliases $aliases): \Mpdf\Mpdf{
+        
+        private function initialize_pdf(string|null $password, SR $sR, string $title, object|null $quote_or_invoice, IIAR|null $iiaR, InvAmount|null $inv_amount, Aliases $aliases, bool $zugferd_invoice, array $associated_files = []): \Mpdf\Mpdf{
             $temp_mpdf_folder = $aliases->get('@uploads').$sR::getTempMpdffolderRelativeUrl();
             $mpdf = new \Mpdf\Mpdf(array_merge($this->options,['tempDir'=>$temp_mpdf_folder]));
             // mPDF configuration
@@ -276,6 +294,23 @@ Class MpdfHelper
             $mpdf->autoLangToFont = true;
             $mpdf->SetTitle($title);
             $mpdf->showImageErrors = true; 
+            
+            // Include zugferd if enabled
+            if ($zugferd_invoice === true && null!==$inv_amount && null!==$iiaR) {
+                $z = new ZugFerdHelper($sR, $iiaR, $inv_amount);
+                //https://mpdf.github.io/reference/mpdf-variables/useadobecjk.html
+                // A zugferd invoice must have fully embedded fonts => $mpdf->useAdobeCJK = false
+                $mpdf->useAdobeCJK = false;
+                
+                $mpdf->PDFX = false;
+                
+                //https://mpdf.github.io/what-else-can-i-do/pdf-a1-b-compliance.html
+                $mpdf->PDFA = false;
+                
+                $mpdf->PDFAauto = true;
+                $mpdf->SetAdditionalXmpRdf($z->zugferd_rdf());
+                $mpdf->SetAssociatedFiles($associated_files);
+            }
             
             $content = $title. ': '. date($sR->trans('date_format'));
             $mpdf->SetHTMLHeader('<div style="text-align: right; font-size: 8px; font-weight: lighter;">'.$content.'</div>');

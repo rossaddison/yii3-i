@@ -10,6 +10,7 @@ use App\Invoice\Entity\TaxRate;
 use App\Invoice\Entity\Product;
 use App\Invoice\Entity\Task;
 use Cycle\Annotated\Annotation\Relation\BelongsTo;
+use Cycle\Annotated\Annotation\Relation\HasOne;
 use \DateTime;
 use \DateTimeImmutable;
   
@@ -71,8 +72,8 @@ class InvItem
     private ?int $task_id =  null;
      
     #[BelongsTo(target: \App\Invoice\Entity\Inv::class, nullable: false, fkAction: 'NO ACTION')]
-    private ?Inv $inv = null;    
-     
+    private ?Inv $inv = null;  
+         
     public function __construct(
         int $id = null,
         string $name = '',
@@ -152,7 +153,6 @@ class InvItem
       return $this->inv;
     }
     
-    //set relation $product
     public function setInv(?Inv $inv): void
     {
         $this->inv = $inv;

@@ -351,7 +351,7 @@ final class ClientController
                 'datehelper'=> new DateHelper($sR),
                 'client'=> $client,
                 'body' => $this->body($client),
-                'aliases'=> new Aliases(['@invoice' => dirname(__DIR__), '@language' => '@invoice/Language']),
+                'aliases'=> new Aliases(['@invoice' => dirname(__DIR__), '@language' => dirname(__DIR__). DIRECTORY_SEPARATOR.'Language']),
                 'selected_country' => $selected_country ?: $sR->get_setting('default_country'),            
                 'selected_language' => $selected_language ?: $sR->get_setting('default_language'),
                 'datepicker_dropdown_locale_cldr' => $session->get('_language') ?? 'en',

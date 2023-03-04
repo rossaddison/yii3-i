@@ -112,8 +112,8 @@ final class EmailTemplateController
                     ],            
             ]),
              //Email templates can be built for either a quote or an invoice.
-            'invoice_templates'=>$emailtemplateRepository->get_invoice_templates('pdf'),
-            'quote_templates'=>$emailtemplateRepository->get_quote_templates('pdf'),
+            'invoice_templates'=>$settingRepository->get_invoice_templates('pdf'),
+            'quote_templates'=>$settingRepository->get_quote_templates('pdf'),
             'selected_pdf_template'=>'',
             'tag'=>$tag
         ];
@@ -167,7 +167,7 @@ final class EmailTemplateController
                 'errors' => [],
                 'email_template'=> $email_template,
                 'body' => $this->body($email_template),
-                'aliases'=> new Aliases(['@invoice' => dirname(__DIR__), '@language' => '@invoice/Language']),
+                'aliases'=> new Aliases(['@invoice' => dirname(__DIR__), '@language' => dirname(__DIR__). DIRECTORY_SEPARATOR. 'Language']),
                 's'=>$settingRepository,
                 'email_template_tags' => $this->viewRenderer->renderPartialAsString('/invoice/emailtemplate/template-tags', [
                         's'=>$settingRepository,
@@ -183,8 +183,8 @@ final class EmailTemplateController
                             'client_custom'=>$customfieldRepository->repoTablequery('client_custom')
                         ],            
                 ]),    
-                'invoice_templates'=>$emailtemplateRepository->get_invoice_templates('pdf'),
-                'quote_templates'=>$emailtemplateRepository->get_quote_templates('pdf'),
+                'invoice_templates'=>$settingRepository->get_invoice_templates('pdf'),
+                'quote_templates'=>$settingRepository->get_quote_templates('pdf'),
                 'selected_pdf_template'=>$email_template->getEmail_template_pdf_template(),
                 'tag'=>$tag
             ];
@@ -260,7 +260,7 @@ final class EmailTemplateController
                 'errors' => [],
                 'emailtemplate'=>$email_template,
                 'body' => $this->body($email_template),
-                'aliases'=>new Aliases(['@invoice' => dirname(__DIR__), '@language' => '@invoice/Language']),
+                'aliases'=>new Aliases(['@invoice' => dirname(__DIR__), '@language' => dirname(__DIR__). DIRECTORY_SEPARATOR.'Language']),
                 's'=>$settingRepository,
             ];
             return $this->viewRenderer->render('__view', $parameters); 

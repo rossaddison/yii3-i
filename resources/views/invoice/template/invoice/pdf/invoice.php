@@ -27,12 +27,8 @@ use App\Invoice\Helpers\DateHelper;
         if ($inv->getClient()->getClient_tax_code()) {
             echo '<div>' .$s->trans('tax_code_short') . ': ' . $inv->getClient()->getClient_tax_code() . '</div>';
         }
-        if ($inv->getClient()->getClient_address_1()) {
-            echo '<div>' . Html::encode($inv->getClient()->getClient_address_1()) . '</div>';
-        }
-        if ($inv->getClient()->getClient_address_2()) {
-            echo '<div>' . Html::encode($inv->getClient()->getClient_address_2()) . '</div>';
-        }
+        echo '<div>' . Html::encode($inv->getClient()->getClient_address_1() ?: $s->trans('street_address')) . '</div>';        
+        echo '<div>' . Html::encode($inv->getClient()->getClient_address_2() ?: $s->trans('street_address_2')) . '</div>';        
         if ($inv->getClient()->getClient_city() || $inv->getClient()->getClient_state() || $inv->getClient()->getClient_zip()) {
             echo '<div>';
             if ($inv->getClient()->getClient_city()) {
@@ -63,15 +59,15 @@ use App\Invoice\Helpers\DateHelper;
     <div id="company">
         <?php 
         if (!empty($userinv)) {
+            echo '<div><b>'.Html::encode($userinv->getCompany()).'</b></div>';
             echo '<div><b>'.Html::encode($userinv->getName()).'</b></div>';
             echo '<div>' .$s->trans('vat_id_short') . ': ' . $userinv->getVat_id() . '</div>';
             echo '<div>' .$s->trans('tax_code_short') . ': ' . $userinv->getTax_code() . '</div>';
-            echo '<div>' . Html::encode($userinv->getAddress_1() ?? '') . '</div>';
-            echo '<div>' . Html::encode($userinv->getAddress_2() ?? '') . '</div>';
-            echo '<div>';
-            echo Html::encode($userinv->getCity() ?? '') . ' ';
-            echo Html::encode($userinv->getState() ?? '') . ' ';
-            echo Html::encode($userinv->getZip() ?? '');
+            echo '<div>' . Html::encode($userinv->getAddress_1() ?: $s->trans('street_address')) .': '. '</div>';
+            echo '<div>' . Html::encode($userinv->getAddress_2() ?: $s->trans('street_address_2')) .': '. '</div>';
+            echo '<div>' . Html::encode($userinv->getCity() ?: $s->trans('city')) .': '. '</div>';
+            echo '<div>' . Html::encode($userinv->getState() ?: $s->trans('state')) .': '. '</div>';
+            echo '<div>' . Html::encode($userinv->getZip() ?: $s->trans('zip')) .': '. '</div>';
             echo '</div>';
             echo '<div>' . $countryhelper->get_country_name($s->trans('cldr'), $userinv->getCountry()) . '</div>';
             echo '<br/>';

@@ -5,8 +5,9 @@ namespace App\Invoice\Inv;
 
 use Yiisoft\Form\FormModel;
 use Yiisoft\Validator\Rule\Required;
+use Yiisoft\Validator\RulesProviderInterface;
 
-final class InvForm extends FormModel
+final class InvForm extends FormModel implements RulesProviderInterface
 {    
     private ?string $number ='';
     private ?string $date_created='';

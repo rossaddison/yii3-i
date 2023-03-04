@@ -44,7 +44,7 @@
                     <div class="col-xs-12 col-md-6">
 
                         <div class="form-group">
-                            <label for="settings[invoice_default_payment_method]">
+                            <label for="settings[invoice_default_payment_method]" <?= $s->where('invoice_default_payment_method'); ?>>
                                 <?= $s->trans('default_payment_method'); ?>
                             </label>
                             <?php $body['settings[invoice_default_payment_method]'] = $s->get_setting('invoice_default_payment_method');?>
@@ -61,7 +61,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="settings[invoices_due_after]">
+                            <label for="settings[invoices_due_after]" <?= $s->where('invoices_due_after'); ?>>
                                 <?= $s->trans('invoices_due_after'); ?>
                             </label>
                             <?php $body['settings[invoices_due_after]'] = $s->get_setting('invoices_due_after');?>

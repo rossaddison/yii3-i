@@ -80,7 +80,8 @@ class Lang
 		}
 
 		// Load the base file, so any others found can override it
-                $aliases = new Aliases(['@invoice' => dirname(__DIR__), '@language' => '@invoice/Language']);
+                $aliases = new Aliases(['@invoice' => dirname(__DIR__), 
+                                        '@language' => dirname(__DIR__).DIRECTORY_SEPARATOR.'Language']);
                 $path = $aliases->get('@language');
                 $basepath = $path.'/'.$idiom.'/'.$langfile;
                 $lang = [];

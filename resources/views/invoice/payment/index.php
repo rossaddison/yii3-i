@@ -86,7 +86,7 @@ $toolbar = Div::tag();
                 ->label($s->trans('invoice'))                
                 ->attribute('inv_id')
                 ->value(static function ($model) use ($urlGenerator): string {
-                   return Html::a($model->getInv()->getNumber(), $urlGenerator->generate('inv/view',['id'=>$model->getInv_id()]),['style'=>'text-decoration:none'])->render();
+                   return Html::a($model->getInv()?->getNumber() ?? '', $urlGenerator->generate('inv/view',['id'=>$model->getInv_id()]),['style'=>'text-decoration:none'])->render();
                }                       
             ), 
             DataColumn::create()
@@ -129,13 +129,13 @@ $toolbar = Div::tag();
             DataColumn::create()
                 ->label($s->trans('edit')) 
                 ->value(static function ($model) use ($s, $urlGenerator): string {
-                   return $model->getInv()->getIs_read_only() === false && $s->get_setting('disable_read_only') === (string)0 ? Html::a(Html::tag('i','',['class'=>'fa fa-edit fa-margin']), $urlGenerator->generate('inv/edit',['id'=>$model->getInv_id()]),[])->render() : '';
+                   return $model->getInv()?->getIs_read_only() === false && $s->get_setting('disable_read_only') === (string)0 ? Html::a(Html::tag('i','',['class'=>'fa fa-edit fa-margin']), $urlGenerator->generate('inv/edit',['id'=>$model->getInv_id()]),[])->render() : '';
                 }                        
             ),
             DataColumn::create()
                 ->label($s->trans('delete')) 
                 ->value(static function ($model) use ($s, $urlGenerator): string {
-                    return $model->getInv()->getIs_read_only() === false && $s->get_setting('disable_read_only') === (string)0 ? Html::a( Html::tag('button',
+                    return $model->getInv()?->getIs_read_only() === false && $s->get_setting('disable_read_only') === (string)0 ? Html::a( Html::tag('button',
                         Html::tag('i','',['class'=>'fa fa-trash fa-margin']),
                         [
                             'type'=>'submit', 

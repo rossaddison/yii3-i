@@ -256,5 +256,19 @@ return [
             'password' => 'yourpassword',
             'options' => [], // See: https://symfony.com/doc/current/mailer.html#tls-peer-verification
         ],
-    ],  
+    ], 
+    
+    // These parameters appear on ZugFerdXml produced invoice
+    // see settingRepository->get_config_company_details() function
+    // Alternatively use UserInv->administrator's company details 
+    // Settings...User Account...Administrator  appearing 
+    // eg. on resources/views/invoice/template/invoice/pdf/invoice.php
+    'company' => [
+        'name' => 'MyCompanyName',
+        'zip' => 'A11 1AA',
+        'address_1' => '1 MyCompany Street',
+        'address_2' => 'MyCompany Area',
+        'city' => 'MyCompanyCity',
+        'country' => 'MyCompanyCountry'
+    ]
 ];

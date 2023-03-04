@@ -6,10 +6,13 @@ namespace App\Invoice\Entity;
 use Cycle\Annotated\Annotation\Column;
 use Cycle\Annotated\Annotation\Entity;
 use Cycle\Annotated\Annotation\Relation\BelongsTo;
+use Cycle\Annotated\Annotation\Relation\HasMany;
 use Cycle\ORM\Entity\Behavior;
+use Doctrine\Common\Collections\ArrayCollection;
 use App\User\User;
 use App\Invoice\Entity\Group;
 use App\Invoice\Entity\Client;
+use App\Invoice\Entity\InvItem;
 use \DateTimeImmutable;
 
 #[Entity(repository: \App\Invoice\Inv\InvRepository::class)]
@@ -25,7 +28,13 @@ class Inv
     
     #[BelongsTo(target:Client::class, nullable: false, fkAction:'NO ACTION')]
     private ?Client $client = null;
-     
+    
+    /**
+     * @var ArrayCollection<array-key, InvItem>
+     */
+    #[HasMany(target: InvItem::class)]
+    private ArrayCollection $items;
+    
     #[Column(type: 'primary')]
     private ?int $id =  null;
      
@@ -96,6 +105,7 @@ class Inv
         int $creditinvoice_parent_id = null
     )
     {
+        $this->items = new ArrayCollection();
         $this->client_id=$client_id;
         $this->group_id=$group_id;
         $this->user_id=$user_id;
@@ -138,6 +148,11 @@ class Inv
     
     public function getClient():?Client {
         return $this->client;
+    }
+    
+    public function getItems() : ArrayCollection
+    {
+        return $this->items;
     }
     
     /**

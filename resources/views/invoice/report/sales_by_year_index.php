@@ -43,7 +43,7 @@
                             <div class="input-group">
                                 <input type="text" name="from_date" id="from_date" placeholder="<?= ' ('.$datehelper->display().')';?>"
                                        class="form-control input-sm datepicker" readonly                   
-                                       value="<?= null!== $from_date ? ($from_date instanceof \DateTimeImmutable ? $from_date($datehelper->style()) : $from_date) : null; ?>" role="presentation" autocomplete="off">
+                                       value="<?= null!== $from_date ? ($from_date instanceof \DateTimeImmutable ? $from_date->format($datehelper->style()) : $from_date) : null; ?>" role="presentation" autocomplete="off">
                                 <span class="input-group-text">
                                 <i class="fa fa-calendar fa-fw"></i>
                             </span>

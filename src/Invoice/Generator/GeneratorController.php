@@ -935,7 +935,7 @@ final class GeneratorController
      * @return GenerateCodeFileHelper
      */
     private function build_and_save(string $generated_dir_path,string $content, string $file,string $name): GenerateCodeFileHelper{
-        echo $generated_dir_path;
+        //echo $generated_dir_path;
         $build_file = new GenerateCodeFileHelper("$generated_dir_path/$file", $content); 
         $build_file->save();
         return $build_file;

@@ -19,8 +19,12 @@
 <p>CompanyPrivate logo will be automatically input on invoice/quotes depending on whether the date of the invoice falls between the start and end date.</p>
 <p>Introducing Paypal.</p>
 <p>Introducing India's PayTm payment gateway's QR code method of payment and comparing this with Stripe's method.</p>
+<p><b>04 March 2023</b></p>
+<p>Introduce ZugferdHelper and ZugferXml</p>
+<p>LoginForm and SignUp form - Extend both forms with RulesProviderInterface<a href>https://github.com/yiisoft/form/pull/249</a></p>
+<p>Psalm Level 1 Testing - 0 errors</p>
 <p><b>23 February 2023</b></p>
-<p>Psalm Level 1 Testing - 1 error - Framework related</p>
+<p><s>Psalm Level 1 Testing - 1 error - Framework related</s></p>
 <code>ERROR: ImplementedReturnTypeMismatch - vendor/yiisoft/form/src/FormModel.php:218:33 - The inherited return type 'iterable<int|string, Yiisoft\Validator\RuleInterface|callable|iterable<int, Yiisoft\Validator\RuleInterface|callable>>' for Yiisoft\Validator\RulesProviderInterface::getRules is different to the implemented return type for Yiisoft\Form\FormModel::getrules 'array<array-key, mixed>' (see https://psalm.dev/123)
     public function getRules(): array</code>
 <p><b>31 January 2023</b></p>

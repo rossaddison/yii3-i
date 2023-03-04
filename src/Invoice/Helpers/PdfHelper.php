@@ -9,6 +9,7 @@ use App\Invoice\Entity\QuoteItem;
 use App\Invoice\Entity\InvItem;
 use App\Invoice\Helpers\MpdfHelper;
 use App\Invoice\Helpers\CustomValuesHelper as CVH;
+use App\Invoice\Helpers\ZugFerdHelper;
 use App\Invoice\Setting\SettingRepository as SR;
 use Yiisoft\Session\SessionInterface as Session;
 
@@ -142,7 +143,7 @@ Class PdfHelper
                 $this->session->set('print_language','');
                 $mpdfhelper = new MpdfHelper(); 
                 $filename = $this->s->trans('quote') . '_' . str_replace(['\\', '/'], '_', ($quote->getNumber() ?? (string)rand(0, 10)));
-                return $mpdfhelper->pdf_create($html, $filename, $stream, $quote->getPassword(), $this->s, $isInvoice = false, $quote);
+                return $mpdfhelper->pdf_create($html, $filename, $stream, $quote->getPassword(), $this->s, null, null,  false, false, [], $quote);
             }    
         } 
     }   //generate_quote_pdf
@@ -233,12 +234,27 @@ Class PdfHelper
                 // Set the print language to null for future use
                 $this->session->set('print_language','');
                 $mpdfhelper = new MpdfHelper(); 
+                $associatedFiles = [];
+                $include_zugferd = $this->s->get_setting('include_zugferd') === '0' ? false : true;
+                if ($include_zugferd && null!==$inv_amount) {
+                    $z = new ZugFerdHelper($this->s, $iiaR, $inv_amount); 
+                    $associatedFiles = [
+                        [
+                            'name' => 'ZUGFeRD-invoice.xml',
+                            'description' => 'ZUGFeRD Invoice',
+                            'AFRelationship' => 'Alternative',
+                            'mime' => 'text/xml',
+                            'path' => $z->generate_invoice_zugferd_xml_temp_file($inv, $iiaR, $inv_amount)
+                        ]
+                    ];
+                } else {
+                    $associatedFiles = [];
+                }
                 $filename = $this->s->trans('invoice') . '_' . str_replace(['\\', '/'], '_', ($inv->getNumber() ?? (string)rand(0, 10)));
                 //$isInvoice is assigned to true as it is an invoice
                 // If stream is true return the pdf as a string using mpdf otherwise save to local file and 
                 // return the filename inclusive target_path to be used to attach to email attachments
-                return $mpdfhelper->pdf_create($html, $filename, $stream, $inv->getPassword(), $this->s, true, $inv);
-                
+                return $mpdfhelper->pdf_create($html, $filename, $stream, $inv->getPassword(), $this->s, $iiaR, $inv_amount, true, $include_zugferd, $associatedFiles, $inv);
             }
        }
     } //generate_inv_pdf
