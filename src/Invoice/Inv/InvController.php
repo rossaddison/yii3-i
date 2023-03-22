@@ -1683,23 +1683,23 @@ final class InvController
         exit;
     }
     
-    /**
-     * 
-     * @param IR $iR
-     * @param IAR $iaR
-     * @param SumexR $sumexR
-     * @param UIR $uiR
-     * @param int $inv_id
-     * @return void
-     */
-    public function generate_sumex_pdf(IR $iR, IAR $iaR, SumexR $sumexR, UIR $uiR, int $inv_id) : void {
-        $this->pdf_helper->generate_inv_sumex($iR, $iaR, $sumexR, $uiR, 
-            $inv_id, 
-            $stream = true, 
-            // client    
-            false 
-        );
-    }
+    ///**
+    // * This function has not been tested
+    // * @param IR $iR
+    // * @param IAR $iaR
+    // * @param SumexR $sumexR
+    // * @param UIR $uiR
+    // * @param int $inv_id
+    // * @return void
+    // */
+    //public function generate_sumex_pdf(IR $iR, IAR $iaR, SumexR $sumexR, UIR $uiR, int $inv_id) : void {
+    //    $this->pdf_helper->generate_inv_sumex($iR, $iaR, $sumexR, $uiR, 
+    //        $inv_id, 
+    //        $stream = true, 
+    //        // client    
+    //        false 
+    //    );
+    //}
         
     // If the setting 'generate_inv_number_for_draft' has not been set, give the quote a basic number according to id, and not according to identifier format    
     

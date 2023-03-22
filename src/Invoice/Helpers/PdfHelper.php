@@ -19,6 +19,7 @@ use App\Invoice\Inv\InvRepository;
 use App\Invoice\Setting\SettingRepository as SR;
 use App\Invoice\Sumex\SumexRepository;
 use App\Invoice\UserInv\UserInvRepository;
+//use setasign\Fpdi\Fpdi;
 use Yiisoft\Aliases\Aliases;
 use Yiisoft\Session\SessionInterface as Session;
 
@@ -336,137 +337,137 @@ Class PdfHelper
         return $return;
     }
     
-    /**
-     * This function has not been tested yet
-     * 
-     * @param InvRepository $iR
-     * @param InvAmountRepository $iaR
-     * @param SumexRepository $SumexR
-     * @param $uiR
-     * @param int $inv_id
-     * @param bool $stream
-     * @param bool $client
-     * @throws \Exception     
-     * @psalm-suppress MissingReturnType
-     */
-    
-    public function generate_inv_sumex(
-            InvRepository $iR, 
-            InvAmountRepository $iaR,
-            SumexRepository $SumexR,
-            UserInvRepository $uiR,
-            int $inv_id, 
-            bool $stream = true, 
-            bool $client = false) 
-    {
-        if ($inv_id) { 
-            $inv = $iR->repoCount((string)$inv_id) > 0 ? $iR->repoInvLoadedquery((string)$inv_id) : null;
-            if ($inv instanceof Inv) {
-                /** @var InvAmount $inv_amount */
-                $inv_amount = $iaR->repoInvAmountquery($inv_id);
-                /** @var \App\Invoice\Entity\Sumex $sumex_treatment */
-                $sumex_treatment = $SumexR->repoSumexInvoicequery((string)$inv_id); 
-                $user_details = $uiR->repoUserInvUserIdquery($inv->getUser_id());
-                if ($user_details instanceof UserInv) {
-                    $sumex = new Sumex($inv, $inv_amount, $user_details, $sumex_treatment, $this->s, $this->session);
-                    $temp = tempnam("/tmp", "invsumex_");
-                    $tempCopy = tempnam("/tmp", "invsumex_");
-                    
-                    $pdf = new \setasign\Fpdi\Fpdi();
-                    
-                    $sumexPDF = $sumex->pdf($inv_id);
-                    if (is_string($sumexPDF)) {
-                        $sha1sum = sha1($sumexPDF);
-                        $shortsum = substr($sha1sum, 0, 8);
-                        $filename = $this->s->trans('invoice') . '_' . ($inv->getNumber() ?: 'Number Not Provided'). '_' . $shortsum;
-
-                        if (!$client) {
-                            $f = fopen($temp, 'wb');
-                            if (!$f) {
-                                throw new \Exception(sprintf('Unable to create output file %s', $temp));			
-                            }
-                            fwrite($f, $sumexPDF, strlen($sumexPDF));
-                            fclose($f);
-
-                            // Hackish
-                            $sumexPDF = str_replace(
-                                "Giustificativo per la richiesta di rimborso",
-                                "Copia: Giustificativo per la richiesta di rimborso",
-                                $sumexPDF
-                            );
-
-                            $fc = fopen($tempCopy, 'wb');
-                            if (!$fc) {
-                                throw new \Exception(sprintf('Unable to create output file %s', $tempCopy));			
-                            }
-                            fwrite($fc, $sumexPDF, strlen($sumexPDF));
-                            fclose($fc);
-
-                            $pageCount = $pdf->setSourceFile($temp);
-
-                            for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
-                                $templateId = $pdf->importPage($pageNo);
-                                $size = $pdf->getTemplateSize($templateId);
-                                /** 
-                                 * @see setasign\fpdf\fpdf.php                             * 
-                                 * @var int $size['w']
-                                 * @var int $size['h']
-                                 */
-                                if ($size['w'] > $size['h']) {
-                                    $pageFormat = 'L';  //  landscape
-                                } else {
-                                    $pageFormat = 'P';  //  portrait
-                                }
-                                $pdf->addPage($pageFormat, array($size['w'], $size['h']), 0);
-                                $pdf->useTemplate($templateId);
-                            }
-
-                            $pageCount = $pdf->setSourceFile($tempCopy);
-
-                            for ($pageNo = 2; $pageNo <= $pageCount; $pageNo++) {
-
-                                $templateId = $pdf->importPage($pageNo);
-                                $size = $pdf->getTemplateSize($templateId);
-                                /** 
-                                 * @see setasign\fpdf\fpdf.php                             * 
-                                 * @var int $size['w']
-                                 * @var int $size['h']
-                                 */
-                                if ($size['w'] > $size['h']) {
-                                    $pageFormat = 'L';  //  landscape
-                                } else {
-                                    $pageFormat = 'P';  //  portrait
-                                }
-                                $pdf->addPage($pageFormat, array($size['w'], $size['h']));
-                                $pdf->useTemplate($templateId);
-                            }
-
-                            unlink($temp);
-                            unlink($tempCopy);
-
-                            if ($stream) {
-                                header("Content-Type:application/pdf");
-                                // string
-                                return $pdf->Output($filename . '.pdf', 'I');
-                            }
-                            $aliases = new Aliases(['@uploads_temp_folder' => dirname(__DIR__).DIRECTORY_SEPARATOR.'Uploads'.DIRECTORY_SEPARATOR]);
-                            $filePath = $aliases->get('@uploads_temp_folder') . $filename . '.pdf';
-                            $pdf->Output($filePath, 'F');
-                            // string
-                            return $filePath;
-                        } else {
-                            if ($stream) {
-                                // string                        
-                                return $sumexPDF;
-                            }
-                            $aliases = new Aliases(['@uploads_temp_folder' => dirname(__DIR__).DIRECTORY_SEPARATOR.'Uploads'.DIRECTORY_SEPARATOR]);
-                            $filePath = $aliases->get('@uploads_temp_folder') . $filename . '.pdf';
-                            // string
-                            return $filePath;
-                        }
-                    } //is_string    
-                } // instanceof UserInv                   
-            }
-        }
-    }
+    ///**
+    // * 
+    // * @param InvRepository $iR
+    // * @param InvAmountRepository $iaR
+    // * @param SumexRepository $SumexR
+    // * @param $uiR
+    // * @param int $inv_id
+    // * @param bool $stream
+    // * @param bool $client
+    // * @throws \Exception     
+    // * @psalm-suppress MissingReturnType
+    // */
+    //
+    //public function generate_inv_sumex(
+    //        InvRepository $iR, 
+    //        InvAmountRepository $iaR,
+    //        SumexRepository $SumexR,
+    //        UserInvRepository $uiR,
+    //        int $inv_id, 
+    //        bool $stream = true, 
+    //        bool $client = false) 
+    //{
+    //    if ($inv_id) { 
+    //        $inv = $iR->repoCount((string)$inv_id) > 0 ? $iR->repoInvLoadedquery((string)$inv_id) : null;
+    //        if ($inv instanceof Inv) {
+    //            /** @var InvAmount $inv_amount */
+    //            $inv_amount = $iaR->repoInvAmountquery($inv_id);
+    //            /** @var \App\Invoice\Entity\Sumex $sumex_treatment */
+    //            $sumex_treatment = $SumexR->repoSumexInvoicequery((string)$inv_id); 
+    //            $user_details = $uiR->repoUserInvUserIdquery($inv->getUser_id());
+    //            if ($user_details instanceof UserInv) {
+    //                $sumex = new Sumex($inv, $inv_amount, $user_details, $sumex_treatment, $this->s, $this->session);
+    //                $temp = tempnam("/tmp", "invsumex_");
+    //                $tempCopy = tempnam("/tmp", "invsumex_");
+    //                
+    //                /** @var \setasign\Fpdi\Fpdi $pdf */
+    //                $pdf = new Fpdi();
+    //                
+    //                $sumexPDF = $sumex->pdf($inv_id);
+    //                if (is_string($sumexPDF)) {
+    //                    $sha1sum = sha1($sumexPDF);
+    //                    $shortsum = substr($sha1sum, 0, 8);
+    //
+    //                                        $filename = $this->s->trans('invoice') . '_' . ($inv->getNumber() ?: 'Number Not Provided'). '_' . $shortsum;
+    //                    if (!$client) {
+    //                        $f = fopen($temp, 'wb');
+    //                        if (!$f) {
+    //                            throw new \Exception(sprintf('Unable to create output file %s', $temp));			
+    //                        }
+    //                        fwrite($f, $sumexPDF, strlen($sumexPDF));
+    //                        fclose($f);
+    //        
+    //                        // Hackish
+    //                        $sumexPDF = str_replace(
+    //                            "Giustificativo per la richiesta di rimborso",
+    //                            "Copia: Giustificativo per la richiesta di rimborso",
+    //                            $sumexPDF
+    //                        );
+    //        
+    //                        $fc = fopen($tempCopy, 'wb');
+    //                        if (!$fc) {
+    //                            throw new \Exception(sprintf('Unable to create output file %s', $tempCopy));			
+    //                        }
+    //                        fwrite($fc, $sumexPDF, strlen($sumexPDF));
+    //                        fclose($fc);
+    //
+    //                        $pageCount = $pdf->setSourceFile($temp);
+    //
+    //                          for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+    //                            $templateId = $pdf->importPage($pageNo);
+    //                            $size = $pdf->getTemplateSize($templateId);
+    //                            /** 
+    //                             * @see setasign\fpdf\fpdf.php                             * 
+    //                             * @var int $size['w']
+    //                             * @var int $size['h']
+    //                             */
+    //                            if ($size['w'] > $size['h']) {
+    //                                $pageFormat = 'L';  //  landscape
+    //                            } else {
+    //                                $pageFormat = 'P';  //  portrait
+    //                            }
+    //                            $pdf->addPage($pageFormat, array($size['w'], $size['h']), 0);
+    //                            $pdf->useTemplate($templateId);
+    //                        }
+    //
+    //                        $pageCount = $pdf->setSourceFile($tempCopy);
+    //
+    //                        for ($pageNo = 2; $pageNo <= $pageCount; $pageNo++) {
+    //
+    //                            $templateId = $pdf->importPage($pageNo);
+    //                            $size = $pdf->getTemplateSize($templateId);
+    //                            /** 
+    //                             * @see setasign\fpdf\fpdf.php                             * 
+    //                             * @var int $size['w']
+    //                             * @var int $size['h']
+    //                             */
+    //                            if ($size['w'] > $size['h']) {
+    //                                $pageFormat = 'L';  //  landscape
+    //                            } else {
+    //                                $pageFormat = 'P';  //  portrait
+    //                            }
+    //                            $pdf->addPage($pageFormat, array($size['w'], $size['h']));
+    //                            $pdf->useTemplate($templateId);
+    //                        }
+    //                        
+    //                        unlink($temp);
+    //                        unlink($tempCopy);
+    //        
+    //                        if ($stream) {
+    //                            header("Content-Type:application/pdf");
+    //                            // string
+    //                            return $pdf->Output($filename . '.pdf', 'I');
+    //                        }
+    //                        $aliases = new Aliases(['@uploads_temp_folder' => dirname(__DIR__).DIRECTORY_SEPARATOR.'Uploads'.DIRECTORY_SEPARATOR]);
+    //                        $filePath = $aliases->get('@uploads_temp_folder') . $filename . '.pdf';
+    //                        $pdf->Output($filePath, 'F');
+    //                        // string
+    //                        return $filePath;
+    //                    } else {
+    //                        if ($stream) {
+    //                            // string                        
+    //                            return $sumexPDF;
+    //                        }
+    //                        $aliases = new Aliases(['@uploads_temp_folder' => dirname(__DIR__).DIRECTORY_SEPARATOR.'Uploads'.DIRECTORY_SEPARATOR]);
+    //                        $filePath = $aliases->get('@uploads_temp_folder') . $filename . '.pdf';
+    //                        // string
+    //                        return $filePath;
+    //                    }
+    //               } //is_string    
+    //            } // instanceof UserInv                   
+    //        }
+    //    }
+    //}
 } 
