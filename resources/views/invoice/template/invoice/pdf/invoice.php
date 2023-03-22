@@ -1,8 +1,9 @@
 <?php
 declare(strict_types=1);
 
-use Yiisoft\Html\Html;
 use App\Invoice\Helpers\DateHelper;
+use App\Invoice\Entity\Sumex;
+use Yiisoft\Html\Html;
 ?>
 
 <!DOCTYPE html>
@@ -14,9 +15,7 @@ use App\Invoice\Helpers\DateHelper;
 </head>    
 <body>
 <header class="clearfix">
-    <div id="logo">
-        <?php // echo invoice_logo_pdf(); ?>
-    </div>
+    <?= $company_logo_and_address; ?>
     <div id="client">
         <div>
             <b><?= Html::encode($inv->getClient()->getClient_name()); ?></b>
@@ -55,26 +54,6 @@ use App\Invoice\Helpers\DateHelper;
             echo '<div>' .$s->trans('phone_abbr') . ': ' . Html::encode($inv->getClient()->getClient_phone()) . '</div>';
         } ?>
 
-    </div>
-    <div id="company">
-        <?php 
-        if (!empty($userinv)) {
-            echo '<div><b>'.Html::encode($userinv->getCompany()).'</b></div>';
-            echo '<div><b>'.Html::encode($userinv->getName()).'</b></div>';
-            echo '<div>' .$s->trans('vat_id_short') . ': ' . $userinv->getVat_id() . '</div>';
-            echo '<div>' .$s->trans('tax_code_short') . ': ' . $userinv->getTax_code() . '</div>';
-            echo '<div>' . Html::encode($userinv->getAddress_1() ?: $s->trans('street_address')) .': '. '</div>';
-            echo '<div>' . Html::encode($userinv->getAddress_2() ?: $s->trans('street_address_2')) .': '. '</div>';
-            echo '<div>' . Html::encode($userinv->getCity() ?: $s->trans('city')) .': '. '</div>';
-            echo '<div>' . Html::encode($userinv->getState() ?: $s->trans('state')) .': '. '</div>';
-            echo '<div>' . Html::encode($userinv->getZip() ?: $s->trans('zip')) .': '. '</div>';
-            echo '</div>';
-            echo '<div>' . $countryhelper->get_country_name($s->trans('cldr'), $userinv->getCountry()) . '</div>';
-            echo '<br/>';
-            echo '<div>' .$s->trans('phone_abbr') . ': ' . Html::encode($userinv->getPhone() ?? '') . '</div>';
-            echo '<div>' .$s->trans('fax_abbr') . ': ' . Html::encode($userinv->getFax() ?? '') . '</div>';
-        }
-        ?>
     </div>
 </header>
 <main>
@@ -187,7 +166,6 @@ use App\Invoice\Helpers\DateHelper;
                 </td>
             </tr>
         <?php } ?>
-
             
         <?php if (!empty($inv_tax_rates)) { ?>    
         <?php  foreach ($inv_tax_rates as $inv_tax_rate) : ?>
@@ -211,7 +189,7 @@ use App\Invoice\Helpers\DateHelper;
                 </td>
             </tr>
         <?php endif; ?>
-        <?php if ($inv->getDiscount_amount() != '0.00') : ?>
+        <?php if ($inv->getDiscount_amount() !== '0.00') : ?>
             <tr>
                 <td <?php echo($show_item_discounts ? 'colspan="6"' : 'colspan="5"'); ?> class="text-right">
                     <?= Html::encode($s->trans('discount')); ?>
@@ -221,7 +199,6 @@ use App\Invoice\Helpers\DateHelper;
                 </td>
             </tr>
         <?php endif; ?>
-
         <tr>
             <td <?php echo($show_item_discounts ? 'colspan="6"' : 'colspan="5"'); ?> class="text-right">
                 <b><?= Html::encode($s->trans('total')); ?></b>
@@ -232,20 +209,55 @@ use App\Invoice\Helpers\DateHelper;
         </tr>
         </tbody>
     </table>
-
-</main>
-
-<footer>
-    <?php if ($inv->getTerms()) : ?>
-        <div class="notes">
-            <b><?= Html::encode($s->trans('terms')); ?></b><br/>
-            <?php echo nl2br(Html::encode($inv->getTerms())); ?>
-        </div>
-    <?php endif; ?>
-    <?php if ($show_custom_fields) {
-        echo $view_custom_fields;
-    }
-    ?>   
+</main>    
+<footer class="notes">
+    <br>
+    <?php if ($inv->getTerms()) { ?>
+    <div style="page-break-before: always"></div>
+    <div>
+        <b><?= Html::encode($s->trans('terms')); ?></b><br>
+        <?php echo nl2br(Html::encode($inv->getTerms())); ?>
+    </div>
+    <br>
+    <?php } ?>
+    <div>
+    <?php if ($show_custom_fields) {        
+        echo $view_custom_fields; 
+    } ?>
+    </div>    
+    <?php if (($s->get_setting('sumex') == '1') && ($sumex instanceof Sumex)) { ?>
+    <div>
+        <?php            
+            $reason = ['disease','accident','maternity','prevention','birthdefect','unknown']; 
+        ?>
+        <b><?= Html::encode($s->trans('reason')); ?></b><br>
+        <p><?= Html::encode($s->trans('reason_'.(string)$reason[$sumex->getReason() ?: 5])); ?></p>       
+    </div>
+    <div>            
+        <b><?= Html::encode($s->trans('sumex_observations')); ?></b><br>
+        <p><?= $sumex->getObservations() ?: ''; ?></p>
+    </div>    
+    <div>            
+        <b><?= Html::encode($s->trans('invoice_sumex_diagnosis')); ?></b><br>
+        <p><?= $sumex->getDiagnosis() ?: ''; ?></p>
+    </div>
+    <div>            
+        <b><?= Html::encode($s->trans('case_date')); ?></b><br>
+        <p><?= $sumex->getCasedate()->format($datehelper->style()) ?: ''; ?></p>
+    </div>
+    <div>            
+        <b><?= Html::encode($s->trans('case_number')); ?></b><br>
+        <p><?= $sumex->getCasenumber() ?: ''; ?></p>
+    </div>
+    <div>
+        <b><?= Html::encode($s->trans('treatment_start')); ?></b><br>
+        <p><?= $sumex->getTreatmentstart()->format($datehelper->style()) ?: ''; ?></p>
+    </div> 
+    <div>    
+        <b><?= Html::encode($s->trans('treatment_end')); ?></b><br>
+        <p><?= $sumex->getTreatmentend()->format($datehelper->style()) ?: ''; ?></p>
+    </div>
+    <?php } ?>
 </footer>
 </body>
 </html>

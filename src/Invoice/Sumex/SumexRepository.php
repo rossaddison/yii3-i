@@ -1,5 +1,4 @@
 <?php
-
 declare(strict_types=1); 
 
 namespace App\Invoice\Sumex;
@@ -91,6 +90,16 @@ private EntityWriter $entityWriter;
      */
     public function repoSumexquery(string $id):Sumex|null    {
         $query = $this->select()->where(['id' => $id]);
+        return  $query->fetchOne() ?: null;        
+    }
+    
+    /**
+     * @return null|Sumex
+     *
+     * @psalm-return TEntity|null
+     */
+    public function repoSumexInvoicequery(string $invoice): Sumex|null    {
+        $query = $this->select()->where(['invoice' => $invoice]);
         return  $query->fetchOne() ?: null;        
     }
 }

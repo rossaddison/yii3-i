@@ -279,6 +279,20 @@ $(function () {
             window.open(url, '_blank');
     });
     
+    // id="inv_to_html_confirm_with_custom_fields button on views/inv/modal_inv_to_html.php
+    $(document).on('click', '#inv_to_html_confirm_with_custom_fields', function () {
+            var url = $(location).attr('origin') + "/invoice/inv/html/1";    
+            window.location.reload;
+            window.open(url, '_blank');            
+    }); 
+
+    // id="inv_to_html_confirm_without_custom_fields button on views/inv/modal_inv_to_html.php
+    $(document).on('click', '#inv_to_html_confirm_without_custom_fields', function () {
+            var url = $(location).attr('origin') + "/invoice/inv/html/0";    
+            window.location.reload;
+            window.open(url, '_blank');
+    });
+    
     $(document).on('click', '#create_recurring_confirm', function () {
             var absolute_url = new URL($(location).attr('href'));
             var url = $(location).attr('origin') + "/invoice/invrecurring/create_recurring_confirm";

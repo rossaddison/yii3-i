@@ -95,7 +95,7 @@ $clienthelper = new ClientHelper($s);
     <div class="col-xs-12 text-muted">
         <br>
         <h4><?= $s->trans('terms'); ?></h4>
-        <div><?= nl2br(Html::encode($invoice->getTerms)); ?></div>
+        <div><?= nl2br(Html::encode($invoice->getTerms())); ?></div>
     </div>
 <?php endif; ?>
 <?= Form::tag()->close(); ?>

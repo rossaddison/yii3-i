@@ -102,6 +102,7 @@ $xdebug = extension_loaded('xdebug') ? 'php.ini zend_extension Installed : Perfo
 
 // Platform, Performance, and Clear Assets Cache, and links Menu will disappear if set to false;
 $debug_mode = true;
+$s->debug_mode($debug_mode);
 
 $this->beginPage();
 ?>
@@ -229,6 +230,9 @@ echo Nav::widget()
                                  ['label' => $translator->translate('invoice.platform.netbeans.UTF-8'), 'url'=>'https://stackoverflow.com/questions/59800221/gradle-netbeans-howto-set-encoding-to-utf-8-in-editor-and-compiler'],
                                  ['label' => $translator->translate('invoice.platform.csrf'), 'url'=>'https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#use-of-custom-request-headers'],
                                  ['label' => 'Html to Markdown', 'url'=>'https://convertsimple.com/convert-html-to-markdown/'],
+                                 ['label' => 'European Invoicing', 'url'=>'https://ec.europa.eu/digital-building-blocks/wikis/display/DIGITAL/Compliance+with+eInvoicing+standard'],
+                                 ['label' => 'European Digital Testing', 'url'=>'https://ec.europa.eu/digital-building-blocks/wikis/display/DIGITAL/eInvoicing+Conformance+Testing'],
+                                 ['label' => 'Xml Example', 'url'=>'https://docs.oasis-open.org/ubl/cs1-UBL-2.1/xml/UBL-Invoice-2.1-Example.xml'],
                                  ['label' => 'jQuery UI 1.13.2', 'url'=>'https://github.com/jquery/jquery-ui'],    
                                  ['label' => 'LAMP'],
                                  ['label' => $translator->translate('invoice.platform.editor'). ': Apache Netbeans 12.4 64 bit'], 
@@ -293,6 +297,10 @@ echo Nav::widget()
                      'url'=>'',
                      'options'=>['class'=>'nav fs-4','data-toggle'=>'tooltip', 'title'=>'Storage: database','style'=>'background-color: #ffffe0'],
                      'visible'=>$debug_mode], 
+                    ['label' => 'File Location',    
+                     'url'=>'',
+                     'options'=>['class'=>'nav fs-4','data-toggle'=>'tooltip', 'title'=>$s->debug_mode_file_location(0),'style'=>'background-color: #ffcccb'],
+                     'visible'=>$debug_mode],  
             ]       
         );
 

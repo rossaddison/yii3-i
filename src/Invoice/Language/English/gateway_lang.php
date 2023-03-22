@@ -75,6 +75,8 @@ $lang = array(
     'online_payment_sandboxId'           => 'Sandbox Id',
     'online_payment_sandbox'             => 'Sandbox',
     'online_payment_region'              => 'Region',
+    // Paypal Checkout v2 4th March 2023 - Notifications
+    'online_payment_webhookId'           => 'Webhook Id',
 
     // Status / Error Messages
     'online_payment_payment_cancelled'   => 'Payment cancelled.',

@@ -296,7 +296,10 @@ public function calculate_inv(string $inv_id, IIR $iiR, IIAR $iiaR, ITRR $itrR, 
      * @psalm-param IR<Inv> $iR
      */
     private function inv_balance_zero_set_to_read_only_if_fully_paid(IR $iR, SRepo $sR, Inv|null $invoice, float $balance) : void {
-        if (($sR->get_setting('read_only_toggle') === (string)2) && null!==$invoice) {
+        // sent => 2, viewed => 3, paid => 4
+        // As soon as the balance on the invoice is zero and the read-only-toggle is 4 ie. paid,
+        // for Administrative purposes set the invoice to read-only
+        if (($sR->get_setting('read_only_toggle') === (string)4) && null!==$invoice) {
             if ($balance == 0.00) {
                 $invoice->setIs_read_only(true);
                 // Set the status to paid

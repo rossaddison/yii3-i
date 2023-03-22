@@ -103,9 +103,9 @@ use Yiisoft\Router\CurrentRoute;
             ),
             DataColumn::create()
                 ->visible($s->get_setting('sumex') ? true : false)
-                ->label($s->get_setting('sumex') ? $s->trans('tariff') : '')                
+                ->label($s->get_setting('sumex') ? $s->trans('product_tariff') : '')                
                 ->attribute('product_tariff')     
-                ->value(static fn ($model): string => ($s->get_setting('sumex') ? Html::encode($model->getTariff()) : Html::encode($s->trans('none')))                       
+                ->value(static fn ($model): string => ($s->get_setting('sumex') ? Html::encode($model->getProduct_tariff()) : Html::encode($s->trans('none')))                       
             ),
             DataColumn::create()
                 ->label($s->trans('view'))    

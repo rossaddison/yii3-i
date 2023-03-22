@@ -655,7 +655,12 @@ return [
                 ->name('inv/view')
                 ->middleware(fn (AccessChecker $checker) => $checker->withPermission('viewInv'))
                 ->middleware(Authentication::class)
-                ->action([InvController::class, 'view']), 
+                ->action([InvController::class, 'view']),
+            Route::methods([Method::GET, Method::POST], '/inv/generate_sumex_pdf/{inv_id}')
+                ->name('inv/generate_sumex_pdf')
+                ->middleware(fn (AccessChecker $checker) => $checker->withPermission('viewInv'))
+                ->middleware(Authentication::class)
+                ->action([InvController::class, 'generate_sumex_pdf']),     
             Route::get('/client_invoices[/page/{page:\d+}[/status/{status:\d+}]]')                
                 ->middleware(fn (AccessChecker $checker) => $checker->withPermission('viewInv'))
                 ->middleware(Authentication::class)
@@ -671,11 +676,11 @@ return [
                 ->middleware(Authentication::class)
                 ->action([InvController::class, 'pdf'])
                 ->name('inv/pdf'), 
-            Route::methods([Method::GET, Method::POST], '/inv/pdf_sumex_generate')                
+            Route::methods([Method::GET, Method::POST], '/inv/html/{include}')                
                 ->middleware(fn (AccessChecker $checker) => $checker->withPermission('editInv'))
                 ->middleware(Authentication::class)
-                ->action([InvController::class, 'pdf_sumex_generate'])
-                ->name('inv/pdf_sumex_generate'),       
+                ->action([InvController::class, 'html'])
+                ->name('inv/html'),     
             Route::methods([Method::GET, Method::POST], '/inv/save_inv_item')                
                 ->middleware(fn (AccessChecker $checker) => $checker->withPermission('editInv'))
                 ->middleware(Authentication::class)
@@ -1093,7 +1098,7 @@ return [
                 ->middleware(fn (AccessChecker $checker) => $checker->withPermission('editInv'))
                 ->middleware(Authentication::class)
                 ->action([SettingController::class, 'clear'])                
-                ->name('setting/clear'),
+                ->name('setting/clear'),            
             Route::get('/task[/page/{page:\d+}]')
                 ->middleware(fn (AccessChecker $checker) => $checker->withPermission('editInv'))
                 ->middleware(Authentication::class)
@@ -1624,16 +1629,16 @@ return [
                 ->middleware(Authentication::class)
                 ->action([SumexController::class, 'add'])
                 ->name('sumex/add'),
-            Route::methods([Method::GET, Method::POST], '/sumex/edit/{id}')
-                ->name('sumex/edit')
-                ->middleware(fn (AccessChecker $checker) => $checker->withPermission('editInv'))
-                ->middleware(Authentication::class)
-                ->action([SumexController::class, 'edit']), 
             Route::methods([Method::GET, Method::POST], '/sumex/delete/{id}')
                 ->name('sumex/delete')
                 ->middleware(fn (AccessChecker $checker) => $checker->withPermission('editInv'))
                 ->middleware(Authentication::class)
                 ->action([SumexController::class, 'delete']),
+            Route::methods([Method::GET, Method::POST], '/sumex/edit/{invoice}')
+                ->name('sumex/edit')
+                ->middleware(fn (AccessChecker $checker) => $checker->withPermission('editInv'))
+                ->middleware(Authentication::class)
+                ->action([SumexController::class, 'edit']),     
             Route::methods([Method::GET, Method::POST], '/sumex/view/{id}')
                 ->name('sumex/view')
                 ->middleware(fn (AccessChecker $checker) => $checker->withPermission('editInv'))

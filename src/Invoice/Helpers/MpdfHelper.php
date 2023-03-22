@@ -188,22 +188,25 @@ Class MpdfHelper
         
         {
             $sR->load_settings();
-            $invoice_array = [];            
-            $aliases = $this->ensure_temp_mpdf_folder_and_uploads_folder_exist($sR);  
-            $title = ($stream ? $sR::getTempMpdffolderRelativeUrl() . $filename . '.pdf':$filename . '.pdf');
+            $aliases = $this->ensure_uploads_folder_exists($sR);  
+            $archived_file = $aliases->get('@uploads').$sR::getUploadsArchiveholderRelativeUrl() .'/Invoice/'. date('Y-m-d') . '_' . $filename . '.pdf';
+            $title = $sR->get_setting('pdf_archive_inv') == '1' ? $archived_file : $filename . '.pdf';
             $start_mpdf = $this->initialize_pdf($password, $sR, $title, $quote_or_invoice, $iiaR, $inv_amount, $aliases, $zugferd_invoice, $associated_files);
             $css = $this->get_css_file($aliases);
             $mpdf = $this->write_html_to_pdf($css,$html,$start_mpdf);            
             if ($isInvoice) {
-                $this->isInvoice($filename, $invoice_array, $stream, $mpdf, $aliases, $sR); 
+                $this->isInvoice($filename, $mpdf, $aliases, $sR); 
             }
-            if ($stream == true) {
+            if ($sR->get_setting('pdf_stream_inv') == '1')
+            {
                 // send the file inline to the browser. The plug-in is used if available.
                 return $mpdf->Output($filename . '.pdf', self::DEST_BROWSER);
-            } else {
-                // save to a local file with the name given by $filename (may include a path).
-                $mpdf->Output($aliases->get('@uploads').$sR::getTempMpdffolderRelativeUrl() . $filename . '.pdf', self::DEST_FILE);
-                return $aliases->get('@uploads').$sR::getTempMpdffolderRelativeUrl() . $filename . '.pdf';
+            } else
+            {    // save to a local file with the name given by $filename (may include a path).
+                if ($sR->get_setting('pdf_archive_inv') === '1') {
+                    $mpdf->Output($aliases->get('@uploads').$sR::getUploadsArchiveholderRelativeUrl() .'/Invoice/'. date('Y-m-d') . '_' . $filename . '.pdf', self::DEST_FILE);
+                    return $aliases->get('@uploads').$sR::getUploadsArchiveholderRelativeUrl() .'/Invoice/'. date('Y-m-d') . '_' . $filename . '.pdf';
+                }    
             }
         }
         
@@ -213,51 +216,28 @@ Class MpdfHelper
         /**
          * 
          * @param string $filename
-         * @param array $invoice_array
-         * @param bool $stream
          * @param \Mpdf\Mpdf $mpdf
          * @param Aliases $aliases
          * @param SR $sR
          * @psalm-suppress MissingReturnType
          */
-        private function isInvoice(string $filename, array $invoice_array, bool $stream, \Mpdf\Mpdf $mpdf, Aliases $aliases, SR $sR)
+        private function isInvoice(string $filename, \Mpdf\Mpdf $mpdf, Aliases $aliases, SR $sR)
         {
-            foreach (glob($aliases->get('@uploads').$sR::getUploadsArchiveholderRelativeUrl() . '*' . $filename . '.pdf') as $file) {
-                array_push($invoice_array, $file);
-            }
-
-            if (!empty($invoice_array)) {
-                rsort($invoice_array);
-
-                if ($stream) {
-                    return $mpdf->Output($filename . '.pdf', self::DEST_BROWSER);
-                } else {
-                    /** @var string $invoice_array[0] */
-                    return $invoice_array[0];
-                }
-            }
             // Archive the file if it is an invoice
-            $archive_folder = $aliases->get('@uploads').$sR::getUploadsArchiveholderRelativeUrl() .'/Invoice';
-            $archived_file = $aliases->get('@uploads').$sR::getUploadsArchiveholderRelativeUrl() .'/Invoice/'. date('Y-m-d') . '_' . $filename . '.pdf';
-            if (!is_dir($archive_folder)){
-                FileHelper::ensureDirectory($archive_folder, 0775);
-            }
-            $mpdf->Output($archived_file, self::DEST_FILE);
-            if ($stream) {
-                return $mpdf->Output($filename . '.pdf', self::DEST_BROWSER);
-            } else {
+            if ($sR->get_setting('pdf_archive_inv') === '1') {
+                $archive_folder = $aliases->get('@uploads').$sR::getUploadsArchiveholderRelativeUrl() .'/Invoice';
+                $archived_file = $aliases->get('@uploads').$sR::getUploadsArchiveholderRelativeUrl() .'/Invoice/'. date('Y-m-d') . '_' . $filename . '.pdf';
+                if (!is_dir($archive_folder)){
+                    FileHelper::ensureDirectory($archive_folder, 0775);
+                }
+                $mpdf->Output($archived_file, self::DEST_FILE);
                 return $archived_file;
             }
         }
         
-        private function ensure_temp_mpdf_folder_and_uploads_folder_exist(SR $sR): Aliases {
+        private function ensure_uploads_folder_exists(SR $sR): Aliases {
             $aliases = new Aliases(['@invoice' => dirname(__DIR__), 
                                     '@uploads' => dirname(__DIR__).DIRECTORY_SEPARATOR.'Uploads'.DIRECTORY_SEPARATOR]);
-            // Invoice/Uploads/Temp/Mpdf
-            $temp_mpdf_folder = $aliases->get('@uploads').$sR::getTempMpdffolderRelativeUrl();            
-            if (!is_dir($temp_mpdf_folder)){
-                FileHelper::ensureDirectory($temp_mpdf_folder, 0775);
-            } 
             
             // Invoice/Uploads/Archive
             $folder = $aliases->get('@uploads').$sR::getUploadsArchiveholderRelativeUrl();
@@ -282,8 +262,7 @@ Class MpdfHelper
         */
         
         private function initialize_pdf(string|null $password, SR $sR, string $title, object|null $quote_or_invoice, IIAR|null $iiaR, InvAmount|null $inv_amount, Aliases $aliases, bool $zugferd_invoice, array $associated_files = []): \Mpdf\Mpdf{
-            $temp_mpdf_folder = $aliases->get('@uploads').$sR::getTempMpdffolderRelativeUrl();
-            $mpdf = new \Mpdf\Mpdf(array_merge($this->options,['tempDir'=>$temp_mpdf_folder]));
+            $mpdf = new \Mpdf\Mpdf($this->options);
             // mPDF configuration
             $mpdf->SetDirectionality('ltr');
             $mpdf->useAdobeCJK = true;

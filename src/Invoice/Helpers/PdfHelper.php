@@ -3,25 +3,39 @@ declare(strict_types=1);
 
 namespace App\Invoice\Helpers;
 
+use App\Invoice\Entity\Inv;
 use App\Invoice\Entity\InvAmount;
 use App\Invoice\Entity\QuoteAmount;
 use App\Invoice\Entity\QuoteItem;
 use App\Invoice\Entity\InvItem;
+use App\Invoice\Entity\UserInv;
 use App\Invoice\Helpers\MpdfHelper;
+use App\Invoice\Helpers\CountryHelper;
 use App\Invoice\Helpers\CustomValuesHelper as CVH;
 use App\Invoice\Helpers\ZugFerdHelper;
+use App\Invoice\Libraries\Sumex;
+use App\Invoice\InvAmount\InvAmountRepository;
+use App\Invoice\Inv\InvRepository;
 use App\Invoice\Setting\SettingRepository as SR;
+use App\Invoice\Sumex\SumexRepository;
+use App\Invoice\UserInv\UserInvRepository;
+use setasign\Fpdi\Fpdi;
+use Yiisoft\Aliases\Aliases;
 use Yiisoft\Session\SessionInterface as Session;
+
 
 Class PdfHelper
 {
     private SR $s;
     
     private Session $session;
+    
+    private CountryHelper $countryhelper;
 
     public function __construct(SR $s, Session $session) {
         $this->s = $s;
         $this->session = $session;
+        $this->countryhelper = new CountryHelper();
     }
     
     /**
@@ -36,7 +50,6 @@ Class PdfHelper
         return $session_list[$dropdown_locale] ?? null;
     }
         
-    // Used on line 104 to determine the cldr 
     /**
      * 
      * @param array|object $quote_or_inv
@@ -130,7 +143,11 @@ Class PdfHelper
                         's'=>$this->s,   
                     ]),        
                     's'=>$this->s,
-                    'countryhelper'=>new CountryHelper(),
+                    'company_logo_and_address'=>$viewrenderer->renderPartialAsString('/invoice/setting/company_logo_and_address.php',
+                        ['company'=>$company = $this->s->get_config_company_details(), 
+                         'countryhelper'=> $this->countryhelper,
+                        ]),
+                    'countryhelper'=>$this->countryhelper,
                     'userinv'=>$userinv,
                     'client'=>$cR->repoClientquery((string)$quote->getClient()?->getClient_id()),
                     'quote_amount'=>$quote_amount,            
@@ -139,6 +156,9 @@ Class PdfHelper
                 ];        
                 // Quote Template will be either 'quote' or a custom designed quote in the folder.
                 $html = $viewrenderer->renderPartialAsString('/invoice/template/quote/pdf/'.$quote_template,$data);
+                if ($this->s->get_setting('pdf_html_quote') === '1') {
+                    return $html;
+                }
                 // Set the print language to null for future use
                 $this->session->set('print_language','');
                 $mpdfhelper = new MpdfHelper(); 
@@ -147,6 +167,96 @@ Class PdfHelper
             }    
         } 
     }   //generate_quote_pdf
+    
+    /**
+     * 
+     * @param string|null $inv_id
+     * @param string $user_id
+     * @param bool $custom
+     * @param InvAmount|null $inv_amount
+     * @param array $inv_custom_values
+     * @param \App\Invoice\Client\ClientRepository $cR
+     * @param \App\Invoice\CustomValue\CustomValueRepository $cvR
+     * @param \App\Invoice\CustomField\CustomFieldRepository $cfR
+     * @param \App\Invoice\InvItem\InvItemRepository $iiR
+     * @param \App\Invoice\InvItemAmount\InvItemAmountRepository $iiaR
+     * @param Inv $inv
+     * @param \App\Invoice\InvTaxRate\InvTaxRateRepository $itrR
+     * @param \App\Invoice\UserInv\UserInvRepository $uiR
+     * @param SumexRepository $sumexR
+     * @param \Yiisoft\Yii\View\ViewRenderer $viewrenderer
+     * @return string
+     */
+    public function generate_inv_html(string|null $inv_id, string $user_id, bool $custom, InvAmount|null $inv_amount, array $inv_custom_values,\App\Invoice\Client\ClientRepository $cR, \App\Invoice\CustomValue\CustomValueRepository $cvR, \App\Invoice\CustomField\CustomFieldRepository $cfR, \App\Invoice\InvItem\InvItemRepository $iiR, \App\Invoice\InvItemAmount\InvItemAmountRepository $iiaR, Inv $inv, \App\Invoice\InvTaxRate\InvTaxRateRepository $itrR, \App\Invoice\UserInv\UserInvRepository $uiR, SumexRepository $sumexR,
+                                \Yiisoft\Yii\View\ViewRenderer $viewrenderer) : string {
+        if ($inv_id) {
+            // If userinv details have been filled, use these details
+            $userinv = ($uiR->repoUserInvcount($user_id)>0 ? $uiR->repoUserInvquery($user_id) : null);
+            // 'draft' => status_id => 1 
+            $inv_template = $this->generate_inv_pdf_template_normal_paid_overdue_watermark($inv->getStatus_id() ?? 1);
+
+            // Determine if discounts should be displayed if there are items on the invoice      
+            $items = ($iiR->repoCount($inv_id) > 0 ? $iiR->repoInvItemIdquery($inv_id) : null);
+            /** @var \App\Invoice\Entity\Sumex $sumex */
+            $sumex = $sumexR->repoSumexInvoicequery($inv_id);
+            $show_item_discounts = false;
+            // Determine if any of the items have a discount, if so then the discount amount row will have to be shown.
+            if (null!==$items) {
+                /** @var InvItem $item */ 
+                foreach ($items as $item) {  
+                    if ($item->getDiscount_amount() !== 0.00) {
+                        $show_item_discounts = true;
+                    }
+                }
+            }
+            // Get all data related to building the inv including custom fields
+            $data = [
+                'inv' => $inv,
+                'inv_tax_rates' => (($itrR->repoCount((string)$this->session->get('inv_id')) > 0) ? $itrR->repoInvquery((string)$this->session->get('inv_id')) : null), 
+                'items' => $items,
+                'iiaR' => $iiaR,
+                'output_type' => 'pdf',
+                'show_item_discounts' => $show_item_discounts,
+                // Show the custom fields if the user has answered yes on the modal ie $custom = true
+                'show_custom_fields' => $custom,
+                // Custom fields appearing near the top of the quote
+                'custom_fields'=> $cfR->repoTablequery('inv_custom'),
+                'custom_values'=>$cvR->attach_hard_coded_custom_field_values_to_custom_field($cfR->repoTablequery('inv_custom')),
+                'cvH'=> new CVH($this->s),
+                'inv_custom_values' => $inv_custom_values,
+                'top_custom_fields' =>$viewrenderer->renderPartialAsString('/invoice/template/invoice/pdf/top_custom_fields', [
+                    'custom_fields'=>$cfR->repoTablequery('inv_custom'),
+                    'cvR'=>$cvR, 
+                    'inv_custom_values'=> $inv_custom_values,  
+                    'cvH'=> new CVH($this->s),
+                    's'=>$this->s,   
+                ]),    
+                // Custom fields appearing at the bottom of the invoice
+                'view_custom_fields'=>$viewrenderer->renderPartialAsString('/invoice/template/invoice/pdf/view_custom_fields', [
+                    'custom_fields'=>$cfR->repoTablequery('inv_custom'),
+                    'cvR'=>$cvR,
+                    'inv_custom_values'=> $inv_custom_values,  
+                    'cvH'=> new CVH($this->s),
+                    's'=>$this->s,   
+                ]),        
+                's'=>$this->s,
+                'sumex'=> $sumex, 
+                'userinv'=>$userinv,
+                'company_logo_and_address'=>$viewrenderer->renderPartialAsString('/invoice/setting/company_logo_and_address.php',
+                    ['company'=>$company = $this->s->get_config_company_details(), 
+                     'countryhelper'=>$this->countryhelper
+                    ]),
+                'countryhelper'=>$this->countryhelper,
+                'client'=>$cR->repoClientquery((string)$inv->getClient()?->getClient_id()),
+                'inv_amount'=>$inv_amount,            
+                // Use the temporary print language to define cldr            
+                'cldr'=> array_keys($this->s->locale_language_array(), $this->get_print_language($inv)),
+            ];        
+            // Inv Template will be either 'inv' or a custom designed inv in the folder.
+            return $viewrenderer->renderPartialAsString('/invoice/template/invoice/pdf/'.$inv_template,$data);
+        }
+        return '';
+    }
     
     /**
      * @param string|null $inv_id
@@ -166,71 +276,13 @@ Class PdfHelper
      * @param \Yiisoft\Yii\View\ViewRenderer $viewrenderer
      * @psalm-suppress MissingReturnType
      */
-    public function generate_inv_pdf(string|null $inv_id, string $user_id, bool $stream, bool $custom, InvAmount|null $inv_amount, array $inv_custom_values,\App\Invoice\Client\ClientRepository $cR, \App\Invoice\CustomValue\CustomValueRepository $cvR, \App\Invoice\CustomField\CustomFieldRepository $cfR, \App\Invoice\InvItem\InvItemRepository $iiR, \App\Invoice\InvItemAmount\InvItemAmountRepository $iiaR, \App\Invoice\Inv\InvRepository $iR, \App\Invoice\InvTaxRate\InvTaxRateRepository $itrR, \App\Invoice\UserInv\UserInvRepository $uiR,
+    public function generate_inv_pdf(string|null $inv_id, string $user_id, bool $stream, bool $custom, InvAmount|null $inv_amount, array $inv_custom_values,\App\Invoice\Client\ClientRepository $cR, \App\Invoice\CustomValue\CustomValueRepository $cvR, \App\Invoice\CustomField\CustomFieldRepository $cfR, \App\Invoice\InvItem\InvItemRepository $iiR, \App\Invoice\InvItemAmount\InvItemAmountRepository $iiaR, \App\Invoice\Inv\InvRepository $iR, \App\Invoice\InvTaxRate\InvTaxRateRepository $itrR, \App\Invoice\UserInv\UserInvRepository $uiR, SumexRepository $sumexR,
                                 \Yiisoft\Yii\View\ViewRenderer $viewrenderer)
     {       
        if ($inv_id) { 
             $inv = $iR->repoCount($inv_id) > 0 ? $iR->repoInvLoadedquery($inv_id) : null;
             if ($inv) {
-                // If userinv details have been filled, use these details
-                $userinv = ($uiR->repoUserInvcount($user_id)>0 ? $uiR->repoUserInvquery($user_id) : null);
-                // 'draft' => status_id => 1 
-                $inv_template = $this->generate_inv_pdf_template_normal_paid_overdue_watermark($inv->getStatus_id() ?? 1);
-                      
-                // Determine if discounts should be displayed if there are items on the invoice      
-                $items = ($iiR->repoCount($inv_id) > 0 ? $iiR->repoInvItemIdquery($inv_id) : null);
-
-                $show_item_discounts = false;
-                // Determine if any of the items have a discount, if so then the discount amount row will have to be shown.
-                if (null!==$items) {
-                    /** @var InvItem $item */ 
-                    foreach ($items as $item) {  
-                        if ($item->getDiscount_amount() !== 0.00) {
-                            $show_item_discounts = true;
-                        }
-                    }
-                }
-
-                // Get all data related to building the inv including custom fields
-                $data = [
-                    'inv' => $inv,
-                    'inv_tax_rates' => (($itrR->repoCount((string)$this->session->get('inv_id')) > 0) ? $itrR->repoInvquery((string)$this->session->get('inv_id')) : null), 
-                    'items' => $items,
-                    'iiaR'=>$iiaR,
-                    'output_type' => 'pdf',
-                    'show_item_discounts' => $show_item_discounts,
-                    // Show the custom fields if the user has answered yes on the modal ie $custom = true
-                    'show_custom_fields' => $custom,
-                    // Custom fields appearing near the top of the quote
-                    'custom_fields'=>$cfR->repoTablequery('inv_custom'),
-                    'custom_values'=>$cvR->attach_hard_coded_custom_field_values_to_custom_field($cfR->repoTablequery('inv_custom')),
-                    'cvH'=> new CVH($this->s),
-                    'inv_custom_values' => $inv_custom_values,
-                    'top_custom_fields' =>$viewrenderer->renderPartialAsString('/invoice/template/invoice/pdf/top_custom_fields', [
-                        'custom_fields'=>$cfR->repoTablequery('inv_custom'),
-                        'cvR'=>$cvR, 
-                        'inv_custom_values'=> $inv_custom_values,  
-                        'cvH'=> new CVH($this->s),
-                        's'=>$this->s,   
-                    ]),    
-                    // Custom fields appearing at the bottom of the quote
-                    'view_custom_fields'=>$viewrenderer->renderPartialAsString('/invoice/template/invoice/pdf/view_custom_fields', [
-                        'custom_fields'=>$cfR->repoTablequery('inv_custom'),
-                        'cvR'=>$cvR,
-                        'inv_custom_values'=> $inv_custom_values,  
-                        'cvH'=> new CVH($this->s),
-                        's'=>$this->s,   
-                    ]),        
-                    's'=>$this->s,
-                    'countryhelper'=>new CountryHelper(),
-                    'userinv'=>$userinv,
-                    'client'=>$cR->repoClientquery((string)$inv->getClient()?->getClient_id()),
-                    'inv_amount'=>$inv_amount,            
-                    // Use the temporary print language to define cldr            
-                    'cldr'=> array_keys($this->s->locale_language_array(), $this->get_print_language($inv)),
-                ];        
-                // Inv Template will be either 'inv' or a custom designed inv in the folder.
-                $html = $viewrenderer->renderPartialAsString('/invoice/template/invoice/pdf/'.$inv_template,$data);
+                $html = $this->generate_inv_html($inv_id, $user_id, $custom, $inv_amount, $inv_custom_values, $cR, $cvR, $cfR, $iiR, $iiaR, $inv, $itrR, $uiR, $sumexR, $viewrenderer);
                 // Set the print language to null for future use
                 $this->session->set('print_language','');
                 $mpdfhelper = new MpdfHelper(); 
@@ -255,7 +307,7 @@ Class PdfHelper
                 // If stream is true return the pdf as a string using mpdf otherwise save to local file and 
                 // return the filename inclusive target_path to be used to attach to email attachments
                 return $mpdfhelper->pdf_create($html, $filename, $stream, $inv->getPassword(), $this->s, $iiaR, $inv_amount, true, $include_zugferd, $associatedFiles, $inv);
-            }
+            } // if $inv
        }
     } //generate_inv_pdf
     
@@ -285,7 +337,137 @@ Class PdfHelper
         return $return;
     }
     
-    public function generate_inv_sumex(): void {
-        
+    /**
+     * 
+     * @param InvRepository $iR
+     * @param InvAmountRepository $iaR
+     * @param SumexRepository $SumexR
+     * @param $uiR
+     * @param int $inv_id
+     * @param bool $stream
+     * @param bool $client
+     * @throws \Exception     
+     * @psalm-suppress MissingReturnType
+     */
+    
+    public function generate_inv_sumex(
+            InvRepository $iR, 
+            InvAmountRepository $iaR,
+            SumexRepository $SumexR,
+            UserInvRepository $uiR,
+            int $inv_id, 
+            bool $stream = true, 
+            bool $client = false) 
+    {
+        if ($inv_id) { 
+            $inv = $iR->repoCount((string)$inv_id) > 0 ? $iR->repoInvLoadedquery((string)$inv_id) : null;
+            if ($inv instanceof Inv) {
+                /** @var InvAmount $inv_amount */
+                $inv_amount = $iaR->repoInvAmountquery($inv_id);
+                /** @var \App\Invoice\Entity\Sumex $sumex_treatment */
+                $sumex_treatment = $SumexR->repoSumexInvoicequery((string)$inv_id); 
+                $user_details = $uiR->repoUserInvUserIdquery($inv->getUser_id());
+                if ($user_details instanceof UserInv) {
+                    $sumex = new Sumex($inv, $inv_amount, $user_details, $sumex_treatment, $this->s, $this->session);
+                    $temp = tempnam("/tmp", "invsumex_");
+                    $tempCopy = tempnam("/tmp", "invsumex_");
+                    
+                    /** @var \setasign\Fpdi\Fpdi $pdf */
+                    $pdf = new Fpdi();
+                    
+                    $sumexPDF = $sumex->pdf($inv_id);
+                    if (is_string($sumexPDF)) {
+                        $sha1sum = sha1($sumexPDF);
+                        $shortsum = substr($sha1sum, 0, 8);
+                        $filename = $this->s->trans('invoice') . '_' . ($inv->getNumber() ?: 'Number Not Provided'). '_' . $shortsum;
+
+                        if (!$client) {
+                            $f = fopen($temp, 'wb');
+                            if (!$f) {
+                                throw new \Exception(sprintf('Unable to create output file %s', $temp));			
+                            }
+                            fwrite($f, $sumexPDF, strlen($sumexPDF));
+                            fclose($f);
+
+                            // Hackish
+                            $sumexPDF = str_replace(
+                                "Giustificativo per la richiesta di rimborso",
+                                "Copia: Giustificativo per la richiesta di rimborso",
+                                $sumexPDF
+                            );
+
+                            $fc = fopen($tempCopy, 'wb');
+                            if (!$fc) {
+                                throw new \Exception(sprintf('Unable to create output file %s', $tempCopy));			
+                            }
+                            fwrite($fc, $sumexPDF, strlen($sumexPDF));
+                            fclose($fc);
+
+                            $pageCount = $pdf->setSourceFile($temp);
+
+                            for ($pageNo = 1; $pageNo <= $pageCount; $pageNo++) {
+                                $templateId = $pdf->importPage($pageNo);
+                                $size = $pdf->getTemplateSize($templateId);
+                                /** 
+                                 * @see setasign\fpdf\fpdf.php                             * 
+                                 * @var int $size['w']
+                                 * @var int $size['h']
+                                 */
+                                if ($size['w'] > $size['h']) {
+                                    $pageFormat = 'L';  //  landscape
+                                } else {
+                                    $pageFormat = 'P';  //  portrait
+                                }
+                                $pdf->addPage($pageFormat, array($size['w'], $size['h']), 0);
+                                $pdf->useTemplate($templateId);
+                            }
+
+                            $pageCount = $pdf->setSourceFile($tempCopy);
+
+                            for ($pageNo = 2; $pageNo <= $pageCount; $pageNo++) {
+
+                                $templateId = $pdf->importPage($pageNo);
+                                $size = $pdf->getTemplateSize($templateId);
+                                /** 
+                                 * @see setasign\fpdf\fpdf.php                             * 
+                                 * @var int $size['w']
+                                 * @var int $size['h']
+                                 */
+                                if ($size['w'] > $size['h']) {
+                                    $pageFormat = 'L';  //  landscape
+                                } else {
+                                    $pageFormat = 'P';  //  portrait
+                                }
+                                $pdf->addPage($pageFormat, array($size['w'], $size['h']));
+                                $pdf->useTemplate($templateId);
+                            }
+
+                            unlink($temp);
+                            unlink($tempCopy);
+
+                            if ($stream) {
+                                header("Content-Type:application/pdf");
+                                // string
+                                return $pdf->Output($filename . '.pdf', 'I');
+                            }
+                            $aliases = new Aliases(['@uploads_temp_folder' => dirname(__DIR__).DIRECTORY_SEPARATOR.'Uploads'.DIRECTORY_SEPARATOR]);
+                            $filePath = $aliases->get('@uploads_temp_folder') . $filename . '.pdf';
+                            $pdf->Output($filePath, 'F');
+                            // string
+                            return $filePath;
+                        } else {
+                            if ($stream) {
+                                // string                        
+                                return $sumexPDF;
+                            }
+                            $aliases = new Aliases(['@uploads_temp_folder' => dirname(__DIR__).DIRECTORY_SEPARATOR.'Uploads'.DIRECTORY_SEPARATOR]);
+                            $filePath = $aliases->get('@uploads_temp_folder') . $filename . '.pdf';
+                            // string
+                            return $filePath;
+                        }
+                    } //is_string    
+                } // instanceof UserInv                   
+            }
+        }
     }
 } 

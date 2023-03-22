@@ -23,7 +23,7 @@ if (!empty($errors)) {
 ?>
 <div class="panel panel-default">
 <div class="panel-heading">
-        <?= $translator->translate('invoice.task'); ?>
+        <i tooltip="data-toggle" title="<?= $s->isDebugMode(3)?>"><?= $translator->translate('invoice.task'); ?></i>
 </div>
 <form id="InvItemFormTask" method="POST" action="<?= $urlGenerator->generate(...$action)?>" enctype="multipart/form-data">
 <input type="hidden" name="_csrf" value="<?= $csrf ?>">
@@ -82,7 +82,7 @@ if (!empty($errors)) {
                         <input type="number" name="price" class="input-sm form-control amount has-feedback" required value="<?= $numberhelper->format_amount($body['price'] ?? ''); ?>">
                     </div>
                 </td>
-                <td class="td-amount td-vert-middle">
+                <td class="td-amount">
                     <div class="input-group">
                         <span class="input-group-text"><?= $s->trans('item_discount'); ?></span>
                         <input type="number" name="discount_amount" class="input-sm form-control amount has-feedback" required

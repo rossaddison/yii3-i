@@ -5,11 +5,12 @@ namespace App\Invoice\Helpers;
 
 use App\Invoice\Entity\Inv;
 use App\Invoice\Entity\InvAmount;
+use App\Invoice\Libraries\ZugferdXml;
 use App\Invoice\Setting\SettingRepository as SRepo;
 use App\Invoice\InvItemAmount\InvItemAmountRepository as IIAR;
 use Yiisoft\Aliases\Aliases;
 use Yiisoft\Files\FileHelper;
-use App\Invoice\Libraries\ZugferdXml;
+use Yiisoft\Security\Random;
 
 Class ZugFerdHelper
 {
@@ -61,8 +62,8 @@ public function generate_invoice_zugferd_xml_temp_file(Inv $invoice, IIAR $iiaR,
     $path = dirname(__DIR__).DIRECTORY_SEPARATOR.'Uploads'
                             .DIRECTORY_SEPARATOR.'Temp'
                             .DIRECTORY_SEPARATOR.'Zugferd'
-                            .DIRECTORY_SEPARATOR. 'invoice_' 
-                            . ($invoice->getId() ?? '_search_null_invoice_id_' ). '_zugferd.xml';
+                            .DIRECTORY_SEPARATOR. 'invoice_' .  Random::string(8)
+                            . ($invoice->getNumber() ?? '_search_null_invoice_id_' ). '_zugferd.xml';
     // Generate inv items from Entity Inv->getItems() HasMany function
     // Generate inv item amounts from $iiaR
     $z = new ZugferdXml($this->s, $invoice, $iiaR, $inv_amount);

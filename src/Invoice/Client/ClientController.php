@@ -689,10 +689,10 @@ final class ClientController
                   'clienthelper' => new ClientHelper($sR),
                   'custom_fields'=>$cfR->repoTablequery('client_custom'),
                   'custom_values'=>$cvR->attach_hard_coded_custom_field_values_to_custom_field($cfR->repoTablequery('client_custom')),
+                  'cvH' => new CVH($sR),
                   'client_custom_values'=>$this->client_custom_values((string)$client_id, $ccR),
                   'client' => $client,            
                   'client_notes' => $cnR->repoClientNoteCount($client_id) > 0 ? $cnR->repoClientquery((string)$client_id) : [],
-                  'cvH' => new CVH($sR),
                   'partial_client_address'=>$this->viewRenderer->renderPartialAsString('/invoice/client/partial_client_address', [
                       'client'=> $client,            
                       'countryhelper'=> new CountryHelper(),

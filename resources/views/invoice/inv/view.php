@@ -19,7 +19,7 @@ use App\Invoice\Helpers\DateHelper;
 ?>
 <div class="panel panel-default">
 <div class="panel-heading">
-    <?= $s->trans('invoice'); ?>
+    <i tooltip="data-toggle" title="<?= $s->isDebugMode(1);?>"><?= $s->trans('invoice');  ?></i>
 </div>
     <?php
         $clienthelper = new ClientHelper($s);
@@ -31,7 +31,8 @@ use App\Invoice\Helpers\DateHelper;
         echo $modal_choose_items;
         // modal_task_lookups is performed using below $modal_choose_tasks
         echo $modal_choose_tasks;
-        echo $modal_inv_to_pdf;
+        echo $modal_inv_to_pdf;        
+        echo $modal_inv_to_html;
         echo $modal_copy_inv;
         echo $modal_delete_items;
         echo $modal_create_recurring;
@@ -140,10 +141,21 @@ use App\Invoice\Helpers\DateHelper;
                         </li>
                     <?php } ?>
                 <?php } ?>                         
-                <li>
-                    <a href="#inv-to-pdf"  data-toggle="modal" style="text-decoration:none">
-                        <i class="fa fa-print fa-margin"></i>
-                        <?= Html::encode($s->trans('download_pdf')); ?>
+                <li>    
+                        <!-- null!==$sumex There is a sumex extension record linked to the current invoice_id 
+                             and the sumex setting under View...Settings...Invoice...Sumex Settings is set at Yes.
+                        -->
+                        <?php if (null!==$sumex && $s->get_setting('sumex') === '1') { ?>
+                               <a href="#inv-to-pdf"  data-toggle="modal" style="text-decoration:none">
+                                    <i class="fa fa-print fa-margin"></i>
+                                    <?= Html::encode($s->trans('generate_sumex')); ?>
+                                </a>    
+                        <?php } else { ?>
+                                <a href="#inv-to-pdf"  data-toggle="modal" style="text-decoration:none">
+                                    <i class="fa fa-print fa-margin"></i>
+                                    <?= Html::encode($s->trans('download_pdf')); ?>
+                                </a>    
+                        <?php } ?>
                         <!-- 
                             views/invoice/inv/modal_inv_to_pdf   ... include custom fields or not on pdf
                             src/Invoice/Inv/InvController/pdf ... calls the src/Invoice/Helpers/PdfHelper->generate_inv_pdf
@@ -161,6 +173,24 @@ use App\Invoice\Helpers\DateHelper;
                     </a>
                 </li>
                 <li>
+                    <?php
+                       // If Settings...View...Invoices...Sumex Settings...Sumex is Yes
+                       // the basic Sumex details will be available to edit
+                       // since the basic details would have been added when the Invoice was added
+                       // by means of the inv modal ie. inv/create_confirm
+                       // The sumex->getInvoice function can return null since not all invoices will require
+                       // Sumex details. If a Sumex Invoice has been been created due to 'Yes' 
+                       // it will be  
+                       if (null!==$sumex) { 
+                            if (null!==$sumex->getInvoice()) { ?>
+                                <a href="<?= $urlGenerator->generate('sumex/edit',['invoice'=> $inv->getId()]); ?>" style="text-decoration:none">
+                                    <i class="fa fa-edit fa-margin"></i>
+                                    <?= $translator->translate('invoice.sumex.edit'); ?>
+                                </a> 
+                            <?php } ?>
+                        <?php } ?>
+                </li>
+                <li>
                     <a href="<?= $urlGenerator->generate('inv/email_stage_0',['id'=> $inv->getId()]); ?>" style="text-decoration:none">
                         <i class="fa fa-send fa-margin"></i>
                         <?= Html::encode($s->trans('send_email')); ?>
@@ -170,6 +200,27 @@ use App\Invoice\Helpers\DateHelper;
                     <a href="#inv-to-inv" data-toggle="modal"  style="text-decoration:none">
                         <i class="fa fa-copy fa-margin"></i>
                          <?= Html::encode($s->trans('copy_invoice')); ?>
+                    </a>
+                </li>
+                <li>
+                        <?php if (null!==$sumex && $s->get_setting('sumex') === '1') { ?>
+                               <a href="#inv-to-html"  data-toggle="modal" style="text-decoration:none">
+                                    <i class="fa fa-print fa-margin"></i>
+                                    <?= Html::encode($translator->translate('invoice.invoice.html.sumex.yes')); ?>
+                                </a>    
+                        <?php } else { ?>
+                                <a href="#inv-to-html"  data-toggle="modal" style="text-decoration:none">
+                                    <i class="fa fa-print fa-margin"></i>
+                                    <?= Html::encode($translator->translate('invoice.invoice.html.sumex.no')); ?>
+                                </a>    
+                        <?php } ?>
+                        <!-- 
+                            views/invoice/inv/modal_inv_to_pdf   ... include custom fields or not on pdf
+                            src/Invoice/Inv/InvController/pdf ... calls the src/Invoice/Helpers/PdfHelper->generate_inv_pdf
+                            src/Invoice/Helpers/PdfHelper ... calls the src/Invoice/Helpers/MpdfHelper->pdf_create
+                            src/Invoice/Helpers/MpdfHelper ... saves folder in src/Invoice/Uploads/Archive
+                            using 'pdf_invoice_template' setting or 'default' views/invoice/template/invoice/invoice.pdf
+                        -->
                     </a>
                 </li>
                 <?php } ?>
@@ -371,7 +422,7 @@ use App\Invoice\Helpers\DateHelper;
                 </div>
             </div>
         </div>
-    </div>
+   </div>
    <div id="partial_item_table_parameters" inv_items="<?php $inv_items; ?>" disabled>
     <?= $partial_item_table; ?>     
    </div>

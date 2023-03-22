@@ -65,10 +65,24 @@ final class InvService
        null!==$form->getTerms() ? $model->setTerms($form->getTerms()) : ''; 
        null!==$form->getCreditinvoice_parent_id() ? $model->setCreditinvoice_parent_id($form->getCreditinvoice_parent_id() ?: 0) : '';
        if ($model->isNewRecord()) {
-            // Draft invoices cannot be viewed by Clients. 
+            // Draft invoices CANNOT be viewed by Clients. 
             // Mark the invoices as 'sent' so that clients can view their invoices when logged in
-            // Draft => 1, Sent => 2
-            $model->setStatus_id($s->get_setting('mark_invoices_sent_copy') === '1' ? 2 : 1 );            
+            // Draft => 1, Sent => 2, Viewed => 3, Paid => 4
+            // To see if clients can view their invoices online under observer role
+            // instead of having to email them in order to get the invoice status marked as sent
+            // the setting under ...Invoices...Other Settings...Mark invoices as sent when copying an invoice can be used.
+            // For testing purposes, multiple invoices to this client can be copied and
+            // with this setting, marked as sent (without emailing), and therefore viewable by the client
+            // Logging in as client with observer status will see these invoices
+            // By default, mark_invoices_sent_copy will be set to '0'
+            if ($s->get_setting('mark_invoices_sent_copy') === '1') {
+                $model->setStatus_id(2);
+                // If the read_only_toggle is set to 'sent', set this invoice to read only
+                $model->setIs_read_only(true);
+            } else {
+                $model->setStatus_id(1);
+                $model->setIs_read_only(false);                
+            }
             null!==$form->getNumber() ? $model->setNumber($form->getNumber()) : '';
             $model->setUser_id((int)$user->getId());
             $model->setUrl_key(Random::string(32));            
@@ -114,7 +128,14 @@ final class InvService
        null!==$form->getTerms() ? $model->setTerms($form->getTerms()) : ''; 
        null!==$form->getCreditinvoice_parent_id() ? $model->setCreditinvoice_parent_id($form->getCreditinvoice_parent_id() ?: 0) : '';
        if ($model->isNewRecord()) {
-            $model->setStatus_id(1);            
+            if ($s->get_setting('mark_invoices_sent_copy') === '1') {
+                $model->setStatus_id(2);
+                // If the read_only_toggle is set to 'sent', set this invoice to read only
+                $model->setIs_read_only(true);
+            } else {
+                $model->setStatus_id(1);
+                $model->setIs_read_only(false);                
+            }           
             null!==$form->getNumber() ? $model->setNumber($form->getNumber()) : '';
             $model->setUser_id((int)$user->getId());
             $model->setUrl_key(Random::string(32));            

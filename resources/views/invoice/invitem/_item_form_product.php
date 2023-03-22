@@ -22,7 +22,7 @@ if (!empty($errors)) {
 ?>
 <div class="panel panel-default">
 <div class="panel-heading">
-        <?= $translator->translate('invoice.product'); ?>
+        <i tooltip="data-toggle" title="<?= $s->isDebugMode(2)?>"><?= $translator->translate('invoice.product'); ?></i>
 </div>
 <form id="InvItemFormProduct" method="POST" action="<?= $urlGenerator->generate(...$action)?>" enctype="multipart/form-data">
 <input type="hidden" name="_csrf" value="<?= $csrf ?>">
@@ -82,12 +82,13 @@ if (!empty($errors)) {
                         <input type="number" name="price" class="input-sm form-control amount has-feedback" required value="<?= $numberhelper->format_amount($body['price'] ?? ''); ?>">
                     </div>
                 </td>
-                <td class="td-amount td-vert-middle">
+                <td class="td-amount">
                     <div class="input-group">
                         <span class="input-group-text"><?= $s->trans('item_discount'); ?></span>
                         <input type="number" name="discount_amount" class="input-sm form-control amount has-feedback" required
                                data-toggle="tooltip" data-placement="bottom"
-                               title="<?= $s->get_setting('currency_symbol') . ' ' . $s->trans('per_item'); ?>" value="<?= $numberhelper->format_amount($body['discount_amount'] ?? ''); ?>">
+                               title="<?= $s->get_setting('currency_symbol') . ' ' . $s->trans('per_item'); ?>" value="<?= $numberhelper->format_amount($body['discount_amount'] ??
+                                       0.00); ?>">
                     </div>
                 </td>
                 <td td-vert-middle>

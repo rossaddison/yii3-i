@@ -148,6 +148,8 @@ final class SettingRepository extends Select\Repository
     }
     
     /**
+     * Build settings array
+     * 
      * @return void
      */
     public function load_settings(): void
@@ -167,10 +169,38 @@ final class SettingRepository extends Select\Repository
      */
     public function get_setting(string $key) : string
     {
+        // Build settings array
         $this->load_settings();
         /** @var string $this->settings[$key] */
-        $setting = $this->settings[$key];
+        if (array_key_exists($key, $this->settings)) {
+            $setting = $this->settings[$key];
+        } else {
+            // Add any newly added keys from payment_gateway array
+            $setting = $this->add_setting_key($key);
+        }
         return $setting;
+    }
+    
+    /**
+     * Save the new setting key and make it available
+     * 
+     * @param string $key
+     * @return string
+     */
+    public function add_setting_key(string $key) : string {
+           // Add the new setting key
+            // eg. if a new payment gateway has been added
+            // to the Payment Gateway array save all the new keys
+            // and values of the array
+            $new_setting = new Setting();
+            $new_setting->setSetting_key($key);
+            // Default value is ''
+            $new_setting->setSetting_value('');
+            $this->save($new_setting);
+            $this->load_settings();
+            /** @var string $this->settings[$key] */
+            $setting = $this->settings[$key];
+            return $setting;
     }
     
     /**
@@ -293,8 +323,13 @@ final class SettingRepository extends Select\Repository
          * @var string $params['company']['address_1']
          * @var string $params['company']['address_2']
          * @var string $params['company']['zip']
-         * @var string $params['company']['city']
+         * @var string $params['company']['city']         
+         * @var string $params['company']['state']
          * @var string $params['company']['country']
+         * @var string $params['company']['vat_id']
+         * @var string $params['company']['tax_code']
+         * @var string $params['company']['phone']
+         * @var string $params['company']['fax']
          */
         $company_array = [
             'name' => $params['company']['name'],
@@ -302,7 +337,12 @@ final class SettingRepository extends Select\Repository
             'address_2' => $params['company']['address_2'],
             'zip' => $params['company']['zip'],
             'city' => $params['company']['city'],
-            'country' => $params['company']['country']
+            'state' => $params['company']['state'],
+            'country' => $params['company']['country'],
+            'vat_id' => $params['company']['vat_id'],
+            'tax_code' => $params['company']['tax_code'],
+            'phone' => $params['company']['phone'],
+            'fax' => $params['company']['fax'],
         ];
         return $company_array;
     }
@@ -606,12 +646,6 @@ final class SettingRepository extends Select\Repository
         return DIRECTORY_SEPARATOR.'Company_private_logos';
     }
     
-    // Append to uploads folder
-    public static function getTempMpdffolderRelativeUrl(): string
-    {        
-        return DIRECTORY_SEPARATOR.'Temp'.DIRECTORY_SEPARATOR.'Mpdf/';
-    }
-    
     public static function getTempZugferdfolderRelativeUrl(): string
     {        
         return DIRECTORY_SEPARATOR.'Temp'.DIRECTORY_SEPARATOR.'Zugferd'.DIRECTORY_SEPARATOR;
@@ -842,10 +876,10 @@ final class SettingRepository extends Select\Repository
     // php 8.0 compatible gateways for omnipay 3.2
     // Working with ...src/Invoice/Language/English/gateway_lang.php
     // label must correspond to ...src/Language/English/gateway_lang.php
+    
     /**
-     * @return string[][][]
-     *
-     * @psalm-return array{AuthorizeNet_AIM: array{apiLoginId: array{type: 'text', label: 'Api Login Id'}, transactionKey: array{type: 'text', label: 'Transaction Key'}, testMode: array{type: 'checkbox', label: 'Test Mode'}, developerMode: array{type: 'checkbox', label: 'Developer Mode'}, version: array{type: 'checkbox', label: 'Omnipay Version'}}, AuthorizeNet_SIM: array{apiLoginId: array{type: 'text', label: 'Api Login Id'}, transactionKey: array{type: 'text', label: 'Transaction Key'}, testMode: array{type: 'checkbox', label: 'Test Mode'}, developerMode: array{type: 'checkbox', label: 'Developer Mode'}, version: array{type: 'checkbox', label: 'Omnipay Version'}}, PayPal_Express: array{username: array{type: 'text', label: 'Username'}, password: array{type: 'password', label: 'Password'}, signature: array{type: 'password', label: 'Signature'}, testMode: array{type: 'checkbox', label: 'Test Mode'}, version: array{type: 'checkbox', label: 'Omnipay Version'}}, PayPal_Pro: array{username: array{type: 'text', label: 'Username'}, password: array{type: 'password', label: 'Password'}, signature: array{type: 'text', label: 'Signature'}, testMode: array{type: 'checkbox', label: 'Test Mode'}, version: array{type: 'checkbox', label: 'Omnipay Version'}}, Amazon_Pay: array{publicKeyId: array{type: 'password', label: 'Public Key ID'}, merchantId: array{type: 'password', label: 'Merchant ID'}, clientId: array{type: 'password', label: 'Client ID'}, clientSecret: array{type: 'password', label: 'Client Secret'}, returnUrl: array{type: 'text', label: 'Return Url'}, storeId: array{type: 'password', label: 'Store Id'}, version: array{type: 'checkbox', label: 'Omnipay Version'}, sandbox: array{type: 'checkbox', label: 'Sandbox'}}, Stripe: array{apiKey: array{type: 'password', label: 'Api Key'}, publishableKey: array{type: 'password', label: 'Publishable Key'}, secretKey: array{type: 'password', label: 'Secret Key'}, version: array{type: 'checkbox', label: 'Omnipay Version'}}, Braintree: array{privateKey: array{type: 'password', label: 'Api Key'}, publicKey: array{type: 'password', label: 'Public Key'}, merchantId: array{type: 'password', label: 'Merchant Id'}, version: array{type: 'checkbox', label: 'Omnipay Version'}, sandbox: array{type: 'checkbox', label: 'Sandbox'}}}
+     * 
+     * @return array
      */
     public function payment_gateways() : array 
     {
@@ -1065,6 +1099,38 @@ final class SettingRepository extends Select\Repository
                     'label' => 'Sandbox'                    
                 )
             ),
+            // March 2023 
+            //https://developer.paypal.com/docs/checkout/advanced/
+            // Eligibility: Australia, Canada, France, 
+            //              Germany, Italy, Spain,
+            //              United States, United Kingdom
+            // https://developer.paypal.com/sdk/js/configuration/
+            'PayPal_Checkout' => array(                
+                'clientId' => array(
+                    'type' => 'password',
+                    'label' => 'Client Id',
+                ),
+                'clientSecret' => array(
+                    'type' => 'password',
+                    'label' => 'Client Secret',
+                ),
+                'returnUrl' => array(
+                    'type' => 'text',
+                    'label' => 'Return Url',
+                ),
+                'version' => array(
+                    'type' => 'checkbox',
+                    'label' => 'Omnipay Version'                    
+                ),
+                'sandbox' => array(
+                    'type' => 'checkbox',
+                    'label' => 'Sandbox'                    
+                ),
+                'webhookId' => array(
+                    'type' => 'text',
+                    'label' => 'Webhook Id',
+                )                
+            ), 
         );
         return $payment_gateways;
     }
@@ -1079,7 +1145,7 @@ final class SettingRepository extends Select\Repository
         $available_drivers = [];
         $gateways = $this->payment_gateways();
         foreach ($gateways as $driver => $_fields) {
-            $d = strtolower($driver);
+            $d = strtolower((string)$driver);
             if ($this->get_setting('gateway_' . $d . '_enabled') === '1') {
                 $available_drivers[] = $driver;                
             }
@@ -1146,6 +1212,16 @@ final class SettingRepository extends Select\Repository
           'why'=>'This custom designed title appears in the top left corner of the current browser tab.',
           'where'=>'layout/invoice'
         ],
+        'default_email_template' => [
+          'why'=>'Build your first template using Settings...Email Template. Your first email to the customer will use this template. '.
+                 'Typically you will include various fields from the database in this template by dragging and dropping them when you build this template. ' .
+                 'Normally you will create three templates ie. Normal, Overdue, and Paid. ' .
+                 'The Normal Invoice Template that you create will be linked to the setting email_invoice_template. ' .
+                 'The Paid Invoice Template that you create will be linked to the setting email_invoice_template_paid. ' .
+                 'The Overdue Invoice Template that you create will be linked to the setting email_invoice_template_overdue. ' .
+                 'Depending on the status of the invoice, the TemplateHelper matches the appropriate email template to the status of the invoice. ',
+          'where'=>'src/Invoice/Helpers/TemplateHelper/select_email_invoice_template'
+        ],    
         'date_format' => [
           'why'=>'This is used exclusively in DateHelper functions.',
           'where'=>'App/Invoice/Helpers/DateHelper.php'
@@ -1244,7 +1320,16 @@ final class SettingRepository extends Select\Repository
         'install_test_data' => [
           'why'=>'This is used by Generator..Reset Data and Generator..Remove Data during the testing of data',
           'where'=>'invoice/test_data_reset and invoice/test_data_remove'
-        ],    
+        ], 
+        'include_zugferd' => [
+            'why'=>'ZUGFeRD stands for Zentraler User Guide des Forums elektronische Rechnung Deutschland ' .
+                   'It is a uniform standard for the electronic transmission of invoice data in Germany. ' .
+                   'The aim of the standard is to harmonise the exchange of information between companies and with public authorities. ' .
+                   'With the standard, the information contained in invoices can be read and processed automatically. ' .
+                   'This enables both you and the recipients of your documents to automatically transfer the invoice data to third-party systems with little effort. ' . 
+                   'With the help of the standard, the entire content of the invoice can be transferred to an ERP system. ',
+            'where'=> 'src/Invoice/Libraries and src/Invoice/Helpers/ZugFerdHelper' 
+        ],
         'invoice_default_payment_method'=>[
             'why'=>'Default: 1 => None, 2 => Cash, 3 => Cheque, 4 => Card/Direct Debit - Succeeded ' .
                  '5 => Card/Direct Debit - Processing 6 => Card/Direct Debit - Customer Ready.',
@@ -1270,8 +1355,10 @@ final class SettingRepository extends Select\Repository
             'where'=>'InvController/pdf and InvController/email_stage_2 when viewing the invoice.'
         ],
         'mark_invoices_sent_copy'=>[
-            'why'=>'Clients do not have access to draft invoices. Mark a copied invoice as sent so that the client can view it. Normally used for testing purposes. By default copied invoices are marked as draft and therefore can not be viewed by the client online.',
-            'where'=>'InvController/inv_to_inv'
+            'why'=>'Clients do not have access to draft invoices. Mark a copied invoice as sent so that the client can view it. Caution: Used for testing purposes only. '.
+                   'By default copied invoices are marked as draft and therefore can not be viewed by the client online. '.
+                   'They can only be viewed by the client once they have been sent by email or marked as sent manually in the Invoice Edit section under Inv/View/Options Dropdown Button. '  ,
+            'where'=> 'InvController/inv_to_inv'
         ],    
         'monospace_amounts'=>[
           'why'=>'Evenly spaced characters for better presentation.',
@@ -1302,9 +1389,15 @@ final class SettingRepository extends Select\Repository
             'where'=>'src/Invoice/Helpers/TemplateHelper/select_pdf_invoice_template function.'
         ],           
         'quote_overview_period'=>[
-          'why'=>'This setting is used on the dashboard so that the quotes that are shown will either be this-month, last-month, this-quarter, last-quarter, this-year, or last-year',
-          'where'=>'views/invoice/dashboard/index.php and also in InvoiceController/dashboard function'
+            'why'=>'This setting is used on the dashboard so that the quotes that are shown will either be this-month, last-month, this-quarter, last-quarter, this-year, or last-year',
+            'where'=>'views/invoice/dashboard/index.php and also in InvoiceController/dashboard function'
         ],
+        'read_only_toggle' => [
+            'why'=>'To prevent an invoice from being edited ie. is read only. By default set to read only if sent. ',
+            'where'=> 'Sent: src/Invoice/Setting/SettingRepository/invoice_mark_sent with InvController (several places) '.
+                      'View: src/Invoice/Setting/SettingRepository/invoice_mark_viewed InvController/url_key (when users view their invoices online) '.  
+                      'Paid: src/Invoice/Helpers/NumberHelper/inv_balance_zero_set_to_read_only_if_fully_paid. ', 
+        ],    
         'tax_rate_decimal_places'=>[
           'why'=>'TODO: Currency decimal places vary per country. The decimal column of the TaxRate table, tax_rate_percent column has to be adjusted during runtime using the ALTER COMMAND sql statement preferably in a FRAGMENT',
           'where'=>'SettingController/tab_index_change_decimal_column'
@@ -1531,5 +1624,69 @@ final class SettingRepository extends Select\Repository
         ];
         return $locales;
     }
-
+    
+    // Record the debug_mode in a setting.
+    public function debug_mode(bool $debug_mode = true) : void {
+        if (($debug_mode == true) && ($this->get_setting('debug_mode') === '0' || null==$this->get_setting('debug_mode'))) {
+            $debug_mode = new Setting();
+            $debug_mode->setSetting_key('debug_mode');
+            $debug_mode->setSetting_value('1');
+            $this->save($debug_mode);            
+        }
+        if (($debug_mode == false) && ($this->get_setting('debug_mode') === '1' || null==$this->get_setting('debug_mode'))) {
+            $debug_mode = new Setting();
+            $debug_mode->setSetting_key('debug_mode');
+            $debug_mode->setSetting_value('0');
+            $this->save($debug_mode);
+        }        
+    }
+    
+    /**
+     * @return string
+     */
+    public function isDebugMode(int $key) : string {
+        // If the default has changed from true to false in the layout/main.php return false otherwise stick to default
+        // Do not return the file location if not in debug mode
+        if (($this->get_setting('debug_mode') === '0')) {
+           return ''; 
+        }
+        // Return the file location if in debug_mode
+        if (($this->get_setting('debug_mode') === '1')) {
+           return $this->debug_mode_file_location($key);
+        }
+        return '';        
+    }
+    
+    /**
+     * @param int $key
+     * @return string
+     */
+    public function debug_mode_file_location(int $key) : string {
+        $layout = '..resources/views/layout/';
+        $common = '..resources/views/invoice/';
+        $array = [$layout.'invoice', 
+                  $common.'inv/view',
+                  $common.'invitem/_item_form_product',
+                  $common.'invitem/_item_form_task',
+                  $common.'inv/view_custom_fields',
+                  $common.'inv/partial_inv_attachments',
+        ];
+        return $array[$key];
+    }
+    
+    /**
+     * @return string
+     */
+    public function public_logo() : string {
+        if (!empty($this->get_setting('public_logo_png_prefix'))) {
+            return $this->get_setting('public_logo_png_prefix');
+        } else {
+            // If no logo has been set use the default file 'logo.png' provided in the public directory
+            $logo_prefix = new Setting();
+            $logo_prefix->setSetting_key('public_logo_png_prefix');
+            $logo_prefix->setSetting_value('logo');
+            $this->save($logo_prefix);
+        }
+        return $this->get_setting('public_logo_png_prefix');
+    }
 }

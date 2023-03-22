@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use Yiisoft\Html\Html;
 use Yiisoft\Yii\Bootstrap5\Alert;
-use App\Invoice\Helpers\DateHelper;
 
 /**
  * @var \Yiisoft\View\View $this
@@ -77,7 +76,7 @@ if (!empty($errors)) {
                         <input type="number" name="price" class="input-sm form-control amount" required value="<?= $numberhelper->format_amount($body['price'] ?? ''); ?>">
                     </div>
                 </td>
-                <td class="td-amount td-vert-middle">
+                <td class="td-amount">
                     <div class="input-group">
                         <span class="input-group-text"><?= $s->trans('item_discount'); ?></span>
                         <input type="number" name="discount_amount" class="input-sm form-control amount" required

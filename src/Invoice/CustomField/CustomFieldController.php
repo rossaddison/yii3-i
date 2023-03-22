@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Invoice\CustomField;
 
 use App\Invoice\Entity\CustomField;
+use App\Invoice\Entity\CustomValue;
 use App\Invoice\CustomField\CustomFieldService;
 use App\Invoice\CustomField\CustomFieldRepository;
+use App\Invoice\CustomValue\CustomValueRepository;
 use App\Invoice\Setting\SettingRepository;
 use App\User\UserService;
 use App\Service\WebControllerService;
@@ -31,6 +33,7 @@ final class CustomFieldController
     private UserService $userService;
     private CustomFieldService $customfieldService;   
     private TranslatorInterface $translator;
+    private SessionInterface $session;
     
     public function __construct(
         ViewRenderer $viewRenderer,
@@ -38,6 +41,7 @@ final class CustomFieldController
         UserService $userService,
         CustomFieldService $customfieldService,
         TranslatorInterface $translator,
+        SessionInterface $session
     )    
     {
         $this->viewRenderer = $viewRenderer->withControllerName('invoice/customfield')
@@ -46,6 +50,7 @@ final class CustomFieldController
         $this->userService = $userService;
         $this->customfieldService = $customfieldService;
         $this->translator = $translator;
+        $this->session = $session;
     }
     
     /**
@@ -54,14 +59,14 @@ final class CustomFieldController
      * @param SettingRepository $settingRepository
      * @param Request $request
      */
-    public function index(SessionInterface $session, CustomFieldRepository $customfieldRepository, SettingRepository $settingRepository, Request $request): \Yiisoft\DataResponse\DataResponse
+    public function index(CustomFieldRepository $customfieldRepository, SettingRepository $settingRepository, Request $request): \Yiisoft\DataResponse\DataResponse
     {
         $pageNum = (int)$request->getAttribute('page', '1');
         $paginator = (new OffsetPaginator($this->customfields($customfieldRepository)))
         ->withPageSize((int)$settingRepository->get_setting('default_list_limit'))
         ->withCurrentPage($pageNum);
-        $canEdit = $this->rbac($session);
-        $flash = $this->flash($session, 'info' , $this->viewRenderer->renderPartialAsString('/invoice/info/custom_field'));
+        $canEdit = $this->rbac();
+        $flash = $this->flash('info' , $this->viewRenderer->renderPartialAsString('/invoice/info/custom_field'));
         $parameters = [
               'paginator' => $paginator,  
               's'=>$settingRepository,
@@ -178,13 +183,18 @@ final class CustomFieldController
      * @param CustomFieldRepository $customfieldRepository
      * @return Response
      */
-    public function delete(CurrentRoute $currentRoute, CustomFieldRepository $customfieldRepository 
-    ): Response {
+    public function delete(CurrentRoute $currentRoute, CustomFieldRepository $customfieldRepository, CustomValueRepository $customvalueRepository) : Response {
         $custom_field = $this->customfield($currentRoute, $customfieldRepository);
-        if ($custom_field) {
+        if ($custom_field instanceof CustomField) {
+        $custom_values = $customvalueRepository->repoCustomFieldquery_count((int)$custom_field->getId());
+        // Make sure all custom values associated with the custom field have been deleted first before commencing
+          if (!($custom_values > 0)) {
             $this->customfieldService->deleteCustomField($custom_field);               
             return $this->webService->getRedirectResponse('customfield/index');        
+          }
         }
+        // Return to the index and warn of existing custom values associated with the custom field
+        $this->flash('warning', $this->translator->translate('invoice.custom.value.delete'));        
         return $this->webService->getRedirectResponse('customfield/index');
     }
     
@@ -215,11 +225,11 @@ final class CustomFieldController
     /**
      * @return Response|true
      */
-    private function rbac(SessionInterface $session): bool|Response 
+    private function rbac(): bool|Response 
     {
         $canEdit = $this->userService->hasPermission('editInv');
         if (!$canEdit){
-            $this->flash($session,'warning', $this->translator->translate('invoice.permission'));
+            $this->flash('warning', $this->translator->translate('invoice.permission'));
             return $this->webService->getRedirectResponse('customfield/index');
         }
         return $canEdit;
@@ -269,13 +279,12 @@ final class CustomFieldController
     
     /**
      * 
-     * @param SessionInterface $session
      * @param string $level
      * @param string $message
      * @return Flash
      */
-    private function flash(SessionInterface $session, string $level, string $message): Flash{
-        $flash = new Flash($session);
+    private function flash(string $level, string $message): Flash{
+        $flash = new Flash($this->session);
         $flash->set($level, $message); 
         return $flash;
     }

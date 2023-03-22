@@ -1,5 +1,4 @@
 <?php
-
 declare(strict_types=1);
 
 // id="inv-to-pdf" triggered by <a href="#inv-to-pdf" data-toggle="modal"  style="text-decoration:none"> on views/inv/view.php 
@@ -23,6 +22,23 @@ declare(strict_types=1);
         </div>
         <div class="modal-footer">
             <div class="btn-group">
+                <!-- display Settings...View...Invoices...Pdf Settings...G(ie. stream)...Folder(ie.archive)...</>(ie Html)... -->
+                <button type="button" data-toggle="tooltip" title="stream/archive/html">
+                <label>
+                    <i class="fa fa-google"></i>
+                    <?php if ((null!==$s->get_setting('pdf_stream_inv')) && ($s->get_setting('pdf_stream_inv') === '1')) { ?>
+                        <i class="fa fa-check"></i>
+                    <?php } else {?>
+                        <i class="fa fa-times"></i>
+                    <?php } ?>    
+                    <i class="fa fa-folder"></i>
+                    <?php if ((null!==$s->get_setting('pdf_archive_inv')) && ($s->get_setting('pdf_archive_inv') === '1')) { ?>
+                        <i class="fa fa-check"></i>
+                    <?php } else {?>
+                        <i class="fa fa-times"></i>
+                    <?php } ?>
+                </label>
+                </button>
                 <button class="inv_to_pdf_confirm_with_custom_fields btn btn-success" id="inv_to_pdf_confirm_with_custom_fields" type="button">
                     <i class="fa fa-check"></i> <?= $s->trans('yes'); ?>
                 </button>

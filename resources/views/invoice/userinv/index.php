@@ -82,9 +82,11 @@ use Yiisoft\Yii\DataView\GridView;
             DataColumn::create()
             ->attribute('user_id')
             ->value(static fn ($model): string => $model->getUser_id()),     
-            DataColumn::create()
-            ->attribute('id')
-            ->value(static fn ($model): int => $model->getId()),
+            // The User id is used for user/assignRole observer {user_id}
+            // Remove column to avoid confusion
+            //DataColumn::create()
+            //->attribute('id')
+            //->value(static fn ($model): int => $model->getId()),
             DataColumn::create()
             ->attribute('active')
             ->value(static function ($model) use($s): string {
@@ -98,6 +100,9 @@ use Yiisoft\Yii\DataView\GridView;
                         return $model->getAll_clients() ? Html::tag('span',$s->trans('yes'),['class'=>'label active'])->render()
                                                         : Html::tag('span',$s->trans('no'),['class'=>'label inactive'])->render();
             }),
+            DataColumn::create()
+            ->attribute('user_id')
+            ->value(static fn ($model): string => $model->getUser()?->getLogin()),     
             DataColumn::create()
             ->attribute('name')
             ->value(static function ($model): string {
@@ -137,8 +142,8 @@ use Yiisoft\Yii\DataView\GridView;
             DataColumn::create()            
             ->label($s->trans('edit'))                
             ->attribute('type')
-            ->value(static function ($model) use ($urlGenerator): string {
-                        return $model->getType() == 1 ? Html::a(
+            ->value(static function ($model) use ($urlGenerator, $canEdit): string {
+                        return $canEdit ? Html::a(
                                                             Html::tag('i','',['class'=>'fa fa-edit fa-margin']),
                                                         $urlGenerator->generate('userinv/edit',['id'=>$model->getId()]),[]                                         
                                                         )->render() : '';

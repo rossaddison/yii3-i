@@ -226,16 +226,6 @@ return [
         ],
     ],
     
-    //yii-invoice
-    // Additional setup params for yii-invoice below
-    'yiisoft/yii-debug' => ['enabled'=>false],         
-       
-    'yiisoft/yii-debug-api' => [
-        'enabled' => false,
-        'allowedIPs' => ['127.0.0.1', '::1'],
-        'allowedHosts' => [],
-    ],
-    
     'yiisoft/mailer' => [
         'messageBodyTemplate' => [
             'viewPath' => '@src/Contact/mail',
@@ -259,16 +249,19 @@ return [
     ], 
     
     // These parameters appear on ZugFerdXml produced invoice
-    // see settingRepository->get_config_company_details() function
-    // Alternatively use UserInv->administrator's company details 
-    // Settings...User Account...Administrator  appearing 
-    // eg. on resources/views/invoice/template/invoice/pdf/invoice.php
+    // and also Sumex1 semi-compatible invoice and is used in App/Invoice/Libraries/Sumex class 
+    // see settingRepository->get_config_company_details() function    
     'company' => [
         'name' => 'MyCompanyName',
-        'zip' => 'A11 1AA',
         'address_1' => '1 MyCompany Street',
         'address_2' => 'MyCompany Area',
         'city' => 'MyCompanyCity',
-        'country' => 'MyCompanyCountry'
+        'country' => 'MyCompanyCountry',        
+        'zip' => 'A11 1AA',
+        'state' => 'My State',
+        'vat_id' => 'GB123456789',
+        'tax_code' => 'Tax Code',
+        'phone' => '02000000000',
+        'fax' => '0200000000',
     ]
 ];

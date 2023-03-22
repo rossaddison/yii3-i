@@ -57,7 +57,7 @@ use Yiisoft\Yii\Bootstrap5\Modal;
       $label = $sumex->getId() . " ";
       echo Html::label($label);
       echo Html::a('Edit',
-      $urlGenerator->generate('sumex/edit', ['id' => $sumex->getId()]),
+      $urlGenerator->generate('sumex/edit', ['invoice' => $sumex->getInvoice()]),
             ['class' => 'btn btn-info btn-sm ms-2']
           );
       echo Html::a('View',

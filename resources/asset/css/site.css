@@ -1,4 +1,0 @@
-label.required:not(:empty):after {
-    color: #dc3545;
-    content: '\a0*';
-}

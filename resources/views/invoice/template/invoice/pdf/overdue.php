@@ -14,9 +14,7 @@ use App\Invoice\Helpers\DateHelper;
 </head>    
 <body>
 <header class="clearfix">
-    <div id="logo">
-        <?php // echo invoice_logo_pdf(); ?>
-    </div>
+    <?= $company_logo_and_address; ?>
     <div id="client">
         <div>
             <b><?= Html::encode($inv->getClient()->getClient_name()); ?></b>
@@ -58,27 +56,6 @@ use App\Invoice\Helpers\DateHelper;
         if ($inv->getClient()->getClient_phone()) {
             echo '<div>' .$s->trans('phone_abbr') . ': ' . Html::encode($inv->getClient()->getClient_phone()) . '</div>';
         } ?>
-
-    </div>
-    <div id="company">
-        <?php 
-        if (!empty($userinv)) {
-            echo '<div><b>'.Html::encode($userinv->getName()).'</b></div>';
-            echo '<div>' .$s->trans('vat_id_short') . ': ' . $userinv->getVat_id() . '</div>';
-            echo '<div>' .$s->trans('tax_code_short') . ': ' . $userinv->getTax_code() . '</div>';
-            echo '<div>' . Html::encode($userinv->getAddress_1() ?? '') . '</div>';
-            echo '<div>' . Html::encode($userinv->getAddress_2() ?? '') . '</div>';
-            echo '<div>';
-            echo Html::encode($userinv->getCity() ?? '') . ' ';
-            echo Html::encode($userinv->getState() ?? '') . ' ';
-            echo Html::encode($userinv->getZip() ?? '');
-            echo '</div>';
-            echo '<div>' . get_country_name($s->trans('cldr'), $userinv->getCountry()) . '</div>';
-            echo '<br/>';
-            echo '<div>' .$s->trans('phone_abbr') . ': ' . Html::encode($userinv->getPhone() ?? '') . '</div>';
-            echo '<div>' .$s->trans('fax_abbr') . ': ' . Html::encode($userinv->getFax() ?? '') . '</div>';
-        }
-        ?>
     </div>
 </header>
 <main>
@@ -240,17 +217,54 @@ use App\Invoice\Helpers\DateHelper;
     
 <watermarktext content="<?= $s->trans('overdue'); ?>" alpha="0.3" />
 
-<footer>
-    <?php if ($inv->getTerms()) : ?>
-        <div class="notes">
-            <b><?= Html::encode($s->trans('terms')); ?></b><br/>
-            <?php echo nl2br(Html::encode($inv->getTerms())); ?>
-        </div>
-    <?php endif; ?>
-    <?php if ($show_custom_fields) {
-        echo $view_custom_fields;
-    }
-    ?>   
+<footer class="notes">
+    <br>
+    <?php if ($inv->getTerms()) { ?>
+    <div style="page-break-before: always"></div>
+    <div>
+        <b><?= Html::encode($s->trans('terms')); ?></b><br>
+        <?php echo nl2br(Html::encode($inv->getTerms())); ?>
+    </div>
+    <br>
+    <?php } ?>
+    <div>
+    <?php if ($show_custom_fields) {        
+        echo $view_custom_fields; 
+    } ?>
+    </div>    
+    <?php if (($s->get_setting('sumex') == '1') && ($sumex instanceof Sumex)) { ?>
+    <div>
+        <?php            
+            $reason = ['disease','accident','maternity','prevention','birthdefect','unknown']; 
+        ?>
+        <b><?= Html::encode($s->trans('reason')); ?></b><br>
+        <p><?= Html::encode($s->trans('reason_'.(string)$reason[$sumex->getReason() ?: 'unknown'])); ?></p>       
+    </div>
+    <div>            
+        <b><?= Html::encode($s->trans('sumex_observations')); ?></b><br>
+        <p><?= $sumex->getObservations() ?: ''; ?></p>
+    </div>    
+    <div>            
+        <b><?= Html::encode($s->trans('invoice_sumex_diagnosis')); ?></b><br>
+        <p><?= $sumex->getDiagnosis() ?: ''; ?></p>
+    </div>
+    <div>            
+        <b><?= Html::encode($s->trans('case_date')); ?></b><br>
+        <p><?= $sumex->getCasedate()->format($datehelper->style()) ?: ''; ?></p>
+    </div>
+    <div>            
+        <b><?= Html::encode($s->trans('case_number')); ?></b><br>
+        <p><?= $sumex->getCasenumber() ?: ''; ?></p>
+    </div>
+    <div>
+        <b><?= Html::encode($s->trans('treatment_start')); ?></b><br>
+        <p><?= $sumex->getTreatmentstart()->format($datehelper->style()) ?: ''; ?></p>
+    </div> 
+    <div>    
+        <b><?= Html::encode($s->trans('treatment_end')); ?></b><br>
+        <p><?= $sumex->getTreatmentend()->format($datehelper->style()) ?: ''; ?></p>
+    </div>
+    <?php } ?>
 </footer>
 </body>
 </html>

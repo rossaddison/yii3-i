@@ -19,7 +19,7 @@ $this->setTitle($s->trans('add_files'));
 
 <div class="panel panel-default no-margin">
     <div class="panel-heading">
-        <?= $s->trans('attachments'); ?>
+        <i tooltip="data-toggle" title="<?= $s->isDebugMode(5);?>"><?= $s->trans('attachments'); ?></i>
     </div>
     <div class="panel-body clearfix">
         <div class="container">
@@ -46,12 +46,12 @@ $this->setTitle($s->trans('add_files'));
                             ->addContainerClass('btn-group')
                             ->buttonsData([
                                 [
-                                    $translator->translate('Reset'),
+                                    $translator->translate('layout.reset'),
                                     'type' => 'reset',
                                     'class' => 'btn btn-sm btn-danger',
                                 ],
                                 [
-                                    $translator->translate('Submit'),
+                                    $translator->translate('layout.submit'),
                                     'type' => 'submit',
                                     'class' => 'btn btn-sm btn-primary',
                                     'name' => 'contact-button',

@@ -14,6 +14,7 @@ use App\Service\WebControllerService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
+use Yiisoft\DataResponse\DataResponseFactoryInterface;
 use Yiisoft\Http\Method;
 use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface;
@@ -29,21 +30,31 @@ final class SumexController
     private UserService $userService;
     private SumexService $sumexService;
     private TranslatorInterface $translator;
-    
+    private DataResponseFactoryInterface $factory;
+
     public function __construct(
         ViewRenderer $viewRenderer,
         WebControllerService $webService,
         UserService $userService,
         SumexService $sumexService,
-        TranslatorInterface $translator
+        TranslatorInterface $translator,
+        DataResponseFactoryInterface $factory,
     )    
     {
-        $this->viewRenderer = $viewRenderer->withControllerName('invoice/sumex')
-                                           ->withLayout('@views/layout/invoice.php');
+        $this->viewRenderer = $viewRenderer;      
         $this->webService = $webService;
         $this->userService = $userService;
         $this->sumexService = $sumexService;
         $this->translator = $translator;
+        $this->factory = $factory;
+        if ($this->userService->hasPermission('viewInv') && !$this->userService->hasPermission('editInv')) {
+            $this->viewRenderer = $viewRenderer->withControllerName('invoice/sumex')
+                                               ->withLayout('@views/layout/guest.php');
+        }
+        if ($this->userService->hasPermission('viewInv') && $this->userService->hasPermission('editInv')) {
+            $this->viewRenderer = $viewRenderer->withControllerName('invoice/sumex')
+                                               ->withLayout('@views/layout/invoice.php');
+        }
     }
     
     /**
@@ -123,8 +134,8 @@ final class SumexController
         $sumex = $this->sumex($currentRoute, $sumexRepository);
         if ($sumex) {
             $parameters = [
-                'title' => 'Edit',
-                'action' => ['sumex/edit', ['id' => $sumex->getId()]],
+                'title' => $settingRepository->get_setting('edit'),
+                'action' => ['sumex/edit', ['invoice' => $sumex->getInvoice()]],
                 'errors' => [],
                 'body' => $this->body($sumex),
                 's'=>$settingRepository,
@@ -134,9 +145,15 @@ final class SumexController
             if ($request->getMethod() === Method::POST) {
                 $form = new SumexForm();
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if (is_array($body) && $form->load($body) && $validator->validate($form)->isValid()) {
                 $this->sumexService->saveSumex($sumex, $form, $settingRepository);
-                    return $this->webService->getRedirectResponse('sumex/index');
+                return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
+                    ['heading' => '','message'=>
+                    $settingRepository->trans('record_successfully_updated'),
+                    /**
+                     * @var int $body['invoice'] 
+                     */
+                    'url'=>'inv/view','id'=>$body['invoice']]));
                 }
                 $parameters['body'] = $body;
                 $parameters['errors'] = $form->getFormErrors();
@@ -206,9 +223,9 @@ final class SumexController
      */
     private function sumex(CurrentRoute $currentRoute, SumexRepository $sumexRepository): Sumex|null
     {
-        $id = $currentRoute->getArgument('id');       
-        if (null!==$id) {
-            $sumex = $sumexRepository->repoSumexquery($id);
+        $invoice = $currentRoute->getArgument('invoice');       
+        if (null!==$invoice) {
+            $sumex = $sumexRepository->repoSumexInvoicequery($invoice);
             return $sumex;            
         }
         return null;

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Yiisoft\Html\Html;
 use Yiisoft\Yii\Bootstrap5\Alert;
+use App\Invoice\Entity\CustomField;
 
 /**
  * @var \Yiisoft\View\View $this
@@ -40,14 +41,14 @@ use Yiisoft\Yii\Bootstrap5\Alert;
                         }
                     } 
         ?>
-
+        <?php if (null!==$custom_field && $custom_field instanceof CustomField) { ?>
         <div class="row">
             <div class="col-xs-12 col-md-6 col-md-offset-3">
 
                 <div class="form-group">
                     <label for="label"><?= $s->trans('field'); ?>: </label>
                     <input type="text" name="label" id="label" class="form-control"
-                           value="<?= Html::encode($custom_field->getLabel()); ?>" disabled="disabled">
+                           value="<?= Html::encode($custom_field->getLabel() ?: ''); ?>" disabled="disabled">
                 </div>
 
                 <div class="form-group">
@@ -106,6 +107,7 @@ use Yiisoft\Yii\Bootstrap5\Alert;
 
             </div>
         </div>
+        <?php } ?>
 
     </div>
 

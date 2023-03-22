@@ -123,7 +123,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="settings[include_zugferd]">
+                            <label for="settings[include_zugferd]" <?= $s->where('include_zugferd'); ?>>
                                 <?= $s->trans('invoice_pdf_include_zugferd'); ?>
                             </label>                            
                             <?php $body['settings[include_zugferd]'] = $s->get_setting('include_zugferd');?>
@@ -152,6 +152,51 @@
                                     <?= $s->trans('no'); ?>
                                 </option>
                                 <option value="1" <?php $s->check_select($body['settings[pdf_watermark]'], '1'); ?>>
+                                    <?= $s->trans('yes'); ?>
+                                </option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="settings[pdf_stream_inv]" <?= $s->where('pdf_stream_inv'); ?>>
+                                <i class="fa fa-brands fa-google"></i>
+                                <?php $body['settings[pdf_stream_inv]'] = $s->get_setting('pdf_stream_inv');?>
+                            </label>
+                            <select name="settings[pdf_stream_inv]" id="settings[pdf_stream_inv]"
+                                class="form-control" >
+                                <option value="0">
+                                    <?= $s->trans('no'); ?>
+                                </option>
+                                <option value="1" <?php $s->check_select($body['settings[pdf_stream_inv]'], '1'); ?>>
+                                    <?= $s->trans('yes'); ?>
+                                </option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="settings[pdf_archive_inv]" <?= $s->where('pdf_archive_inv'); ?>>
+                                <i class="fa fa-folder"></i>
+                                <?php $body['settings[pdf_archive_inv]'] = $s->get_setting('pdf_archive_inv');?>
+                            </label>
+                            <select name="settings[pdf_archive_inv]" id="settings[pdf_archive_inv]"
+                                class="form-control" >
+                                <option value="0">
+                                    <?= $s->trans('no'); ?>
+                                </option>
+                                <option value="1" <?php $s->check_select($body['settings[pdf_archive_inv]'], '1'); ?>>
+                                    <?= $s->trans('yes'); ?>
+                                </option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="settings[pdf_html_inv]" <?= $s->where('pdf_html_inv'); ?>>
+                                <i class="fa fa-solid fa-code"></i>
+                                <?php $body['settings[pdf_html_inv]'] = $s->get_setting('pdf_html_inv');?>
+                            </label>
+                            <select name="settings[pdf_html_inv]" id="settings[pdf_html_inv]"
+                                class="form-control" >
+                                <option value="0">
+                                    <?= $s->trans('no'); ?>
+                                </option>
+                                <option value="1" <?php $s->check_select($body['settings[pdf_html_inv]'], '1'); ?>>
                                     <?= $s->trans('yes'); ?>
                                 </option>
                             </select>
@@ -242,7 +287,7 @@
                     <div class="col-xs-12 col-md-6">
 
                         <div class="form-group">
-                            <label for="settings[email_invoice_template]">
+                            <label for="settings[email_invoice_template]" <?= $s->where('default_email_template'); ?>>
                                 <?= $s->trans('default_email_template'); ?>
                             </label>                                                        
                             <?php $body['settings[email_invoice_template]'] = $s->get_setting('email_invoice_template');?>
@@ -355,7 +400,7 @@
                     <div class="col-xs-12 col-md-6">
 
                         <div class="form-group">
-                            <label for="settings[read_only_toggle]">
+                            <label for="settings[read_only_toggle]" <?= $s->where('read_only_toggle'); ?>>
                                 <?= $s->trans('set_to_read_only'); ?>
                             </label>                                                                                                                           
                             <?php $body['settings[read_only_toggle]'] = $s->get_setting('read_only_toggle');?>

@@ -59,42 +59,47 @@ final class InvoiceController
     private UserService $userService; 
     private TranslatorInterface $translator;
     private SettingService $settingService;
-    
-        
+    private SessionInterface $session;
+           
     public function __construct(
                                 WebControllerService $webService, 
                                 UserService $userService, 
                                 TranslatorInterface $translator,
                                 SettingService $settingService,
-                                ViewRenderer $viewRenderer 
+                                ViewRenderer $viewRenderer,
+                                SessionInterface $session,
     )
     {
-                                   
         $this->webService = $webService;
         $this->userService = $userService;
         $this->translator = $translator;
         $this->settingService = $settingService;
         $this->viewRenderer = $viewRenderer;
-        // Client / user has just been signed up and assignRole command has not yet been used at command prompt
+        $this->session = $session;
+                
+        // Authenticated (Signed Up) and Unauthorised (No Permissions)
         if (!$this->userService->hasPermission('viewInv') && !$this->userService->hasPermission('editInv')) {
             $this->viewRenderer = $viewRenderer->withControllerName('invoice')
-                                                 ->withLayout('@views/layout/invoice.php');
+                                               ->withLayout('@views/layout/guest.php');
+            $this->flash($this->session, 'info' , $this->translator->translate('invoice.permission.unauthorised'));
         }
         
-        // Client / user has been signed up and assignRole command has been used to assign permissions
-        // at the command prompt
+        // Client: Authenticated and Authorised (Permission: viewInv)
         if ($this->userService->hasPermission('viewInv') && !$this->userService->hasPermission('editInv')) {
             $this->viewRenderer = $viewRenderer->withControllerName('invoice')
-                                                 ->withLayout('@views/layout/guest.php');
+                                               ->withLayout('@views/layout/guest.php');
+            $this->flash($this->session, 'info' , $this->translator->translate('invoice.permission.authorised.view'));
         }
+        
+        // Administrator: Authenticated and Authorised (Permission: editInv)
         if ($this->userService->hasPermission('editInv')) {
             $this->viewRenderer = $viewRenderer->withControllerName('invoice')
                                                  ->withLayout('@views/layout/invoice.php');
+            $this->flash($this->session, 'info' , $this->translator->translate('invoice.permission.authorised.edit')); 
         }
     }
     
     /**
-     * 
      * @param SessionInterface $session
      * @return string
      */
@@ -233,7 +238,9 @@ final class InvoiceController
                           ClientRepository $cR,
                           GroupRepository $gR
                          ): \Yiisoft\DataResponse\DataResponse {
-        $this->flash($session, 'info' , $this->viewRenderer->renderPartialAsString('/invoice/info/invoice'));
+        if (($sR->get_setting('debug_mode') == '1') && ($this->userService->hasPermission('editInv'))) {
+            $this->flash($session, 'info' , $this->viewRenderer->renderPartialAsString('/invoice/info/invoice'));
+        }    
         $gR->repoCountAll() === 0 ? $this->install_default_invoice_and_quote_group($gR) : '';
         $pmR->count() === 0 ? $this->install_default_payment_methods($pmR) : '';
         // If you want to reinstall the default settings, remove the default_settings_exist setting => its count will be zero
@@ -295,6 +302,7 @@ final class InvoiceController
             // going into the mysql database table 'settings' and deleting it. This will remove &  //
             // reinstall the default settings listed below. The above index function will check    //
             // whether this setting exists. If not THIS function will be run.                      //
+            // CAUTION: THIS WILL ALSO REMOVE ALL THE SETTINGS INCLUDING SECRET KEYS
             //*************************************************************************************//
             'default_settings_exist'=>1,                  
             'cldr'=> $session->get('_language') ?? 'en',
@@ -312,7 +320,7 @@ final class InvoiceController
             //paginator list limit
             'default_list_limit'=>120, 
             // Prevent documents from being made non-editable. By default documents are made non-editable
-            // according to the read_only_toggle which is set at paid ie 2.
+            // according to the read_only_toggle which is set at sent ie 2.
             // By default this setting is on 0 ie. Invoices can be made read-only (through the 
             // read_only_toggle)
             'disable_read_only'=> 0,
@@ -334,7 +342,18 @@ final class InvoiceController
             // Number format Default located in SettingsRepository 
             'number_format' => 'number_format_us_uk',
             'payment_list_limit' => 20,
+            // Show the pdf in the Browser ie. stream ...Settings...View...Invoices...Pdf Settings...G
+            'pdf_stream_inv' => 1,
+            // Accumulate pdf's in archive folder /src/Invoice/Uploads/Archive/Invoice
+            // Settings...View...Invoices...Pdf Settings...Folder
+            'pdf_archive_inv' => 1,
+            // Preview in webpage as html instead of tabbed pdf
+            // Settings...View...Invoices...Pdf Settings...</>
+            'pdf_html_inv' => 0,
             // Setting => filename ... under views/invoice/template/invoice/pdf           
+            'pdf_stream_quote' => 1,
+            'pdf_archive_quote' => 1,
+            'pdf_html_quote' => 0,
             'pdf_invoice_template' => 'invoice',
             'pdf_invoice_template_paid' => 'paid',
             'pdf_invoice_template_overdue' => 'overdue',

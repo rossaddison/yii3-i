@@ -10,7 +10,6 @@ use App\Invoice\Entity\TaxRate;
 use App\Invoice\Entity\Product;
 use App\Invoice\Entity\Task;
 use Cycle\Annotated\Annotation\Relation\BelongsTo;
-use Cycle\Annotated\Annotation\Relation\HasOne;
 use \DateTime;
 use \DateTimeImmutable;
   

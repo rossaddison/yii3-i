@@ -257,7 +257,7 @@
                                     <?php if ($s->get_setting('sumex') == '1'): ?>
                                         <tr>
                                             <th><?= $s->trans('sumex_ssn'); ?></th>
-                                            <td><?= $clienthelper->format_avs($client->getClient_avs()); ?></td>
+                                            <td><?= $cvH->format_avs($client->getClient_avs()); ?></td>
                                         </tr>
                                         <tr>
                                             <th><?= $s->trans('sumex_insurednumber'); ?></th>

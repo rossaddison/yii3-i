@@ -5,7 +5,7 @@
                         <div class="mb-3 form-group">
                             <div class="panel panel-default">
                                 <div class="panel-heading">
-                                    <?= $s->trans('custom_fields'); ?>
+                                    <i tooltip="data-toggle" title="<?= $s->isDebugMode(4)?>"><?= $s->trans('custom_fields'); ?></i>
                                 </div>
                                 <div>
                                     <div class="row">

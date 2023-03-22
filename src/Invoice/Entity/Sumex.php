@@ -15,10 +15,10 @@ class Sumex
     #[Column(type: 'primary')]
     private ?int $id =  null;
      
-    #[Column(type: 'integer(11)', nullable: false)]
+    #[Column(type: 'integer(11)', nullable: true)]
     private ?int $invoice =  null;
      
-    #[Column(type: 'integer(11)', nullable: false)]
+    #[Column(type: 'integer(11)', nullable: false, default: 0)]
     private ?int $reason =  null;
      
     #[Column(type: 'string(500)', nullable: false)]
@@ -27,13 +27,13 @@ class Sumex
     #[Column(type: 'string(500)', nullable: false)]
     private string $observations =  '';
      
-    #[Column(type: 'date', nullable: false)]
+    #[Column(type: 'date', nullable: true)]
     private mixed $treatmentstart =  '';
      
-    #[Column(type: 'date', nullable: false)]
+    #[Column(type: 'date', nullable: true)]
     private mixed $treatmentend =  '';
      
-    #[Column(type: 'date', nullable: false)]
+    #[Column(type: 'date', nullable: true)]
     private mixed $casedate =  '';
      
     #[Column(type: 'string(35)', nullable: true)]
@@ -44,7 +44,10 @@ class Sumex
         int $reason = null,
         string $diagnosis = '',
         string $observations = '',
-        string $casenumber = ''
+        string $casenumber = '',
+        mixed $treatmentstart = '',
+        mixed $treatmentend = '',
+        mixed $casedate = '',    
     )
     {
         $this->invoice=$invoice;
@@ -52,6 +55,9 @@ class Sumex
         $this->diagnosis=$diagnosis;
         $this->observations=$observations;
         $this->casenumber=$casenumber;
+        $this->treatmentstart=$treatmentstart;
+        $this->treatmentend=$treatmentend;
+        $this->casedate=$casedate;
     }
     
     public function getId(): string
@@ -112,7 +118,7 @@ class Sumex
     
     public function setTreatmentstart(DateTime $treatmentstart) : void
     {
-      $this->treatmentstart =  $treatmentstart->format('Y-m-d');
+      $this->treatmentstart =  $treatmentstart;
     }
     
     public function getTreatmentend(): DateTimeImmutable|null
@@ -123,7 +129,7 @@ class Sumex
     
     public function setTreatmentend(DateTime $treatmentend) : void
     {
-      $this->treatmentend =  $treatmentend->format('Y-m-d')    ;
+      $this->treatmentend =  $treatmentend;
     }
     
     public function getCasedate(): DateTimeImmutable
@@ -134,7 +140,7 @@ class Sumex
     
     public function setCasedate(DateTime $casedate) : void
     {
-      $this->casedate =  $casedate->format('Y-m-d');
+      $this->casedate =  $casedate;
     }
     
     public function getCasenumber(): ?string

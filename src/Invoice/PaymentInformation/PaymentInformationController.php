@@ -12,7 +12,6 @@ use App\Invoice\Entity\InvAmount;
 use App\Invoice\Entity\InvItem;
 use App\Invoice\Entity\Merchant;
 use App\Invoice\Entity\Payment;
-use App\Invoice\Entity\PaymentMethod;
 use App\Invoice\Entity\Setting;
 // Libraries
 use App\Invoice\Libraries\Crypt;
@@ -713,7 +712,7 @@ public function get_stripe_pci_client_secret(array $yii_invoice) : string|null
     $payment_intent = \Stripe\PaymentIntent::create([
         // convert the float amount to cents
         'amount' => ((float)$yii_invoice['balance'] ?: 0.00) * 100,
-        'currency' =>  (float)$yii_invoice['currency'] ?: 0.00,
+        'currency' =>  $yii_invoice['currency'],
         // include the payment methods you have chosen listed in dashboard.stripe.com eg. card, bacs direct debit,
         // googlepay etc.
         'automatic_payment_methods' => [
@@ -1158,7 +1157,8 @@ private function initialize_omnipay_gateway(string $driver) : mixed
    // Load the 'gateway drivers' array
    $gateway_driver_array = $this->sR->payment_gateways();
    // Get the specific drivers array from the whole gateway array
-   $gateway_settings = $gateway_driver_array[$driver] ?? '';
+   /** @var array $gateway_settings */
+   $gateway_settings = $gateway_driver_array[$driver] ?? [];
 
    $gateway_init = [];
    /** @var Setting $setting */

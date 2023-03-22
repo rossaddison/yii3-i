@@ -169,9 +169,6 @@ if (!empty($errors)) {
             </div>
         </div>    
     </div>
-
-    
-
     <div class="form-group">
         <div class="col-xs-12 col-sm-2 text-right text-left-xs">
             <label for="discount_amount"><?= $s->trans('discount'); ?></label>

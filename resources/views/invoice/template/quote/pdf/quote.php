@@ -13,10 +13,8 @@ use App\Invoice\Helpers\DateHelper;
     <meta name="viewport" content="width=device-width, initial-scale=1">    
 </head>    
 <body>
-<header class="clearfix">
-    <div id="logo">
-        <?php // echo invoice_logo_pdf(); ?>
-    </div>
+<header class="clearfix">    
+    <?= $company_logo_and_address; ?>
     <div id="client">
         <div>
             <b><?= Html::encode($quote->getClient()->getClient_name()); ?></b>
@@ -59,26 +57,6 @@ use App\Invoice\Helpers\DateHelper;
             echo '<div>' .$s->trans('phone_abbr') . ': ' . Html::encode($quote->getClient()->getClient_phone()) . '</div>';
         } ?>
 
-    </div>
-    <div id="company">
-        <?php 
-        if (!empty($userinv)) {
-            echo '<div><b>'.Html::encode($userinv->getName()).'</b></div>';
-            echo '<div>' .$s->trans('vat_id_short') . ': ' . $userinv->getVat_id() . '</div>';
-            echo '<div>' .$s->trans('tax_code_short') . ': ' . $userinv->getTax_code() . '</div>';
-            echo '<div>' . Html::encode($userinv->getAddress_1() ?? '') . '</div>';
-            echo '<div>' . Html::encode($userinv->getAddress_2() ?? '') . '</div>';
-            echo '<div>';
-            echo Html::encode($userinv->getCity() ?? '') . ' ';
-            echo Html::encode($userinv->getState() ?? '') . ' ';
-            echo Html::encode($userinv->getZip() ?? '');
-            echo '</div>';
-            echo '<div>' . $countryhelper->get_country_name($s->trans('cldr'), $userinv->getCountry()) . '</div>';
-            echo '<br/>';
-            echo '<div>' .$s->trans('phone_abbr') . ': ' . Html::encode($userinv->getPhone() ?? '') . '</div>';
-            echo '<div>' .$s->trans('fax_abbr') . ': ' . Html::encode($userinv->getFax() ?? '') . '</div>';
-        }
-        ?>
     </div>
 </header>
 <main>

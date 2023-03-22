@@ -115,6 +115,18 @@ private EntityWriter $entityWriter;
         return $this->prepareDataReader($query);        
     }
     
+     /**
+      * 
+      * @param int $custom_field_id
+      * @return int
+      */
+    public function repoCustomFieldquery_count(int $custom_field_id): int    {
+        $count = $this->select()
+                      ->where(['custom_field_id' =>$custom_field_id])
+                      ->count();
+        return $count;        
+    }
+    
     /**
      * 
      * @param EntityReader $custom_fields

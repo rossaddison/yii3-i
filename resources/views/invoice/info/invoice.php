@@ -19,6 +19,19 @@
 <p>CompanyPrivate logo will be automatically input on invoice/quotes depending on whether the date of the invoice falls between the start and end date.</p>
 <p>Introducing Paypal.</p>
 <p>Introducing India's PayTm payment gateway's QR code method of payment and comparing this with Stripe's method.</p>
+<p><b>22 March 2023</b></p>
+<p>Preparation for Peppol e-Invoicing: UBL classes created using num-num/ubl-invoice. See folder src/Invoice/Ubl. Psalm Level 1 tested.</p>
+<p>Html of invoice can be created - modal_inv_to_html - under View...Options</p>
+<p>Logo introduced on invoices</p>
+<p>A common company logo and address template created under invoice/setting/views.</p>
+<p>A sumex extension table of table Invoice created. - Generating a sumex pdf is in its infancy.</p>
+<p>Removed extensions causing DOM errors. F12 not carrying any errors.</p>
+<p>Simplified Introductory Slider</p>
+<p>Created 3 additional 'Yes/No' settings for 1. Stream (G Icon) 2. Archive (folder icon) 3. Html code (code icon) under Pdf Settings</p>
+<p>Archives are saving consistently under src/Invoice/Uploads/Archives</p>
+<p>Bugfix: Delete inv item redirects to interim page properly.</p>
+<p>Bugfix: Cannot delete item if Invoice has 'sent' status.</p>
+<p>Zugferd Invoices are archived under Invoice/Uploads/Temp/Zugferd wiht a random string filename.</p>
 <p><b>04 March 2023</b></p>
 <p>Introduce ZugferdHelper and ZugferXml</p>
 <p>LoginForm and SignUp form - Extend both forms with RulesProviderInterface<a href>https://github.com/yiisoft/form/pull/249</a></p>

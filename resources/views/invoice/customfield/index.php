@@ -88,7 +88,7 @@ use App\Widget\OffsetPagination;
                 <ul class="dropdown-menu">
                     <li>
                         <a href="<?= $urlGenerator->generate('customfield/edit',['id'=>$customfield->getId()]); ?>" style="text-decoration:none">
-                            <i class="fa fa-edit fa-margin"></i> <?= $s->trans('edit'); ?>
+                            <p style="font-size:16px;"><i class="fa fa-edit fa-margin"></i><?= $s->trans('edit'); ?></p>    
                         </a>
                     </li>
                     <li>

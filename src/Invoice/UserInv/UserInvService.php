@@ -50,9 +50,6 @@ final class UserInvService
        null!==$form->getIban() ? $model->setIban($form->getIban()) : '';
        null!==$form->getGln() ? $model->setGln($form->getGln()) : '';
        null!==$form->getRcc() ? $model->setRcc($form->getRcc()) : '';
-       if ($model->isNewRecord()) {
-            $model->setActive(false);
-       }
        $this->repository->save($model);
     }
     
