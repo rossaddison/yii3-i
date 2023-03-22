@@ -60,7 +60,7 @@
         "sabre/xml": "*",
         
         "stripe/stripe-php": "10.10.0",
-        "amzn/amazon-pay-api-sdk-php": "2.5.2",
+        "amzn/amazon-pay-api-sdk-php": "2.6.1",
         "braintree/braintree_php": "6.11.1",
         "google/cloud-translate": "1.13.1",
         
