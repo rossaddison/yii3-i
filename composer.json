@@ -48,6 +48,7 @@
         "ext-gd": "*",
         "ext-intl": "*",
         "ext-dom": "*",
+        "ext-fileinfo": "*",
         
         "rossaddison/data": "dev-master",
         "rossaddison/mpdf": "*",        

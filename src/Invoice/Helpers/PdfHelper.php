@@ -19,7 +19,6 @@ use App\Invoice\Inv\InvRepository;
 use App\Invoice\Setting\SettingRepository as SR;
 use App\Invoice\Sumex\SumexRepository;
 use App\Invoice\UserInv\UserInvRepository;
-use setasign\Fpdi\Fpdi;
 use Yiisoft\Aliases\Aliases;
 use Yiisoft\Session\SessionInterface as Session;
 
@@ -338,6 +337,7 @@ Class PdfHelper
     }
     
     /**
+     * This function has not been tested yet
      * 
      * @param InvRepository $iR
      * @param InvAmountRepository $iaR
@@ -372,8 +372,7 @@ Class PdfHelper
                     $temp = tempnam("/tmp", "invsumex_");
                     $tempCopy = tempnam("/tmp", "invsumex_");
                     
-                    /** @var \setasign\Fpdi\Fpdi $pdf */
-                    $pdf = new Fpdi();
+                    $pdf = new \setasign\Fpdi\Fpdi();
                     
                     $sumexPDF = $sumex->pdf($inv_id);
                     if (is_string($sumexPDF)) {
