@@ -25,7 +25,7 @@
         "doctrine/collections": "^2.1",
         
         "fakerphp/faker": "^1.14",
-        "httpsoft/http-message": "^1.0.5",
+        "httpsoft/http-message": "^1.1",
         
         "nyholm/psr7": "*",
         
@@ -33,7 +33,7 @@
         "psr/container": "^2.0",
         "psr/http-factory": "^1.0",
         "psr/http-factory-implementation": "*",
-        "psr/http-message": "^1.0",
+        "psr/http-message": "^1.1|^2.0",
         "psr/http-server-handler": "^1.0",
         "psr/http-server-middleware": "^1.0",
         "psr/log": "^3.0",
@@ -59,10 +59,10 @@
         "setasign/fpdf": "^1.8",
         "sabre/xml": "*",
         
-        "stripe/stripe-php": "10.10.0",
+        "stripe/stripe-php": "10.13.0",
         "amzn/amazon-pay-api-sdk-php": "2.5.2",
-        "braintree/braintree_php": "6.11.1",
-        "google/cloud-translate": "1.13.1",
+        "braintree/braintree_php": "6.11.2",
+        "google/cloud-translate": "1.13.3",
         
         "psalm/plugin-symfony": "*",
         "yiisoft/arrays": "^3.0",
@@ -115,7 +115,7 @@
         "yiisoft/yii-dataview": "^3.0@dev",
         "yiisoft/yii-event": "^2.0",
         "yiisoft/yii-http": "^1.0",
-        "yiisoft/yii-middleware": "dev-master",
+        "yiisoft/yii-middleware": "^1.0",
         
         "yiisoft/yii-runner": "*",
         
