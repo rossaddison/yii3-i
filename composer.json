@@ -59,7 +59,7 @@
         "setasign/fpdf": "^1.8",
         "sabre/xml": "*",
         
-        "stripe/stripe-php": "10.13.0",
+        "stripe/stripe-php": "10.14.0",
         "amzn/amazon-pay-api-sdk-php": "2.5.2",
         "braintree/braintree_php": "6.11.2",
         "google/cloud-translate": "1.13.3",
