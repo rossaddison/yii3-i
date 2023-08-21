@@ -50,11 +50,13 @@
         "ext-dom": "*",
         "ext-fileinfo": "*",
         "ext-json": "*",
+        "ext-curl": "*",
         
         "rossaddison/data": "dev-master",
         "rossaddison/mpdf": "*", 
         "digitalbazaar/json-ld": "*",
         "brick/money": "*",
+        "brick/math": "*",
         "vjik/cycle-typecast": "*",
         
         "league/omnipay": "^3.0",
