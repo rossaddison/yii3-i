@@ -11,6 +11,7 @@ use App\Invoice\CustomField\CustomFieldRepository as CFR;
 use App\Invoice\CustomValue\CustomValueRepository as CVR;
 use App\Invoice\InvCustom\InvCustomRepository as ICR;
 use App\Invoice\PaymentCustom\PaymentCustomRepository as PCR;
+use App\Invoice\SalesOrderCustom\SalesOrderCustomRepository as SOCR;
 use App\Invoice\QuoteCustom\QuoteCustomRepository as QCR;
 use App\Invoice\Quote\QuoteRepository as QR;
 use App\Invoice\Setting\SettingRepository as SRepo;
@@ -45,12 +46,12 @@ Class MailerHelper
         Session $session,        
         private LoggerInterface $logger,    
         private MailerInterface $mailer,    
-        CCR $ccR, QCR $qcR, ICR $icR, PCR $pcR, CFR $cfR, CVR $cvR)
+        CCR $ccR, QCR $qcR, ICR $icR, PCR $pcR, SOCR $socR, CFR $cfR, CVR $cvR)
     {
         $this->s = $s;
         $this->session = $session;
         $this->pdfhelper = new PdfHelper($s, $session);
-        $this->templatehelper = new TemplateHelper($s, $ccR, $qcR, $icR, $pcR, $cfR, $cvR);
+        $this->templatehelper = new TemplateHelper($s, $ccR, $qcR, $icR, $pcR, $socR, $cfR, $cvR);
         $this->invoicehelper = new InvoiceHelper($s, $session);
         $this->logger = $logger;
         // yii-mailer: Not using yii's contact-email template but ...mail/invoice/invoice.php 

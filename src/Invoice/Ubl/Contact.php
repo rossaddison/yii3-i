@@ -9,95 +9,53 @@ use Sabre\Xml\XmlSerializable;
 class Contact implements XmlSerializable
 {
     private ?string $name;
+    private ?string $firstname;
+    private ?string $lastname;
     private ?string $telephone;
     private ?string $telefax;
     private ?string $electronicMail;
     
-    public function __construct(?string $name, ?string $telephone, ?string $telefax, ?string $electronicMail) {
+    public function __construct(?string $name, ?string $firstname, ?string $lastname, ?string $telephone, ?string $telefax, ?string $electronicMail) {
         $this->name = $name;
+        $this->firstname = $firstname;
+        $this->lastname = $lastname;
         $this->telephone = $telephone;
         $this->telefax = $telefax;
         $this->electronicMail = $electronicMail;
     }
-
+    
     /**
-     * 
-     * @return null|string
+     * @see StoreCoveHelper validate_supplier_contact
+     * @return string|null
      */
-    public function getName(): ?string
+    public function getName() : ?string 
     {
         return $this->name;
     }
-
-    /**
-     * 
-     * @param null|string $name
-     * @return Contact
-     */
-    public function setName(?string $name): Contact
+    
+    public function getFirstName() : ?string 
     {
-        $this->name = $name;
-        return $this;
+        return $this->firstname;
     }
-
-    /**
-     * 
-     * @return null|string
-     */
-    public function getTelephone(): ?string
+    
+    public function getLastName() : ?string 
+    {
+        return $this->lastname;
+    }
+    
+    public function getTelephone() : ?string 
     {
         return $this->telephone;
     }
-
-    /**
-     * 
-     * @param null|string $telephone
-     * @return Contact
-     */
-    public function setTelephone(?string $telephone): Contact
-    {
-        $this->telephone = $telephone;
-        return $this;
-    }
-
-    /**
-     * 
-     * @return null|string
-     */
-    public function getTelefax(): ?string
+    
+    public function getTelefax() : ?string 
     {
         return $this->telefax;
     }
-
-    /**
-     * 
-     * @param null|string $telefax
-     * @return Contact
-     */
-    public function setTelefax(?string $telefax): Contact
-    {
-        $this->telefax = $telefax;
-        return $this;
-    }
-
-    /**
-     * 
-     * @return null|string
-     */
-    public function getElectronicMail(): ?string
+    
+    public function getElectronicMail() : ?string 
     {
         return $this->electronicMail;
-    }
-
-    /**
-     * 
-     * @param null|string $electronicMail
-     * @return Contact
-     */
-    public function setElectronicMail(?string $electronicMail): Contact
-    {
-        $this->electronicMail = $electronicMail;
-        return $this;
     }
 
     /**
@@ -110,6 +68,12 @@ class Contact implements XmlSerializable
         if ($this->name !== null) {
             $writer->write([
                 Schema::CBC . 'Name' => $this->name
+            ]);
+        }
+        
+        if ($this->name == null && ($this->firstname !== null || $this->lastname !== null)) {
+            $writer->write([
+                Schema::CBC . 'Name' => ($this->firstname ?? '').' '. ($this->lastname ?? '')
             ]);
         }
 

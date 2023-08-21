@@ -11,7 +11,6 @@ use Yiisoft\Html\Tag\Button;
 use Yiisoft\Html\Tag\Form;
 use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Router\UrlGeneratorInterface;
-use Yiisoft\Strings\StringHelper;
 use Yiisoft\View\WebView;
 use Yiisoft\Yii\Bootstrap5\Nav;
 use Yiisoft\Yii\Bootstrap5\NavBar;
@@ -39,7 +38,7 @@ $this->addJsVars($assetManager->getJsVars());
 
 $currentRouteName = $currentRoute->getName() ?? '';
 $isGuest = $user === null || $user->getId() === null;
-
+$session->set('_language', $currentRoute->getArgument('_language'));
 $this->beginPage();
 ?>
     <!DOCTYPE html>
@@ -65,24 +64,6 @@ $this->beginPage();
             ->currentPath($currentRoute
                 ->getUri()
                 ->getPath())
-            ->options(['class' => 'navbar-nav mx-auto'])
-            ->items(
-                [
-                    [
-                        'label' => $s->trans('invoice'),
-                        'url' => $urlGenerator->generate('invoice/index'),
-                        'active' => StringHelper::startsWith(
-                            $currentRouteName,
-                            'invoice/'
-                        ),
-                    ],
-                ]
-            ) ?>
-
-        <?= Nav::widget()
-            ->currentPath($currentRoute
-                ->getUri()
-                ->getPath())
             ->options(['class' => 'navbar-nav'])
             ->items(
                 [
@@ -91,7 +72,7 @@ $this->beginPage();
                         'url' => '#',
                         'items' => [
                             [
-                        'label' => 'Afrikaans',
+                        'label' => 'Afrikaans',                                
                         'url' => $urlGenerator->generateFromCurrent(['_language' => 'af'], fallbackRouteName: 'site/index'),
                     ],
                     [

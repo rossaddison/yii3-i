@@ -6,4 +6,4 @@
     <?php echo '<td>'; ?>
     <?php  $cvH->print_field_for_pdf($quote_custom_values, $custom_field, $cvR); ?>                                   
     <?php echo '</td>'; ?>
-<?php endforeach; ?>
+<?php endforeach; 

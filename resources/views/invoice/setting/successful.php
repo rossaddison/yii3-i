@@ -1,3 +1,16 @@
+<?php declare(strict_types=1);
+ 
+ use Yiisoft\Html\Html;
+ /**
+ * @var \Yiisoft\View\WebView $this
+ * @var \Yiisoft\Router\UrlGeneratorInterface $urlGenerator
+ * @var array $body
+ * @var string $csrf
+ * @var string $action
+ * @var string $title 
+ * @var \Yiisoft\Session\Flash\FlashInterface $flash
+ */
+ ?>   
 <!doctype html>
 <html lang="en">
 <head>
@@ -53,19 +66,9 @@
     </style>
 </head>
 <body>
-<?php
- /**
- * @var \Yiisoft\View\WebView $this
- * @var \Yiisoft\Router\UrlGeneratorInterface $urlGenerator
- * @var array $body
- * @var string $csrf
- * @var string $action
- * @var string $title 
- * @var \Yiisoft\Session\Flash\FlashInterface $flash
- */
- ?>       
-<h1><?php echo $heading; ?></h1>
-<?php echo $message; ?>
+    
+<h1><?php echo $heading. '. '.$message; ?></h1>
+<?= Html::button($translator->translate('invoice.back'),['onclick'=>'history.back()']); ?>
 </body>
 </html>
 

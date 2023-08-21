@@ -97,7 +97,7 @@ if (!empty($errors)) {
     </div>
     <div class="col mb-3 form-group">
         <label for="controller_layout_dir_dot_path" class="form-label">Controller Layout Directory Dot Path eg. '/views/layout/invoice.php' that appears just after controller construct (exclude the apostrophe's) and is appended to the above src directory location.</label>
-        <input type="text" class="form-control" name="controller_layout_dir_dot_path" id="controller_layout_dir_dot_path" placeholder="Controller Layout Directory Dot Path" value="<?= Html::encode($body['controller_layout_dir_dot_path'] ?? '/views/layout/invoice.php') ?>" required>
+        <input type="text" class="form-control" name="controller_layout_dir_dot_path" id="controller_layout_dir_dot_path" placeholder="Controller Layout Directory Dot Path" value="<?= Html::encode($body['controller_layout_dir_dot_path'] ?? 'views/layout/invoice.php') ?>" required>
     </div>
   </div>
   <div class="card row mb-3">

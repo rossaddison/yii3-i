@@ -42,7 +42,7 @@ use Yiisoft\Router\CurrentRoute;
 
     $toolbarReset = A::tag()
         ->addAttributes(['type' => 'reset'])
-        ->addClass('btn btn-danger me-1')
+        ->addClass('btn btn-danger me-1 ajax-loader')
         ->content(I::tag()->addClass('bi bi-bootstrap-reboot'))
         ->href($urlGenerator->generate($currentRoute->getName()))
         ->id('btn-reset')
@@ -62,8 +62,12 @@ use Yiisoft\Router\CurrentRoute;
 </div>
 <br>
 <div>
+
+</div>
+<div>
     <?= $alert; ?>
-</div>    
+</div>
+<div>
     <?= GridView::widget()
         ->columns(
             DataColumn::create()
@@ -92,6 +96,11 @@ use Yiisoft\Router\CurrentRoute;
                 ->value(static fn ($model): string => Html::encode($s->format_currency($model->getProduct_price()))                        
             ),
             DataColumn::create()
+                ->label($translator->translate('invoice.product.price.base.quantity'))                
+                ->attribute('product_price_base_quantity')     
+                ->value(static fn ($model): string => Html::encode($model->getProduct_price_base_quantity())                        
+            ),
+            DataColumn::create()
                 ->label($s->trans('product_unit'))                
                 ->attribute('product_unit')     
                 ->value(static fn ($model): string => Html::encode((ucfirst($model->getUnit()->getUnit_name())))                        
@@ -106,6 +115,12 @@ use Yiisoft\Router\CurrentRoute;
                 ->label($s->get_setting('sumex') ? $s->trans('product_tariff') : '')                
                 ->attribute('product_tariff')     
                 ->value(static fn ($model): string => ($s->get_setting('sumex') ? Html::encode($model->getProduct_tariff()) : Html::encode($s->trans('none')))                       
+            ),
+            DataColumn::create()
+                ->label($translator->translate('invoice.product.property.add'))    
+                ->value(static function ($model) use ($urlGenerator): string {
+                   return Html::a(Html::tag('i','',['class'=>'fa fa-plus fa-margin']), $urlGenerator->generate('productproperty/add',['product_id'=>$model->getProduct_id()]),[])->render();
+                }
             ),
             DataColumn::create()
                 ->label($s->trans('view'))    
@@ -150,23 +165,15 @@ use Yiisoft\Router\CurrentRoute;
         )
         ->rowAttributes(['class' => 'align-middle'])
         ->summaryAttributes(['class' => 'mt-3 me-3 summary text-end'])
+        ->summary($grid_summary)
+        ->emptyTextAttributes(['class' => 'card-header bg-warning text-black'])
+        ->emptyText((string)$translator->translate('invoice.invoice.no.records'))
         ->tableAttributes(['class' => 'table table-striped text-center h-75','id'=>'table-product'])
         ->toolbar(
-            Form::tag()->post($urlGenerator->generate('quote/index'))->csrf($csrf)->open() .
+            Form::tag()->post($urlGenerator->generate('product/index'))->csrf($csrf)->open() .
             Div::tag()->addClass('float-end m-3')->content($toolbarReset)->encode(false)->render() .
             Form::tag()->close()
         );
     ?>
-    <?php
-        $pageSize = $paginator->getCurrentPageSize();
-        if ($pageSize > 0) {
-            echo Html::p(
-                sprintf('Showing %s out of %s products', $pageSize, $paginator->getTotalItems()),
-                ['class' => 'text-muted']
-            );
-        } else {
-            echo Html::p('No records');
-        }
-    ?>
     </div>
-</div>
+

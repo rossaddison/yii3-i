@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 use Yiisoft\Html\Html;
 use App\Invoice\Helpers\DateHelper;
+
+$vat = $s->get_setting('enable_vat_registration');
 ?>
 
 <!DOCTYPE html>
@@ -62,9 +64,9 @@ use App\Invoice\Helpers\DateHelper;
     <div class="invoice-details clearfix">
         <table>
             <tr>
-                <td><?php echo $s->trans('invoice_date') . ':'; ?></td>
+                <td><?php echo $translator->translate('invoice.invoice.date.issued') . ':'; ?> . ':'; ?></td>
                     <?php
-                        $date = $client->getClient_date_created();
+                        $date = $inv->getDate_created();
                         if ($date && $date != "0000-00-00") {
                             //use the DateHelper
                             $datehelper = new DateHelper($s);
@@ -75,6 +77,34 @@ use App\Invoice\Helpers\DateHelper;
                     ?> 
                 <td><?php echo Html::encode($date); ?></td>
             </tr>
+            <?php if ($vat === '1') { ?>
+            <tr>
+                <td><?php echo $translator->translate('invoice.invoice.tax.point') . ':'; ?></td>
+                    <?php
+                        $date_tp = $inv->getDate_tax_point();
+                        if ($date_tp && $date_tp != "0000-00-00") {
+                            //use the DateHelper
+                            $datehelper = new DateHelper($s);
+                            $date = $datehelper->date_from_mysql($date_tp);
+                        } else {
+                            $date = null;
+                        }
+                    ?> 
+                <td><?php echo Html::encode($date); ?></td>
+                <td><?php echo $translator->translate('invoice.invoice.date.supplied') . ':'; ?></td>
+                    <?php
+                        $date_sp = $inv->getDate_supplied();
+                        if ($date_sp && $date_sp != "0000-00-00") {
+                            //use the DateHelper
+                            $datehelper = new DateHelper($s);
+                            $date = $datehelper->date_from_mysql($date_sp);
+                        } else {
+                            $date = null;
+                        }
+                    ?> 
+                <td><?php echo Html::encode($date); ?></td>
+            </tr>
+            <?php } ?>
             <tr>
                 <td><?php echo $s->trans('expires') . ': '; ?></td>
                 <?php
@@ -105,7 +135,12 @@ use App\Invoice\Helpers\DateHelper;
             <?php if ($show_item_discounts) : ?>
                 <th class="item-discount text-right"><?= Html::encode($s->trans('discount')); ?></th>
             <?php endif; ?>
+            <?php if ($vat === '0') { ?>     
             <th class="item-price text-right"><?= Html::encode($s->trans('tax')); ?></th>    
+            <?php } else { ?>
+                <th class="item-price text-right"><?= Html::encode($translator->translate('invoice.invoice.vat.abbreviation')); ?></th>    
+                <th class="item-price text-right">%</th>
+            <?php } ?>     
             <th class="item-total text-right"><?= Html::encode($s->trans('total')); ?></th>
         </tr>
         </thead>
@@ -140,6 +175,11 @@ use App\Invoice\Helpers\DateHelper;
                 </td>
                 <td class="text-right">
                     <?php  
+                        echo Html::encode($item->getTaxRate()?->getTax_rate_percent()); 
+                    ?>
+                </td>
+                <td class="text-right">
+                    <?php  
                         echo Html::encode($s->format_currency($inv_item_amount?->getTotal())); 
                     ?>
                 </td>
@@ -152,15 +192,21 @@ use App\Invoice\Helpers\DateHelper;
         <tbody class="invoice-sums">
 
         <tr>
-            <td <?php echo($show_item_discounts ? 'colspan="6"' : 'colspan="5"'); ?>
-                    class="text-right"><?= Html::encode($s->trans('subtotal'))." (".Html::encode($s->trans('price'))."-".Html::encode($s->trans('discount')).") x ".Html::encode($s->trans('qty')); ?></td>
-            <td class="text-right"><?php echo Html::encode($s->format_currency($inv_amount->getItem_subtotal())); ?></td>
+            <?php if ($vat === '0') { ?>
+            <td <?php echo($show_item_discounts ? 'colspan="7"' : 'colspan="6"'); ?>
+                    class="text-right"><?= Html::encode(
+                            $s->trans('subtotal'))." (".Html::encode($s->trans('price'))."-".Html::encode($s->trans('discount')).") x ".Html::encode($s->trans('qty')); ?></td>
+            <?php } else { ?>
+            <td <?php echo($show_item_discounts ? 'colspan="7"' : 'colspan="6"'); ?>
+                    class="text-right"><?= Html::encode(
+                            $s->trans('subtotal')); ?></td> 
+            <?php } ?> 
         </tr>
 
         <?php if ($inv_amount->getItem_tax_total() > 0) { ?>
             <tr>
-                <td <?php echo($show_item_discounts ? 'colspan="6"' : 'colspan="5"'); ?> class="text-right">
-                    <?= Html::encode($s->trans('item_tax')); ?>
+                <td <?php echo($show_item_discounts ? 'colspan="7"' : 'colspan="6"'); ?> class="text-right">
+                    <?= Html::encode( $vat === '1' ? $translator->translate('invoice.invoice.vat.break.down') : $s->trans('item_tax')); ?>
                 </td>
                 <td class="text-right">
                     <?php echo Html::encode($s->format_currency($inv_amount->getItem_tax_total())); ?>
@@ -169,10 +215,10 @@ use App\Invoice\Helpers\DateHelper;
         <?php } ?>
 
             
-        <?php if (!empty($inv_tax_rates)) { ?>    
+        <?php if (!empty($inv_tax_rates) && ($vat === '0')) { ?>    
         <?php  foreach ($inv_tax_rates as $inv_tax_rate) : ?>
             <tr>
-                <td <?php echo ($show_item_discounts ? 'colspan="6"' : 'colspan="5"'); ?> class="text-right">
+                <td <?php echo ($show_item_discounts ? 'colspan="7"' : 'colspan="6"'); ?> class="text-right">
                     <?php echo Html::encode($inv_tax_rate->getTaxRate()->getTax_rate_name()) . ' (' . Html::encode($s->format_amount($inv_tax_rate->getTaxRate()->getTax_rate_percent())) . '%)'; ?>
                 </td>
                 <td class="text-right">
@@ -180,30 +226,31 @@ use App\Invoice\Helpers\DateHelper;
                 </td>
             </tr>
         <?php endforeach ?>
-        <?php } ?>    
-        <?php if ($inv->getDiscount_percent() != '0.00') : ?>
+        <?php } ?>  
+        <?php if ($vat === '0') { ?>        
+        <?php if ($inv->getDiscount_percent() !== 0.00) { ?>
             <tr>
-                <td <?php echo($show_item_discounts ? 'colspan="6"' : 'colspan="5"'); ?> class="text-right">
+                <td <?php echo($show_item_discounts ? 'colspan="7"' : 'colspan="6"'); ?> class="text-right">
                     <?= Html::encode($s->trans('discount')); ?>
                 </td>
                 <td class="text-right">
                     <?php echo Html::encode($s->format_amount($inv->getDiscount_percent())); ?>%
                 </td>
             </tr>
-        <?php endif; ?>
-        <?php if ($inv->getDiscount_amount() != '0.00') : ?>
+        <?php } ?>
+        <?php if ($inv->getDiscount_amount() !== 0.00) { ?>
             <tr>
-                <td <?php echo($show_item_discounts ? 'colspan="6"' : 'colspan="5"'); ?> class="text-right">
+                <td <?php echo($show_item_discounts ? 'colspan="7"' : 'colspan="6"'); ?> class="text-right">
                     <?= Html::encode($s->trans('discount')); ?>
                 </td>
                 <td class="text-right">
                     <?php echo Html::encode($s->format_currency($inv->getDiscount_amount())); ?>
                 </td>
             </tr>
-        <?php endif; ?>
-
+        <?php } ?>
+        <?php } ?>    
         <tr>
-            <td <?php echo($show_item_discounts ? 'colspan="6"' : 'colspan="5"'); ?> class="text-right">
+            <td <?php echo($show_item_discounts ? 'colspan="7"' : 'colspan="6"'); ?> class="text-right">
                 <b><?= Html::encode($s->trans('total')); ?></b>
             </td>
             <td class="text-right">
@@ -215,7 +262,7 @@ use App\Invoice\Helpers\DateHelper;
 
 </main>
     
-<watermarktext content="<?= $s->trans('overdue'); ?>" alpha="0.3" />
+<watermarkimage src="/img/overdue.png" alpha="0.1"/>
 
 <footer class="notes">
     <br>

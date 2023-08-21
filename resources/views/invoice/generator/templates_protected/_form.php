@@ -91,7 +91,7 @@ if (!empty($errors)) {
          } 
          
          if (($column->getType() === 'float') && ($column->getAbstractType() === 'decimal' )) {
-            echo '<div class="form-group">'."\n";
+            echo '<div class="row mb3 form-group">'."\n";
             echo '  <label for="'.$column->getName().'"><?= $s->trans('."'".$column->getName()."'".'); ?></label>'."\n";
             echo '      <div class="input-group has-feedback">'."\n";
             echo '          <input type="text" name="'.$column->getName().'" id="'.$column->getName().'" class="form-control"'."\n";
@@ -102,7 +102,7 @@ if (!empty($errors)) {
           }
           
           if (($column->getType() === 'string') && ($column->getAbstractType() <> 'date' )) {
-            echo ' <div class="mb3 form-group">'."\n";
+            echo ' <div class="row mb3 form-group">'."\n";
             echo '   <label for="'.$column->getName().'"><?= $s->trans('."'".$column->getName()."'". '); ?>';
             echo '</label>'."\n";
             echo '   <input type="text" name="'.$column->getName().'" id="'.$column->getName().'" class="form-control"'."\n";
@@ -111,7 +111,7 @@ if (!empty($errors)) {
           }
           
           if (($column->getType() === 'int') && ($column->getAbstractType() <> 'date' ) && ($column->getAbstractType() <> 'primary' )) {
-            echo ' <div class="mb3 form-group">'."\n";
+            echo ' <div class="row mb3 form-group">'."\n";
             echo '   <label for="'.$column->getName().'"><?= $s->trans('."'".$column->getName()."'". '); ?>';
             echo '</label>'."\n";
             echo '   <input type="text" name="'.$column->getName().'" id="'.$column->getName().'" class="form-control"'."\n";
@@ -120,7 +120,7 @@ if (!empty($errors)) {
           }
           
           if (($column->getType() === 'int') && ($column->getAbstractType() === 'primary' )) {
-            echo ' <div class="mb3 form-group">'."\n";
+            echo ' <div class="row mb3 form-group">'."\n";
             echo '   <input type="hidden" name="'.$column->getName().'" id="'.$column->getName().'" class="form-control"'."\n";
             echo ' value="<?= Html::encode($body['."'".$column->getName()."'".'] ?? '. " ''". '); ?>'.'"'.'>'."\n";
             echo ' </div>'."\n";

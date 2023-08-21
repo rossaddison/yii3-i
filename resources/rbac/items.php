@@ -11,7 +11,8 @@ return [
             'editInv',
             'viewPayment',
             'editPayment',
-            'editUser'
+            'editUser',
+            'editClientPeppol'
         ],
     ],
     
@@ -36,7 +37,9 @@ return [
         'createdAt' => 1599036348,
         'children' => [
            'viewInv',
-           'viewPayment'
+           'viewPayment',
+           'editUserInv',
+           'editClientPeppol'
         ]    
     ],
     
@@ -70,6 +73,20 @@ return [
     
     'editUser'=>[
         'name' => 'editUser',
+        'type' => 'permission',
+        'updatedAt' => 1599036348,
+        'createdAt' => 1599036348,
+    ],
+    
+    'editUserInv'=>[
+        'name' => 'editUserInv',
+        'type' => 'permission',
+        'updatedAt' => 1599036348,
+        'createdAt' => 1599036348,
+    ],
+    
+    'editClientPeppol'=>[
+        'name' => 'editClientPeppol',
         'type' => 'permission',
         'updatedAt' => 1599036348,
         'createdAt' => 1599036348,

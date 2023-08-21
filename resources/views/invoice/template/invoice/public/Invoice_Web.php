@@ -12,7 +12,7 @@ use App\Invoice\Helpers\NumberHelper;
  */
 
 $numberhelper = new NumberHelper($s);
-
+$vat = $s->get_setting('enable_vat_registration');
 ?>
 
 <!DOCTYPE html>
@@ -202,6 +202,7 @@ $numberhelper = new NumberHelper($s);
                                 <td class="amount"><?= $numberhelper->format_currency($item->getPrice() ?? 0.00); ?></td>
                                 <td class="amount"><?= $numberhelper->format_currency($item->getDiscount_amount() ?? 0.00); ?></td>
                                 <td class="amount"><?= $numberhelper->format_currency($inv_item_amount->repoInvItemAmountquery((string)$item->getId())->getSubtotal() ?? 0.00); ?></td>
+                                <td class="amount"><?= $numberhelper->format_currency($inv_item_amount->repoInvItemAmountquery((string)$item->getId())->getTaxRate()?->getTax_rate_percent() ??  0.00); ?></td>
                             </tr>
                         <?php endforeach ?>
                         <tr>
@@ -213,13 +214,13 @@ $numberhelper = new NumberHelper($s);
                         <?php if ($inv_amount->getItem_tax_total() > 0) { ?>
                             <tr>
                                 <td class="no-bottom-border" colspan="4"></td>
-                                <td class="text-right"><?= $s->trans('item_tax'); ?></td>
+                                <td class="text-right"><?= $vat === '0' ? $s->trans('item_tax') : $translator->translate('invoice.invoice.vat.abbreviation') ?></td>
                                 <td class="amount"><?= $numberhelper->format_currency($inv_amount->getItem_tax_total() ?? 0.00)?></td>
                             </tr>
                         <?php } ?>
 
                         <?php 
-                            if (null!== $inv_tax_rates) {
+                            if (null!== $inv_tax_rates && $vat === '0') {
                                 foreach ($inv_tax_rates as $inv_tax_rate) : ?>
                                 <tr>
                                     <td class="no-bottom-border" colspan="4"></td>
@@ -232,13 +233,14 @@ $numberhelper = new NumberHelper($s);
                         <?php   endforeach; 
                         
                             }  ?>
-
+                        
+                        <?php if ($vat  === '0') { ?>        
                         <tr>
                             <td class="no-bottom-border" colspan="4"></td>
                             <td class="text-right"><?= $s->trans('discount'); ?>:</td>
                             <td class="amount">
                                 <?php
-                                if ($inv->getDiscount_percent() > 0) {
+                                if ($inv->getDiscount_percent()) {
                                     echo $numberhelper->format_amount($inv->getDiscount_percent()) . ' %';
                                 } else {
                                     echo $numberhelper->format_amount($inv->getDiscount_amount() ?? 0.00);
@@ -246,7 +248,8 @@ $numberhelper = new NumberHelper($s);
                                 ?>
                             </td>
                         </tr>
-
+                        <?php } ?>
+                        
                         <tr>
                             <td class="no-bottom-border" colspan="4"></td>
                             <td class="text-right"><?= $s->trans('total'); ?>:</td>

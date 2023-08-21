@@ -7,21 +7,26 @@ use App\Invoice\Entity\Inv;
 use App\Invoice\Entity\InvAmount;
 use App\Invoice\Entity\QuoteAmount;
 use App\Invoice\Entity\QuoteItem;
+use App\Invoice\Entity\SalesOrder;
+use App\Invoice\Entity\SalesOrderItem;
 use App\Invoice\Entity\InvItem;
-use App\Invoice\Entity\UserInv;
+//use App\Invoice\Entity\UserInv;
+use App\Invoice\Helpers\DateHelper;
 use App\Invoice\Helpers\MpdfHelper;
 use App\Invoice\Helpers\CountryHelper;
 use App\Invoice\Helpers\CustomValuesHelper as CVH;
 use App\Invoice\Helpers\ZugFerdHelper;
-use App\Invoice\Libraries\Sumex;
-use App\Invoice\InvAmount\InvAmountRepository;
-use App\Invoice\Inv\InvRepository;
+//use App\Invoice\Libraries\Sumex;
+//use App\Invoice\InvAmount\InvAmountRepository;
+//use App\Invoice\Inv\InvRepository;
 use App\Invoice\Setting\SettingRepository as SR;
 use App\Invoice\Sumex\SumexRepository;
-use App\Invoice\UserInv\UserInvRepository;
+
+//use App\Invoice\UserInv\UserInvRepository;
 //use setasign\Fpdi\Fpdi;
-use Yiisoft\Aliases\Aliases;
+//use Yiisoft\Aliases\Aliases;
 use Yiisoft\Session\SessionInterface as Session;
+use Yiisoft\Translator\TranslatorInterface as Translator;
 
 
 Class PdfHelper
@@ -101,7 +106,10 @@ Class PdfHelper
 
                 // Determine if discounts should be displayed if there are items on the quote     
                 $items = ($qiR->repoCount($quote_id) > 0 ? $qiR->repoQuoteItemIdquery($quote_id) : null);
-
+                
+                // e-invoicing requirement
+                /** @var string $client_number */
+                $client_number = $quote->getClient()?->getClient_number();
                 $show_item_discounts = false;
                 // Determine if any of the items have a discount, if so then the discount amount row will have to be shown.
                 if (null!==$items) {
@@ -145,7 +153,12 @@ Class PdfHelper
                     's'=>$this->s,
                     'company_logo_and_address'=>$viewrenderer->renderPartialAsString('/invoice/setting/company_logo_and_address.php',
                         ['company'=>$company = $this->s->get_config_company_details(), 
+                         'document_number'=>$quote->getNumber(),
+                         'client_number' => $client_number,
                          'countryhelper'=> $this->countryhelper,
+                         'isInvoice' => false,
+                         'isQuote' => true,
+                         'isSalesOrder' => false   
                         ]),
                     'countryhelper'=>$this->countryhelper,
                     'userinv'=>$userinv,
@@ -170,9 +183,120 @@ Class PdfHelper
     
     /**
      * 
+     * @param string|null $so_id
+     * @param string $user_id
+     * @param bool $stream
+     * @param bool $custom
+     * @param object|null $so_amount
+     * @param array $so_custom_values
+     * @param \App\Invoice\Client\ClientRepository $cR
+     * @param \App\Invoice\CustomValue\CustomValueRepository $cvR
+     * @param \App\Invoice\CustomField\CustomFieldRepository $cfR
+     * @param \App\Invoice\SalesOrderItem\SalesOrderItemRepository $soiR
+     * @param \App\Invoice\SalesOrderItemAmount\SalesOrderItemAmountRepository $soiaR
+     * @param \App\Invoice\SalesOrder\SalesOrderRepository $soR
+     * @param \App\Invoice\SalesOrderTaxRate\SalesOrderTaxRateRepository $sotrR
+     * @param \App\Invoice\UserInv\UserInvRepository $uiR
+     * @param \Yiisoft\Yii\View\ViewRenderer $viewrenderer
+     * @param Translator $translator
+     * @psalm-suppress MissingReturnType
+     */
+    public function generate_salesorder_pdf(string|null $so_id, string $user_id, bool $stream, bool $custom, object|null $so_amount, array $so_custom_values,\App\Invoice\Client\ClientRepository $cR, \App\Invoice\CustomValue\CustomValueRepository $cvR, \App\Invoice\CustomField\CustomFieldRepository $cfR, \App\Invoice\SalesOrderItem\SalesOrderItemRepository $soiR, \App\Invoice\SalesOrderItemAmount\SalesOrderItemAmountRepository $soiaR, \App\Invoice\SalesOrder\SalesOrderRepository $soR, \App\Invoice\SalesOrderTaxRate\SalesOrderTaxRateRepository $sotrR, \App\Invoice\UserInv\UserInvRepository $uiR,
+                                \Yiisoft\Yii\View\ViewRenderer $viewrenderer, Translator $translator)
+    {       
+            if ($so_id) {
+            
+            $so = $soR->repoCount($so_id) > 0 ? $soR->repoSalesOrderLoadedquery($so_id) : null;
+            
+            if (null!==$so){
+                // If userinv details have been filled, use these details
+                $userinv = ($uiR->repoUserInvcount($user_id)>0 ? $uiR->repoUserInvquery($user_id) : null);
+                // If a template has been selected in the dropdown use it otherwise use the default 'salesorder' template under
+                // views/invoice/template/salesorder/pdf/salesorder.pdf
+                $salesorder_template = (!empty($this->s->get_setting('pdf_salesorder_template')) ? $this->s->get_setting('pdf_salesorder_template') : 'salesorder');            
+
+                // Determine if discounts should be displayed if there are items on the salesorder    
+                $items = ($soiR->repoCount($so_id) > 0 ? $soiR->repoSalesOrderItemIdquery($so_id) : null);
+                // e-invoicing requirement 
+                /** @var string $client_number */
+                $client_number = $so->getClient()?->getClient_number();
+                $show_item_discounts = false;
+                // Determine if any of the items have a discount, if so then the discount amount row will have to be shown.
+                if (null!==$items) {
+                    /** @var SalesOrderItem $item */
+                    foreach ($items as $item) {
+                       if ($item->getDiscount_amount() !== 0.00) {
+                            $show_item_discounts = true;
+                       }
+                    }
+                }
+                // Get all data related to building the quote including custom fields
+                $data = [
+                    'salesorder' => $so,
+                    'salesorder_tax_rates' => (($sotrR->repoCount((string)$this->session->get('so_id')) > 0) ? $sotrR->repoSalesOrderquery((string)$this->session->get('so_id')) : null), 
+                    'items' => $items,
+                    'soiaR'=>$soiaR,
+                    'output_type' => 'pdf',
+                    'show_item_discounts' => $show_item_discounts,
+                    // Show the custom fields if the user has answered yes on the modal ie $custom = true
+                    'show_custom_fields' => $custom,
+                    // Custom fields appearing near the top of the quote
+                    'custom_fields'=>$cfR->repoTablequery('salesorder_custom'),
+                    'custom_values'=>$cvR->attach_hard_coded_custom_field_values_to_custom_field($cfR->repoTablequery('salesorder_custom')),
+                    'cvH'=> new CVH($this->s),
+                    'salesorder_custom_values' => $so_custom_values,
+                    'top_custom_fields' =>$viewrenderer->renderPartialAsString('/invoice/template/salesorder/pdf/top_custom_fields', [
+                        'custom_fields'=>$cfR->repoTablequery('salesorder_custom'),
+                        'cvR'=>$cvR, 
+                        'salesorder_custom_values'=> $so_custom_values,  
+                        'cvH'=> new CVH($this->s),
+                        's'=>$this->s,   
+                    ]),    
+                    // Custom fields appearing at the bottom of the salesorder 
+                    'view_custom_fields'=>$viewrenderer->renderPartialAsString('/invoice/template/salesorder/pdf/view_custom_fields', [
+                        'custom_fields'=>$cfR->repoTablequery('salesorder_custom'),
+                        'cvR'=>$cvR,
+                        'salesorder_custom_values'=> $so_custom_values,  
+                        'cvH'=> new CVH($this->s),
+                        's'=>$this->s,   
+                    ]),        
+                    's'=>$this->s,
+                    'company_logo_and_address'=>$viewrenderer->renderPartialAsString('/invoice/setting/company_logo_and_address.php',
+                        ['company'=>$company = $this->s->get_config_company_details(), 
+                         'document_number'=> $so->getNumber(),
+                         'client_number'=> $client_number,   
+                         'countryhelper'=> $this->countryhelper,
+                         'isInvoice' => false,
+                         'isQuote' => false,
+                         'isSalesOrder' => true   
+                        ]),
+                    'countryhelper'=>$this->countryhelper,
+                    'userinv'=>$userinv,
+                    'client'=>$cR->repoClientquery((string)$so->getClient()?->getClient_id()),
+                    'so_amount'=>$so_amount,            
+                    // Use the temporary print language to define cldr            
+                    'cldr'=> array_keys($this->s->locale_language_array(), $this->get_print_language($so)),
+                ];        
+                // Sales Order Template will be either 'salesorder' or a custom designed salesorder in the folder.
+                $html = $viewrenderer->renderPartialAsString('/invoice/template/salesorder/pdf/'.$salesorder_template, $data);
+                if ($this->s->get_setting('pdf_html_salesorder') === '1') {
+                    return $html;
+                }
+                // Set the print language to null for future use
+                $this->session->set('print_language','');
+                $mpdfhelper = new MpdfHelper(); 
+                $filename = $translator->translate('invoice.salesorder') . '_' . str_replace(['\\', '/'], '_', ($so->getNumber() ?? (string)rand(0, 10)));
+                return $mpdfhelper->pdf_create($html, $filename, $stream, $so->getPassword(), $this->s, null, null,  false, false, [], $so);
+            }    
+        } 
+    }   //generate_quote_pdf
+    
+    /**
+     * 
      * @param string|null $inv_id
      * @param string $user_id
      * @param bool $custom
+     * @param SalesOrder|null $so
      * @param InvAmount|null $inv_amount
      * @param array $inv_custom_values
      * @param \App\Invoice\Client\ClientRepository $cR
@@ -187,18 +311,21 @@ Class PdfHelper
      * @param \Yiisoft\Yii\View\ViewRenderer $viewrenderer
      * @return string
      */
-    public function generate_inv_html(string|null $inv_id, string $user_id, bool $custom, InvAmount|null $inv_amount, array $inv_custom_values,\App\Invoice\Client\ClientRepository $cR, \App\Invoice\CustomValue\CustomValueRepository $cvR, \App\Invoice\CustomField\CustomFieldRepository $cfR, \App\Invoice\InvItem\InvItemRepository $iiR, \App\Invoice\InvItemAmount\InvItemAmountRepository $iiaR, Inv $inv, \App\Invoice\InvTaxRate\InvTaxRateRepository $itrR, \App\Invoice\UserInv\UserInvRepository $uiR, SumexRepository $sumexR,
+    public function generate_inv_html(string|null $inv_id, string $user_id, bool $custom, SalesOrder|null $so, InvAmount|null $inv_amount, array $inv_custom_values,\App\Invoice\Client\ClientRepository $cR, \App\Invoice\CustomValue\CustomValueRepository $cvR, \App\Invoice\CustomField\CustomFieldRepository $cfR, \App\Invoice\InvItem\InvItemRepository $iiR, \App\Invoice\InvItemAmount\InvItemAmountRepository $iiaR, Inv $inv, \App\Invoice\InvTaxRate\InvTaxRateRepository $itrR, \App\Invoice\UserInv\UserInvRepository $uiR, SumexRepository $sumexR,
                                 \Yiisoft\Yii\View\ViewRenderer $viewrenderer) : string {
         if ($inv_id) {
             // If userinv details have been filled, use these details
             $userinv = ($uiR->repoUserInvcount($user_id)>0 ? $uiR->repoUserInvquery($user_id) : null);
             // 'draft' => status_id => 1 
             $inv_template = $this->generate_inv_pdf_template_normal_paid_overdue_watermark($inv->getStatus_id() ?? 1);
-
             // Determine if discounts should be displayed if there are items on the invoice      
             $items = ($iiR->repoCount($inv_id) > 0 ? $iiR->repoInvItemIdquery($inv_id) : null);
             /** @var \App\Invoice\Entity\Sumex $sumex */
             $sumex = $sumexR->repoSumexInvoicequery($inv_id);
+            // e-invoicing requirement 
+            //$client_number = $inv->getClient()?->getClient_number();
+            $client_purchase_order_number = ($so ? $so->getClient_po_number() : '');
+            $date_helper = new DateHelper($this->s);
             $show_item_discounts = false;
             // Determine if any of the items have a discount, if so then the discount amount row will have to be shown.
             if (null!==$items) {
@@ -244,7 +371,14 @@ Class PdfHelper
                 'userinv'=>$userinv,
                 'company_logo_and_address'=>$viewrenderer->renderPartialAsString('/invoice/setting/company_logo_and_address.php',
                     ['company'=>$company = $this->s->get_config_company_details(), 
-                     'countryhelper'=>$this->countryhelper
+                     'document_number'=> $inv->getNumber(),
+                     //'client_number'=> $client_number,
+                     'client_purchase_order_number' => $client_purchase_order_number,
+                     'date_tax_point'=> $date_helper->date_from_mysql($inv->getDate_tax_point()),   
+                     'countryhelper'=> $this->countryhelper,
+                     'isInvoice'=> true,
+                     'isQuote' => false,
+                     'isSalesOrder' => false  
                     ]),
                 'countryhelper'=>$this->countryhelper,
                 'client'=>$cR->repoClientquery((string)$inv->getClient()?->getClient_id()),
@@ -263,6 +397,7 @@ Class PdfHelper
      * @param string $user_id
      * @param bool $stream
      * @param bool $custom
+     * @param SalesOrder|null $so 
      * @param InvAmount|null $inv_amount
      * @param array $inv_custom_values
      * @param \App\Invoice\Client\ClientRepository $cR
@@ -276,13 +411,13 @@ Class PdfHelper
      * @param \Yiisoft\Yii\View\ViewRenderer $viewrenderer
      * @psalm-suppress MissingReturnType
      */
-    public function generate_inv_pdf(string|null $inv_id, string $user_id, bool $stream, bool $custom, InvAmount|null $inv_amount, array $inv_custom_values,\App\Invoice\Client\ClientRepository $cR, \App\Invoice\CustomValue\CustomValueRepository $cvR, \App\Invoice\CustomField\CustomFieldRepository $cfR, \App\Invoice\InvItem\InvItemRepository $iiR, \App\Invoice\InvItemAmount\InvItemAmountRepository $iiaR, \App\Invoice\Inv\InvRepository $iR, \App\Invoice\InvTaxRate\InvTaxRateRepository $itrR, \App\Invoice\UserInv\UserInvRepository $uiR, SumexRepository $sumexR,
+    public function generate_inv_pdf(string|null $inv_id, string $user_id, bool $stream, bool $custom, SalesOrder|null $so, InvAmount|null $inv_amount, array $inv_custom_values,\App\Invoice\Client\ClientRepository $cR, \App\Invoice\CustomValue\CustomValueRepository $cvR, \App\Invoice\CustomField\CustomFieldRepository $cfR, \App\Invoice\InvItem\InvItemRepository $iiR, \App\Invoice\InvItemAmount\InvItemAmountRepository $iiaR, \App\Invoice\Inv\InvRepository $iR, \App\Invoice\InvTaxRate\InvTaxRateRepository $itrR, \App\Invoice\UserInv\UserInvRepository $uiR, SumexRepository $sumexR,
                                 \Yiisoft\Yii\View\ViewRenderer $viewrenderer)
     {       
        if ($inv_id) { 
             $inv = $iR->repoCount($inv_id) > 0 ? $iR->repoInvLoadedquery($inv_id) : null;
             if ($inv) {
-                $html = $this->generate_inv_html($inv_id, $user_id, $custom, $inv_amount, $inv_custom_values, $cR, $cvR, $cfR, $iiR, $iiaR, $inv, $itrR, $uiR, $sumexR, $viewrenderer);
+                $html = $this->generate_inv_html($inv_id, $user_id, $custom, $so, $inv_amount, $inv_custom_values, $cR, $cvR, $cfR, $iiR, $iiaR, $inv, $itrR, $uiR, $sumexR, $viewrenderer);
                 // Set the print language to null for future use
                 $this->session->set('print_language','');
                 $mpdfhelper = new MpdfHelper(); 

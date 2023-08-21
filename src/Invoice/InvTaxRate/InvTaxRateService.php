@@ -25,7 +25,6 @@ final class InvTaxRateService
         $inv_id = ((null !==($form->getInv_id())) ? $form->getInv_id() : '');
         // The form is required to have a tax value even if it is a zero rate
         $model->setInv_id((int)$inv_id);
-        $model->setInv_id((int)$form->getInv_id());
         $tax_rate_id = ((null !==($form->getTax_rate_id())) ? $form->getTax_rate_id() : '');
         // The form is required to have a tax value even if it is a zero rate
         $model->setTax_rate_id((int)$tax_rate_id);

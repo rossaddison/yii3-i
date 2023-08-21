@@ -8,8 +8,13 @@
 <p>2. Accountant Role with the ability of an accountant/bookkeeper to record payments against invoices.</p>
 <p>3. Include a <b>Company Private Detail</b> specific logo on an invoice.</p>
 <p>4. Acceptance Tests for Invoice</p>
+<p>5. Further validation and exceptions to be included in testing of e-Invoicing using PeppolHelper.</p>
+<p>6. Filters to be introduced on grids</p>
+<p><s>7. Improve Generator index template using Yiisoft functions.</s></p>
+<p>8. Include Product images</p>
+<p>9. Integrate <code>https://github.com/php-finance/double-entry</code></p>
 <p><s>Pdf template construction upon emailing.</s></p>
-<p>Work on info issues</p>
+<p><s>Work on info issues</s></p>
 <p>Work In Progress - Shorter Term Goals</p>
 <p><s>Psalm Level 2 - Testing</s></p>
 <p><s>Dead Code Removal with Psalm 3 Testing</s></p>
@@ -19,6 +24,32 @@
 <p>CompanyPrivate logo will be automatically input on invoice/quotes depending on whether the date of the invoice falls between the start and end date.</p>
 <p>Introducing Paypal.</p>
 <p>Introducing India's PayTm payment gateway's QR code method of payment and comparing this with Stripe's method.</p>
+<p>A General Sales Tax (GST) Tax System will have to be implemented first for this purpose.</p>
+<p><b>20 August 2023</b></p>
+<p>Each Product has an additional field called Additional Item Property Name and Value. These product properties can be added from the product view.
+<p>A number of Additional Properties can be added to a product now by means of the Product Property Entity.</p>
+<p><img src="/options" height="300" width="500"></p>
+<p><img src="/ecosio_openpeppol_ubl_invoice_3_15_0" height="300" width="600"></p>
+<p>Introduce Peppol (src\Invoice\Helpers\Peppol\PeppolHelper)</p>
+<p><a href="https://ecosio.com/en/peppol-and-xml-document-validator-button/?pk_abe=EN_Peppol_XML_Validator_Page&pk_abv=With_CTA"> An Ecosio validated 0 error xml e-invoice</a> can be generated. 
+<p>Introduce StoreCove (src\Invoice\Helpers\StoreCove\StoreCoveHelper) </p>
+<p><a href="https://www.storecove.com/docs#_json_object">A Storecove Json Encoded Invoice</a> can be generated. </p>
+<p><b>Requirement 1:</b></p>
+<p>With VAT enabled - VAT Invoices can now be created.</p>
+<p><b>Requirement 2:</b></p>
+<p>Store Cove Api connection functions have been created. (src\Invoice\InvoiceController.php store_cove_call_api)</p>
+<p><b>Requirement 3:</b></p>
+<p><b>Xml electronic invoices - Can be output</b> if the following sequence is followed:</p>
+<p>a: A logged in Client sets up their Peppol details on their side via Client...View...Options...Edit Peppol Details for e-invoicing. </p> 
+<p>b: A quote is created and sent by the Administrator to the Client.</p>
+<p>c: A logged in Client creates a sales order from the quote with their purchase order number, purchase order line number, and their contact person in the modal.</p>
+<p>d: A logged in Client, on each of the sales order line items, inputs their line item reference number. (Mandatory or else exception will be raised). </p>
+<p>e: A logged in Administrator, requests that terms and conditions be accepted.</p>
+<p>f: A logged in Client accepts the terms and conditions. </p>
+<p>g: A logged in Administrator, updates the status of the sales order from assembled, approved, confirmed, to generate. </p> 
+<p>h: A logged in Administrator can generate an invoice if the sales order status is on 'generate'</p>
+<p>i: A logged in Administrator can now generate a Peppol Xml Invoice using today's exchange rates setup on Settings...View...Peppol Electronic Invoicing...One of From Currency and One of To Currency</p>
+<p>j: Peppol exceptions will be raised.</p>
 <p><b>22 March 2023</b></p>
 <p>Preparation for Peppol e-Invoicing: UBL classes created using num-num/ubl-invoice. See folder src/Invoice/Ubl. Psalm Level 1 tested.</p>
 <p>Html of invoice can be created - modal_inv_to_html - under View...Options</p>

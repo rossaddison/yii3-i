@@ -155,7 +155,7 @@ final class QuoteItemController
         $quote_id = (string)$session->get('quote_id');
         $quote_item = $this->quoteitem($currentRoute, $qiR);
         $parameters = [
-                'title' => 'Edit',
+                'title' => $this->translator->translate('invoice.edit'),
                 'action' => ['quoteitem/edit', ['id' => $currentRoute->getArgument('id')]],
                 'errors' => [],
                 'body' => $this->body($quote_item ?: new QuoteItem()),
@@ -183,7 +183,7 @@ final class QuoteItemController
                          */
                         $request_quote_item = (int)$this->quoteitem($currentRoute, $qiR)->getId();
                         $this->saveQuoteItemAmount($request_quote_item, 
-                                                   $quantity, $price, $discount, $tax_rate_percentage, $qias, $qiar);    
+                                                   $quantity, $price, $discount, $tax_rate_percentage, $qias, $qiar, $sR);    
                         return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/quote_successful',
                         ['heading'=>'Successful', 'message'=>$sR->trans('record_successfully_updated'),'url'=>'quote/view','id'=>$quote_id])); 
                     }
@@ -205,14 +205,36 @@ final class QuoteItemController
         return null;
     }
     
-    public function saveQuoteItemAmount(int $quote_item_id, float $quantity, float $price, float $discount, float|null $tax_rate_percentage, QIAS $qias, QIAR $qiar): void
+    /**
+     * 
+     * @param int $quote_item_id
+     * @param float $quantity
+     * @param float $price
+     * @param float $discount
+     * @param float $tax_rate_percentage
+     * @param QIAS $qias
+     * @param QIAR $qiar
+     * @param SR $sR
+     * @return void
+     */
+    public function saveQuoteItemAmount(int $quote_item_id, float $quantity, float $price, float $discount, float $tax_rate_percentage, QIAS $qias, QIAR $qiar, SR $sR): void
     {  
        $qias_array = [];
        if ($quote_item_id) {
             $qias_array['quote_item_id'] = $quote_item_id;
             $sub_total = $quantity * $price;
-            $tax_total = ($sub_total * (($tax_rate_percentage ?? 0)/100));
-            $discount_total = $quantity*$discount;
+            $discount_total = ($quantity*$discount);
+            $tax_total = 0.00;
+            // NO VAT
+            if ($sR->get_setting('enable_vat_registration') === '0') { 
+             $tax_total = (($sub_total * ($tax_rate_percentage/100)));
+            }
+            // VAT
+            if ($sR->get_setting('enable_vat_registration') === '1') { 
+             // EARLY SETTLEMENT CASH DISCOUNT MUST BE REMOVED BEFORE VAT DETERMINED
+             // @see https://informi.co.uk/finance/how-vat-affected-discounts
+             $tax_total = ((($sub_total-$discount_total) * ($tax_rate_percentage/100)));
+            }
             $qias_array['discount'] = $discount_total;
             $qias_array['subtotal'] = $sub_total;
             $qias_array['taxtotal'] = $tax_total;

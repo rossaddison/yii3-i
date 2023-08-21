@@ -43,12 +43,15 @@ use App\User\UserService;
 use Psr\Http\Message\ResponseInterface as Response;
 
 // Yiisoft
+use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Security\Random;
 use Yiisoft\Session\SessionInterface;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\User\CurrentUser;
 use Yiisoft\Yii\View\ViewRenderer;
+
+use App\Invoice\Libraries\Crypt;
 
 use Cycle\Database\DatabaseManager;
 
@@ -60,14 +63,18 @@ final class InvoiceController
     private TranslatorInterface $translator;
     private SettingService $settingService;
     private SessionInterface $session;
+    private SettingRepository $s;
+    private Crypt $crypt;
            
     public function __construct(
-                                WebControllerService $webService, 
-                                UserService $userService, 
-                                TranslatorInterface $translator,
-                                SettingService $settingService,
-                                ViewRenderer $viewRenderer,
-                                SessionInterface $session,
+        WebControllerService $webService, 
+        UserService $userService, 
+        TranslatorInterface $translator,
+        SettingService $settingService,
+        ViewRenderer $viewRenderer,
+        SessionInterface $session,
+        SettingRepository $s,
+        Crypt $crypt
     )
     {
         $this->webService = $webService;
@@ -76,41 +83,595 @@ final class InvoiceController
         $this->settingService = $settingService;
         $this->viewRenderer = $viewRenderer;
         $this->session = $session;
+        $this->s = $s;
+        $this->crypt = $crypt;
                 
         // Authenticated (Signed Up) and Unauthorised (No Permissions)
         if (!$this->userService->hasPermission('viewInv') && !$this->userService->hasPermission('editInv')) {
             $this->viewRenderer = $viewRenderer->withControllerName('invoice')
                                                ->withLayout('@views/layout/guest.php');
-            $this->flash($this->session, 'info' , $this->translator->translate('invoice.permission.unauthorised'));
+            $this->flash('info' , $this->translator->translate('invoice.permission.unauthorised'));
         }
         
         // Client: Authenticated and Authorised (Permission: viewInv)
         if ($this->userService->hasPermission('viewInv') && !$this->userService->hasPermission('editInv')) {
             $this->viewRenderer = $viewRenderer->withControllerName('invoice')
                                                ->withLayout('@views/layout/guest.php');
-            $this->flash($this->session, 'info' , $this->translator->translate('invoice.permission.authorised.view'));
+            $this->flash('info' , $this->translator->translate('invoice.permission.authorised.view'));
         }
         
         // Administrator: Authenticated and Authorised (Permission: editInv)
         if ($this->userService->hasPermission('editInv')) {
             $this->viewRenderer = $viewRenderer->withControllerName('invoice')
                                                  ->withLayout('@views/layout/invoice.php');
-            $this->flash($this->session, 'info' , $this->translator->translate('invoice.permission.authorised.edit')); 
+            $this->flash('info' , $this->translator->translate('invoice.permission.authorised.edit')); 
         }
     }
     
     /**
-     * @param SessionInterface $session
      * @return string
      */
-    private function alert(SessionInterface $session) : string {
+    private function alert() : string {
         return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
         [
-            'flash'=>$this->flash($session, '', ''),
+            'flash'=>$this->flash('', ''),
             'errors' => [],
         ]);
     }
     
+    /**
+     * 
+     * @param CurrentRoute $currentRoute
+     * @return Response
+     */
+    public function faq(CurrentRoute $currentRoute) : Response 
+    {
+        switch ($currentRoute->getArgument('topic')) {
+            case 'tp':
+                $view = $this->viewRenderer->renderPartialAsString('/invoice/info/taxpoint');
+                break;
+            default:
+                $view = '';
+                break;
+        }
+        return $this->viewRenderer->render('/invoice/info/view',['topic'=> $view]);
+    }
+    
+    /**
+     * Use curL to call the store_cove api ... 1.1.3. Make your first API call
+     * Tab: ERP or Accounting System, NOT: Individual Company, NOT: Reseller or Systems Integrator
+     * @see config\common\routes\routes.php api-store-cove
+     * @see https://www.storecove.com/docs 3.3.2. Sending a document UBL format
+     * @return \Yiisoft\DataResponse\DataResponse
+     */
+    public function store_cove_call_api() : \Yiisoft\DataResponse\DataResponse 
+    {
+        $store_cove = "https://api.storecove.com/api/v2/discovery/receives";
+        // 1.1.2 : Create a new API key by clicking the "Create New API Key" button. For the Integrator package, create a "Master" key.
+        /** 
+         * @var mixed $api_key_here
+         */
+        $api_key_here = $this->crypt->decode($this->s->get_setting('gateway_storecove_apiKey')); 
+        $site = curl_init();
+        curl_setopt($site, CURLOPT_URL, $store_cove);
+        curl_setopt($site, CURLOPT_POST, true);
+        curl_setopt($site, CURLOPT_RETURNTRANSFER, true); 
+        curl_setopt($site, CURLOPT_HTTPHEADER, ["Accept: application/json","Authorization: Bearer $api_key_here","Content-Type: application/json"]);
+        curl_setopt($site, CURLOPT_HEADER, true); 
+        /**
+         * @see https://www.storecove.com/docs/#_getting_started 1.1.3. Make your first API call 
+         */
+        $data = '{"documentTypes": ["invoice"], "network": "peppol", "metaScheme": "iso6523-actorid-upis", "scheme": "nl:kvk", "identifier":"60881119"}';
+        curl_setopt($site, CURLOPT_POSTFIELDS, $data);
+        curl_close($site);
+        $message = curl_error($site) ? curl_error($site) : 
+        $this->translator->translate('invoice.curl.store.cove.api.setup.successful');
+        $parameters = [
+           'result' => curl_exec($site),
+           'message' => $message,
+           'status' => curl_error($site) ? 'warning' : 'success'
+        ];
+        return $this->viewRenderer->render('/invoice/curl/api_result', $parameters);
+    }
+    
+    /**
+     * Use curL to call the store_cove api ... 1.1.4a. Create a sender: Get the Legal Entity Id
+     * @see config\common\routes\routes.php api-store-cove-get-legal-entity-id
+     * @see https://www.storecove.com/docs/
+     * @return \Yiisoft\DataResponse\DataResponse
+     */
+    public function store_cove_call_api_get_legal_entity_id() : \Yiisoft\DataResponse\DataResponse 
+    {
+        $store_cove = "https://api.storecove.com/api/v2/legal_entities";
+        /** 
+         * @var mixed $api_key_here
+         */
+        $api_key_here = $this->crypt->decode($this->s->get_setting('gateway_storecove_apiKey'));
+        $site = curl_init();
+        curl_setopt($site, CURLOPT_URL, $store_cove);
+        curl_setopt($site, CURLOPT_POST, true);
+        curl_setopt($site, CURLOPT_RETURNTRANSFER, true); 
+        curl_setopt($site, CURLOPT_HTTPHEADER, ["Accept: application/json","Authorization: Bearer $api_key_here","Content-Type: application/json"]);
+        curl_setopt($site, CURLOPT_HEADER, true);
+        $country_code_identifier = 'GB';
+        $data = '{"party_name": "Test Party", "line1": "Test Street 1", "city": "Test City", "zip": "Zippy", "country": "'.$country_code_identifier.'"}';
+        curl_setopt($site, CURLOPT_POSTFIELDS, $data);
+        curl_close($site);
+        $message = curl_error($site) ? curl_error($site) : 
+        $this->translator->translate('invoice.curl.store.cove.api.get.legal.entity.id.successful');
+        $parameters = [
+           'result' => curl_exec($site),
+           'message' => $message,
+           'status' => curl_error($site) ? 'warning' : 'success'
+        ];
+        return $this->viewRenderer->render('/invoice/curl/api_result', $parameters);
+    }
+    
+    /**
+     * Use curL to call the store_cove api ... 1.1.4b Create a Sender: Create an Identifier
+     * @see config\common\routes\routes.php api-store-cove-legal-entity-identifier
+     * @see https://www.storecove.com/docs/
+     * @return \Yiisoft\DataResponse\DataResponse
+     */
+    public function store_cove_call_api_legal_entity_identifier() : \Yiisoft\DataResponse\DataResponse 
+    {
+        // Obtain from above function store_cove_call_api_legal_entity()
+        // store-cove regex: ^GB(\d{9}(\d{3})?$|^[A-Z]{2}\d{3})$ will match eg. GB000123456
+        
+        // eg. GB obtained from setting view storecove
+        $legal = $this->s->get_setting('storecove_country');
+        // Must be a 9 digit number including preceding zeros or a 12 digit number
+        // eg. 000217688
+        $id = '000217793';
+        $scheme_tax_identifier = 'GB:VAT';
+        $combo_id = $legal.$id;
+        $store_cove = "https://api.storecove.com/api/v2/legal_entities/$id/peppol_identifiers";
+        /** 
+         * @var mixed $api_key_here
+         */
+        $api_key_here = $this->crypt->decode($this->s->get_setting('gateway_storecove_apiKey'));
+        $site = curl_init();
+        curl_setopt($site, CURLOPT_URL, $store_cove);
+        curl_setopt($site, CURLOPT_POST, true);
+        curl_setopt($site, CURLOPT_RETURNTRANSFER, true); 
+        curl_setopt($site, CURLOPT_HTTPHEADER, ["Accept: application/json","Authorization: Bearer $api_key_here","Content-Type: application/json"]);
+        curl_setopt($site, CURLOPT_HEADER, true); 
+        $data = '{"superscheme": "iso6523-actorid-upis", "scheme": "'.$scheme_tax_identifier.'", "identifier": "'.$combo_id.'"}';
+        curl_setopt($site, CURLOPT_POSTFIELDS, $data);
+        curl_close($site);
+        $message = curl_error($site) ? curl_error($site) : 
+        $this->translator->translate('invoice.curl.store.cove.api.legal.entity.identifier.successful');
+        $parameters = [
+           'result' => curl_exec($site),
+           'message' => $message,
+           'status' => curl_error($site) ? 'warning' : 'success'
+        ];
+        return $this->viewRenderer->render('/invoice/curl/api_result', $parameters);
+    }
+    
+    /**
+     * @see https://app.storecove.com/en/docs #1.1.5 Send your first invoice .. Click on green button for json copy
+     * Paste json copy into $data
+     * @return \Yiisoft\DataResponse\DataResponse
+     */
+    public function store_cove_send_test_json_invoice() : \Yiisoft\DataResponse\DataResponse 
+    {
+        $store_cove = "https://api.storecove.com/api/v2/document_submissions";
+        // Remove zeros from '000217668' => integer'
+        $legal_entity_id_as_integer = (int)$this->s->get_setting('storecove_legal_entity_id');
+        /** 
+         * @var mixed $api_key_here
+         */
+        $api_key_here = $this->crypt->decode($this->s->get_setting('gateway_storecove_apiKey'));
+        $site = curl_init();
+        curl_setopt($site, CURLOPT_URL, $store_cove);
+        curl_setopt($site, CURLOPT_POST, true);
+        curl_setopt($site, CURLOPT_RETURNTRANSFER, true); 
+        curl_setopt($site, CURLOPT_HTTPHEADER, ["Accept: application/json","Authorization: Bearer $api_key_here","Content-Type: application/json"]);
+        curl_setopt($site, CURLOPT_HEADER, true); 
+        // World ie. GB,  to Germany a.k.a "World to DE"     
+        $data = '{
+            "legalEntityId": '.$legal_entity_id_as_integer.',
+            "routing": {
+              "emails": [
+                "test@example.com"
+              ],
+              "eIdentifiers": [
+                {
+                  "scheme": "DE:LWID",
+                  "id": "10101010-STO-10"
+                }
+              ]
+            },
+            "document": {
+              "documentType": "invoice",
+              "invoice": {
+                "invoiceNumber": "202112007",
+                "issueDate": "2021-12-07",
+                "documentCurrencyCode": "EUR",
+                "taxSystem": "tax_line_percentages",
+                "accountingCustomerParty": {
+                  "party": {
+                    "companyName": "ManyMarkets Inc.",
+                    "address": {
+                      "street1": "Street 123",
+                      "zip": "1111AA",
+                      "city": "Here",
+                      "country": "DE"
+                    }
+                  },
+                  "publicIdentifiers": [
+                    {
+                      "scheme": "DE:LWID",
+                      "id": "10101010-STO-10"
+                    }
+                  ]
+                },
+                "invoiceLines": [
+                  {
+                    "description": "The things you purchased",
+                    "amountExcludingVat": 10,
+                    "tax": {
+                      "percentage": 0,
+                      "category": "export",
+                      "country": "DE"
+                    }
+                  }
+                ],
+                "taxSubtotals": [
+                  {
+                    "percentage": 0,
+                    "category": "export",
+                    "country": "DE",
+                    "taxableAmount": 10,
+                    "taxAmount": 0
+                  }
+                ],
+                "paymentMeansArray": [
+                  {
+                    "account": "NL50ABNA0552321249",
+                    "holder": "Storecove",
+                    "code": "credit_transfer"
+                  }
+                ],
+                "amountIncludingVat": 10
+              }
+            }
+        }';
+        curl_setopt($site, CURLOPT_POSTFIELDS, $data);
+        curl_close($site);
+        $message = curl_error($site) ? curl_error($site) : 
+        $this->translator->translate('invoice.curl.store.cove.api.send.test.json.invoice.successful');
+        $parameters = [
+           'result' => curl_exec($site),
+           'message' => $message,
+           'status' => curl_error($site) ? 'warning' : 'success'
+        ];
+        return $this->viewRenderer->render('/invoice/curl/api_result', $parameters);
+    }
+    
+    public function store_cove_send_actual_json_invoice() : \Yiisoft\DataResponse\DataResponse 
+    {
+        $store_cove = "https://api.storecove.com/api/v2/document_submissions";
+        // Remove zeros from '000217668' => integer'
+        $legal_entity_id_as_integer = (int)$this->s->get_setting('storecove_legal_entity_id');
+        /** 
+         * @var mixed $api_key_here
+         */
+        $api_key_here = $this->crypt->decode($this->s->get_setting('gateway_storecove_apiKey'));
+        $site = curl_init();
+        curl_setopt($site, CURLOPT_URL, $store_cove);
+        curl_setopt($site, CURLOPT_POST, true);
+        curl_setopt($site, CURLOPT_RETURNTRANSFER, true); 
+        curl_setopt($site, CURLOPT_HTTPHEADER, ["Accept: application/json","Authorization: Bearer $api_key_here","Content-Type: application/json"]);
+        curl_setopt($site, CURLOPT_HEADER, true); 
+        // World ie. GB,  to Germany a.k.a "World to DE"     
+        $data = '{
+            "legalEntityId": '.$legal_entity_id_as_integer.',
+            "routing": {
+              "emails": [
+                "test@example.com"
+              ],
+              "eIdentifiers": [
+                {
+                  "scheme": "DE:LWID",
+                  "id": "10101010-STO-10"
+                }
+              ]
+            },
+            "document": {
+              "documentType": "invoice",
+              "invoice": {
+                "invoiceNumber": "202112007",
+                "issueDate": "2021-12-07",
+                "documentCurrencyCode": "EUR",
+                "taxSystem": "tax_line_percentages",
+                "accountingCustomerParty": {
+                  "party": {
+                    "companyName": "ManyMarkets Inc.",
+                    "address": {
+                      "street1": "Street 123",
+                      "zip": "1111AA",
+                      "city": "Here",
+                      "country": "DE"
+                    }
+                  },
+                  "publicIdentifiers": [
+                    {
+                      "scheme": "DE:LWID",
+                      "id": "10101010-STO-10"
+                    }
+                  ]
+                },
+                "invoiceLines": [
+                  {
+                    "description": "The things you purchased",
+                    "amountExcludingVat": 10,
+                    "tax": {
+                      "percentage": 0,
+                      "category": "export",
+                      "country": "DE"
+                    }
+                  }
+                ],
+                "taxSubtotals": [
+                  {
+                    "percentage": 0,
+                    "category": "export",
+                    "country": "DE",
+                    "taxableAmount": 10,
+                    "taxAmount": 0
+                  }
+                ],
+                "paymentMeansArray": [
+                  {
+                    "account": "NL50ABNA0552321249",
+                    "holder": "Storecove",
+                    "code": "credit_transfer"
+                  }
+                ],
+                "amountIncludingVat": 10
+              }
+            }
+        }';
+        
+        $data = '{
+            "legalEntityId": 100000099999,
+            "idempotencyGuid": "61b37456-5f9e-4d56-b63b-3b1a23fa5c73",
+            "routing": {
+              "eIdentifiers": [
+                {
+                  "scheme": "NL:KVK",
+                  "id": "27375186"
+                }
+              ],
+              "emails": [
+                "receiver@example.com"
+              ],
+              "workflow": "full"
+            },
+            "attachments": [
+              {
+                "filename": "myname.pdf",
+                "document": "JVBERi0xLjIgCjkgMCBvYmoKPDwKPj4Kc3RyZWFtCkJULyAzMiBUZiggIFlPVVIgVEVYVCBIRVJFICAgKScgRVQKZW5kc3RyZWFtCmVuZG9iago0IDAgb2JqCjw8Ci9UeXBlIC9QYWdlCi9QYXJlbnQgNSAwIFIKL0NvbnRlbnRzIDkgMCBSCj4+CmVuZG9iago1IDAgb2JqCjw8Ci9LaWRzIFs0IDAgUiBdCi9Db3VudCAxCi9UeXBlIC9QYWdlcwovTWVkaWFCb3ggWyAwIDAgMjUwIDUwIF0KPj4KZW5kb2JqCjMgMCBvYmoKPDwKL1BhZ2VzIDUgMCBSCi9UeXBlIC9DYXRhbG9nCj4+CmVuZG9iagp0cmFpbGVyCjw8Ci9Sb290IDMgMCBSCj4+CiUlRU9G",
+                "mimeType": "application/pdf",
+                "primaryImage": false,
+                "documentId": "myId",
+                "description": "A Description"
+              }
+            ],
+            "document": {
+              "documentType": "invoice",
+              "invoice": {
+                "taxSystem": "tax_line_percentages",
+                "documentCurrency": "EUR",
+                "invoiceNumber": "F463333333336",
+                "issueDate": "2020-11-26",
+                "taxPointDate": "2020-11-26",
+                "dueDate": "2020-12-26",
+                "invoicePeriod": "2020-11-12 - 2020-11-17",
+                "references": [
+                  {
+                    "documentType": "purchase_order",
+                    "documentId": "buyer reference or purchase order reference is recommended",
+                    "lineId": "1",
+                    "issueDate": "2021-12-01"
+                  },
+                  {
+                    "documentType": "buyer_reference",
+                    "documentId": "buyer reference or purchase order reference is recommended"
+                  },
+                  {
+                    "documentType": "sales_order",
+                    "documentId": "R06788111"
+                  },
+                  {
+                    "documentType": "billing",
+                    "documentId": "refers to a previous invoice"
+                  },
+                  {
+                    "documentType": "contract",
+                    "documentId": "contract123"
+                  },
+                  {
+                    "documentType": "despatch_advice",
+                    "documentId": "DDT123"
+                  },
+                  {
+                    "documentType": "receipt",
+                    "documentId": "aaaaxxxx"
+                  },
+                  {
+                    "documentType": "originator",
+                    "documentId": "bbbbyyyy"
+                  }
+                ],
+                "accountingCost": "23089",
+                "note": "This is the invoice note. Senders can enter free text. This may not be read by the receiver, so it is not encouraged to use this.",
+                "accountingSupplierParty": {
+                  "party": {
+                    "contact": {
+                      "email": "sender@company.com",
+                      "firstName": "Jony",
+                      "lastName": "Ponski",
+                      "phone": "088-333333333"
+                    }
+                  }
+                },
+                "accountingCustomerParty": {
+                  "publicIdentifiers": [
+                    {
+                      "scheme": "NL:KVK",
+                      "id": "27375186"
+                    },
+                    {
+                      "scheme": "NL:VAT",
+                      "id": "NL999999999B01"
+                    }
+                  ],
+                  "party": {
+                    "companyName": "Receiver Company",
+                    "address": {
+                      "street1": "Streety 123",
+                      "street2": null,
+                      "city": "Alphen aan den Rijn",
+                      "zip": "2400 AA",
+                      "county": null,
+                      "country": "NL"
+                    },
+                    "contact": {
+                      "email": "receiver@company.com",
+                      "firstName": "Pon",
+                      "lastName": "Johnson",
+                      "phone": "088-444444444"
+                    }
+                  }
+                },
+                "delivery": {
+                  "deliveryPartyName": "Delivered To Name",
+                  "actualDeliveryDate": "2020-11-01",
+                  "deliveryLocation": {
+                    "id": "871690930000478611",
+                    "schemeId": "EAN",
+                    "address": {
+                      "street1": "line1",
+                      "street2": "line2",
+                      "city": "CITY",
+                      "zip": "3423423",
+                      "county": "CA",
+                      "country": "US"
+                    }
+                  }
+                },
+                "paymentTerms": {
+                  "note": "For payment terms, only a note is supported by Peppol currently."
+                },
+                "paymentMeansArray": [
+                  {
+                    "code": "credit_transfer",
+                    "account": "NL50RABO0162432445",
+                    "paymentId": "44556677"
+                  }
+                ],
+                "invoiceLines": [
+                  {
+                    "lineId": "1",
+                    "amountExcludingVat": 2.88,
+                    "itemPrice": 0.12332,
+                    "baseQuantity": 2,
+                    "quantity": 63,
+                    "quantityUnitCode": "KWH",
+                    "allowanceCharges": [
+                      {
+                        "reason": "special discount",
+                        "amountExcludingTax": -0.25
+                      },
+                      {
+                        "reason": "even more special discount",
+                        "amountExcludingTax": -0.75
+                      }
+                    ],
+                    "tax": {
+                      "percentage": 21,
+                      "country": "NL",
+                      "category": "standard"
+                    },
+                    "orderLineReferenceLineId": "3",
+                    "accountingCost": "23089",
+                    "name": "Supply peak",
+                    "description": "Supply",
+                    "invoicePeriod": "2020-11-12 - 2020-11-17",
+                    "note": "Only half the story...",
+                    "references": [],
+                    "buyersItemIdentification": "9 008 115",
+                    "sellersItemIdentification": "E_DVK_PKlik_KVP_LP",
+                    "standardItemIdentification": "8718868597083",
+                    "standardItemIdentificationSchemeId": "GTIN",
+                    "additionalItemProperties": [
+                      {
+                        "name": "UtilityConsumptionPoint",
+                        "value": "871690930000222221"
+                      },
+                      {
+                        "name": "UtilityConsumptionPointAddress",
+                        "value": "VE HAZERSWOUDE-XXXXX"
+                      }
+                    ]
+                  }
+                ],
+                "allowanceCharges": [
+                  {
+                    "reason": "late payment",
+                    "amountExcludingTax": 10.2,
+                    "tax": {
+                      "percentage": 21,
+                      "country": "NL",
+                      "category": "standard"
+                    }
+                  }
+                ],
+                "taxSubtotals": [
+                  {
+                    "taxableAmount": 13.08,
+                    "taxAmount": 2.75,
+                    "percentage": 21,
+                    "country": "NL"
+                  }
+                ],
+                "amountIncludingVat": 15.83,
+                "prepaidAmount": 1
+              }
+            }
+          }';
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        curl_setopt($site, CURLOPT_POSTFIELDS, $data);
+        curl_close($site);
+        $message = curl_error($site) ? curl_error($site) : 
+        $this->translator->translate('invoice.curl.store.cove.api.setup.legal.entity.successful');
+        $parameters = [
+           'result' => curl_exec($site),
+           'message' => $message,
+           'status' => curl_error($site) ? 'warning' : 'success'
+        ];
+        return $this->viewRenderer->render('/invoice/curl/api_result', $parameters);
+    }
+        
     /**
      * @param SessionInterface $session
      * @param ClientRepository $cR
@@ -124,7 +685,7 @@ final class InvoiceController
      * @param TaskRepository $taskR
      * @param ProjectRepository $prjctR
      */
-    public function dashboard (SessionInterface $session,
+    public function dashboard (
                                ClientRepository $cR,
                                GroupRepository $gR,
                                InvRepository $iR,
@@ -137,7 +698,7 @@ final class InvoiceController
                                ProjectRepository $prjctR
                               ) : \Yiisoft\DataResponse\DataResponse {
         $data = [
-            'alerts'=>$this->alert($session),
+            'alerts'=>$this->alert(),
             'clienthelper'=>new ClientHelper($sR),
             // Repositories
             'irR'=>$irR,
@@ -206,13 +767,12 @@ final class InvoiceController
     
     /**
      * 
-     * @param SessionInterface $session
      * @param string $level
      * @param string $message
      * @return Flash
      */
-    private function flash(SessionInterface $session, string $level, string $message): Flash{
-        $flash = new Flash($session);
+    private function flash(string $level, string $message): Flash{
+        $flash = new Flash($this->session);
         $flash->set($level, $message); 
         return $flash;
     }
@@ -228,7 +788,8 @@ final class InvoiceController
      * @param ClientRepository $cR
      * @param GroupRepository $gR
      */
-    public function index(SessionInterface $session, 
+    public function index(CurrentRoute $currentRoute,
+                          SessionInterface $session, 
                           SettingRepository $sR,
                           TaxRateRepository $trR,
                           UnitRepository $uR,
@@ -239,7 +800,7 @@ final class InvoiceController
                           GroupRepository $gR
                          ): \Yiisoft\DataResponse\DataResponse {
         if (($sR->get_setting('debug_mode') == '1') && ($this->userService->hasPermission('editInv'))) {
-            $this->flash($session, 'info' , $this->viewRenderer->renderPartialAsString('/invoice/info/invoice'));
+            $this->flash('info' , $this->viewRenderer->renderPartialAsString('/invoice/info/invoice'));
         }    
         $gR->repoCountAll() === 0 ? $this->install_default_invoice_and_quote_group($gR) : '';
         $pmR->count() === 0 ? $this->install_default_payment_methods($pmR) : '';
@@ -249,9 +810,10 @@ final class InvoiceController
         // The cldr is saved from the $session->get('_language') parameter in the Invoice/Layout/main.php file as soon as the user changes the locale.
         // The below line is an additional line of code to ensure that the locale (session runtime file) is saved to database 'cldr' and may be removed in future. 
         // The cldr setting is not accessible in non debug mode by means of the tab-index
-        $sR->repoCount('cldr') === 1 && $sR->get_setting('cldr') !== (string)$session->get('_language') ? $this->cldr((string)$session->get('_language') ?: 'en',$sR) : '';
+        //$sR->repoCount('cldr') === 1 && $sR->get_setting('cldr') !== (string)$session->get('_language') ? $this->cldr((string)$session->get('_language') ?: $currentRoute->getArgument('_language'),$sR) : '';
+        $session->set('_language', $currentRoute->getArgument('_language'));
         $parameters = [
-            'alerts'=> $this->alert($session),
+            'alerts'=> $this->alert(),
         ];
         return $this->viewRenderer->render('index', $parameters);
     }
@@ -265,12 +827,13 @@ final class InvoiceController
      * @param ClientRepository $cR
      * @return void
      */
-    private function install_check_for_preexisting_test_data(SettingRepository $sR, 
-                                                             FamilyRepository $fR, 
-                                                             UnitRepository $uR, 
-                                                             ProductRepository $pR, 
-                                                             TaxRateRepository $trR, 
-                                                             ClientRepository $cR) : void {
+    private function install_check_for_preexisting_test_data(
+        SettingRepository $sR, 
+        FamilyRepository $fR, 
+        UnitRepository $uR, 
+        ProductRepository $pR, 
+        TaxRateRepository $trR, 
+        ClientRepository $cR) : void {
         // The setting install_test_data exists
         if ($sR->repoCount('install_test_data') === 1 
                 && $fR->repoTestDataCount() == 0
@@ -304,7 +867,7 @@ final class InvoiceController
             // whether this setting exists. If not THIS function will be run.                      //
             // CAUTION: THIS WILL ALSO REMOVE ALL THE SETTINGS INCLUDING SECRET KEYS
             //*************************************************************************************//
-            'default_settings_exist'=>1,                  
+            'default_settings_exist'=> '1',                  
             'cldr'=> $session->get('_language') ?? 'en',
             'cron_key' => Random::string(32),
             'currency_symbol' => '£',
@@ -316,6 +879,8 @@ final class InvoiceController
             'decimal_point' => '.',
             'default_invoice_group' => 1,
             'default_quote_group' => 2,
+            'default_invoice_terms' => '',
+            'default_sales_order_group' => 3,
             'default_language' => $sR->get_folder_language() ?: 'English', 
             //paginator list limit
             'default_list_limit'=>120, 
@@ -325,13 +890,16 @@ final class InvoiceController
             // read_only_toggle)
             'disable_read_only'=> 0,
             'disable_sidebar' => 1,
-            // By default, invoice deletion is not allowed. Invoices have to be cancelled with a credit invoice.
+            // Invoice deletion by Law is not allowed. Invoices have to be cancelled with a credit invoice.
             'enable_invoice_deletion'=>true,
+            'enable_peppol_client_defaults'=> 1,
+            'enable_vat_registration'=> 0,
             // Archived pdfs are automatically sent to customers from view/invoice...Options...Send
             // The pdf is sent along with the attachment to the invoice on the view/invoice.
             'email_pdf_attachment' => 1,
             'generate_invoice_number_for_draft' => 1,
             'generate_quote_number_for_draft' => 1,
+            'generate_so_number_for_draft' => 1,
             'install_test_data'=>0,            
             //1 => None, 2 => Cash, 3 => Cheque, 4 => Card/Direct Debit - Succeeded
             //5 => Card/Direct Debit - Processing 6 => Card/Direct Debit - Customer Ready 
@@ -339,6 +907,14 @@ final class InvoiceController
             'invoices_due_after' => 30,
             'invoice_logo' => 'favicon.ico',
             'mark_invoices_sent_copy' => 0,
+            'mpdf_ltr' => 1,
+            'mpdf_cjk' => 1,
+            'mpdf_auto_script_to_lang' => 1,
+            'mpdf_auto_vietnamese' => 1,
+            'mpdf_auto_arabic' => 1,
+            'mpdf_allow_charset_conversion' => 1,
+            'mpdf_auto_language_to_font' => 1,
+            'mpdf_show_image_errors' => 1,
             // Number format Default located in SettingsRepository 
             'number_format' => 'number_format_us_uk',
             'payment_list_limit' => 20,
@@ -347,7 +923,7 @@ final class InvoiceController
             // Accumulate pdf's in archive folder /src/Invoice/Uploads/Archive/Invoice
             // Settings...View...Invoices...Pdf Settings...Folder
             'pdf_archive_inv' => 1,
-            // Preview in webpage as html instead of tabbed pdf
+            // Preview in webpage as html instead of tabbed pdf with
             // Settings...View...Invoices...Pdf Settings...</>
             'pdf_html_inv' => 0,
             // Setting => filename ... under views/invoice/template/invoice/pdf           
@@ -359,9 +935,10 @@ final class InvoiceController
             'pdf_invoice_template_overdue' => 'overdue',
             // Setting => filename ... under views/invoice/template/quote/pdf
             'pdf_quote_template' => 'quote',            
-            // Templates used for processing online payments via customers login portal
+            // Templates used for processing online payments via customers/clients login portal
+            'peppol_xml_stream' => 1,
             'public_invoice_template' => 'Invoice_Web',
-            'public_quote_template' => 'Invoice_Web',
+            'public_quote_template' => 'Quote_Web',
             'quotes_expire_after' => 15,
             // Set the invoice to read-only on sent by default;  
             'read_only_toggle' => 2,
@@ -627,6 +1204,13 @@ final class InvoiceController
         $q_group->setNext_id(1);
         $q_group->setLeft_pad(0);
         $gR->save($q_group);
+        
+        $so_group = new Group();
+        $so_group->setName('Sales Order Group');
+        $so_group->setIdentifier_format('SO{{{id}}}');
+        $so_group->setNext_id(1);
+        $so_group->setLeft_pad(0);
+        $gR->save($so_group);
     }
     
     /**
@@ -663,15 +1247,19 @@ final class InvoiceController
         $customer_ready = new PaymentMethod();
         $customer_ready->setName('Card / Direct Debit - Customer Ready for Payment');
         $pmR->save($customer_ready);
+        // 8
+        $peppol_access_point = new PaymentMethod();
+        $peppol_access_point->setName('Peppol Access Point');
+        $pmR->save($peppol_access_point);
     }
     
     /**
      * @return Response|true
      */
-    private function rbac(SessionInterface $session): bool|Response {
+    private function rbac(): bool|Response {
         $canEdit = $this->userService->hasPermission('viewInv');
         if (!$canEdit){
-            $this->flash($session,'warning', $this->translator->translate('invoice.permission'));
+            $this->flash('warning', $this->translator->translate('invoice.permission'));
             return $this->webService->getRedirectResponse('invoice/index');
         }
         return $canEdit;
@@ -739,13 +1327,12 @@ final class InvoiceController
                 $flash = $this->translator->translate('invoice.install.test.data');                 
         }
         $data = [
-                'alerts'=> $this->alert($session),          
+                'alerts'=> $this->alert(),          
         ];
         return $this->viewRenderer->render('index', $data);
     }
     
     /**
-     * @param SessionInterface $session
      * @param SettingRepository $sR
      * @param UnitRepository $uR
      * @param FamilyRepository $fR
@@ -755,8 +1342,7 @@ final class InvoiceController
      * @param InvRepository $iR
      * @param TaxRateRepository $trR
      */
-    public function test_data_reset(SessionInterface $session,  
-                                    SettingRepository $sR,
+    public function test_data_reset(SettingRepository $sR,
                                     UnitRepository $uR,
                                     FamilyRepository $fR,
                                     ProductRepository $pR,
@@ -778,9 +1364,9 @@ final class InvoiceController
         } else {
                 $flash = $this->translator->translate('invoice.install.test.data');           
         }
-        $this->flash($session, 'info', $flash);
+        $this->flash('info', $flash);
         $data = [
-                'alerts'=> $this->alert($session),          
+            'alerts'=> $this->alert(),          
         ];
         return $this->viewRenderer->render('index', $data);
     }   
@@ -838,8 +1424,8 @@ final class InvoiceController
                            ClientRepository $cR,                           
                            GroupRepository $gR
                           ): \Yiisoft\DataResponse\DataResponse {
-        $canEdit = $this->rbac($session);
-        $flash = $this->flash($session, 'info' , $this->viewRenderer->renderPartialAsString('/invoice/info/ubuntu'));        
+        $canEdit = $this->rbac();
+        $flash = $this->flash('info' , $this->viewRenderer->renderPartialAsString('/invoice/info/ubuntu'));        
         $gR->repoCountAll() === 0 ? $this->install_default_invoice_and_quote_group($gR) : '';
         $sR->repoCount('default_settings_exist') === 0 ? $this->install_default_settings_on_first_run($session, $sR) : ''; 
         $sR->repoCount('install_test_data') === 1 && $sR->get_setting('install_test_data') === '1' ? $this->install_test_data($trR, $uR, $fR, $pR, $cR, $sR) : '';

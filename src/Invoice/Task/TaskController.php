@@ -10,6 +10,8 @@ use App\Invoice\Entity\InvItem;
 use App\Invoice\Helpers\DateHelper;
 use App\Invoice\Helpers\NumberHelper;
 
+
+use App\Invoice\InvAllowanceCharge\InvAllowanceChargeRepository as ACIR;
 use App\Invoice\InvItemAmount\InvItemAmountService as iiaS;
 use App\Invoice\InvItem\InvItemRepository as iiR;
 use App\Invoice\InvTaxRate\InvTaxRateRepository as itrR;
@@ -249,6 +251,7 @@ final class TaskController
      * @param ValidatorInterface $validator
      * @param Request $request
      * @param SessionInterface $session
+     * @param ACIR $aciR
      * @param tR $taskR
      * @param sR $sR
      * @param trR $trR
@@ -260,7 +263,7 @@ final class TaskController
      * @param pymR $pymR
      */
     public function selection_inv(ValidatorInterface $validator, Request $request, SessionInterface $session,
-                                  tR $taskR, sR $sR, trR $trR, iiaR $iiaR, iiR $iiR, itrR $itrR, iaR $iaR, iR $iR, pymR $pymR)
+                                  ACIR $aciR, tR $taskR, sR $sR, trR $trR, iiaR $iiaR, iiR $iiR, itrR $itrR, iaR $iaR, iR $iR, pymR $pymR)
                                   : \Yiisoft\DataResponse\DataResponse {        
         $select_items = $request->getQueryParams();
         /** @var array $task_ids */
@@ -277,7 +280,7 @@ final class TaskController
             $this->save_task_lookup_item_inv($order, $task, $inv_id, $taskR, $trR, $iiaR, $sR, $validator);
             $order++;          
         }
-        $numberHelper->calculate_inv((string)$session->get('inv_id'), $iiR, $iiaR, $itrR, $iaR, $iR, $pymR);
+        $numberHelper->calculate_inv((string)$session->get('inv_id'), $aciR, $iiR, $iiaR, $itrR, $iaR, $iR, $pymR);
         return $this->factory->createResponse(Json::encode($tasks));        
     }
     

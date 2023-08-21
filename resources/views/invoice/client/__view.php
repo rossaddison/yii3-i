@@ -34,6 +34,10 @@ $datehelper = new DateHelper($s);
         <label for="client_surname" class="form-label" style="background:lightblue"><?= $s->trans('client_surname'); ?></label>
         <?= Html::encode($client->getClient_surname()); ?>
     </div>
+    <div class="mb-3 form-group">
+        <label for="client_number" class="form-label" style="background:lightblue"><?= $translator->translate('invoice.client.number'); ?></label>
+        <?= Html::encode($client->getClient_number()); ?>
+    </div>  
     <div class="mb-3 form-group no-margin">
         <label for="client_language" class="form-label" style="background:lightblue"><?php echo $s->trans('language'); ?></label>
         <?= Html::encode($client->getClient_language()); ?>         

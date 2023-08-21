@@ -358,11 +358,11 @@ class ZugferdXml
     protected function xmlSpecifiedTradeSettlementMonetarySummation(DOMDocument $doc) : DOMElement
     {
         $node = $doc->createElement('ram:SpecifiedTradeSettlementMonetarySummation');
-        $node->appendChild($this->currencyElement($doc, 'ram:LineTotalAmount', $this->inv_amount->getItem_subtotal() ?? 0.00));
+        $node->appendChild($this->currencyElement($doc, 'ram:LineTotalAmount', $this->inv_amount->getItem_subtotal() ?: 0.00));
         $node->appendChild($this->currencyElement($doc, 'ram:ChargeTotalAmount', 0));
         $node->appendChild($this->currencyElement($doc, 'ram:AllowanceTotalAmount', 0));
-        $node->appendChild($this->currencyElement($doc, 'ram:TaxBasisTotalAmount', $this->inv_amount->getItem_subtotal() ?? 0.00));
-        $node->appendChild($this->currencyElement($doc, 'ram:TaxTotalAmount', $this->inv_amount->getItem_tax_total() ?? 0.00));
+        $node->appendChild($this->currencyElement($doc, 'ram:TaxBasisTotalAmount', $this->inv_amount->getItem_subtotal() ?: 0.00));
+        $node->appendChild($this->currencyElement($doc, 'ram:TaxTotalAmount', $this->inv_amount->getItem_tax_total() ?: 0.00));
         $node->appendChild($this->currencyElement($doc, 'ram:GrandTotalAmount', $this->inv_amount->getTotal() ?? 0.00));
         $node->appendChild($this->currencyElement($doc, 'ram:TotalPrepaidAmount', $this->inv_amount->getPaid() ?? 0.00));
         $node->appendChild($this->currencyElement($doc, 'ram:DuePayableAmount', $this->inv_amount->getBalance() ?? 0.00));
@@ -461,7 +461,7 @@ class ZugferdXml
 
         // SpecifiedTradeSettlementMonetarySummation
         $sumNode = $doc->createElement('ram:SpecifiedTradeSettlementMonetarySummation');
-        $sumNode->appendChild($this->currencyElement($doc, 'ram:LineTotalAmount', $this->inv_amount->getItem_subtotal() ?? 0.00));
+        $sumNode->appendChild($this->currencyElement($doc, 'ram:LineTotalAmount', $this->inv_amount->getItem_subtotal() ?: 0.00));
         $node->appendChild($sumNode);
 
         return $node;

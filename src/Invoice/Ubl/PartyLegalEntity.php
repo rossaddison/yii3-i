@@ -1,25 +1,28 @@
 <?php
-declare(strict_types=1); 
+
+declare(strict_types=1);
 
 namespace App\Invoice\Ubl;
 
 use Sabre\Xml\Writer;
 use Sabre\Xml\XmlSerializable;
 
-class PartyLegalEntity implements XmlSerializable
-{
+class PartyLegalEntity implements XmlSerializable {
+
     private string $registrationName;
-    private ?string $companyId;
-    private ?string $companyIdAttributes;
-    
-    public function __construct(string $registrationName, ?string $companyId, ?string $companyIdAttributes) {
+    private array $companyIdAttributes;
+    private string $companyLegalForm;
+    private string $companyId;
+
+    public function __construct(string $registrationName, string $companyId, array $companyIdAttributes, string $companyLegalForm) {
         $this->registrationName = $registrationName;
         $this->companyId = $companyId;
         $this->companyIdAttributes = $companyIdAttributes;
-    } 
+        $this->companyLegalForm = $companyLegalForm;
+    }
 
     /**
-     * 
+     *
      * @return string
      */
     public function getRegistrationName(): string
@@ -37,27 +40,35 @@ class PartyLegalEntity implements XmlSerializable
         $this->registrationName = $registrationName;
         return $this;
     }
+    
+    public function getCompanyIdAttributeSchemeId(): string {
+        $companyIdAttributes = $this->companyIdAttributes;
+        /**
+         * @var string $companyIdAttributes['schemeID']
+         */
+        return $companyIdAttributes['schemeID'] ?? '';
+    }
 
     /**
      * 
-     * @return null|string
+     * @return string
      */
-    public function getCompanyId(): ?string
+    public function getCompanyId(): string
     {
         return $this->companyId;
     }
 
     /**
      * 
-     * @param null|string $companyId
-     * @param null|string $companyIdAttributes
+     * @param string $companyId
+     * @param array $companyIdAttributes
      * @return PartyLegalEntity
      */
-    public function setCompanyId(?string $companyId, ?string $companyIdAttributes = null): PartyLegalEntity
+    public function setCompanyId(string $companyId, array $companyIdAttributes = null): PartyLegalEntity
     {
         $this->companyId = $companyId;
-        if (null!==($companyIdAttributes)) {
-            $this->companyIdAttributes = $companyIdAttributes;
+        if (!empty($companyIdAttributes)) {
+          $this->companyIdAttributes = $companyIdAttributes;
         }
         return $this;
     }
@@ -67,12 +78,11 @@ class PartyLegalEntity implements XmlSerializable
      * @param Writer $writer
      * @return void
      */
-    public function xmlSerialize(Writer $writer): void
-    {
+    public function xmlSerialize(Writer $writer): void {
         $writer->write([
             Schema::CBC . 'RegistrationName' => $this->registrationName,
         ]);
-        if ($this->companyId !== null) {
+        if ($this->companyId !== '') {
             $writer->write([
                 [
                     'name' => Schema::CBC . 'CompanyID',

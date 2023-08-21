@@ -13,9 +13,10 @@ use Yiisoft\View\WebView;
  * @var WebView $this
  * @var \Yiisoft\Translator\TranslatorInterface $translator
  */
-
-$this->setTitle($s->trans('add_files'));
-?>
+ if ($invEdit && $invView) { 
+    $this->setTitle($s->trans('add_files'));
+ }
+ ?>
 
 <div class="panel panel-default no-margin">
     <div class="panel-heading">
@@ -23,6 +24,7 @@ $this->setTitle($s->trans('add_files'));
     </div>
     <div class="panel-body clearfix">
         <div class="container">
+            <?php if ($invView && $invEdit) { ?> 
             <div class="row">
                 <div>
                     <div>
@@ -61,9 +63,12 @@ $this->setTitle($s->trans('add_files'));
                     </div>
                 </div>
             </div>
+            <?php } ?>
+            <?php if ($invView) { ?>
             <div class="row">
                 <?= $partial_inv_attachments_list; ?>
             </div>
+            <?php } ?>
         </div>
 
     </div>

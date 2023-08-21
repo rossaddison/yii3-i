@@ -23,16 +23,20 @@ use App\User\UserService;
 use App\Invoice\Client\ClientRepository as cR;
 use App\Invoice\ClientCustom\ClientCustomRepository as ccR;
 use App\Invoice\ClientNote\ClientNoteRepository as cnR;
+use App\Invoice\ClientPeppol\ClientPeppolRepository as cpR;
 use App\Invoice\CustomValue\CustomValueRepository as cvR;
 use App\Invoice\CustomField\CustomFieldRepository as cfR;
+use App\Invoice\DeliveryLocation\DeliveryLocationRepository as delR;
 use App\Invoice\Group\GroupRepository as gR;
 use App\Invoice\InvAmount\InvAmountRepository as iaR;
 use App\Invoice\Inv\InvRepository as iR;
 use App\Invoice\InvRecurring\InvRecurringRepository as irR;
 use App\Invoice\Payment\PaymentRepository as pymtR;
+use App\Invoice\PostalAddress\PostalAddressRepository as paR;
 use App\Invoice\QuoteAmount\QuoteAmountRepository as qaR;
 use App\Invoice\Quote\QuoteRepository as qR;
 use App\Invoice\Setting\SettingRepository as sR;
+use App\Invoice\UserClient\UserClientRepository as ucR;
 // Helpers
 use App\Invoice\Helpers\CountryHelper;
 use App\Invoice\Helpers\ClientHelper;
@@ -89,6 +93,16 @@ final class ClientController
         $this->userclientService = $userclientService;
         $this->currentUser = $currentUser;
         $this->factory = $factory;
+        $this->viewRenderer = $viewRenderer;
+        $this->userService = $userService;
+        if ($this->userService->hasPermission('viewInv') && !$this->userService->hasPermission('editInv')) {
+            $this->viewRenderer = $viewRenderer->withControllerName('invoice/client')
+                                                 ->withLayout('@views/layout/guest.php');
+        }
+        if ($this->userService->hasPermission('viewInv') && $this->userService->hasPermission('editInv')) {
+            $this->viewRenderer = $viewRenderer->withControllerName('invoice/client')
+                                                 ->withLayout('@views/layout/invoice.php');
+        }
         $this->translator = $translator;
     }
     
@@ -109,8 +123,10 @@ final class ClientController
             'client_date_created'=>$client->getClient_date_created(),
             'client_date_modified'=>$client->getClient_date_modified(),
             'client_name' => $client->getClient_name(),
+            'client_number' => $client->getClient_number(),
             'client_address_1' => $client->getClient_address_1(),
             'client_address_2' => $client->getClient_address_2(),
+            'client_building_number' =>$client->getClient_building_number(),
             'client_city' => $client->getClient_city(),
             'client_state' => $client->getClient_state(),
             'client_zip' => $client->getClient_zip(),
@@ -129,7 +145,8 @@ final class ClientController
             'client_insurednumber'=>$client->getClient_insurednumber(),
             'client_veka'=>$client->getClient_veka(),
             'client_birthdate'=>$client->getClient_birthdate(),
-            'client_gender'=>$client->getClient_gender(),                
+            'client_gender'=>$client->getClient_gender(),
+            'client_postaladdress_id'=>$client->getPostaladdress_id()
         ];
         return $body;
     }
@@ -201,7 +218,7 @@ final class ClientController
     {
         $body = $request->getQueryParams();
         $datehelper = new DateHelper($sR);
-        $ajax_body = [
+        $ajax_body = [             
             'client_name'=>$body['client_name'] ?? 'clientnameismissing',
             'client_email'=>$body['client_email'] ?? 'email@email.com',
             'client_surname'=>$body['client_surname'] ?? 'clientsurnameismissing',
@@ -333,8 +350,8 @@ final class ClientController
         }
     } 
     
-    public function edit(ViewRenderer $head, SessionInterface $session, Request $request, cR $cR, ccR $ccR, cfR $cfR, cvR $cvR, 
-            ValidatorInterface $validator, sR $sR, CurrentRoute $currentRoute
+    public function edit(SessionInterface $session, Request $request, cR $cR, ccR $ccR, cfR $cfR, cvR $cvR, 
+            ValidatorInterface $validator, paR $paR, sR $sR, CurrentRoute $currentRoute
     ): Response {
      $client = null!==$this->client($currentRoute, $cR) ? $this->client($currentRoute, $cR) : null;
      if ($client) {
@@ -343,11 +360,12 @@ final class ClientController
         $countries = new CountryHelper();
         $client_id = $client->getClient_id();
         if (null!==$client_id) {
+            $postaladdresses = $paR->repoClientAll((string)$client_id); 
             $parameters = [
                 'title' => $sR->trans('edit'),
                 'action' => ['client/edit', ['id' => $client_id]],
                 'errors' => [],
-                'head'=> $head,
+                'buttons' => $this->viewRenderer->renderPartialAsString('/invoice/layout/header_buttons',['s'=>$sR, 'hide_submit_button'=>false ,'hide_cancel_button'=>false]), 
                 'datehelper'=> new DateHelper($sR),
                 'client'=> $client,
                 'body' => $this->body($client),
@@ -355,11 +373,13 @@ final class ClientController
                 'selected_country' => $selected_country ?: $sR->get_setting('default_country'),            
                 'selected_language' => $selected_language ?: $sR->get_setting('default_language'),
                 'datepicker_dropdown_locale_cldr' => $session->get('_language') ?? 'en',
+                'postal_address_count' => $paR->repoClientCount((string)$client_id),
+                'postaladdresses' => $postaladdresses,
                 'countries'=> $countries->get_country_list($sR->get_setting('cldr')),
                 'custom_fields'=> $cfR->repoTablequery('client_custom'),
                 'custom_values'=> $cvR->attach_hard_coded_custom_field_values_to_custom_field($cfR->repoTablequery('client_custom')),
                 'cvH'=> new CVH($sR),
-                'client_custom_values'=> $this->client_custom_values((string)$client_id, $ccR)
+                'client_custom_values'=> $this->client_custom_values((string)$client_id, $ccR),                
             ];
             if ($request->getMethod() === Method::POST) {            
                 $edited_body = $request->getParsedBody();
@@ -368,7 +388,7 @@ final class ClientController
                     $parameters['body'] = $edited_body;
                     $parameters['errors']=$returned_form->getFormErrors(); 
                     // Only save custom fields if they exist
-                    if ($ccR->repoClientCount((string)$client_id) > 0) { 
+                    if ($cfR->repoTableCountquery('client_custom') > 0) { 
                       $this->edit_save_custom_fields($edited_body, $validator, $ccR, (string)$client_id); 
                     }
                 }    
@@ -409,19 +429,25 @@ final class ClientController
         $custom = (array)$edited_body['custom'];
         /** @var string $value */
         foreach ($custom as $custom_field_id => $value) {
-            $client_custom = $ccR->repoFormValuequery($client_id, (string)$custom_field_id);
-            if (null!==$client_custom) {
-                $client_custom_input = [
-                    'client_id'=>(int)$client_id,
-                    'custom_field_id'=>(int)$custom_field_id,
-                    'value'=>$value
-                ];
-                $form = new ClientCustomForm();
-                if ($form->load($client_custom_input) && $validator->validate($form)->isValid())
-                {
-                    $this->clientCustomService->saveClientCustom($client_custom, $form);     
-                }
-            }
+          $client_custom = $ccR->repoFormValuequery($client_id, (string)$custom_field_id);
+          if (null!==$client_custom) {
+              $client_custom_input = [
+                  'client_id'=>(int)$client_id,
+                  'custom_field_id'=>(int)$custom_field_id,
+                  'value'=>$value
+              ];
+              $form = new ClientCustomForm();
+              if ($form->load($client_custom_input) && $validator->validate($form)->isValid())
+              {
+                  $this->clientCustomService->saveClientCustom($client_custom, $form);     
+              }
+          } else {
+            $client_custom = new ClientCustom();
+            $client_custom->setClient_id((int)$client_id);
+            $client_custom->setCustom_field_id((int)$custom_field_id);
+            $client_custom->setValue($value);
+            $ccR->save($client_custom);          
+          }
         }        
     }
     
@@ -431,7 +457,8 @@ final class ClientController
         return $flash;
     }
     
-    public function index(CurrentRoute $currentRoute, SessionInterface $session, cR $cR, iaR $iaR, iR $iR, sR $sR): 
+    
+     public function index(CurrentRoute $currentRoute, SessionInterface $session, cR $cR, iaR $iaR, iR $iR, sR $sR, cpR $cpR): 
         \Yiisoft\DataResponse\DataResponse
     {
         $canEdit = $this->rbac($session);
@@ -448,12 +475,48 @@ final class ClientController
             'canEdit' => $canEdit,
             'active'=>$active,
             'pageNum'=>$pageNum,
+            'cpR'=>$cpR,
             'modal_create_client'=>$this->viewRenderer->renderPartialAsString('modal_create_client',[
                 'datehelper'=> new DateHelper($sR)
             ])
         ];    
         return $this->viewRenderer->render('index', $parameters);
-    }    
+    }
+    
+    public function guest(CurrentRoute $currentRoute, SessionInterface $session, cR $cR, iaR $iaR, iR $iR, sR $sR, cpR $cpR, ucR $ucR): 
+        Response
+    {
+        //$canEdit = $this->rbac($session);
+        $pageNum = (int)$currentRoute->getArgument('page', '1');        
+        $active = (int)$currentRoute->getArgument('active', '2');
+        $user = $this->userService->getUser();
+        if (null!==$user) {
+          $user_id = $user->getId();
+          if (null!==$user_id) {  
+            $client_array = $ucR->get_assigned_to_user($user_id);
+            $clients = $cR->repoUserClient($client_array);
+            $paginator = (new OffsetPaginator($clients))
+                ->withPageSize((int)$sR->get_setting('default_list_limit'))
+                ->withCurrentPage($pageNum);
+            $parameters = [
+                'paginator'=>$paginator,
+                'alert'=>$this->alert($session),
+                'iR'=> $iR,
+                'iaR'=> $iaR,
+                'canEdit' => true,
+                'active'=>$active,
+                'pageNum'=>$pageNum,
+                'cpR'=>$cpR,
+                'modal_create_client'=>$this->viewRenderer->renderPartialAsString('modal_create_client',[
+                    'datehelper'=> new DateHelper($sR)
+                ])
+            ];    
+            return $this->viewRenderer->render('guest', $parameters);
+          } // null!== $user_id
+          return $this->webService->getNotFoundResponse();
+        } // null!== $this->userService
+        return $this->webService->getNotFoundResponse();
+    }
     
     public function load_client_notes(Request $request, cnR $cnR): \Yiisoft\DataResponse\DataResponse
     {
@@ -618,11 +681,10 @@ final class ClientController
      * @param Request $request
      * @param ValidatorInterface $validator
      * @param cnS $cnS
-     * @param cnR $cnR
      * @param sR $sR
      * @return \Yiisoft\DataResponse\DataResponse
      */
-    public function save_client_note_new(Request $request, ValidatorInterface $validator, cnS $cnS, cnR $cnR, sR $sR) : \Yiisoft\DataResponse\DataResponse 
+    public function save_client_note_new(Request $request, ValidatorInterface $validator, cnS $cnS, sR $sR) : \Yiisoft\DataResponse\DataResponse 
     {
         $datehelper = new DateHelper($sR);
         //receive data ie. note
@@ -663,8 +725,10 @@ final class ClientController
      * @param cR $cR
      * @param cfR $cfR
      * @param cnR $cnR
+     * @param cpR $cpR
      * @param cvR $cvR
      * @param ccR $ccR
+     * @param delR $delR
      * @param gR $gR
      * @param iR $iR
      * @param iaR $iaR
@@ -675,7 +739,7 @@ final class ClientController
      * @param sR $sR
      * @return Response
      */    
-    public function view(SessionInterface $session, CurrentRoute $currentRoute, cR $cR, cfR $cfR, cnR $cnR, cvR $cvR, ccR $ccR, gR $gR, iR $iR, iaR $iaR, irR $irR, qR $qR, pymtR $pymtR, qaR $qaR, sR $sR   
+    public function view(SessionInterface $session, CurrentRoute $currentRoute, cR $cR, cfR $cfR, cnR $cnR, cpR $cpR, cvR $cvR, ccR $ccR, delR $delR, gR $gR, iR $iR, iaR $iaR, irR $irR, qR $qR, pymtR $pymtR, qaR $qaR, sR $sR   
     ): Response {
       $client = $this->client($currentRoute, $cR);      
       if ($client instanceof Client) {
@@ -689,6 +753,7 @@ final class ClientController
                   'clienthelper' => new ClientHelper($sR),
                   'custom_fields'=>$cfR->repoTablequery('client_custom'),
                   'custom_values'=>$cvR->attach_hard_coded_custom_field_values_to_custom_field($cfR->repoTablequery('client_custom')),
+                  'cpR' => $cpR,
                   'cvH' => new CVH($sR),
                   'client_custom_values'=>$this->client_custom_values((string)$client_id, $ccR),
                   'client' => $client,            
@@ -818,7 +883,12 @@ final class ClientController
                       // if ($payment->getInv()->getClient_id() === $client->getClient_id())
                       'payments'=> $pymtR->repoPaymentInvLoadedAll((int)$sR->get_setting('payment_list_limit') ?: 10),
                       'clienthelper' => new ClientHelper($sR),
-                  ]),    
+                  ]), 
+                  'delivery_locations'=>$this->viewRenderer->renderPartialAsString('/invoice/client/client_delivery_location_list', [
+                      'client'=> $client,
+                      'locations'=> $delR->repoClientquery((string)$client->getClient_id()),
+                      'clienthelper' => new ClientHelper($sR),
+                  ]), 
               ];
               return $this->viewRenderer->render('view', $parameters);
          } else {

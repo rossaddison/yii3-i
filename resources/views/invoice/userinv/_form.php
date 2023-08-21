@@ -183,7 +183,7 @@ if (!empty($errors)) {
  value="<?= Html::encode($body['iban'] ??  ''); ?>">
  </div>
  <div class="mb3 form-group">
-   <label for="gln"><?= $s->trans('gln'); ?></label>
+   <label for="gln"><?= $translator->translate('invoice.delivery.location.global.location.number'); ?></label>
    <input type="text" name="gln" id="gln" class="form-control"
  value="<?= Html::encode($body['gln'] ??  ''); ?>">
  </div>

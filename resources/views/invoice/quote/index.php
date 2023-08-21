@@ -39,7 +39,7 @@ $header = Div::tag()
 
 $toolbarReset = A::tag()
     ->addAttributes(['type' => 'reset'])
-    ->addClass('btn btn-danger me-1')
+    ->addClass('btn btn-danger me-1 ajax-loader')
     ->content(I::tag()->addClass('bi bi-bootstrap-reboot'))
     ->href($urlGenerator->generate($currentRoute->getName()))
     ->id('btn-reset')
@@ -55,7 +55,7 @@ $toolbar = Div::tag();
             echo $modal_create_quote;
         ?>
         <?php if ($client_count === 0) { ?>
-        <a href="#create-quote" class="btn btn-success" data-toggle="modal" disabled data-toggle="tooltip" title="<?= $s->trans('add_client'); ?>">
+        <a href="#create-quote" class="btn btn-success" data-toggle="modal" disabled data-bs-toggle = "tooltip" title="<?= $s->trans('add_client'); ?>">
             <i class="fa fa-plus"></i><?= $s->trans('new'); ?>
         </a>
         <?php } else { ?>
@@ -94,7 +94,7 @@ $toolbar = Div::tag();
                 </a>
                 <a href="<?= $urlGenerator->generate('quote/index',['page'=>1,'status'=>6]); ?>" style="text-decoration:none"
                    class="btn  <?php echo $status == 6 ? 'btn-primary' : 'btn-default'  ?>">
-                    <?= $s->trans('cancelled'); ?>
+                    <?= $s->trans('canceled'); ?>
                 </a>
             </div>
     </div>
@@ -118,6 +118,21 @@ $toolbar = Div::tag();
             }       
         ),
         DataColumn::create()
+            ->label($translator->translate('invoice.salesorder.number.status'))                
+            ->attribute('so_id')     
+            ->value(static function ($model) use ($s, $urlGenerator, $soR, $quote_statuses) : string {
+                $so_id = $model->getSo_id();
+                $so = $soR->repoSalesOrderUnloadedquery($so_id);
+                if ($so) {
+                    return (string)Html::a($so->getNumber(). ' '. (string)$soR->getStatuses($s)[$so->getStatus_id()]['label'],$urlGenerator->generate('salesorder/view',['id'=>$so_id]),['style'=>'text-decoration:none','class'=> 'label '. (string)$soR->getStatuses($s)[$so->getStatus_id()]['class']]);
+                }
+                if ($model->getSo_id() === '0' && $model->getStatus_id() === 7 ) {
+                    return (string)Html::a($quote_statuses[$model->getStatus_id()]['label'],'',['class'=>'btn btn-warning']);
+                }
+                return '';
+            }            
+        ),
+        DataColumn::create()
             ->attribute('number')
             ->value(static function ($model) use ($urlGenerator): string {
                return Html::a($model->getNumber(), $urlGenerator->generate('quote/view',['id'=>$model->getId()]),['style'=>'text-decoration:none'])->render();
@@ -131,7 +146,11 @@ $toolbar = Div::tag();
         DataColumn::create()
             ->attribute('date_expires')   
             ->value(static fn ($model): string => ($model->getDate_expires())->format($datehelper->style())                        
-        ),
+        ),        
+        DataColumn::create()
+            ->attribute('date_required')
+            ->value(static fn ($model): string => ($model->getDate_required())->format($datehelper->style())
+        ), 
         DataColumn::create()
             ->label($s->trans('client'))                
             ->attribute('client_id')     
@@ -161,7 +180,8 @@ $toolbar = Div::tag();
         DataColumn::create()
             ->label($s->trans('delete'))    
             ->value(static function ($model) use ($s, $urlGenerator): string {
-               return Html::a( Html::tag('button',
+                if ($model->getStatus_id() == '1') {
+                    return Html::a( Html::tag('button',
                                                         Html::tag('i','',['class'=>'fa fa-trash fa-margin']),
                                                         [
                                                             'type'=>'submit', 
@@ -171,6 +191,7 @@ $toolbar = Div::tag();
                                                         ),
                         $urlGenerator->generate('quote/delete',['id'=>$model->getId()]),[]                                         
                     )->render();
+                } else { return ''; }
             }
         ),          
     )
@@ -190,23 +211,15 @@ $toolbar = Div::tag();
     )
     ->rowAttributes(['class' => 'align-middle'])
     ->summaryAttributes(['class' => 'mt-3 me-3 summary text-end'])
+    ->summary($grid_summary)
+    ->emptyTextAttributes(['class' => 'card-header bg-warning text-black'])
+    ->emptyText((string)$translator->translate('invoice.invoice.no.records'))
     ->tableAttributes(['class' => 'table table-striped text-center h-75','id'=>'table-quote'])
     ->toolbar(
         Form::tag()->post($urlGenerator->generate('quote/index'))->csrf($csrf)->open() .
         Div::tag()->addClass('float-end m-3')->content($toolbarReset)->encode(false)->render() .
         Form::tag()->close()
     );
-?>
-<?php
-    $pageSize = $paginator->getCurrentPageSize();
-    if ($pageSize > 0) {
-      echo Html::p(
-        sprintf('Showing %s out of %s quotes: Max '. $max . ' quotes per page: Total Quotes '.$paginator->getTotalItems() , $pageSize, $paginator->getTotalItems()),
-        ['class' => 'text-muted']
-    );
-    } else {
-      echo Html::p('No records');
-    }
 ?>
 
  

@@ -32,7 +32,8 @@ if (!empty($errors)) {
     </div>
     <div class="mb-3 form-group">
         <label for="setting_value" class="form-label">Setting Value</label>
-        <input type="text" class="form-control" name="setting_value" id="setting_value" placeholder="Setting Value" value="<?= Html::encode($body['setting_value'] ?? '') ?>">
+        <!-- TODO   Html encoding here prevents the input of zero from being saved -->
+        <input type="text" class="form-control" name="setting_value" id="setting_value" placeholder="Setting Value" value="<?= $body['setting_value'] ?? '' ?>">
     </div>
   </div>    
   <button type="submit" class="btn btn-primary"><?= $s->trans('submit'); ?></button>

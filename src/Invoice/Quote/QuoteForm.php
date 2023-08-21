@@ -11,6 +11,7 @@ final class QuoteForm extends FormModel
     private string $number ='';
     
     private ?string $inv_id=null;
+    private ?string $so_id=null;
     private ?int $group_id=null;
     private ?int $client_id=null;    
     private ?int $status_id=1;
@@ -22,6 +23,11 @@ final class QuoteForm extends FormModel
     
     // The Entities ie. Entity/Quote.php have return type string => return type strings in the form 
     // get => string ; 
+    public function getSo_id() : string|null
+    {
+      return $this->so_id;
+    }
+    
     public function getInv_id() : string|null
     {
       return $this->inv_id;

@@ -49,6 +49,7 @@ final class QuoteService
     public function addQuote(User $user, Quote $model, QuoteForm $form, SR $s): void
     { 
         null!==$form->getInv_id() ? $model->setInv_id((int)$form->getInv_id()) : '';
+        null!==$form->getSo_id() ? $model->setSo_id((int)$form->getSo_id()) : '';
         null!==$form->getGroup_id() ? $model->setGroup_id($form->getGroup_id()) : '';
         null!==$form->getClient_id() ? $model->setClient_id($form->getClient_id()) : '';
         null!==$form->getStatus_id() ? $model->setStatus_id($form->getStatus_id()) : '';
@@ -59,6 +60,7 @@ final class QuoteService
         null!==$form->getNotes() ? $model->setNotes($form->getNotes()) : '';       
         if ($model->isNewRecord()) {
              $model->setInv_id(0);             
+             $model->setSo_id(0);
              !empty($form->getNumber()) ? $model->setNumber($form->getNumber()) : '';
              $model->setStatus_id(1);
              $model->setUser_id((int)$user->getId());
@@ -80,7 +82,7 @@ final class QuoteService
     public function saveQuote(User $user, Quote $model, QuoteForm $form, SR $s, GR $gR): Quote
     { 
         $model->setInv_id((int)$form->getInv_id());
-        
+        $model->setSo_id((int)$form->getSo_id());
         null!==$form->getClient_id() ? $model->setClient($model->getClient()?->getClient_id() == $form->getClient_id() ? $model->getClient() : null): '';
         $model->setClient_id((int)$form->getClient_id());
        
@@ -95,6 +97,49 @@ final class QuoteService
         null!==$form->getNotes() ? $model->setNotes($form->getNotes()) : '';
         if ($model->isNewRecord()) {
              $model->setInv_id(0); 
+             $model->setSo_id(0);
+             !empty($form->getNumber()) ? $model->setNumber($form->getNumber()) : '';
+             $model->setStatus_id(1);
+             $model->setUser($user);
+             $model->setUser_id((int)$user->getId());
+             $model->setUrl_key(Random::string(32));            
+             $model->setDate_created(new \DateTimeImmutable('now'));
+             $model->setDate_expires($s);
+             $model->setDiscount_amount(0.00);
+        }
+        // Regenerate quote numbers if the setting is changed
+        if (!$model->isNewRecord() && $s->get_setting('generate_quote_number_for_draft') === '1') {
+             null!==$form->getGroup_id() ? $model->setNumber((string)$gR->generate_number($form->getGroup_id(), true)) : '';  
+        }
+        $this->repository->save($model);
+        return $model;
+    }
+    
+    /**
+     * bothQuote replaced addQuote and saveQuote. addQuote and saveQuote will be merged into saveQuote ultimately
+     * @param User $user
+     * @param Quote $model
+     * @param QuoteForm $form
+     * @param SR $s
+     * @param GR $gR
+     * @return Quote
+     */
+    public function bothQuote(User $user, Quote $model, QuoteForm $form, SR $s, GR $gR): Quote
+    {    
+        $model->nullifyRelationOnChange((int)$form->getGroup_id(),(int)$form->getClient_id());
+        null!==$form->getInv_id() ? $model->setInv_id((int)$form->getInv_id()) : '';
+        null!==$form->getSo_id() ? $model->setSo_id((int)$form->getSo_id()) : '';
+        null!==$form->getClient_id() ? $model->setClient_id($form->getClient_id()) : 0;
+        null!==$form->getGroup_id() ? $model->setGroup_id($form->getGroup_id()) : 0;
+        null!==$form->getStatus_id() ? $model->setStatus_id($form->getStatus_id()) : '';
+        null!==$form->getDiscount_percent() ? $model->setDiscount_percent($form->getDiscount_percent()) : '';
+        null!==$form->getDiscount_amount() ? $model->setDiscount_amount($form->getDiscount_amount()) : '';
+        null!==$form->getUrl_key() ? $model->setUrl_key($form->getUrl_key()) : '';
+        null!==$form->getPassword() ? $model->setPassword($form->getPassword()) : '';
+        null!==$form->getNotes() ? $model->setNotes($form->getNotes()) : '';
+        if ($model->isNewRecord()) {
+             $model->setInv_id(0);
+             $model->setSo_id(0);
              $model->setStatus_id(1);
              $model->setUser($user);
              $model->setUser_id((int)$user->getId());

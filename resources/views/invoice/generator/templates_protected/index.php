@@ -1,20 +1,30 @@
 <?php 
    use Yiisoft\Strings\Inflector;
-   echo "<?php\n";             
+   echo "<?php\n";
+   $random = 99999999999999999;
 ?>
 
 declare(strict_types=1);
 
 use Yiisoft\Html\Html;
+use Yiisoft\Data\Paginator\OffsetPaginator;
+use Yiisoft\Translator\TranslatorInterface;
+use Yiisoft\Html\Tag\A;
+use Yiisoft\Html\Tag\Div;
+use Yiisoft\Html\Tag\Form;
+use Yiisoft\Html\Tag\H5;
+use Yiisoft\Html\Tag\I;
 use Yiisoft\Yii\Bootstrap5\Alert;
-use Yiisoft\Yii\Bootstrap5\Modal;
+use Yiisoft\Yii\DataView\Column\DataColumn;
+use Yiisoft\Yii\DataView\GridView;
+use Yiisoft\Yii\DataView\OffsetPagination;
 
 /**
  * @var \App\Invoice\Entity\<?= $generator->getCamelcase_capital_name(); ?> $<?= $generator->getSmall_singular_name()."\n"; ?>
  * @var \Yiisoft\Router\UrlGeneratorInterface $urlGenerator
- * @var bool $canEdit
+ * @var TranslatorInterface $translator
+ * @var OffsetPaginator $paginator
  * @var string $id
- * @var \Yiisoft\Session\Flash\FlashInterface $flash 
  */
 
 ?>
@@ -23,90 +33,84 @@ use Yiisoft\Yii\Bootstrap5\Modal;
         echo '<h1>'.$inf->toSentence($generator->getPre_entity_table(),'UTF-8').'</h1>'."\n"; 
 ?>
 <?php   echo "<?php\n"; ?>
-        $danger = $flash->get('danger');
-        if ($danger != null) {
-            $alert =  Alert::widget()
-            ->body($danger)
-            ->options(['class' => ['alert-danger shadow'],])
-            ->render();
-            echo $alert;
+    
+    $header = Div::tag()
+      ->addClass('row')
+      ->content(
+        H5::tag()
+        ->addClass('bg-primary text-white p-3 rounded-top')
+        ->content(
+          I::tag()->addClass('bi bi-receipt')->content(' ' . $translator->translate('put.your.translation.here'))
+        )
+      )
+      ->render();
+
+    $toolbarReset = A::tag()
+      ->addAttributes(['type' => 'reset'])
+      ->addClass('btn btn-danger me-1 ajax-loader')
+      ->content(I::tag()->addClass('bi bi-bootstrap-reboot'))
+      ->href($urlGenerator->generate($currentRoute->getName()))
+      ->id('btn-reset')
+      ->render();
+
+    $toolbar = Div::tag();
+       
+    echo GridView::widget()
+      ->columns(
+        DataColumn::create()
+        ->attribute('id')
+        ->label($s->trans('id'))
+        ->value(static fn($model) => $model->getId()),
+        DataColumn::create()
+        ->label($s->trans('view'))
+        ->value(static function ($model) use ($urlGenerator): string {
+          return Html::a(Html::tag('i', '', ['class' => 'fa fa-eye fa-margin']), $urlGenerator->generate('<?= $generator->getSmall_singular_name(); ?>/view', ['id' => $model->getId()]), [])->render();
         }
-        $info = $flash->get('info');
-        if ($info != null) {
-            $alert =  Alert::widget()
-            ->body($info)
-            ->options(['class' => ['alert-info shadow'],])
-            ->render();
-            echo $alert;
+        ),
+        DataColumn::create()
+        ->label($s->trans('edit'))
+        ->value(static function ($model) use ($urlGenerator): string {
+          return Html::a(Html::tag('i', '', ['class' => 'fa fa-pencil fa-margin']), $urlGenerator->generate('<?= $generator->getSmall_singular_name(); ?>/edit', ['id' => $model->getId()]), [])->render();
         }
-        $warning = $flash->get('warning');
-        if ($warning != null) {
-            $alert =  Alert::widget()
-            ->body($warning)
-            ->options(['class' => ['alert-warning shadow'],])
-            ->render();
-            echo $alert;
+        ),
+        DataColumn::create()
+        ->label($s->trans('delete'))
+        ->value(static function ($model) use ($s, $urlGenerator): string {
+          return Html::a(Html::tag('button',
+              Html::tag('i', '', ['class' => 'fa fa-trash fa-margin']),
+              [
+                'type' => 'submit',
+                'class' => 'dropdown-button',
+                'onclick' => "return confirm(" . "'" . $s->trans('delete_record_warning') . "');"
+              ]
+            ),
+            $urlGenerator->generate('<?= $generator->getSmall_singular_name(); ?>/delete', ['id' => $model->getId()]), []
+          )->render();
         }
-        
-<?php   
-        echo "\n";  
-        echo '?>'."\n"; 
-        echo '<div>'."\n";       
-        echo '<?php'."\n";
-        echo '    if ($canEdit) {'."\n";
-        echo "        echo Html::a('Add',"."\n";
-        echo '        $urlGenerator->generate('."'".$generator->getSmall_singular_name().'/add'."'),"."\n";
-        echo "            ['class' => 'btn btn-outline-secondary btn-md-12 mb-3']"."\n";
-        echo '     );'."\n";
-        echo '    //list all the items'."\n";
-        echo '    foreach ($'.$generator->getSmall_plural_name().' as $'.$generator->getSmall_singular_name().'){'."\n";
-        echo '      echo Html::br();'."\n";
-        echo '      $label = $'.$generator->getSmall_singular_name().'->getId() . " "'.';'."\n";
-        echo '      echo Html::label($label);'."\n";
-        echo "      echo Html::a('Edit',"."\n";
-        echo '      $urlGenerator->generate('."'".$generator->getSmall_singular_name().'/edit'."', ["."'id'".' => $'.$generator->getSmall_singular_name().'->getId()]),'."\n";
-        echo "            ['class' => 'btn btn-info btn-sm ms-2']"."\n";
-        echo '          );'."\n";                
-        echo "      echo Html::a('View',"."\n";
-        echo '      $urlGenerator->generate('."'".$generator->getSmall_singular_name().'/view'."', ["."'id'".' => $'.$generator->getSmall_singular_name().'->getId()]),'."\n";
-        echo "      ['class' => 'btn btn-warning btn-sm ms-2']"."\n";
-        echo '             );'."\n";
-        echo '      //modal delete button'."\n";
-        echo '      echo Modal::widget()'."\n";
-        echo "      ->title('Please confirm that you want to delete this record# '".".$".$generator->getSmall_singular_name().'->getId())'."\n";
-        echo "      ->titleOptions(['class' => 'text-center'])"."\n";
-        echo "      ->options(['class' => 'testMe'])"."\n";
-        echo '      ->size(Modal::SIZE_SMALL)'."\n";        
-        echo "      ->headerOptions(['class' => 'text-danger'])"."\n";
-        echo "      ->bodyOptions(['class' => 'modal-body', 'style' => 'text-align:center;',])"."\n";
-        echo "      ->footerOptions(['class' => 'text-dark'])"."\n";
-        echo "      ->footer("."\n";
-        echo '                  Html::button('."\n";
-        echo "                  'Close',"."\n";
-        echo '                  ['."\n";
-        echo "                              'type' => 'button',"."\n";
-        echo "                              'class' => ['btn btn-success btn-sm ms-2'],"."\n";
-        echo "                              'data' => ["."\n";
-        echo "                              'bs-dismiss' => 'modal',"."\n";
-        echo '                   ],'."\n";
-        echo '                   ]'."\n";
-        echo '                   ).';                
-        echo "                   Html::a('Yes Delete it Please ... I am sure!',"."\n";
-        echo '                   $urlGenerator->generate('."'".$generator->getSmall_singular_name().'/delete'."', ["."'id'".' => $'.$generator->getSmall_singular_name().'->getId()]),'."\n";
-        echo "                   ['class' => 'btn btn-danger btn-sm ms-2']"."\n";
-        echo '                              )'."\n";
-        echo '                        )'."\n";
-        echo '      ->withoutCloseButton()'."\n";
-        echo '      ->toggleButton(['."\n";
-        echo "                      'class' => ['btn btn-danger btn-sm ms-2'],"."\n";
-        echo "                      'label' => 'Delete',"."\n";
-        echo '                      ])'."\n";
-        echo '      ->begin();'."\n";
-        echo "      echo '<p>Are you sure you want to delete this record? </p>';"."\n";
-        echo "      echo Modal::end();"."\n";
-        echo "      echo Html::br();"."\n";
-        echo '    }'."\n";           
-        echo '    }'."\n";      
-        echo "?>"."\n"; 
-        echo '</div>';  
-?>
+        ),
+      )
+      ->headerRowAttributes(['class' => 'card-header bg-info text-black'])
+      ->filterPosition('header')
+      ->filterModelName('<?= $generator->getSmall_singular_name(); ?>')
+      ->header($header)
+      ->id('w<?= $random; ?>-grid')
+      ->paginator($paginator)
+      ->pagination(
+        OffsetPagination::widget()
+        ->menuClass('pagination justify-content-center')
+        ->paginator($paginator)
+        // No need to use page argument since built-in. Use status bar value passed from urlGenerator to inv/guest
+        //->urlArguments(['status'=>$status])
+        ->render(),
+      )
+      ->rowAttributes(['class' => 'align-middle'])
+      ->summaryAttributes(['class' => 'mt-3 me-3 summary text-end'])
+      ->summary($grid_summary)
+      ->emptyTextAttributes(['class' => 'card-header bg-warning text-black'])
+      ->emptyText((string) $translator->translate('invoice.invoice.no.records'))
+      ->tableAttributes(['class' => 'table table-striped text-center h-<?= $random; ?>', 'id' => 'table-<?= $generator->getSmall_singular_name(); ?>'])
+      ->toolbar(
+        Form::tag()->post($urlGenerator->generate('<?= $generator->getSmall_singular_name(); ?>/index'))->csrf($csrf)->open() .
+        Div::tag()->addClass('float-end m-3')->content($toolbarReset)->encode(false)->render() .
+        Form::tag()->close()
+    );

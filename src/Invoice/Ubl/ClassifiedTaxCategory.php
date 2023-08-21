@@ -42,10 +42,10 @@ class ClassifiedTaxCategory implements XmlSerializable
             return $this->id;
         }
 
-        if ($this->getPercent() !== null) {
-            if ($this->getPercent() >= 21) {
+        if ($this->percent !== null) {
+            if ($this->percent >= 21) {
                 return 'S';
-            } elseif ($this->getPercent() <= 21 && $this->getPercent() >= 6) {
+            } elseif ($this->percent <= 21 && $this->percent >= 6) {
                 return 'AA';
             } else {
                 return 'Z';
@@ -56,126 +56,15 @@ class ClassifiedTaxCategory implements XmlSerializable
 
     /**
      * 
-     * @param string|null $id
-     * @return ClassifiedTaxCategory
-     */
-    public function setId(?string $id): ClassifiedTaxCategory
-    {
-        $this->id = $id;
-        return $this;
-    }
-
-    /**
-     * 
-     * @return string|null
-     */
-    public function getName(): ?string
-    {
-        return $this->name;
-    }
-
-    /**
-     * 
-     * @param string|null $name
-     * @return ClassifiedTaxCategory
-     */
-    public function setName(?string $name): ClassifiedTaxCategory
-    {
-        $this->name = $name;
-        return $this;
-    }
-
-    /**
-     * 
-     * @return float|null
-     */
-    public function getPercent(): ?float
-    {
-        return $this->percent;
-    }
-
-    /**
-     * 
-     * @param float|null $percent
-     * @return ClassifiedTaxCategory
-     */
-    public function setPercent(?float $percent): ClassifiedTaxCategory
-    {
-        $this->percent = $percent;
-        return $this;
-    }
-
-    /**
-     * 
-     * @return TaxScheme|null
-     */
-    public function getTaxScheme(): ?TaxScheme
-    {
-        return $this->taxScheme;
-    }
-
-    /**
-     * 
-     * @param TaxScheme|null $taxScheme
-     * @return ClassifiedTaxCategory
-     */
-    public function setTaxScheme(?TaxScheme $taxScheme): ClassifiedTaxCategory
-    {
-        $this->taxScheme = $taxScheme;
-        return $this;
-    }
-
-    /**
-     * 
-     * @return string|null
-     */
-    public function getSchemeID(): ?string
-    {
-        return $this->schemeID;
-    }
-
-    /**
-     * 
-     * @param string|null $id
-     * @return ClassifiedTaxCategory
-     */
-    public function setSchemeID(?string $id): ClassifiedTaxCategory
-    {
-        $this->schemeID = $id;
-        return $this;
-    }
-
-    /**
-     * 
-     * @return string|null
-     */
-    public function getSchemeName(): ?string
-    {
-        return $this->schemeName;
-    }
-
-    /**
-     * 
-     * @param string|null $name
-     * @return ClassifiedTaxCategory
-     */
-    public function setSchemeName(?string $name): ClassifiedTaxCategory
-    {
-        $this->schemeName = $name;
-        return $this;
-    }
-
-    /**
-     * 
      * @throws InvalidArgumentException
      */
     public function validate() : void
     {
-        if ($this->getId() === null) {
+        if ($this->id === null) {
             throw new InvalidArgumentException('Missing taxcategory id');
         }
 
-        if ($this->getPercent() === null) {
+        if ($this->percent === null) {
             throw new InvalidArgumentException('Missing taxcategory percent');
         }
     }
@@ -199,7 +88,7 @@ class ClassifiedTaxCategory implements XmlSerializable
 
         $writer->write([
             'name' => Schema::CBC . 'ID',
-            'value' => $this->getId(),
+            'value' => $this->id,
             'attributes' => $schemeAttributes
         ]);
 

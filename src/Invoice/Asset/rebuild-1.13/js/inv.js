@@ -129,6 +129,38 @@ $(function () {
     $('#new_row').clone().appendTo('#item_table').removeAttr('id').addClass('item').show();            
     });
     
+    // id="allowance_charge_submit" in drop down menu on views/inv/view.php
+    $(document).on('click', '#allowance_charge_submit', function () {
+    var url = $(location).attr('origin') + "/invoice/inv/save_inv_allowance_charge";
+    var btn = $('.allowance_charge_submit');
+    var absolute_url = new URL($(location).attr('href'));
+    btn.html('<h6 class="text-center"><i class="fa fa-spin fa-spinner"></i></h6>');
+    //take the inv id from the public url
+    inv_id = absolute_url.href.substring(absolute_url.href.lastIndexOf('/') + 1);
+    $.ajax({type: 'GET',
+            contentType: "application/json; charset=utf-8",
+            data: {
+                   inv_id: inv_id,
+                   inv_allowance_charge_id: $('#inv_allowance_charge_id').val(),
+                   amount: $('#inv_allowance_charge_amount').val()
+            },
+            url: url,
+            cache: false,
+            dataType: 'json',
+            success: function (data) {
+                       var response = parsedata(data);
+                       if (response.success === 1) {                                   
+                          window.location = absolute_url;
+                          btn.html('<h6 class="text-center"><i class="fa fa-check"></i></h6>');
+                          window.location.reload();                                                
+                       }
+            },
+            error: function() {
+                alert('Incomplete fields: You must include an allowance charge. ');
+            }
+    });
+    });
+    
     // id="inv_tax_submit" in drop down menu on views/inv/view.php
     $(document).on('click', '#inv_tax_submit', function () {
     var url = $(location).attr('origin') + "/invoice/inv/save_inv_tax_rate";
@@ -151,6 +183,7 @@ $(function () {
                        var response = parsedata(data);
                        if (response.success === 1) {                                   
                           window.location = absolute_url;
+                          btn.html('<h6 class="text-center"><i class="fa fa-check"></i></h6>');
                           window.location.reload();                                                
                        }
             },

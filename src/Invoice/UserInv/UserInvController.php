@@ -51,11 +51,19 @@ final class UserInvController
     )    
     {
         $this->factory = $factory;
-        $this->viewRenderer = $viewRenderer->withControllerName('invoice/userinv')
-                                           ->withLayout('@views/layout/invoice.php');
+        $this->viewRenderer = $viewRenderer; 
         $this->webService = $webService;
         $this->userService = $userService;
         $this->userinvService = $userinvService;
+        $this->viewRenderer = $viewRenderer;
+        if ($this->userService->hasPermission('editUserInv') && !$this->userService->hasPermission('editInv')) {
+            $this->viewRenderer = $viewRenderer->withControllerName('invoice/userinv')
+                                                 ->withLayout('@views/layout/guest.php');
+        }
+        if ($this->userService->hasPermission('viewInv') && $this->userService->hasPermission('editInv')) {
+            $this->viewRenderer = $viewRenderer->withControllerName('invoice/userinv')
+                                                 ->withLayout('@views/layout/invoice.php');
+        }
         $this->translator = $translator;
         $this->session = $session;
     }
@@ -98,6 +106,7 @@ final class UserInvController
           'translator'=>$translator,
           's'=>$sR,
           'canEdit' => $canEdit,
+          'grid_summary'=> $sR->grid_summary($paginator, $this->translator, (int)$sR->get_setting('default_list_limit'), $this->translator->translate('invoice.payments'), ''),
           'userinvs' => $repo,
           'locale'=>$session->get('_language'),
           'alert'=>$this->alert(),
@@ -105,8 +114,51 @@ final class UserInvController
           'page'=> $page,
           'sortOrder' => $query_params['sort'] ?? '',
         ];
-        return $this->viewRenderer->render('index', $parameters);
-        
+        return $this->viewRenderer->render('index', $parameters);        
+    }
+    
+    public function guest(ViewRenderer $head, Request $request, 
+                        ValidatorInterface $validator,
+                        UserInvRepository $userinvRepository, 
+                        SettingRepository $settingRepository,
+                        uR $uR,
+
+    ): Response {
+        $aliases = new Aliases(['@invoice' => dirname(__DIR__), 
+                                '@language' => dirname(__DIR__). DIRECTORY_SEPARATOR. 'Language']);
+        if (null!==$this->userService->getUser()){
+            $id = $this->userService->getUser()?->getId();
+            if (null!==$id) {
+                $user_inv = $userinvRepository->repoUserInvUserIdquery($id);
+                if ($user_inv) {
+                    $parameters = [
+                        'title' => $settingRepository->trans('edit'),
+                        'action' => ['userinv/guest'],
+                        'errors' => [],
+                        'body' => $this->body($user_inv),
+                        'head'=>$head,
+                        'aliases'=>$aliases,
+                        'users'=>$uR->findAllUsers(),
+                        's'=>$settingRepository,
+
+                    ];
+                    if ($request->getMethod() === Method::POST) {
+                        $form = new UserInvForm();
+                        $body = $request->getParsedBody();
+                        if ($form->load($body) && $validator->validate($form)->isValid()) {
+                            $this->userinvService->saveUserInv($user_inv, $form);
+                            return $this->webService->getRedirectResponse('invoice/index');
+                        }
+                        $parameters['body'] = $body;
+                        $parameters['errors'] = $form->getFormErrors();
+                    }
+                    return $this->viewRenderer->render('_form_guest', $parameters);
+                }
+                return $this->webService->getRedirectResponse('invoice/index');
+            } // nul!== $id
+            return $this->webService->getNotFoundResponse();
+        } // null!==$this->userService->getUser()
+        return $this->webService->getNotFoundResponse();
     }
     
     /**

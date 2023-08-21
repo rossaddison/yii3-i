@@ -36,7 +36,7 @@ use Yiisoft\Yii\DataView\GridView;
 
     $toolbarReset = A::tag()
         ->addAttributes(['type' => 'reset'])
-        ->addClass('btn btn-danger me-1')
+        ->addClass('btn btn-danger me-1 ajax-loader')
         ->content(I::tag()->addClass('bi bi-bootstrap-reboot'))
         ->href($urlGenerator->generate($currentRoute->getName()))
         ->id('btn-reset')
@@ -183,23 +183,15 @@ use Yiisoft\Yii\DataView\GridView;
         )
         ->rowAttributes(['class' => 'align-middle'])
         ->summaryAttributes(['class' => 'mt-3 me-3 summary text-end'])
+        ->summary($grid_summary)
+        ->emptyTextAttributes(['class' => 'card-header bg-warning text-black'])
+        ->emptyText((string)$translator->translate('invoice.invoice.no.records'))
         ->tableAttributes(['class' => 'table table-striped text-center h-75','id'=>'table-user-inv'])
         ->toolbar(
             Form::tag()->post($urlGenerator->generate('userinv/index'))->csrf($csrf)->open() .
             Div::tag()->addClass('float-end m-3')->content($toolbarReset)->encode(false)->render() .
             Form::tag()->close()
         );          
-    ?>
-    <?php
-        $pageSize = $paginator->getCurrentPageSize();
-        if ($pageSize > 0) {
-            echo Html::p(
-                sprintf('Showing %s out of %s '.$s->trans('users'), $pageSize, $paginator->getTotalItems()),
-                ['class' => 'text-muted']
-            );
-        } else {
-            echo Html::p('No records');
-        }
-    ?>    
+    ?> 
 </div>
 </div>

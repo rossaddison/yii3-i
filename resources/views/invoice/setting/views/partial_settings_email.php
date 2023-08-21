@@ -19,7 +19,7 @@
                             <?php $body['settings[email_pdf_attachment]'] = $s->get_setting('email_pdf_attachment'); ?>
                             <select name="settings[email_pdf_attachment]" id="settings[email_pdf_attachment]"
                                 class="form-control" data-minimum-results-for-search="Infinity">
-                                <option value="0"><?= $s->trans('no'); ?></option>
+                                <option value="0" <?php $s->check_select($body['settings[email_pdf_attachment]'], '0'); ?>><?= $s->trans('no'); ?></option>
                                 <option value="1" <?php $s->check_select($body['settings[email_pdf_attachment]'], '1'); ?>>
                                     <?= $s->trans('yes'); ?>
                                 </option>

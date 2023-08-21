@@ -3,152 +3,119 @@ declare(strict_types=1);
 
 namespace App\Invoice\Ubl;
 
-use Sabre\Xml\Writer;
-use Sabre\Xml\XmlSerializable;
-
-use InvalidArgumentException;
-
-class TaxSubTotal implements XmlSerializable
+class TaxSubtotal
 {
-    private null|float $taxableAmount = null;
-    private null|float $taxAmount = null;
-    private null|TaxCategory $taxCategory = null;
-    private null|float $percent = null;
-
-    /**
-     * 
-     * @return float|null
-     */
-    public function getTaxableAmount(): ?float
-    {
-        return $this->taxableAmount;
+    private float $taxableAmounts = 0.00;
+    private float $taxAmount = 0.00;
+    private string $taxCategory = '';
+    private float $taxCategoryPercent = 0.00;
+    private array $taxSubtotal = [];
+    private string $documentCurrency = '';
+    
+    // Used in src\Invoice\Ubl\Invoice.php function build_tax_sub_totals_array()
+    // The array passed here is a sub-array ie. one of many subtotals 
+    // - a subtotal is generated for each tax category.
+    public function __construct(array $taxSubtotal) {
+        $this->taxSubtotal = $taxSubtotal;
+    }    
+    
+    public function load_values_from_array() : void {
+       $array = $this->taxSubtotal;             
+      /**
+       * @var float $array['TaxableAmounts']
+       */   
+      $this->taxableAmounts = $array['TaxableAmounts'] ?: 0.00;
+      /**
+       * @var float $array['TaxAmount']
+       */
+      $this->taxAmount = $array['TaxAmount'] ?: 0.00;
+      /**
+       * @var string $array['TaxCategory']
+       */
+      $this->taxCategory = $array['TaxCategory'] ?: '';
+      /**
+       * @var float $array['TaxCategoryPercent']
+       */
+      $this->taxCategoryPercent = $array['TaxCategoryPercent'] ?: 0.00;        
+      /**
+       * @var string $array['DocumentCurrency']
+       */
+      $this->documentCurrency = $array['DocumentCurrency'] ?: '';
     }
-
-    /**
-     * 
-     * @param float|null $taxableAmount
-     * @return TaxSubTotal
-     */
-    public function setTaxableAmount(?float $taxableAmount): TaxSubTotal
+        
+    public function build_pre_serialized_array() : array 
     {
-        $this->taxableAmount = $taxableAmount;
-        return $this;
-    }
-
-    /**
-     * 
-     * @return float|null
-     */
-    public function getTaxAmount(): ?float
-    {
-        return $this->taxAmount;
-    }
-
-    /**
-     * 
-     * @param float|null $taxAmount
-     * @return TaxSubTotal
-     */
-    public function setTaxAmount(?float $taxAmount): TaxSubTotal
-    {
-        $this->taxAmount = $taxAmount;
-        return $this;
-    }
-
-    /**
-     * 
-     * @return TaxCategory|null
-     */
-    public function getTaxCategory(): ?TaxCategory
-    {
-        return $this->taxCategory;
-    }
-
-    /**
-     * 
-     * @param TaxCategory $taxCategory
-     * @return TaxSubTotal
-     */
-    public function setTaxCategory(TaxCategory $taxCategory): TaxSubTotal
-    {
-        $this->taxCategory = $taxCategory;
-        return $this;
-    }
-
-    /**
-     * 
-     * @return float|null
-     */
-    public function getPercent(): ?float
-    {
-        return $this->percent;
-    }
-
-    /**
-     * 
-     * @param float|null $percent
-     * @return TaxSubTotal
-     */
-    public function setPercent(?float $percent): TaxSubTotal
-    {
-        $this->percent = $percent;
-        return $this;
-    }
-
-    /**
-     * 
-     * @return void
-     * @throws InvalidArgumentException
-     */
-    public function validate() : void
-    {
-        if ($this->taxableAmount === null) {
-            throw new InvalidArgumentException('Missing taxsubtotal taxableAmount');
-        }
-
-        if ($this->taxAmount === null) {
-            throw new InvalidArgumentException('Missing taxsubtotal taxamount');
-        }
-
-        if ($this->taxCategory === null) {
-            throw new InvalidArgumentException('Missing taxsubtotal taxcategory');
-        }
-    }
-
-    /**
-     * The xmlSerialize method is called during xml writing.
-     * @param Writer $writer
-     * @return void
-     */
-    public function xmlSerialize(Writer $writer): void
-    {
-        $this->validate();
-
-        $writer->write([
-            [
+      $this->load_values_from_array();
+      $return_array = [
+        'name' =>Schema::CAC . 'TaxSubtotal',
+        'value' => [
+              [ 
                 'name' => Schema::CBC . 'TaxableAmount',
-                'value' => number_format($this->taxableAmount ?: 0.00, 2, '.', ''),
+                'value' => number_format($this->taxableAmounts ?: 0.00, 2, '.', ''),
                 'attributes' => [
-                    'currencyID' => Generator::$currencyID
+                    'currencyID' => $this->documentCurrency
                 ]
+               ],
+               [
+                 'name' => Schema::CBC . 'TaxAmount',
+                 'value' => number_format($this->taxAmount ?: 0.00, 2, '.', ''),
+                 'attributes' => [
+                      'currencyID' => $this->documentCurrency
+                 ]
+                ],
+                [
+                  'name' => Schema::CAC . 'TaxCategory',
+                  'value' => [
+                    [
+                       'name' => Schema::CBC . 'ID',
+                       'value' => $this->taxCategory
+                    ],
+                    [
+                       'name' => Schema::CBC . 'Percent',
+                       'value' => $this->taxCategoryPercent
+                    ],
+                    // https://docs.peppol.eu/poacc/billing/3.0/syntax/ubl-invoice/cac-TaxTotal/cac-TaxSubtotal/cac-TaxCategory/cbc-TaxExemptionReasonCode/
+                    $this->cbcTaxExemptionReasonCode($this->taxCategory),
+                    $this->cbcTaxExemptionReason($this->taxCategory),
+                    [
+                       'name' => Schema::CAC .  'TaxScheme',
+                       'value' => [
+                          [
+                            'name' => Schema::CBC . 'ID',
+                            'value' => 'VAT' 
+                          ]    
+                       ]
+                    ]
+                  ]
+                ],
+              ]
+            ];
+        return $return_array;    
+    }
+
+    private function cbcTaxExemptionReasonCode(string $status_code) : array {
+        $array = match($status_code) {
+            // Exempt from tax
+            'E' => [
+               'name' => Schema::CBC . 'TaxExemptionReasonCode',
+               'value' => 'E',
+               'attributes' => []
             ],
-            [
-                'name' => Schema::CBC . 'TaxAmount',
-                'value' => number_format($this->taxAmount ?: 0.00, 2, '.', ''),
-                'attributes' => [
-                    'currencyID' => Generator::$currencyID
-                ]
-            ]
-        ]);
-
-        if ($this->percent !== null) {
-            $writer->write([
-                Schema::CBC . 'Percent' => $this->percent
-            ]);
-        }
-
-        $writer->write([
-            Schema::CAC . 'TaxCategory' => $this->taxCategory
-        ]);
+            default => [],
+        };
+        return $array;
+    }
+    
+     private function cbcTaxExemptionReason(string $status_code) : array {
+        $array = match($status_code) {
+            // Exempt from tax
+            'E' => [
+               'name' => Schema::CBC . 'TaxExemptionReason',
+               'value' => 'Exempt',
+               'attributes' => []
+            ],
+            default => [],
+        };
+        return $array;
     }
 }

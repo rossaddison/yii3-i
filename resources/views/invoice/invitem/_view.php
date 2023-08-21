@@ -63,6 +63,10 @@ if (!empty($errors)) {
    <?= Html::encode($body['discount_amount'] ?? ''); ?>
  </div>
  <div class="mb3 form-group">
+   <label for="charge_amount" class="form-label" style="background:lightblue"><?= $translator->translate('invoice.invoice.item.charge'); ?></label>
+   <?= Html::encode($body['charge_amount'] ?? ''); ?>
+ </div>
+ <div class="mb3 form-group">
    <label for="order" class="form-label" style="background:lightblue"><?= $s->trans('order'); ?></label>
    <?= Html::encode($body['order'] ?? ''); ?>
  </div>

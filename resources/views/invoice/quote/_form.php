@@ -37,11 +37,21 @@ if (!empty($errors)) {
     </div>
     <div class="form-group">
       <div class="col-xs-12 col-sm-2 text-right text-left-xs">  
-        <label for="number" class="control-label"><?= $s->trans('quote');?></label>
+        <label for="number" class="control-label"><?= $translator->translate('invoice.quote.id');?></label>
       </div>
       <div class="col-xs-12 col-sm-6">  
         <div clsss="input-group">  
-            <input type="text" name="number" id="number" class="form-control" required disabled value="<?= Html::encode($body['number'] ??  ''); ?>">
+            <input type="text" name="number" id="number" class="form-control" required disabled value="<?= Html::encode($body['id'] ??  ''); ?>">
+        </div>
+      </div>    
+    </div>
+    <div class="form-group">
+      <div class="col-xs-12 col-sm-2 text-right text-left-xs">  
+        <label for="number" class="control-label"><?= $translator->translate('invoice.quote.number');?></label>
+      </div>
+      <div class="col-xs-12 col-sm-6">  
+        <div clsss="input-group">  
+            <input type="text" name="number" id="number" class="form-control" disabled value="<?= Html::encode($body['number'] ??  ''); ?>">
         </div>
       </div>    
     </div>
@@ -76,6 +86,33 @@ if (!empty($errors)) {
       </select>
       </div>
     </div>
+    
+    <?php if ($del_count > 0) { ?>
+    <div class="form-group">
+        <div class="col-xs-12 col-sm-2 text-right text-left-xs">
+            <label for="delivery_location_id"><?= $translator->translate('invoice.invoice.delivery.location'); ?>: </label>
+        </div>        
+        <div class="col-xs-12 col-sm-6">
+            <div class="input-group">  
+                <select name="delivery_location_id" id="delivery_location_id"
+                        class="form-control">
+                    <?php foreach ($dels as $del) { ?>
+                        <option value="<?php echo $del->getId(); ?>"
+                            <?php echo $s->check_select(Html::encode($body['delivery_location_id'] ?? $del->getId()), $del->getId()); ?>>
+                            <?php echo $del->getAddress_1(). ', '.$del->getAddress_2() .', '. $del->getCity() .', '. $del->getZip() ; ?>
+                        </option>
+                    <?php } ?>
+                </select>
+            </div>
+        </div>    
+    </div>
+    <?php } else {
+        echo '<div>';
+        echo $no_delivery_locations ? $alert : '';
+        echo Html::a($translator->translate('invoice.invoice.delivery.location.add'), $urlGenerator->generate('del/add',['client_id'=>$quote->getClient_id()]));
+        echo '</div>';
+    }
+    ?>
 
     <div class="form-group">
       <div class="col-xs-12 col-sm-2 text-right text-left-xs">  

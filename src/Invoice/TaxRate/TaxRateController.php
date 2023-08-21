@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Invoice\TaxRate;
 
 use App\Invoice\Entity\TaxRate;
+use App\Invoice\Helpers\Peppol\PeppolArrays;
 use App\Invoice\TaxRate\TaxRateRepository;
 use App\Invoice\Setting\SettingRepository;
 use App\Service\WebControllerService;
@@ -81,12 +82,14 @@ final class TaxRateController
      */
     public function add(ViewRenderer $head, Session $session, Request $request,SettingRepository $settingRepository,ValidatorInterface $validator): Response
     {
+        $peppol_arrays = new PeppolArrays();
         $parameters = [
-            'title' => 'Add Tax Rate',
+            'title' => $this->translator->translate('invoice.tax.rate.add'),
             'action' => ['taxrate/add'],
             'head'=>$head,
             'errors' => [],
             'body' => $request->getParsedBody(),
+            'peppol_tax_rate_code_array' => $peppol_arrays->getUncl5305(),
             's'=>$settingRepository
         ];
         
@@ -117,6 +120,7 @@ final class TaxRateController
             SettingRepository $settingRepository, TaxRateRepository $taxrateRepository, ValidatorInterface $validator): Response 
     {
         $taxrate = $this->taxrate($currentRoute, $taxrateRepository);
+        $peppol_arrays = new PeppolArrays();
         if ($taxrate) {
             $parameters = [
                 'title' => $settingRepository->trans('edit'),
@@ -124,10 +128,14 @@ final class TaxRateController
                 'errors' => [],
                 'head'=>$head,
                 'translator'=>$this->translator,
+                'peppol_tax_rate_code_array' => $peppol_arrays->getUncl5305(),
                 'body' => [
+                    'tax_rate_code' => $taxrate->getTax_rate_code(),
+                    'peppol_tax_rate_code' => $taxrate->getPeppol_tax_rate_code(),
+                    'storecove_tax_type' => $taxrate->getStorecove_tax_type(),
                     'tax_rate_name' => $taxrate->getTax_rate_name(),
-                    'tax_rate_percent'=>$taxrate->getTax_rate_percent(),
-                    'tax_rate_default'=>$taxrate->getTax_rate_default(),
+                    'tax_rate_percent'=> $taxrate->getTax_rate_percent(),
+                    'tax_rate_default'=> $taxrate->getTax_rate_default(),
                 ],
                 's'=>$settingRepository,
             ];
@@ -164,7 +172,7 @@ final class TaxRateController
             return $this->webService->getRedirectResponse('taxrate/index'); 
 	} catch (\Exception $e) {
             unset($e);
-            $this->flash($session, 'danger', 'Cannot delete. Tax Rate history exists.');
+            $this->flash($session, 'danger', $this->translator->translate('invoice.tax.rate.history.exists'));
             return $this->webService->getRedirectResponse('taxrate/index');
         } 
     }
@@ -187,6 +195,8 @@ final class TaxRateController
                 's'=>$settingRepository,
                 'translator'=>$this->translator,
                 'body' => [
+                    'tax_rate_code' => $taxrate->getTax_rate_code(),
+                    'peppol_tax_rate_code' => $taxrate->getPeppol_tax_rate_code(),
                     'tax_rate_id'=>$taxrate->getTax_rate_id(),
                     'tax_rate_name'=>$taxrate->getTax_rate_name(),
                     'tax_rate_percent'=>$taxrate->getTax_rate_percent(),

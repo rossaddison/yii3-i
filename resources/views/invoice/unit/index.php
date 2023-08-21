@@ -28,11 +28,10 @@ use App\Widget\OffsetPagination;
       ->urlGenerator(fn ($page) => $urlGenerator->generate('family/index', ['page' => $page]));
     ?>
     <?php 
-            if ($pagination->isRequired()) {
-               echo $pagination;
-            }
-    ?> 
-
+        if ($pagination->isRequired()) {
+           echo $pagination;
+        }
+    ?>
 </div>
 
 <div id="content" class="table-content">
@@ -67,7 +66,21 @@ use App\Widget\OffsetPagination;
                                         <i class="fa fa-edit fa-margin"></i> <?= $s->trans('edit'); ?>
                                     </a>
                                 </li>
+                                <?php if ($upR->repoUnitCount((string)$unit->getUnit_id()) === 0 ) { ?>
                                 <li>
+                                    <a href="<?= $urlGenerator->generate('unitpeppol/add', ['unit_id' => $unit->getUnit_id()]); ?>" style="text-decoration:none">
+                                        <i class="fa fa-plus fa-margin"></i><?= $translator->translate('invoice.unit.peppol.add'); ?>
+                                    </a>
+                                </li>
+                                <?php } ?>
+                                <?php if ($upR->repoUnitCount((string)$unit->getUnit_id()) > 0 ) { ?>
+                                <li>
+                                    <a href="<?= $urlGenerator->generate('unitpeppol/edit', ['id' => $unit->getUnit_id()]); ?>" style="text-decoration:none">
+                                        <i class="fa fa-edit fa-margin"></i> <?= $translator->translate('invoice.unit.peppol.edit'); ?>
+                                    </a>
+                                </li>
+                                <?php } ?>
+                                    <li>
                                     <form action="<?= $urlGenerator->generate('unit/delete', ['id' => $unit->getUnit_id()]); ?>" style="text-decoration:none"
                                           method="POST">
                                         <input type="hidden" name="_csrf" value="<?= $csrf; ?>">

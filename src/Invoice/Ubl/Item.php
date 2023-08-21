@@ -137,7 +137,7 @@ class Item implements XmlSerializable
             ]);
         }
 
-        if ($this->getSellersItemIdentification()!==null) {
+        if ($this->sellersItemIdentification!==null) {
             $writer->write([
                 Schema::CAC . 'SellersItemIdentification' => [
                     Schema::CBC . 'ID' => $this->sellersItemIdentification
@@ -145,9 +145,9 @@ class Item implements XmlSerializable
             ]);
         }
 
-        if ($this->getClassifiedTaxCategory()!==null) {
+        if ($this->classifiedTaxCategory!==null) {
             $writer->write([
-                Schema::CAC . 'ClassifiedTaxCategory' => $this->getClassifiedTaxCategory()
+                Schema::CAC . 'ClassifiedTaxCategory' => $this->classifiedTaxCategory
             ]);
         }
     }

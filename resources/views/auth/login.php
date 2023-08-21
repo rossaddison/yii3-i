@@ -17,7 +17,7 @@ use Yiisoft\View\WebView;
  * @var string                $csrf
  * @var LoginForm             $formModel
  */
-$this->setTitle($translator->translate('layout.login'));
+$this->setTitle($s->trans('login'));
 
 $error = $error ?? null;
 ?>

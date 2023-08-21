@@ -100,7 +100,7 @@ private EntityWriter $entityWriter;
      * @return ProductCustom|null
      */
     public function repoFormValuequery(string $product_id, string $custom_field_id):ProductCustom|null {
-        $query = $this->select()->where(['inv_id' =>$product_id])
+        $query = $this->select()->where(['product_id' =>$product_id])
                                 ->andWhere(['custom_field_id' =>$custom_field_id]);
         return  $query->fetchOne() ?: null;        
     }
@@ -112,7 +112,7 @@ private EntityWriter $entityWriter;
      * @return int
      */
     public function repoProductCustomCount(string $product_id, string $custom_field_id) : int {
-        $query = $this->select()->where(['inv_id' =>$product_id])
+        $query = $this->select()->where(['product_id' =>$product_id])
                                 ->andWhere(['custom_field_id' =>$custom_field_id]);
         return $query->count();
     } 

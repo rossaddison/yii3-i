@@ -59,7 +59,7 @@ final class <?= $generator->getCamelcase_capital_name();?>Form extends FormModel
     foreach ($orm_schema->getColumns() as $column) {
       if (($column->getAbstractType() <> 'primary') && ($column->getAbstractType() <> 'date') && ($column->getAbstractType() <> 'time')) {
         echo "\n";
-        echo '    public function get'.ucfirst($column->getName()).'() : '.$column->getType()."\n";
+        echo '    public function get'.ucfirst($column->getName()).'() : '.$column->getType().'|null'."\n";
         echo '    {'."\n";
         echo '      return $this->'.$column->getName().';'."\n";
         echo '    }'."\n";
@@ -87,6 +87,11 @@ final class <?= $generator->getCamelcase_capital_name();?>Form extends FormModel
       }
     }
     echo "\n";
+    echo '    /**'."\n";
+    echo '     * @return string'."\n";
+    echo "     * @psalm-return ''"."\n";
+    echo '     */';
+    echo "\n";
     echo '    public function getFormName(): string'."\n";
     echo '    {'."\n";
     echo '      return '."''".';'."\n";
@@ -98,9 +103,7 @@ final class <?= $generator->getCamelcase_capital_name();?>Form extends FormModel
     echo "\n";
     foreach ($orm_schema->getColumns() as $column) {
        if (substr($column, -2) <> 'id') {   
-        echo "        '".$column->getName()."' => ["."\n";
-        echo '            Required::rule(),'."\n";
-        echo '        ],'."\n";
+        echo "        '".$column->getName()."' => [new Required()],";
        } 
     }
     echo '    ];'."\n";   

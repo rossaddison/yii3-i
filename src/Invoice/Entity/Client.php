@@ -3,9 +3,12 @@ declare(strict_types=1);
 
 namespace App\Invoice\Entity;
 
+use App\Invoice\Entity\DeliveryLocation;
 use Cycle\Annotated\Annotation\Column;
 use Cycle\Annotated\Annotation\Entity;
+use Cycle\Annotated\Annotation\Relation\HasMany;
 use Cycle\ORM\Entity\Behavior;
+use Doctrine\Common\Collections\ArrayCollection;
 use \DateTime;
 use \DateTimeImmutable; 
 
@@ -16,22 +19,33 @@ class Client
  {
     #[Column(type: 'primary')]
     public ?int $id = null;
-     
+    
+    #[Column(type: 'integer(11)', nullable:true)]
+    private ?int $postaladdress_id =  null;
+    
     #[Column(type: 'datetime')]
     private DateTimeImmutable $client_date_created;
     
     #[Column(type: 'datetime')]    
     private DateTimeImmutable $client_date_modified;
-     
+    
+    // treat as first name
     #[Column(type: 'text')]
     private string $client_name = '';
-     
+    
+    // treat as last name
+    #[Column(type: 'string(151)', nullable: true)]
+    private ?string $client_surname = '';
+    
     #[Column(type: 'text', nullable: true)]
     private ?string $client_address_1 =  '';
      
     #[Column(type: 'text', nullable: true)]
     private ?string $client_address_2 =  '';
-     
+    
+    #[Column(type: 'string(50)', nullable: true)]
+    private ?string $client_building_number = '';
+    
     #[Column(type: 'text', nullable: true)]
     private ?string $client_city =  '';
      
@@ -70,9 +84,9 @@ class Client
      
     #[Column(type: 'bool', default: false)]
     private bool $client_active = false;
-     
-    #[Column(type: 'string(151)', nullable: true)]
-    private ?string $client_surname = '';
+        
+    #[Column(type: 'string(12)', nullable: true)]
+    private ?string $client_number =  '';
      
     #[Column(type: 'string(16)', nullable: true)]
     private ?string $client_avs =  '';
@@ -88,17 +102,47 @@ class Client
     
     #[Column(type: 'tinyInteger(4)', nullable: false, default: 0)]
     private ?int $client_gender = null;
+        
+    /**
+     * @var ArrayCollection<array-key, DeliveryLocation>
+     */
+    #[HasMany(target: DeliveryLocation::class)]
+    private ArrayCollection $delivery_locations;
      
-    public function __construct(string $client_name = '', string $client_address_1='',string $client_address_2='',string $client_city='',
-            string $client_state='',string $client_zip='',string $client_country='',string $client_phone='',string $client_fax='',
-            string $client_mobile='', string $client_email ='', string $client_web='', string $client_vat_id='', string $client_tax_code='',
-            string $client_language='', bool $client_active=false, string $client_surname='', string $client_avs='', string $client_insurednumber='',
-            string $client_veka='', mixed $client_birthdate = '', int $client_gender=0
-    )
+    public function __construct(
+            // treat as firstname
+            string $client_name ='',             
+            string $client_surname='',
+            string $client_number='',
+            string $client_address_1='', 
+            string $client_address_2='', 
+            string $client_building_number='',
+            string $client_city='',
+            string $client_state='',
+            string $client_zip='', 
+            string $client_country='',
+            string $client_phone='',
+            string $client_fax='',
+            string $client_mobile='', 
+            string $client_email ='', 
+            string $client_web='', 
+            string $client_vat_id='', 
+            string $client_tax_code='',
+            string $client_language='', 
+            bool $client_active=false, 
+            string $client_avs='', 
+            string $client_insurednumber='',
+            string $client_veka='', 
+            mixed $client_birthdate = '', 
+            int $client_gender=0, 
+            int $postaladdress_id = null)
     {
-        $this->client_name = $client_name;  
+        $this->client_name = $client_name;        
+        $this->client_surname = $client_surname;
+        $this->client_number = $client_number;
         $this->client_address_1 = $client_address_1;
         $this->client_address_2 = $client_address_2;
+        $this->client_building_number = $client_building_number;
         $this->client_city = $client_city;
         $this->client_state = $client_state;
         $this->client_zip = $client_zip;
@@ -112,7 +156,6 @@ class Client
         $this->client_tax_code = $client_tax_code;
         $this->client_language = $client_language;
         $this->client_active = $client_active;
-        $this->client_surname = $client_surname;
         $this->client_avs = $client_avs;
         $this->client_insurednumber = $client_insurednumber;
         $this->client_veka = $client_veka;
@@ -120,6 +163,8 @@ class Client
         $this->client_gender = $client_gender;
         $this->client_date_created = new \DateTimeImmutable();
         $this->client_date_modified = new \DateTimeImmutable();
+        $this->postaladdress_id = $postaladdress_id;
+        $this->delivery_locations = new ArrayCollection();
     }
     
     public function getClient_id(): ?int
@@ -135,6 +180,11 @@ class Client
     public function getClient_date_modified(): DateTimeImmutable
     {
         return $this->client_date_modified;
+    }
+    
+    public function getClient_full_name() : string
+    {
+        return $this->client_name . ' ' .($this->client_surname ?? '');
     }
     
     public function getClient_name(): string
@@ -175,6 +225,16 @@ class Client
     public function setClient_address_2(string $client_address_2) : void
     {
       $this->client_address_2 =  $client_address_2;
+    }
+    
+    public function getClient_building_number(): ?string
+    {
+       return $this->client_building_number;
+    }
+    
+    public function setClient_building_number(string $client_building_number) : void
+    {
+      $this->client_building_number =  $client_building_number;
     }
     
     public function getClient_city(): ?string
@@ -349,6 +409,16 @@ class Client
         $this->client_birthdate = $client_birthdate;
     }
     
+    public function getClient_number() : ?string 
+    {
+        return $this->client_number;
+    }
+    
+    public function setClient_number(?string $client_number) : void 
+    {
+        $this->client_number = $client_number;
+    }
+    
     public function getClient_gender(): int|null
     {
        return $this->client_gender;
@@ -359,6 +429,14 @@ class Client
       $this->client_gender =  $client_gender;
     }
     
+    public function setPostaladdress_id(int $postaladdress_id) : void {
+        $this->postaladdress_id = $postaladdress_id;
+    }
+    
+    public function getPostaladdress_id() : int|null {
+        return $this->postaladdress_id;
+    }
+        
     public function isNewRecord(): bool
     {
         return null===$this->getClient_id() ? true : false;

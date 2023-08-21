@@ -25,7 +25,7 @@ final class <?= $generator->getCamelcase_capital_name(); ?>Service
             echo "\n";
             foreach ($orm_schema->getColumns() as $column) { 
                 if (($column->getAbstractType() <> 'primary')) {
-                    echo '       $model->set'. ucfirst($column->getName()).'($form->get'.ucfirst($column->getName()).'());'."\n";
+                    echo '   null!==$form->get'.ucfirst($column->getName()).'() ? $model->set'. ucfirst($column->getName()).'($form->get'.ucfirst($column->getName())."()) : '';"."\n";
                 }    
             }
         ?> 

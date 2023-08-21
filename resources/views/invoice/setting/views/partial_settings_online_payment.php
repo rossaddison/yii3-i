@@ -100,7 +100,7 @@ foreach ($gateway_drivers as $driver => $fields) :
                             <input type="checkbox" name="settings[gateway_<?= $d; ?>_<?= $key ?>]"
                                 value="1"
                                 <?php $s->check_select($body['settings[gateway_' . $d . '_'.$key.']'], 1, '==', true) ?>
-                                data-toggle="tooltip" title="<?= $setting['label'] === 'Omnipay Version' 
+                                data-bs-toggle = "tooltip" title="<?= $setting['label'] === 'Omnipay Version' 
                                 ? 'Leave this box unchecked if you are using the latest PCI Compliant version eg. Stripe version 10. 15112022. '
                                 . 'Check this box if you are using an Omnipay Version. You should be advised not to deal with Card Numbers on forms. '
                                 . 'eg. on Stripe you will have to agree to check "Handle card information directly". See https://https://dashboard.stripe.com/settings/integration'

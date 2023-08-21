@@ -34,7 +34,9 @@ private EntityWriter $entityWriter;
      */
     public function findAllPreloaded(): EntityReader
     {
-        $query = $this->select()->load('inv')->load('tax_rate');
+        $query = $this->select()
+                      ->load('inv')
+                      ->load('tax_rate');
         return $this->prepareDataReader($query);
     }
     
@@ -111,7 +113,10 @@ private EntityWriter $entityWriter;
      * @return TEntity|null
      */
     public function repoInvTaxRatequery(string $id): ?InvTaxRate    {
-        $query = $this->select()->load('inv')->load('tax_rate')->where(['id' => $id]);
+        $query = $this->select()
+                      ->load('inv')
+                      ->load('tax_rate')
+                      ->where(['id' => $id]);
         return  $query->fetchOne();        
     }
     

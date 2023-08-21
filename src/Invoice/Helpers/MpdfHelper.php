@@ -265,14 +265,14 @@ Class MpdfHelper
             $mpdf = new \Mpdf\Mpdf($this->options);
             // mPDF configuration
             $mpdf->SetDirectionality('ltr');
-            $mpdf->useAdobeCJK = true;
-            $mpdf->autoScriptToLang = true;
-            $mpdf->autoVietnamese = true;
-            $mpdf->allow_charset_conversion = false;
-            $mpdf->autoArabic = true;
-            $mpdf->autoLangToFont = true;
+            $mpdf->useAdobeCJK = ($sR->get_setting('mpdf_cjk') === '1' ? true : false);
+            $mpdf->autoScriptToLang = ($sR->get_setting('mpdf_auto_script_to_lang') === '1' ? true : false);
+            $mpdf->autoVietnamese = ($sR->get_setting('mpdf_auto_vietnamese') === '1' ? true : false);
+            $mpdf->allow_charset_conversion = ($sR->get_setting('mpdf_allow_charset_conversion') === '0' ? false : true);
+            $mpdf->autoArabic = ($sR->get_setting('mpdf_auto_arabic') === '1' ? true : false);
+            $mpdf->autoLangToFont = ($sR->get_setting('mpdf_auto_language_to_font') === '1' ? true : false);
             $mpdf->SetTitle($title);
-            $mpdf->showImageErrors = true; 
+            $mpdf->showImageErrors = ($sR->get_setting('mpdf_show_image_errors') === '1' ? true : false); 
             
             // Include zugferd if enabled
             if ($zugferd_invoice === true && null!==$inv_amount && null!==$iiaR) {
@@ -303,6 +303,7 @@ Class MpdfHelper
             // Watermark
             if (!empty($sR->get_setting('pdf_watermark'))) {
                 $mpdf->showWatermarkText = true;
+                $mpdf->showWatermarkImage = true;
             }
             
             if (($quote_or_invoice instanceof Quote) || ($quote_or_invoice instanceof Inv)) { 

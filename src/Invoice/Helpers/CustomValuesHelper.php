@@ -185,11 +185,10 @@ Class CustomValuesHelper {
     
     public function print_field_for_form(array $entity_custom_values, CustomField $custom_field, array  $custom_value, string $class_input = '', string $class_before_input_class = 'controls', string $label_class =''): void {
         ?>
-        
-            <div class="col-xs-12 col-sm-2 text-right text-left-xs">
+            <div class="col-xs-12 col-sm-2">
                 <label<?php echo($label_class != '' ? " class='" . $label_class . "'" : ''); ?>
                       for="custom[<?= $custom_field->getId(); ?>]">
-                    <?= "   ".Html::encode($custom_field->getLabel()); ?>
+                    <?= Html::encode($custom_field->getLabel()); ?>
                     <?= ($custom_field->getType() === 'DATE' ? " (".$this->d->display().")" : ''); ?>
                 </label>
             </div>
@@ -239,12 +238,12 @@ Class CustomValuesHelper {
                             <option value=""><?= $this->s->trans('none'); ?></option>
                             <?php
                                 /** @var CustomValue $choice */
-                                foreach ($choices as $choice): ?>
+                                foreach ($choices as $choice) { ?>
                                 <option value="<?= $choice->getId(); ?>" 
-                                    <?php $this->s->check_select(in_array($choice->getId(), $selChoices), null); ?>>
-                            <?= Html::encode($choice->getValue()); ?>
+                                    <?php $this->s->check_select(in_array($choice->getId(), $selChoices), $choice->getId()); ?>>
+                                    <?= Html::encode($choice->getValue()); ?>
                                 </option>
-                        <?php endforeach; ?>
+                                <?php } ?>
                         </select>
                     </div>        
                     <?php
@@ -280,7 +279,8 @@ Class CustomValuesHelper {
                                value="<?= Html::encode($fieldValue); ?>" required>
                     </div>    
         <?php } ?>
-            </div>        
+            </div>
+            <br>
         <?php
     }
     
@@ -349,26 +349,25 @@ Class CustomValuesHelper {
     public function form_value(array $entity_custom_values, string $custom_field_id) {                                                                                                                                         
         /** @var CustomValue $entity_custom_value */
         foreach ($entity_custom_values as $entity_custom_value) {
-            if ($entity_custom_value->getCustom_field_id() === (int)$custom_field_id) {
+            if ($entity_custom_value->getCustom_field_id() == $custom_field_id) {
                 return $entity_custom_value->getValue();
             }
         }        
     }
     
     /**
-     * 
      * @param array $entity_custom_values
      * @param string $custom_field_id
      * @param cvR $cvR
      * @return string|int|null
      */           
     public function selected_value(array $entity_custom_values, string $custom_field_id, cvR $cvR) : string|int|null {
-        $quote_custom_value = $this->form_value($entity_custom_values,$custom_field_id);
-        if (($quote_custom_value !== '') && !empty($quote_custom_value)) {
-          $custom_value = $cvR->repoCustomValuequery((string)$quote_custom_value);
-          /** @var CustomValue $custom_value */
-          return $selected_value = $custom_value->getValue();
-        } 
-        return $selected_value = '';
+      $form_custom_value = $this->form_value($entity_custom_values,$custom_field_id);
+      if (($form_custom_value !== '') && !empty($form_custom_value)) {
+        $custom_value = $cvR->repoCustomValuequery((string)$form_custom_value);
+        /** @var CustomValue $custom_value */
+        return $selected_value = $custom_value->getValue();
+      } 
+      return $selected_value = '';
     }
 }

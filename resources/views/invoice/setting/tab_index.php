@@ -28,6 +28,9 @@ declare(strict_types=1);
         <a data-toggle="tab" href="#settings-quotes" style="text-decoration: none"><?= $s->trans('quotes'); ?></a>
     </li>
     <li>
+        <a data-toggle="tab" href="#settings-client-purchase-orders" style="text-decoration: none"><?= $translator->translate('invoice.salesorders'); ?></a>
+    </li>
+    <li>
         <a data-toggle="tab" href="#settings-taxes" style="text-decoration: none"><?= $s->trans('taxes'); ?></a>
     </li>
     <li>
@@ -41,6 +44,18 @@ declare(strict_types=1);
     </li>
     <li>
         <a data-toggle="tab" href="#settings-google-translate" style="text-decoration: none"><?= 'Google Translate' ?></a>
+    </li>
+    <li>
+        <a data-toggle="tab" href="#settings-vat-registered" style="text-decoration: none"><?= $translator->translate('invoice.invoice.vat'); ?></a>
+    </li>
+    <li>
+        <a data-toggle="tab" href="#settings-mpdf" style="text-decoration: none"><?= $translator->translate('invoice.invoice.mpdf'); ?></a>
+    </li>
+    <li>
+        <a data-toggle="tab" href="#settings-peppol" style="text-decoration: none"><?= $translator->translate('invoice.invoice.peppol'); ?></a>
+    </li>
+    <li>
+        <a data-toggle="tab" href="#settings-storecove" style="text-decoration: none"><?= $translator->translate('invoice.invoice.storecove'); ?></a>
     </li>
 </ul>
 
@@ -67,6 +82,10 @@ declare(strict_types=1);
             <div id="settings-quotes" class="tab-pane">
                 <?= $quotes; ?>
             </div>
+            
+            <div id="settings-client-purchase-orders" class="tab-pane">
+                <?= $salesorders; ?>
+            </div>
 
             <div id="settings-taxes" class="tab-pane">
                 <?= $taxes; ?>
@@ -86,6 +105,22 @@ declare(strict_types=1);
             
             <div id="settings-google-translate" class="tab-pane">
                 <?= $google_translate; ?>
+            </div>
+            
+            <div id="settings-vat-registered" class="tab-pane">
+                <?= $vat_registered; ?>
+            </div>
+            
+            <div id="settings-mpdf" class="tab-pane">
+                <?= $mpdf; ?>
+            </div>
+            
+            <div id="settings-peppol" class="tab-pane">
+                <?= $peppol_electronic_invoicing; ?>
+            </div>
+            
+            <div id="settings-storecove" class="tab-pane">
+                <?= $storecove; ?>
             </div>
 
         </div>

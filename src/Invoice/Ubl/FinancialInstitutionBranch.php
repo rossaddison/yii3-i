@@ -13,24 +13,6 @@ class FinancialInstitutionBranch implements XmlSerializable
         $this->id = $id;
     }
 
-    /**
-     * @return null|string
-     */
-    public function getId(): ?string
-    {
-        return $this->id;
-    }
-
-    /**
-     * @param null|string $id
-     * @return FinancialInstitutionBranch
-     */
-    public function setId(?string $id): FinancialInstitutionBranch
-    {
-        $this->id = $id;
-        return $this;
-    }
-
     public function xmlSerialize(Writer $writer): void
     {
         $writer->write([

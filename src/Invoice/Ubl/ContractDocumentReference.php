@@ -13,27 +13,7 @@ class ContractDocumentReference implements XmlSerializable
     public function __construct(?string $id) {
         $this->id = $id;
     }
-
-    /**
-     * 
-     * @return null|string
-     */
-    public function getId(): ?string
-    {
-        return $this->id;
-    }
-
-    /**
-     * 
-     * @param null|string $id
-     * @return ContractDocumentReference
-     */
-    public function setId(?string $id): ContractDocumentReference
-    {
-        $this->id = $id;
-        return $this;
-    }
-
+    
     /**
      * 
      * @param Writer $writer

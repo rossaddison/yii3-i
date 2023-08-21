@@ -7,7 +7,6 @@ use Sabre\Xml\XmlSerializable;
 
 class InvoiceLine implements XmlSerializable
 {
-    public string $xmlTagName = 'InvoiceLine';
     private string $id;
     protected float $invoicedQuantity;
     private float $lineExtensionAmount;

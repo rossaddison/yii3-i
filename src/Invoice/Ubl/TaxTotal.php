@@ -10,47 +10,10 @@ use InvalidArgumentException;
 
 class TaxTotal implements XmlSerializable
 {
-    private null|float $taxAmount = null;
-    private array $taxSubTotals = [];
-
-    /**
-     * 
-     * @return float|null
-     */
-    public function getTaxAmount(): ?float
-    {
-        return $this->taxAmount;
-    }
-
-    /**
-     * 
-     * @param float|null $taxAmount
-     * @return TaxTotal
-     */
-    public function setTaxAmount(?float $taxAmount): TaxTotal
-    {
-        $this->taxAmount = $taxAmount;
-        return $this;
-    }
-
-    /**
-     * 
-     * @return array
-     */
-    public function getTaxSubTotals(): array
-    {
-        return $this->taxSubTotals;
-    }
-
-    /**
-     * 
-     * @param TaxSubTotal $taxSubTotal
-     * @return TaxTotal
-     */
-    public function addTaxSubTotal(TaxSubTotal $taxSubTotal): TaxTotal
-    {
-        $this->taxSubTotals[] = $taxSubTotal;
-        return $this;
+    private array $doc_and_or_supp_currency_tax = [];
+    
+    public function __construct(array $doc_and_or_supp_currency_tax) {
+        $this->doc_and_or_supp_currency_tax = $doc_and_or_supp_currency_tax;
     }
 
     /**
@@ -60,12 +23,13 @@ class TaxTotal implements XmlSerializable
      */
     public function validate() : void
     {
-        if ($this->taxAmount === null) {
+        if (empty($this->doc_and_or_supp_currency_tax)) {
             throw new InvalidArgumentException('Missing taxtotal taxamount');
         }
     }
 
     /**
+     * @see PeppolHelper/TaxAmounts function
      * 
      * @param Writer $writer
      * @return void
@@ -73,20 +37,58 @@ class TaxTotal implements XmlSerializable
     public function xmlSerialize(Writer $writer): void
     {
         $this->validate();
-
-        $writer->write([
-            [
-                'name' => Schema::CBC . 'TaxAmount',
-                'value' => number_format($this->taxAmount ?: 0.00, 2, '.', ''),
-                'attributes' => [
-                    'currencyID' => Generator::$currencyID
-                ]
-            ],
-        ]);
+        $tst = $this->doc_and_or_supp_currency_tax;
+        /**
+         * @var float $tst['supp_tax_cc_tax_amount']
+         */
+        $supp_tax_cc_tax_amount = $tst['supp_tax_cc_tax_amount'] ?: 0.00;
+        /**
+         * @var float $tst['doc_cc_tax_amount']
+         */
+        $doc_cc_tax_amount = $tst['doc_cc_tax_amount'] ?: 0.00;
+        /**
+         * @var string $tst['supp_tax_cc']
+         */
+        $supp_cc = $tst['supp_tax_cc'] ?? '';
+        /**
+         * @var string $tst['doc_cc']
+         */
+        $doc_cc = $tst['doc_cc'] ?? '';
         
-        /** @var TaxSubTotal $taxSubTotal */
-        foreach ($this->taxSubTotals as $taxSubTotal) {
-            $writer->write([Schema::CAC . 'TaxSubtotal' => $taxSubTotal]);
-        }
-    }
+        // One Instance of Tax Total provided because 
+        // Document has same currency code as Supplier
+        if ($doc_cc === $supp_cc) {
+        $writer->write(
+          [
+            'name' => Schema::CBC . 'TaxAmount',
+            'value' => number_format($supp_tax_cc_tax_amount ?: 0.00, 2, '.', ''),
+            'attributes' => [
+                'currencyID' => $supp_cc,
+            ]
+          ],
+        );
+        
+        // The suppliers currency is different to the document's currency
+        } else {
+        // https://docs.peppol.eu/poacc/billing/3.0/syntax/ubl-invoice/cac-TaxTotal/
+        // Suppliers Tax Amount in Suppliers Currency without subtotal breakdown
+        $writer->write([
+          'name' => Schema::CBC . 'TaxAmount',
+          'value' => number_format((float)(string)$supp_tax_cc_tax_amount ?: 0.00, 2, '.', ''),
+          'attributes' => [
+              'currencyID' => $supp_cc
+          ],
+        ]);
+        // Document Recipients TaxAmount in Document Recipient's Currency
+        $writer->write([
+          [
+            'name' => Schema::CBC . 'TaxAmount',
+            'value' => number_format((float)(string)$doc_cc_tax_amount ?: 0.00, 2, '.', ''),
+            'attributes' => [
+                'currencyID' => $doc_cc
+            ]
+          ],
+        ]);
+        } // elseif
+    } //xmlserialize
 }

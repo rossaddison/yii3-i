@@ -39,7 +39,7 @@ $header = Div::tag()
 
 $toolbarReset = A::tag()
     ->addAttributes(['type' => 'reset'])
-    ->addClass('btn btn-danger me-1')
+    ->addClass('btn btn-danger me-1 ajax-loader')
     ->content(I::tag()->addClass('bi bi-bootstrap-reboot'))
     ->href($urlGenerator->generate($currentRoute->getName()))
     ->id('btn-reset')
@@ -110,6 +110,7 @@ $toolbar = Div::tag();
         )
         ->rowAttributes(['class' => 'align-middle'])
         ->summaryAttributes(['class' => 'mt-3 me-3 summary text-end'])
+    ->summary('')
         ->tableAttributes(['class' => 'table table-striped text-center h-75','id'=>'table-payment'])
         ->toolbar(
             Form::tag()->post($urlGenerator->generate('payment/index'))->csrf($csrf)->open() .

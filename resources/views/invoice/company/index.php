@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use Yiisoft\Html\Html;
 use Yiisoft\Yii\Bootstrap5\Alert;
-use Yiisoft\Yii\Bootstrap5\Modal;
 
 /**
  * @var \App\Invoice\Entity\Company $company
@@ -41,8 +40,6 @@ use Yiisoft\Yii\Bootstrap5\Modal;
             ->render();
             echo $alert;
         }
-        
-
 ?>
 <div>
 <?php
@@ -51,7 +48,12 @@ use Yiisoft\Yii\Bootstrap5\Modal;
         $urlGenerator->generate('company/add'),
             ['class' => 'btn btn-outline-secondary btn-md-12 mb-3']
      );
+    }
+    
     //list all the items
+    /**
+     * @var Company $company
+     */
     foreach ($companies as $company){
       echo Html::br();
       $label = $company->getId() . " ";
@@ -64,7 +66,6 @@ use Yiisoft\Yii\Bootstrap5\Modal;
       $urlGenerator->generate('company/view', ['id' => $company->getId()]),
       ['class' => 'btn btn-warning btn-sm ms-2']
              );
-      }
       echo Html::a('Delete',
       $urlGenerator->generate('company/delete', ['id' => $company->getId()]),
       ['class' => 'btn btn-danger btn-sm ms-2', 

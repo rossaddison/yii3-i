@@ -6,7 +6,6 @@ namespace App\Invoice\Upload;
 
 use Yiisoft\Form\FormModel;
 use Yiisoft\Validator\Rule\Required;
-use DateTime;
 
 final class UploadForm extends FormModel
 {    
@@ -14,6 +13,7 @@ final class UploadForm extends FormModel
     private string $url_key='';
     private string $file_name_original='';
     private string $file_name_new='';
+    private string $description='';
     private string $uploaded_date='';
 
     public function getClient_id() : int|null
@@ -35,10 +35,15 @@ final class UploadForm extends FormModel
     {
       return $this->file_name_new;
     }
-
-    public function getUploaded_date() : \DateTime
+    
+    public function getDescription() : string
     {
-       return new DateTime($this->uploaded_date);
+      return $this->description;  
+    }
+    
+    public function getUploaded_date() : string|null
+    {
+       return $this->uploaded_date;
     }
 
     /**

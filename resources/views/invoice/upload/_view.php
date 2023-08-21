@@ -25,19 +25,23 @@ if (!empty($errors)) {
 <h1><?= Html::encode($title) ?></h1>
 <div class="row">
  <div class="mb3 form-group">
-<label for="url_key" class="form-label" style="background:lightblue"><?= $s->trans('url_key'); ?></label>
+<label for="url_key" class="form-label" style="background:lightblue"><?= $translator->translate('invoice.upload.url.key'); ?></label>
    <?= Html::encode($body['url_key'] ?? ''); ?>
  </div>
  <div class="mb3 form-group">
-<label for="file_name_original" class="form-label" style="background:lightblue"><?= $s->trans('file_name_original'); ?></label>
+<label for="file_name_original" class="form-label" style="background:lightblue"><?= $translator->translate('invoice.upload.filename.original'); ?></label>
    <?= Html::encode($body['file_name_original'] ?? ''); ?>
  </div>
  <div class="mb3 form-group">
-<label for="file_name_new" class="form-label" style="background:lightblue"><?= $s->trans('file_name_new'); ?></label>
+<label for="file_name_new" class="form-label" style="background:lightblue"><?= $translator->translate('invoice.upload.filename.new'); ?></label>
    <?= Html::encode($body['file_name_new'] ?? ''); ?>
  </div>
+ <div class="mb3 form-group">
+<label for="description" class="form-label" style="background:lightblue"><?= $translator->translate('invoice.upload.filename.description'); ?></label>
+   <?= Html::encode($body['description'] ?? ''); ?>
+ </div>   
 <div class="mb3 form-group">
-  <label for="uploaded_date" class="form-label" style="background:lightblue"><?= $s->trans('uploaded_date'); ?>  </label>
+  <label for="uploaded_date" class="form-label" style="background:lightblue"><?= $translator->translate('invoice.upload.date'); ?></label>
 <?php $date = $body['uploaded_date']; if ($date && $date != "0000-00-00") {    $datehelper = new DateHelper($s);  $date = $datehelper->date_from_mysql($date);} else {  $date = null;}?><?= Html::encode($date); ?></div>
  <div class="mb3 form-group">
    <label for="client_id" class="form-label" style="background:lightblue"><?= $s->trans('client'); ?></label>

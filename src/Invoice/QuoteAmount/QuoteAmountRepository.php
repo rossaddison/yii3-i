@@ -192,6 +192,10 @@ private EntityWriter $entityWriter;
         $return = [];
         // $period eg. this-month, last-month derived from $sR->get_setting('invoice or quote_overview_period') 
         $range = $sR->range($period);
+        /**
+         * @var int $key
+         * @var array $status 
+         */
         foreach ($qR->getStatuses($sR) as $key => $status) {
             $status_specific_quotes = $this->repoStatusTotals($key, $range, $sR);
             /** @var float $total */

@@ -4,52 +4,35 @@ namespace App\Invoice\Ubl;
 
 use Sabre\Xml\Writer;
 use Sabre\Xml\XmlSerializable;
-use DateTime;
 
 class InvoicePeriod implements XmlSerializable
 {
-    private DateTime $startDate;
-    private DateTime $endDate;
+    private string $startDate;
+    private string $endDate;
+    // https://docs.peppol.eu/poacc/billing/3.0/syntax/ubl-invoice/cac-InvoicePeriod
+    // https://docs.peppol.eu/poacc/billing/3.0/codelist/UNCL2005/
+    private string $descriptionCode;
     
-    public function __construct(DateTime $startDate, DateTime $endDate) {
+    public function __construct(string $startDate, string $endDate, string $descriptionCode) {
         $this->startDate = $startDate;
         $this->endDate = $endDate;
+        $this->descriptionCode = $descriptionCode;
     }
 
     /**
-     * @return DateTime
+     * @return string
      */
-    public function getStartDate(): DateTime
+    public function getStartDate(): string
     {
         return $this->startDate;
     }
 
     /**
-     * @param DateTime $startDate
-     * @return InvoicePeriod
+     * @return string
      */
-    public function setStartDate(DateTime $startDate): InvoicePeriod
-    {
-        $this->startDate = $startDate;
-        return $this;
-    }
-
-    /**
-     * @return DateTime
-     */
-    public function getEndDate(): DateTime
+    public function getEndDate(): string
     {
         return $this->endDate;
-    }
-
-    /**
-     * @param DateTime $endDate
-     * @return InvoicePeriod
-     */
-    public function setEndDate(DateTime $endDate): InvoicePeriod
-    {
-        $this->endDate = $endDate;
-        return $this;
     }
     
     /**
@@ -61,11 +44,16 @@ class InvoicePeriod implements XmlSerializable
     public function xmlSerialize(Writer $writer): void
     {
         $writer->write([
-            Schema::CBC . 'StartDate' => $this->startDate->format('Y-m-d') ?: '',
+            Schema::CBC . 'StartDate' => $this->startDate ?: '',
         ]);
         
         $writer->write([
-            Schema::CBC . 'EndDate' => $this->endDate->format('Y-m-d') ?: '',
+            Schema::CBC . 'EndDate' => $this->endDate ?: '',
         ]);
+        if ($this->descriptionCode !== '') {  
+            $writer->write([
+                Schema::CBC . 'DescriptionCode' => $this->descriptionCode ?: '',
+            ]);
+        }
     }
 }

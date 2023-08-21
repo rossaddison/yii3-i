@@ -12,7 +12,6 @@ use App\Invoice\Entity\Inv;
 #[Entity(repository: \App\Invoice\InvAmount\InvAmountRepository::class)] 
 class InvAmount
 {
-    
     #[BelongsTo(target:Inv::class, nullable: false, fkAction: 'NO ACTION')]
     private ?Inv $inv = null;
     
@@ -26,10 +25,10 @@ class InvAmount
     private int $sign = 1;
     
     #[Column(type: 'decimal(20,2)', nullable: false, default: 0.00)]
-    private ?float $item_subtotal = 0.00;
+    private float $item_subtotal = 0.00;
      
     #[Column(type: 'decimal(20,2)', nullable: false, default: 0.00)]
-    private ?float $item_tax_total = 0.00;
+    private float $item_tax_total = 0.00;
      
     #[Column(type: 'decimal(20,2)', nullable: false, default: 0.00)]
     private ?float $tax_total = 0.00;
@@ -54,14 +53,18 @@ class InvAmount
          float $balance = 0.00
     )
     {
-         $this->inv_id=$inv_id;
-         $this->sign=$sign;
-         $this->item_subtotal=$item_subtotal;
-         $this->item_tax_total=$item_tax_total;
-         $this->tax_total=$tax_total;
-         $this->total=$total;
-         $this->paid=$paid;
-         $this->balance=$balance;
+        $this->inv_id=$inv_id;
+        $this->sign=$sign;
+        // The sum of all line item's subtotals
+        $this->item_subtotal=$item_subtotal;
+        // The sum of all line item's tax totals
+        $this->item_tax_total=$item_tax_total;
+        // The below tax_total is not applicable to VAT based systems and will always be zero in vat based systems
+        // Total of additional taxes separate from line item taxes
+        $this->tax_total=$tax_total;
+        $this->total=$total;
+        $this->paid=$paid;
+        $this->balance=$balance;
     }
     
     public function getInv() : ?Inv
@@ -99,7 +102,7 @@ class InvAmount
       $this->sign =  $sign;
     }
     
-    public function getItem_subtotal() : float|null
+    public function getItem_subtotal() : float
     {
      return $this->item_subtotal;
     }
@@ -109,7 +112,7 @@ class InvAmount
       $this->item_subtotal =  $item_subtotal;
     }
     
-    public function getItem_tax_total() : float|null
+    public function getItem_tax_total() : float
     {
      return $this->item_tax_total;
     }

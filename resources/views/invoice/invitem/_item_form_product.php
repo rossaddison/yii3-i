@@ -19,6 +19,7 @@ if (!empty($errors)) {
     }
 }
 
+$vat = $s->get_setting('enable_vat_registration') === '1' ? true : false;
 ?>
 <div class="panel panel-default">
 <div class="panel-heading">
@@ -33,9 +34,10 @@ if (!empty($errors)) {
     <th></th>
     <th><?= $s->trans('item'); ?></th>
     <th><?= $s->trans('description'); ?></th>
+    <th><?= $translator->translate('invoice.invoice.note'); ?></th>
     <th><?= $s->trans('quantity'); ?></th>
     <th><?= $s->trans('price'); ?></th>
-    <th><?= $s->trans('tax_rate'); ?></th>
+    <th><?= $vat === false ? $s->trans('tax_rate') : $translator->translate('invoice.invoice.vat.rate') ?></th>
     <th><?= $s->trans('subtotal'); ?></th>
     <th><?= $s->trans('tax'); ?></th>
     <th><?= $s->trans('total'); ?></th>
@@ -84,16 +86,16 @@ if (!empty($errors)) {
                 </td>
                 <td class="td-amount">
                     <div class="input-group">
-                        <span class="input-group-text"><?= $s->trans('item_discount'); ?></span>
+                        <span class="input-group-text"><?= $vat === false ? $s->trans('item_discount') : $translator->translate('invoice.invoice.cash.discount'); ?></span>
                         <input type="number" name="discount_amount" class="input-sm form-control amount has-feedback" required
-                               data-toggle="tooltip" data-placement="bottom"
+                               data-bs-toggle = "tooltip" data-placement="bottom"
                                title="<?= $s->get_setting('currency_symbol') . ' ' . $s->trans('per_item'); ?>" value="<?= $numberhelper->format_amount($body['discount_amount'] ??
                                        0.00); ?>">
                     </div>
                 </td>
                 <td td-vert-middle>
                     <div class="input-group">
-                        <span class="input-group-text"><?= $s->trans('tax_rate'); ?></span>
+                        <span class="input-group-text"><?= $vat === false ? $s->trans('tax_rate') : $translator->translate('invoice.invoice.vat.rate') ?></span>
                         <select name="tax_rate_id" class="form-control has-feedback" required>
                              <!-- avoid using a zero option here -->
                             <?php foreach ($tax_rates as $tax_rate) { ?>
@@ -106,8 +108,8 @@ if (!empty($errors)) {
                 </td>
                 <!-- see line 896 InvController: id modal-choose-items lies on views/product/modal_product_lookups_inv.php-->
                 <td class="td-icon text-right td-vert-middle">                   
-                    <button class="btn btn btn-primary" href="#modal-choose-items" id="modal-choose-items" data-toggle="modal"><i class="fa fa-list" data-toggle="tooltip" title="<?= $s->trans('add_product'); ?>"></i></button>
-                    <button type="submit" class="btn btn btn-info" data-toggle="tooltip" title="invitem/add_product"><i class="fa fa-plus"></i><?= $s->trans('save'); ?></button>
+                    <button class="btn btn btn-primary" href="#modal-choose-items" id="modal-choose-items" data-toggle="modal"><i class="fa fa-list" data-bs-toggle = "tooltip" title="<?= $s->trans('add_product'); ?>"></i></button>
+                    <button type="submit" class="btn btn btn-info" data-bs-toggle = "tooltip" title="invitem/add_product"><i class="fa fa-plus"></i><?= $s->trans('save'); ?></button>
                 </td>              
             </tr>
             <tr>
@@ -115,6 +117,10 @@ if (!empty($errors)) {
                     <div class="input-group">
                         <span class="input-group-text"><?= $s->trans('description'); ?></span>
                         <textarea name="description" class="form-control"><?= Html::encode($body['description'] ??  ''); ?></textarea>
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-text"><?= $translator->translate('invoice.invoice.note'); ?></span>
+                        <textarea name="note" class="form-control"><?= Html::encode($body['note'] ??  ''); ?></textarea>
                     </div>
                 </td>
                 <td class="td-amount">
@@ -135,11 +141,11 @@ if (!empty($errors)) {
                     <span name="subtotal" class="amount"></span>
                 </td>
                 <td class="td-amount td-vert-middle">
-                    <span><?= $s->trans('discount'); ?></span><br/>
+                    <span><?= $vat === false ? $s->trans('discount') : $translator->translate('invoice.invoice.early.settlement.cash.discount') ?></span><br/>
                     <span name="discount_total" class="amount"></span>
                 </td>
                 <td class="td-amount td-vert-middle">
-                    <span><?= $s->trans('tax'); ?></span><br/>
+                    <span><?= $vat === false ? $s->trans('tax') : $translator->translate('invoice.invoice.vat.abbreviation')  ?></span><br/>
                     <span name="tax_total" class="amount"></span>
                 </td>
                 <td class="td-amount td-vert-middle">

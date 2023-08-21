@@ -41,9 +41,9 @@ if (!empty($errors)) {
     </select>
  </div>
  <div class="mb3 form-group">
-    <label for="tax_rate_id">Tax rate</label>
+    <label for="tax_rate_id"><?php $s->trans('tax_rate'); ?></label>
     <select name="tax_rate_id" id="tax_rate_id" class="form-control simple-select">
-       <option value="0">Tax rate</option>
+       <option value="0"><?php $s->trans('tax_rate'); ?></option>
          <?php foreach ($tax_rates as $tax_rate) { ?>
           <option value="<?= $tax_rate->getId(); ?>"
            <?php $s->check_select(Html::encode($body['tax_rate_id'] ?? ''), $tax_rate->getId()) ?>

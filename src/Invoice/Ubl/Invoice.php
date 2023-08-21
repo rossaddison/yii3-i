@@ -1,721 +1,449 @@
 <?php
-declare(strict_types=1); 
+
+declare(strict_types=1);
 
 namespace App\Invoice\Ubl;
 
+// Sabre
 use Sabre\Xml\Writer;
 use Sabre\Xml\XmlSerializable;
+use App\Invoice\Ubl\Schema;
+use App\Invoice\Setting\SettingRepository;
 use DateTime;
 use InvalidArgumentException;
 
 class Invoice implements XmlSerializable {
-    public string $xmlTagName = 'Invoice';
-    private ?string $UBLVersionID = '2.1';
-    private ?string $customizationID = '1.0';    
-    private string $documentCurrencyCode = 'EUR';    
-    private ?ContractDocumentReference $contractDocumentReference;            
-    private ?Delivery $delivery;        
-    private ?InvoicePeriod $invoicePeriod;
-    private ?OrderReference $orderReference;    
-    private ?LegalMonetaryTotal $legalMonetaryTotal;
-    private ?Party $accountingSupplierParty;
-    private ?Party $accountingCustomerParty;    
-    private ?PaymentMeans $paymentMeans;            
-    private ?PaymentTerms $paymentTerms;    
-    private ?TaxTotal $taxTotal;    
-       
-    private DateTime $issueDate;
-    private ?DateTime $taxPointDate;
-    private ?DateTime $dueDate;        
+  private SettingRepository $settingRepository;
+  // http://www.datypic.com/sc/ubl23/t-ns53_InvoiceType.html
+  private ?string $UBLVersionID = '2.1';
+  private ?string $customizationID = 'urn:cen.eu:en16931:2017#compliant#urn:fdc:peppol.eu:2017:poacc:billing:3.0';
+  private ?string $profileID;
+  private ?string $id;
+  private DateTime $issueDate;  
+  private ?DateTime $dueDate;
+  protected ?int $invoiceTypeCode = InvoiceTypeCode::INVOICE;
+  private ?string $note;
+  private ?DateTime $taxPointDate;
+  private string $documentCurrencyCode = 'EUR';
+  /* @see Settings ... View ... Peppol Electronic Invoicing ... from_currency and to_currency */ 
+  private ?string $accountingCostCode;  
+  private ?string $buyerReference;  
+  private ?InvoicePeriod $invoicePeriod;
+  private ?OrderReference $orderReference;
+  private ?AdditionalDocumentReference $additionalDocumentReference;
+  private ?ContractDocumentReference $contractDocumentReference;
+  private ?Party $accountingSupplierParty;
+  private ?Party $accountingCustomerParty;
+  private ?Delivery $delivery;
+  private ?PaymentMeans $paymentMeans;
+  private ?PaymentTerms $paymentTerms;
+  private array $allowanceCharges;
+  private array $taxAmounts;
+  private array $taxSubtotal;
+  private ?LegalMonetaryTotal $legalMonetaryTotal;
+  protected array $invoiceLines;
+  private ?bool $isCopyIndicator;
+  private ?string $supplierAssignedAccountID;
+
+  public function __construct(
+    SettingRepository $settingRepository,
+    ?string $profileID,
+    ?string $id,
+    DateTime $issueDate,
+    DateTime $dueDate,
+    ?string $note,
+    DateTime $taxPointDate,    
+    ?string $accountingCostCode,
+    ?string $buyerReference,
+    ?InvoicePeriod $invoicePeriod,
+    ?OrderReference $orderReference,
+    ContractDocumentReference $contractDocumentReference,
+    AdditionalDocumentReference $additionalDocumentReference,
+    ?Party $accountingSupplierParty,
+    ?Party $accountingCustomerParty,
+    ?Delivery $delivery,
+    PaymentMeans $paymentMeans,
+    PaymentTerms $paymentTerms,
+    array $allowanceCharges,
+    array $taxAmounts,
+    array $taxSubtotal,
+    ?LegalMonetaryTotal $legalMonetaryTotal,
+    array $invoiceLines,
+    ?bool $isCopyIndicator,
+    ?string $supplierAssignedAccountID,
+  ) {
+    $this->settingRepository = $settingRepository;
+    $this->profileID = $profileID;
+    $this->id = $id;
+    $this->issueDate = $issueDate;
+    $this->dueDate = $dueDate;
+    $this->note = $note;    
+    $this->taxPointDate = $taxPointDate;
+    $this->accountingCostCode = $accountingCostCode;
+    $this->buyerReference = $buyerReference;
+    $this->invoicePeriod = $invoicePeriod;
+    $this->orderReference = $orderReference;
+    $this->contractDocumentReference = $contractDocumentReference;
+    $this->additionalDocumentReference = $additionalDocumentReference;
+    $this->accountingSupplierParty = $accountingSupplierParty;
+    $this->accountingCustomerParty = $accountingCustomerParty;
+    $this->delivery = $delivery;    
+    $this->paymentMeans = $paymentMeans;
+    $this->paymentTerms = $paymentTerms;
+    $this->allowanceCharges = $allowanceCharges;
+    $this->taxAmounts = $taxAmounts;
+    $this->taxSubtotal = $taxSubtotal;
+    $this->legalMonetaryTotal = $legalMonetaryTotal;
+    $this->invoiceLines = $invoiceLines;
+    $this->isCopyIndicator = $isCopyIndicator;
+    $this->supplierAssignedAccountID = $supplierAssignedAccountID;
+  }
+
+  /**
+   * @return null|string
+   */
+  public function getUBLVersionID(): ?string {
+    return $this->UBLVersionID;
+  }
+
+  /**
+   * @see http://www.schemacentral.com Business Document Standards
+   * @param null|string $UBLVersionID
+   * eg. '2.0', '2.1', '2.2', '2.3'
+   * @return Invoice
+   */
+  public function setUBLVersionID(?string $UBLVersionID): Invoice {
+    $this->UBLVersionID = $UBLVersionID;
+    return $this;
+  }
+
+  /**
+   * @return Invoice
+   */
+  public function setDocumentCurrencyCode(): Invoice {
+    $this->documentCurrencyCode = $this->settingRepository->get_setting('currency_code_to');
+    return $this;
+  }
+
+  public function getDocumentCurrencyCode(): string {
+    return $this->settingRepository->get_setting('currency_code_to');
+  }
+
+  /**
+   * The validate function that is called during xml writing to validate the data of the object.
+   *
+   * @return void
+   * @throws InvalidArgumentException An error with information about required data that is missing to write the XML
+   */
+  public function validate() : void {
+    if ($this->id === null) {
+      throw new InvalidArgumentException('Missing invoice id');
+    }
     
-    private ?string $accountingCostCode;
-    /** @var AdditionalDocumentReference[] $additionalDocumentReferences */
-    private array $additionalDocumentReferences = [];
-    private array $allowanceCharges;
-    private ?string $buyerReference;
-    private ?bool $isCopyIndicator; 
-    private ?string $id;
-    protected array $invoiceLines;
+    if (empty($this->note)) {
+      throw new InvalidArgumentException('Missing invoice note');
+    }
+
+    if (!$this->issueDate instanceof DateTime) {
+      throw new InvalidArgumentException('Invalid invoice issueDate');
+    }
+
+    if ($this->invoiceTypeCode === null) {
+      throw new InvalidArgumentException('Missing invoice invoiceTypeCode');
+    }
+
+    if ($this->accountingSupplierParty === null) {
+      throw new InvalidArgumentException('Missing invoice accountingSupplierParty');
+    }
+
+    if ($this->accountingCustomerParty === null) {
+      throw new InvalidArgumentException('Missing invoice accountingCustomerParty');
+    }
+
+    if (empty($this->invoiceLines)) {
+      throw new InvalidArgumentException('Missing invoice lines');
+    }
+
+    if ($this->legalMonetaryTotal === null) {
+      throw new InvalidArgumentException('Missing invoice LegalMonetaryTotal');
+    }
+  }
+
+  /**
+   *
+   * @param Writer $writer
+   * @return void
+   */
+  public function xmlSerialize(Writer $writer): void {
+    $this->validate();
+
+    $writer->write([
+      Schema::CBC . 'UBLVersionID' => $this->UBLVersionID,
+      Schema::CBC . 'CustomizationID' => $this->customizationID,
+    ]);
+
+    if ($this->profileID !== null) {
+      $writer->write([
+        Schema::CBC . 'ProfileID' => $this->profileID
+      ]);
+    }
+
+    $writer->write([
+      Schema::CBC . 'ID' => $this->id
+    ]);
     
-    protected ?int $invoiceTypeCode = InvoiceTypeCode::INVOICE;
-    
-    private ?string $note;
-    private ?string $profileID;
-    private ?string $supplierAssignedAccountID;
-    
-    public function __construct(            
-            ContractDocumentReference $contractDocumentReference,                                      
-            ?Delivery $delivery,          
-            ?InvoicePeriod $invoicePeriod,           
-            ?LegalMonetaryTotal  $legalMonetaryTotal,
-            ?OrderReference $orderReference,
-            ?Party $accountingSupplierParty,
-            ?Party $accountingCustomerParty,
-            PaymentMeans $paymentMeans,
-            PaymentTerms $paymentTerms,
-            TaxTotal $taxTotal,    
-            
-            DateTime $issueDate,
-            DateTime $taxPointDate,
-            DateTime $dueDate,
-            
-            ?string $accountingCostCode,
-            array  $additionalDocumentReferences,            
-            array  $allowanceCharges,
-            ?string $buyerReference,
-            ?bool $isCopyIndicator,
-            ?string $id,
-            array  $invoiceLines,
-            ?string $note,
-            ?string $profileID,
-            ?string $supplierAssignedAccountID,
-    ) {
-            
-            $this->contractDocumentReference = $contractDocumentReference;
-            $this->delivery = $delivery;            
-            $this->invoicePeriod = $invoicePeriod;
-            $this->orderReference = $orderReference;
-            $this->accountingSupplierParty = $accountingSupplierParty;
-            $this->accountingCustomerParty = $accountingCustomerParty;
-            $this->paymentMeans = $paymentMeans;
-            $this->paymentTerms = $paymentTerms;
-            $this->taxTotal = $taxTotal;          
-            
-            $this->issueDate = $issueDate;            
-            $this->taxPointDate = $taxPointDate;
-            $this->dueDate = $dueDate;
-            
-            $this->accountingCostCode = $accountingCostCode;            
-            
-            /** @var AdditionalDocumentReference[] $additionalDocumentReferences */
-            $this->additionalDocumentReferences = $additionalDocumentReferences;
-            $this->allowanceCharges = $allowanceCharges;
-            $this->buyerReference = $buyerReference;
-            $this->isCopyIndicator = $isCopyIndicator;
-            $this->id = $id;            
-            $this->invoiceLines = $invoiceLines;            
-            $this->legalMonetaryTotal = $legalMonetaryTotal;
-            $this->note = $note;
-            $this->paymentTerms = $paymentTerms;
-            $this->profileID = $profileID;
-            $this->supplierAssignedAccountID = $supplierAssignedAccountID;
-    }
-
     /**
-     * @return null|string
-     */
-    public function getUBLVersionID(): ?string {
-        return $this->UBLVersionID;
-    }
-
-    /**
-     * @param null|string $UBLVersionID
-     * eg. '2.0', '2.1', '2.2', ...
-     * @return Invoice
-     */
-    public function setUBLVersionID(?string $UBLVersionID): Invoice {
-        $this->UBLVersionID = $UBLVersionID;
-        return $this;
-    }
-
-    /**
-     * @return null|string
-     */
-    public function getId(): ?string {
-        return $this->id;
-    }
-
-    /**
-     * @param null|string $id
-     * @return Invoice
-     */
-    public function setId(?string $id): Invoice {
-        $this->id = $id;
-        return $this;
-    }
-
-    /**
-     * @param null|string $customizationID
-     * @return Invoice
-     */
-    public function setCustomizationID(?string $customizationID): Invoice {
-        $this->customizationID = $customizationID;
-        return $this;
-    }
-
-    /**
-     * @param null|string $profileID
-     * @return Invoice
-     */
-    public function setProfileID(?string $profileID): Invoice {
-        $this->profileID = $profileID;
-        return $this;
-    }
-
-    /**
-     * @return null|bool
-     */
-    public function isCopyIndicator(): null|bool {
-        return $this->isCopyIndicator;
-    }
-
-    /**
-     * @param bool $isCopyIndicator
-     * @return Invoice
-     */
-    public function setCopyIndicator(bool $isCopyIndicator): Invoice {
-        $this->isCopyIndicator = $isCopyIndicator;
-        return $this;
-    }
-
-    /**
-     * @return DateTime
-     */
-    public function getIssueDate(): ?DateTime {
-        return $this->issueDate;
-    }
-
-    /**
-     * @param DateTime $issueDate
-     * @return Invoice
-     */
-    public function setIssueDate(DateTime $issueDate): Invoice {
-        $this->issueDate = $issueDate;
-        return $this;
-    }
-
-    /**
-     * @return DateTime
-     */
-    public function getDueDate(): ?DateTime {
-        return $this->dueDate;
-    }
-
-    /**
-     * @param DateTime $dueDate
-     * @return Invoice
-     */
-    public function setDueDate(DateTime $dueDate): Invoice {
-        $this->dueDate = $dueDate;
-        return $this;
-    }
-
-    /**
-     * @param string $currencyCode
-     * @return Invoice
-     */
-    public function setDocumentCurrencyCode(string $currencyCode = 'EUR'): Invoice {
-        $this->documentCurrencyCode = $currencyCode;
-        return $this;
-    }
-
-    /**
-     * @return null|int
-     */
-    public function getInvoiceTypeCode(): ?int {
-        return $this->invoiceTypeCode;
-    }
-
-    /**
-     * @param int $invoiceTypeCode
-     * @return Invoice
-     */
-    public function setInvoiceTypeCode(int $invoiceTypeCode): Invoice {
-        $this->invoiceTypeCode = $invoiceTypeCode;
-        return $this;
-    }
-
-    /**
-     * @return null|string
-     */
-    public function getNote() {
-        return $this->note;
-    }
-
-    /**
-     * @param null|string $note
-     * @return Invoice
-     */
-    public function setNote(?string $note) : Invoice {
-        $this->note = $note;
-        return $this;
-    }
-
-    /**
-     * @return DateTime
-     */
-    public function getTaxPointDate(): ?DateTime {
-        return $this->taxPointDate;
-    }
-
-    /**
-     * @param DateTime $taxPointDate
-     * @return Invoice
-     */
-    public function setTaxPointDate(DateTime $taxPointDate): Invoice {
-        $this->taxPointDate = $taxPointDate;
-        return $this;
-    }
-
-    /**
-     * @return null|PaymentTerms
-     */
-    public function getPaymentTerms(): ?PaymentTerms {
-        return $this->paymentTerms;
-    }
-
-    /**
-     * @param PaymentTerms $paymentTerms
-     * @return Invoice
-     */
-    public function setPaymentTerms(PaymentTerms $paymentTerms): Invoice {
-        $this->paymentTerms = $paymentTerms;
-        return $this;
-    }
-
-    /**
-     * @return null|Party
-     */
-    public function getAccountingSupplierParty(): ?Party {
-        return $this->accountingSupplierParty;
-    }
-
-    /**
-     * @param Party $accountingSupplierParty
-     * @return Invoice
-     */
-    public function setAccountingSupplierParty(Party $accountingSupplierParty): Invoice {
-        $this->accountingSupplierParty = $accountingSupplierParty;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getSupplierAssignedAccountID(): ?string {
-        return $this->supplierAssignedAccountID;
-    }
-
-    /**
-     * @param string $supplierAssignedAccountID
-     * @return Invoice
-     */
-    public function setSupplierAssignedAccountID(string $supplierAssignedAccountID): Invoice {
-        $this->supplierAssignedAccountID = $supplierAssignedAccountID;
-        return $this;
-    }
-
-    /**
-     * @return null|Party
-     */
-    public function getAccountingCustomerParty(): ?Party {
-        return $this->accountingCustomerParty;
-    }
-
-    /**
-     * @param Party $accountingCustomerParty
-     * @return Invoice
-     */
-    public function setAccountingCustomerParty(Party $accountingCustomerParty): Invoice {
-        $this->accountingCustomerParty = $accountingCustomerParty;
-        return $this;
-    }
-
-    /**
-     * @return null|PaymentMeans
-     */
-    public function getPaymentMeans(): ?PaymentMeans {
-        return $this->paymentMeans;
-    }
-
-    /**
-     * @param PaymentMeans $paymentMeans
-     * @return Invoice
-     */
-    public function setPaymentMeans(PaymentMeans $paymentMeans): Invoice {
-        $this->paymentMeans = $paymentMeans;
-        return $this;
-    }
-
-    /**
-     * @return null|TaxTotal
-     */
-    public function getTaxTotal(): ?TaxTotal {
-        return $this->taxTotal;
-    }
-
-    /**
-     * @param TaxTotal $taxTotal
-     * @return Invoice
-     */
-    public function setTaxTotal(TaxTotal $taxTotal): Invoice {
-        $this->taxTotal = $taxTotal;
-        return $this;
-    }
-
-    /**
-     * @return null|LegalMonetaryTotal
-     */
-    public function getLegalMonetaryTotal(): ?LegalMonetaryTotal {
-        return $this->legalMonetaryTotal;
-    }
-
-    /**
-     * @param LegalMonetaryTotal $legalMonetaryTotal
-     * @return Invoice
-     */
-    public function setLegalMonetaryTotal(LegalMonetaryTotal $legalMonetaryTotal): Invoice {
-        $this->legalMonetaryTotal = $legalMonetaryTotal;
-        return $this;
-    }
-
-    /**
-     * @return null|array
-     */
-    public function getInvoiceLines(): ?array {
-        return $this->invoiceLines;
-    }
-
-    /**
-     * @param InvoiceLine[] $invoiceLines
-     * @return Invoice
-     */
-    public function setInvoiceLines(array $invoiceLines): Invoice {
-        $this->invoiceLines = $invoiceLines;
-        return $this;
-    }
-
-    /**
-     * @return null|array
-     */
-    public function getAllowanceCharges(): ?array {
-        return $this->allowanceCharges;
-    }
-
-    /**
-     * @param AllowanceCharge[] $allowanceCharges
-     * @return Invoice
-     */
-    public function setAllowanceCharges(array $allowanceCharges): Invoice {
-        $this->allowanceCharges = $allowanceCharges;
-        return $this;
-    }
-
-    /**
-     * @return null|AdditionalDocumentReference
-     */
-    public function getAdditionalDocumentReference(): ?AdditionalDocumentReference {
-        return $this->additionalDocumentReferences[0] ?? null;
-    }
-
-    /**
-     * @param AdditionalDocumentReference $additionalDocumentReference
-     * @return Invoice
-     */
-    public function setAdditionalDocumentReference(AdditionalDocumentReference $additionalDocumentReference): Invoice {
-        $this->additionalDocumentReferences = [$additionalDocumentReference];
-        return $this;
-    }
-
-    /**
-     * @param AdditionalDocumentReference $additionalDocumentReference
-     * @return Invoice
-     */
-    public function addAdditionalDocumentReference(AdditionalDocumentReference $additionalDocumentReference): Invoice {
-        $this->additionalDocumentReferences[] = $additionalDocumentReference;
-        return $this;
-    }
-
-    /**
-     * @param string $buyerReference
-     * @return Invoice
-     */
-    public function setBuyerReference(string $buyerReference): Invoice {
-        $this->buyerReference = $buyerReference;
-        return $this;
-    }
-
-    /**
-     * @return string buyerReference
-     */
-    public function getBuyerReference(): ?string {
-        return $this->buyerReference;
-    }
-
-    /**
-     * @return null|string
-     */
-    public function getAccountingCostCode(): ?string {
-        return $this->accountingCostCode;
-    }
-
-    /**
-     * @param null|string $accountingCostCode
-     * @return Invoice
-     */
-    public function setAccountingCostCode(?string $accountingCostCode): Invoice {
-        $this->accountingCostCode = $accountingCostCode;
-        return $this;
-    }
-
-    /**
-     * @return null|InvoicePeriod
-     */
-    public function getInvoicePeriod(): ?InvoicePeriod {
-        return $this->invoicePeriod;
-    }
-
-    /**
-     * @param InvoicePeriod $invoicePeriod
-     * @return Invoice
-     */
-    public function setInvoicePeriod(InvoicePeriod $invoicePeriod): Invoice {
-        $this->invoicePeriod = $invoicePeriod;
-        return $this;
-    }
-
-    /**
-     * @return Delivery
-     */
-    public function getDelivery(): ?Delivery {
-        return $this->delivery;
-    }
-
-    /**
-     * @param Delivery $delivery
-     * @return Invoice
-     */
-    public function setDelivery(Delivery $delivery): Invoice {
-        $this->delivery = $delivery;
-        return $this;
-    }
-
-    /**
-     * @return OrderReference
-     */
-    public function getOrderReference(): ?OrderReference {
-        return $this->orderReference;
-    }
-
-    /**
-     * @param OrderReference $orderReference
-     * @return Invoice
-     */
-    public function setOrderReference(OrderReference $orderReference): Invoice {
-        $this->orderReference = $orderReference;
-        return $this;
-    }
-
-    /**
-     * @return ContractDocumentReference
-     */
-    public function getContractDocumentReference(): ?ContractDocumentReference {
-        return $this->contractDocumentReference;
-    }
-
-    /**
-     * @param ContractDocumentReference $contractDocumentReference
-     * @return Invoice
-     */
-    public function setContractDocumentReference(ContractDocumentReference $contractDocumentReference): Invoice {
-        $this->contractDocumentReference = $contractDocumentReference;
-        return $this;
-    }
-
-    /**
-     * The validate function that is called during xml writing to valid the data of the object.
+     * Rule set: OpenPeppol UBL Invoice (3.15.0) (a.k.a BIS Billing 3.0.14)
      *
-     * @return void
-     * @throws InvalidArgumentException An error with information about required data that is missing to write the XML
+     * @see https://ecosio.com/en/peppol-and-xml-document-validator-button/   
+     * @see https://docs.peppol.eu/poacc/billing/3.0/rules/UBL-CR-004/
+     * Warning
+     * Location: src/Invoice/Helpers/Peppol/EcosioTestFiles/invoice_CtuZ7QoIINV107_peppol
+     * Element/context: /:Invoice[1]
+     * XPath test: not(cbc:CopyIndicator)
+     * Error message: [UBL-CR-004]-A UBL invoice should not include the CopyIndicator
      */
-    public function validate() {
-        if ($this->id === null) {
-            throw new InvalidArgumentException('Missing invoice id');
-        }
+    
+    //if ($this->isCopyIndicator !== null) {
+    //  $writer->write([
+    //    Schema::CBC . 'CopyIndicator' => $this->isCopyIndicator ? 'true' : 'false'
+    //  ]);
+    //}
 
-        if (!$this->issueDate instanceof DateTime) {
-            throw new InvalidArgumentException('Invalid invoice issueDate');
-        }
+    $writer->write([
+      Schema::CBC . 'IssueDate' => $this->issueDate->format('Y-m-d'),
+    ]);
 
-        if ($this->invoiceTypeCode === null) {
-            throw new InvalidArgumentException('Missing invoice invoiceTypeCode');
-        }
-
-        if ($this->accountingSupplierParty === null) {
-            throw new InvalidArgumentException('Missing invoice accountingSupplierParty');
-        }
-
-        if ($this->accountingCustomerParty === null) {
-            throw new InvalidArgumentException('Missing invoice accountingCustomerParty');
-        }
-
-        if (!empty($this->invoiceLines)) {
-            throw new InvalidArgumentException('Missing invoice lines');
-        }
-
-        if ($this->legalMonetaryTotal === null) {
-            throw new InvalidArgumentException('Missing invoice LegalMonetaryTotal');
-        }
+    if ($this->dueDate !== null) {
+      $writer->write([
+        Schema::CBC . 'DueDate' => $this->dueDate->format('Y-m-d')
+      ]);
     }
+
+    $writer->write([
+      Schema::CBC . 'InvoiceTypeCode' => $this->invoiceTypeCode
+    ]);
+
+    if ($this->note !== null) {
+      $writer->write([
+        Schema::CBC . 'Note' => $this->note
+      ]);
+    }
+
+    if ($this->taxPointDate !== null) {
+      $writer->write([
+        Schema::CBC . 'TaxPointDate' => $this->taxPointDate->format('Y-m-d')
+      ]);
+    }
+
+    $writer->write([
+      Schema::CBC . 'DocumentCurrencyCode' => $this->getDocumentCurrencyCode(),
+    ]);
+    
+    /* 
+     * Warning
+     * Location: src/Invoice/Helpers/Peppol/EcosioTestFiles/invoice_a0Vc8Tz6INV107_peppol
+     * Element/context: /:Invoice[1]
+     * XPath test: not(cbc:AccountingCostCode)
+     * Error message: [UBL-CR-010]-A UBL invoice should not include the AccountingCostCode
+    */
+     //if ($this->accountingCostCode !== null) {
+     //
+     // $writer->write([
+     //   Schema::CBC . 'AccountingCostCode' => $this->accountingCostCode
+     // ]);
+     //}
+
+    if ($this->buyerReference !== null) {
+      $writer->write([
+        Schema::CBC . 'BuyerReference' => $this->buyerReference
+      ]);
+    }
+
+    if ($this->invoicePeriod !== null) {
+      $writer->write([
+        Schema::CAC . 'InvoicePeriod' => $this->invoicePeriod
+      ]);
+    }
+
+    if ($this->orderReference !== null) {
+      $writer->write([
+        Schema::CAC . 'OrderReference' => $this->orderReference
+      ]);
+    }
+
+    if ($this->contractDocumentReference !== null) {
+      $writer->write([
+        Schema::CAC . 'ContractDocumentReference' => $this->contractDocumentReference,
+      ]);
+    }
+    
+    /**
+     * @see src/Invoice/Helpers/Peppol/PeppolHelper 
+     * Warning
+     * Location: src/Invoice/Helpers/Peppol/EcosioTestFiles/invoice_a0Vc8Tz6INV107_peppol
+     * Element/context: /:Invoice[1]
+     * XPath test: not(cac:AdditionalDocumentReference/cbc:DocumentType)
+     * Error message: [UBL-CR-114]-A UBL invoice should not include the AdditionalDocumentReference DocumentType
+     */
+    
+    if ($this->additionalDocumentReference !== null) {
+      $writer->write([
+        Schema::CAC . 'AdditionalDocumentReference' => $this->additionalDocumentReference
+      ]);
+    }
+
+    
+    /*
+     * Warning
+     * Location: invoice_a0Vc8Tz6INV107_peppol
+     * Element/context: /:Invoice[1]
+     * XPath test: not(cac:AccountingCustomerParty/cbc:SupplierAssignedAccountID)
+     * Error message: [UBL-CR-202]-A UBL invoice should not include the AccountingCustomerParty SupplierAssignedAccountID
+     */
+    //if ($this->supplierAssignedAccountID !== null) {
+    //  $customerParty = [
+    //    Schema::CBC . 'SupplierAssignedAccountID' => $this->supplierAssignedAccountID,
+    //    Schema::CAC . "Party" => $this->accountingCustomerParty
+    //  ];
+    //} else {
+    $customerParty = [
+      Schema::CAC . "Party" => $this->accountingCustomerParty
+    ];
+    //}
+
+    $writer->write([
+      Schema::CAC . 'AccountingSupplierParty' => [Schema::CAC . "Party" => $this->accountingSupplierParty],
+      Schema::CAC . 'AccountingCustomerParty' => $customerParty,
+    ]);
+
+    if ($this->delivery !== null) {
+      $writer->write([
+        Schema::CAC . 'Delivery' => $this->delivery
+      ]);
+    }
+
+    if ($this->paymentMeans !== null) {
+      $writer->write([
+        Schema::CAC . 'PaymentMeans' => $this->paymentMeans
+      ]);
+    }
+
+    if ($this->paymentTerms !== null) {
+      $writer->write([
+        Schema::CAC . 'PaymentTerms' => $this->paymentTerms
+      ]);
+    }
+
+    if (!empty($this->allowanceCharges)) {
+      /** @var AllowanceCharge $allowanceCharge */
+      foreach ($this->allowanceCharges as $allowanceCharge) {
+        $writer->write([
+          Schema::CAC . 'AllowanceCharge' => $allowanceCharge
+        ]);
+      }
+    }
+    
+    $this->validate();
+         $tst = $this->taxAmounts;
+        /**
+         * @var float $tst['supp_tax_cc_tax_amount']
+         */
+        $supp_tax_cc_tax_amount = $tst['supp_tax_cc_tax_amount'] ?: 0.00;
+        /**
+         * @var float $tst['doc_cc_tax_amount']
+         */
+        $doc_cc_tax_amount = $tst['doc_cc_tax_amount'] ?: 0.00;
+        /**
+         * @var string $tst['supp_tax_cc']
+         */
+        $supp_cc = $tst['supp_tax_cc'] ?? '';
+        /**
+         * @var string $tst['doc_cc']
+         */
+        $doc_cc = $tst['doc_cc'] ?? '';
+    
+    // if the document's currency code is the same as us (Supplier) ie. sending locally    
+    if ($doc_cc === $supp_cc) {    
+    $writer->write([
+      [
+        'name' => Schema::CAC . 'TaxTotal',
+        'value' => [
+           [
+              'name' => Schema::CBC . 'TaxAmount',
+              'value' => number_format($supp_tax_cc_tax_amount ?: 0.00, 2, '.', ''),
+                'attributes' => [
+                    'currencyID' => $supp_cc,
+              ]
+           ],
+           [
+              $this->build_tax_sub_totals_array()
+           ], 
+        ],
+      ],
+    ]); 
+    } else {
+        // https://docs.peppol.eu/poacc/billing/3.0/syntax/ubl-invoice/cac-TaxTotal/
+        // Suppliers Tax Amount in Suppliers Currency without subtotal breakdown
+        $writer->write([
+          [
+            'name' => Schema::CAC . 'TaxTotal',
+            'value' => [
+               [
+                  'name' => Schema::CBC . 'TaxAmount',
+                  'value' => number_format($supp_tax_cc_tax_amount ?: 0.00, 2, '.', ''),
+                    'attributes' => [
+                        'currencyID' => $supp_cc,
+                  ]
+               ],
+               [
+                  $this->build_tax_sub_totals_array()
+               ], 
+            ],
+          ],
+        ]);
+        // Document Recipients TaxAmount in Document Recipient's Currency
+        $writer->write([
+            [
+                'name' => Schema::CBC . 'TaxAmount',
+                'value' => number_format((float)(string)$doc_cc_tax_amount ?: 0.00, 2, '.', ''),
+                'attributes' => [
+                    'currencyID' => $doc_cc
+                ]
+            ],
+        ]);
+        
+        } // elseif
+        
+    $writer->write([
+      Schema::CAC . 'LegalMonetaryTotal' => $this->legalMonetaryTotal
+    ]);
 
     /**
-     * 
-     * @param Writer $writer
-     * @return void
+     * @var array $this->invoiceLines
+     * @var array $invoiceLine
      */
-    public function xmlSerialize(Writer $writer): void {
-        $this->validate();
-
-        $writer->write([
-            Schema::CBC . 'UBLVersionID' => $this->UBLVersionID,
-            Schema::CBC . 'CustomizationID' => $this->customizationID,
-        ]);
-
-        if ($this->profileID !== null) {
-            $writer->write([
-                Schema::CBC . 'ProfileID' => $this->profileID
-            ]);
-        }
-
-        $writer->write([
-            Schema::CBC . 'ID' => $this->id
-        ]);
-        
-        if ($this->isCopyIndicator !== null) {
-            $writer->write([
-                Schema::CBC . 'CopyIndicator' => $this->isCopyIndicator ? 'true' : 'false'
-            ]);
-        }
-
-        $writer->write([
-            Schema::CBC . 'IssueDate' => $this->issueDate->format('Y-m-d'),
-        ]);
-
-        if ($this->dueDate !== null && $this->xmlTagName === 'Invoice') {
-            $writer->write([
-                Schema::CBC . 'DueDate' => $this->dueDate->format('Y-m-d')
-            ]);
-        }
-
-        $writer->write([
-            Schema::CBC . $this->xmlTagName . 'TypeCode' => $this->invoiceTypeCode
-        ]);
-      
-
-        if ($this->note !== null) {
-            $writer->write([
-                Schema::CBC . 'Note' => $this->note
-            ]);
-        }
-
-        if ($this->taxPointDate !== null) {
-            $writer->write([
-                Schema::CBC . 'TaxPointDate' => $this->taxPointDate->format('Y-m-d')
-            ]);
-        }
-
-        $writer->write([
-            Schema::CBC . 'DocumentCurrencyCode' => $this->documentCurrencyCode,
-        ]);
-
-        if ($this->accountingCostCode !== null) {
-            $writer->write([
-                Schema::CBC . 'AccountingCostCode' => $this->accountingCostCode
-            ]);
-        }
-
-        if ($this->buyerReference !== null) {
-            $writer->write([
-                Schema::CBC . 'BuyerReference' => $this->buyerReference
-            ]);
-        }
-
-        if ($this->contractDocumentReference !== null) {
-            $writer->write([
-                Schema::CAC . 'ContractDocumentReference' => $this->contractDocumentReference,
-            ]);
-        }
-
-        if ($this->invoicePeriod !== null) {
-            $writer->write([
-                Schema::CAC . 'InvoicePeriod' => $this->invoicePeriod
-            ]);
-        }
-
-        if ($this->orderReference !== null) {
-            $writer->write([
-                Schema::CAC . 'OrderReference' => $this->orderReference
-            ]);
-        }
-
-        if (!empty($this->additionalDocumentReferences)) {
-            /** @var AdditionalDocumentReference $additionalDocumentReference */
-            foreach ($this->additionalDocumentReferences as $additionalDocumentReference) {
-                $writer->write([
-                    Schema::CAC . 'AdditionalDocumentReference' => $additionalDocumentReference
-                ]);
-            }
-        }
-
-        if ($this->supplierAssignedAccountID !== null) {
-            $customerParty = [
-                Schema::CBC . 'SupplierAssignedAccountID' => $this->supplierAssignedAccountID,
-                Schema::CAC . "Party" => $this->accountingCustomerParty
-            ];
-        } else {
-            $customerParty = [
-                Schema::CAC . "Party" => $this->accountingCustomerParty
-            ];
-        }
-
-        $writer->write([
-            Schema::CAC . 'AccountingSupplierParty' => [Schema::CAC . "Party" => $this->accountingSupplierParty],
-            Schema::CAC . 'AccountingCustomerParty' => $customerParty,
-        ]);
-
-        if ($this->delivery !== null) {
-            $writer->write([
-                Schema::CAC . 'Delivery' => $this->delivery
-            ]);
-        }
-
-        if ($this->paymentMeans !== null) {
-            $writer->write([
-                Schema::CAC . 'PaymentMeans' => $this->paymentMeans
-            ]);
-        }
-
-        if ($this->paymentTerms !== null) {
-            $writer->write([
-                Schema::CAC . 'PaymentTerms' => $this->paymentTerms
-            ]);
-        }
-
-        
-        if (!empty($this->allowanceCharges)) {
-            /** @var AllowanceCharge $allowanceCharge */
-            foreach ($this->allowanceCharges as $allowanceCharge) {
-                $writer->write([
-                    Schema::CAC . 'AllowanceCharge' => $allowanceCharge
-                ]);
-            }
-        }
-
-        if ($this->taxTotal !== null) {
-            $writer->write([
-                Schema::CAC . 'TaxTotal' => $this->taxTotal
-            ]);
-        }
-
-        $writer->write([
-            Schema::CAC . 'LegalMonetaryTotal' => $this->legalMonetaryTotal
-        ]);
-        
-        /** @var InvoiceLine $invoiceLine */
-        foreach ($this->invoiceLines as $invoiceLine) {
-            $writer->write([
-                Schema::CAC . $invoiceLine->xmlTagName => $invoiceLine
-            ]);
-        }
+    foreach ($this->invoiceLines as $invoiceLine) {
+       $writer->write($invoiceLine);
     }
+  }
+  
+  /*
+   * @see PeppolHelper function build_TaxSubtotal_array
+   * Take each Tax Category and build a tax sub total 
+   * @return array
+   */
+  public function build_tax_sub_totals_array() : array 
+  {
+    $merged_array = [];
+    /**
+     * @var array $this->taxSubtotal
+     * @var array $value
+     */
+    foreach ($this->taxSubtotal as $value) {
+      $tst = new TaxSubtotal($value);
+      array_push($merged_array, $tst->build_pre_serialized_array());
+    }
+    return $merged_array;
+  }
 }

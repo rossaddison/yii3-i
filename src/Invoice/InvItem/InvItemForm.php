@@ -10,11 +10,13 @@ use Yiisoft\Validator\Rule\Required;
 final class InvItemForm extends FormModel
 {        
     private ?string $inv_id='';
+    private ?string $so_item_id='';
     private ?string $tax_rate_id='';
     private ?string $product_id='';
     private ?string $task_id='';
     private ?string $name='';
     private ?string $description='';
+    private ?string $note='';
     private ?float $quantity=null;
     private ?float $price=null;
     private ?float $discount_amount=null;
@@ -22,6 +24,7 @@ final class InvItemForm extends FormModel
     private ?string $product_unit='';
     private ?int $product_unit_id=null;
     private ?string $date='';
+    private ?string $delivery_id='';
     
     public function getDate() : string|null
     {
@@ -31,6 +34,11 @@ final class InvItemForm extends FormModel
     public function getInv_id() : string|null
     {
       return $this->inv_id;
+    }
+    
+    public function getSo_item_id() : string|null
+    {
+      return $this->so_item_id;
     }
 
     public function getTax_rate_id() : string|null
@@ -57,6 +65,11 @@ final class InvItemForm extends FormModel
     {
       return $this->description;
     }
+    
+    public function getNote() : string|null
+    {
+      return $this->note;
+    }
 
     public function getQuantity() : float|null
     {
@@ -72,7 +85,7 @@ final class InvItemForm extends FormModel
     {
       return $this->discount_amount;
     }
-
+    
     public function getOrder() : int|null
     {
       return $this->order;
@@ -87,6 +100,11 @@ final class InvItemForm extends FormModel
     {
       return $this->product_unit_id;
     }
+    
+    public function getDelivery_id() : string|null
+    {
+      return $this->delivery_id;
+    }
 
     /**
      * @return string
@@ -99,9 +117,7 @@ final class InvItemForm extends FormModel
     }
     
     /**
-     * @return Required[][]
-     *
-     * @psalm-return array{tax_rate_id: list{Required}, product_id: list{Required}, task_id: list{Required}, quantity: list{Required}, price: list{Required}, discount_amount: list{Required}, order: list{Required}, product_unit_id: list{Required}}
+     * @return array
      */
     public function getRule(): array {
         return [

@@ -24,7 +24,7 @@ final class SettingService
     public function saveSetting(Setting $model, SettingForm $form): void
     {
         $form->getSetting_key() ? $model->setSetting_key($form->getSetting_key()) : '';
-        $form->getSetting_value() ? $model->setSetting_value($form->getSetting_value()) : '';
+        null!==$form->getSetting_value() ? $model->setSetting_value($form->getSetting_value()) : '';
         $this->repository->save($model);
     }
     

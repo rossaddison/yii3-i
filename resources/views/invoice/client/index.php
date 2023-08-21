@@ -65,6 +65,7 @@ $pagination = OffsetPagination::widget()
         <thead>
         <tr>
         <th><?= $s->trans('active'); ?></th>
+        <th>Peppol</th>
         <th><?= $s->trans('client_name'); ?></th>
          <th><?= $s->trans('birthdate'); ?></th>
         <th><?= $s->trans('email_address'); ?></th>
@@ -78,6 +79,9 @@ $pagination = OffsetPagination::widget()
             <tr>
 		<td>
 		    <?= ($client->getClient_active()) ? '<span class="label active">' . $s->trans('yes') . '</span>' : '<span class="label inactive">' . $s->trans('no') . '</span>'; ?>
+		</td>
+                <td>
+		    <?= ($cpR->repoClientCount((string)$client->getClient_id()) !== 0 ) ? '<span class="label active">' . $s->trans('yes') . '</span>' : '<span class="label inactive">' . $s->trans('no') . '</span>'; ?>
 		</td>
                 <td><?= Html::a($client->getClient_name()." ".$client->getClient_surname(),$urlGenerator->generate('client/view',['id' => $client->getClient_id()]),['class' => 'btn btn-warning ms-2']);?></td>
                 <td><?= Html::encode(($client->getClient_birthdate())->format($datehelper->style())); ?></td>
@@ -100,6 +104,20 @@ $pagination = OffsetPagination::widget()
                                     <i class="fa fa-edit fa-margin"></i> <?= $s->trans('edit'); ?>
                                 </a>
                             </li>
+                            <?php if ($cpR->repoClientCount((string)$client->getClient_id()) === 0 ) { ?>
+                            <li>
+                                <a href="<?= $urlGenerator->generate('clientpeppol/add', ['client_id' => $client->getClient_id()]); ?>" style="text-decoration:none">
+                                    <i class="fa fa-plus fa-margin"></i> <?= $translator->translate('invoice.client.peppol.add'); ?>
+                                </a>
+                            </li>
+                            <?php } ?>
+                            <?php if ($cpR->repoClientCount((string)$client->getClient_id()) > 0 ) { ?>
+                            <li>
+                                <a href="<?= $urlGenerator->generate('clientpeppol/edit', ['client_id' => $client->getClient_id()]); ?>" style="text-decoration:none">
+                                    <i class="fa fa-edit fa-margin"></i> <?= $translator->translate('invoice.client.peppol.edit'); ?>
+                                </a>
+                            </li>
+                            <?php } ?>
                             <li>
                                 <a href="<?= $urlGenerator->generate('client/delete',['id' => $client->getClient_id()]); ?>" style="text-decoration:none" onclick="return confirm('<?= $s->trans('delete_client_warning').'?'; ?>');">
                                     <i class="fa fa-trash fa-margin"></i><?= $s->trans('delete'); ?>                                    

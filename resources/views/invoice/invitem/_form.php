@@ -134,6 +134,14 @@ if ($date_add && $date_add !== "0000-00-00") {
               <span class="input-group-text"><?= $s->get_setting('currency_symbol'); ?></span>
       </div>
 </div>
+<div class="input-group">
+  <label for="charge_amount"><?= $translator->translate('invoice.invoice.item.charge'); ?></label>
+      <div class="input-group has-feedback">
+          <input type="text" name="charge_amount" id="charge_amount" class="form-control"
+              value="<?= $s->format_amount($body['charge_amount'] ?? ''); ?>">
+              <span class="input-group-text"><?= $s->get_setting('currency_symbol'); ?></span>
+      </div>
+</div>    
  <div class="mb3 form-group">
    <label for="order"><?= $s->trans('order'); ?></label>
    <input type="text" name="order" id="order" class="form-control"

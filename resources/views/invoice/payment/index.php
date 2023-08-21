@@ -16,8 +16,7 @@ use Yiisoft\Yii\DataView\OffsetPagination;
 use Yiisoft\Router\CurrentRoute;
 
 /**
- * @var \App\Invoice\Entity\Payment $payment 
- * @var string $csrf
+ * @var \App\Invoice\Entity\Payment $payment  * @var string $csrf
  * @var CurrentRoute $currentRoute 
  * @var OffsetPaginator $paginator
  * @var \Yiisoft\Router\UrlGeneratorInterface $urlGenerator 
@@ -39,7 +38,7 @@ $header = Div::tag()
 
 $toolbarReset = A::tag()
     ->addAttributes(['type' => 'reset'])
-    ->addClass('btn btn-danger me-1')
+    ->addClass('btn btn-danger me-1 ajax-loader')
     ->content(I::tag()->addClass('bi bi-bootstrap-reboot'))
     ->href($urlGenerator->generate($currentRoute->getName()))
     ->id('btn-reset')
@@ -52,11 +51,13 @@ $toolbar = Div::tag();
     <?= $alert; ?> 
 </div>
 
-<div>
- <h5><?= $s->trans('payment'); ?></h5>
- <a class="btn btn-success" href="<?= $urlGenerator->generate('payment/add'); ?>">
-      <i class="fa fa-plus"></i> <?= $s->trans('new'); ?> </a>
-</div>
+<?php if ($canEdit && $canView) { ?>
+    <div>
+     <h5><?= $s->trans('payment'); ?></h5>
+     <a class="btn btn-success" href="<?= $urlGenerator->generate('payment/add'); ?>">
+          <i class="fa fa-plus"></i> <?= $s->trans('new'); ?> </a>
+    </div>
+<?php } ?>
 <br>
 <?= GridView::widget()
         ->columns(
@@ -164,20 +165,13 @@ $toolbar = Div::tag();
         )
         ->rowAttributes(['class' => 'align-middle'])
         ->summaryAttributes(['class' => 'mt-3 me-3 summary text-end'])
+        //->summary($grid_summary)
+        ->emptyTextAttributes(['class' => 'card-header bg-warning text-black'])
+        ->emptyText((string)$translator->translate('invoice.invoice.no.records'))                         
         ->tableAttributes(['class' => 'table table-striped text-center h-75','id'=>'table-payment'])
         ->toolbar(
             Form::tag()->post($urlGenerator->generate('payment/index'))->csrf($csrf)->open() .
             Div::tag()->addClass('float-end m-3')->content($toolbarReset)->encode(false)->render() .
             Form::tag()->close()
         );
-            
-    $pageSize = $paginator->getCurrentPageSize();
-    if ($pageSize > 0) {
-      echo Html::p(
-        sprintf('Showing %s out of %s payments: Max '. $max . ' payments per page: Total Payments '.$paginator->getTotalItems() , $pageSize, $paginator->getTotalItems()),
-        ['class' => 'text-muted']
-    );
-    } else {
-      echo Html::p('No records');
-    }
 ?>

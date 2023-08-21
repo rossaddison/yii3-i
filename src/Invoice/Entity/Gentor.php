@@ -19,7 +19,7 @@ class Gentor
     #[Column(type: 'string(20)')]
     private ?string $route_suffix = '';
     
-    #[Column(type: 'string(20)')]
+    #[Column(type: 'string(50)')]
     private ?string $camelcase_capital_name = '';
     
     #[Column(type: 'string(20)')]

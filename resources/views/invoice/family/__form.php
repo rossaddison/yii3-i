@@ -27,7 +27,7 @@ if (!empty($errors)) {
 <input type="hidden" name="_csrf" value="<?= $csrf ?>">
   <div class="row">
     <div class="mb-3 form-group">
-        <input type="text" class="form-control" name="family_name" id="family_name" placeholder="Family Name" 
+        <input type="text" class="form-control" name="family_name" id="family_name" placeholder="Family Name" required
                <?= in_array($body['family_name'] ?? '', ['Product','Service']) ? 'disabled' : '' ?> 
                value="<?= Html::encode($body['family_name'] ?? '') ?>">
     </div>      

@@ -189,7 +189,40 @@ $(function () {
             }
             
         });
-    }); 
+    });
+    
+    // id="quote_with_purchase_order_number_confirm button on views/quote/modal_purchase_order_number.php associated with submit button
+    $(document).on('click', '#quote_with_purchase_order_number_confirm', function () {
+    var url = $(location).attr('origin') + "/invoice/quote/approve";
+    var btn = $('.quote_with_purchase_order_number_confirm');
+    var absolute_url = new URL($(location).attr('href'));
+    btn.html('<h6 class="text-center"><i class="fa fa-spin fa-spinner"></i></h6>');
+    $.ajax({type: 'GET',
+            contentType: "application/json; charset=utf-8",
+            data: {
+                url_key: $('#url_key').val(),
+                client_po_number: $('#quote_with_purchase_order_number').val(),
+                client_po_line_number: $('#quote_with_purchase_order_line_number').val(),
+                client_po_person: $('#quote_with_purchase_order_person').val()
+            },                
+            url: url,
+            cache: false,
+            dataType: 'json',
+            success: function (data) {
+                        var response =  parsedata(data);
+                        if (response.success === 1) {
+                            // The validation was successful and quote with purchase order number was created
+                            btn.html('<h2 class="text-center"><i class="fa fa-check"></i></h2>');                        
+                            window.location = absolute_url;
+                            window.location.reload();
+                        }
+            },
+            error: function(xhr, status, error) {                         
+                console.warn(xhr.responseText);
+                alert('Status: ' + status + ' An error: ' + error.toString());
+            }
+        });
+    });
 
     // Creates the invoice
     $(document).on('click', '#quote_to_invoice_confirm', function () {        
@@ -217,14 +250,60 @@ $(function () {
                             btn.html('<h2 class="text-center"><i class="fa fa-check"></i></h2>');                        
                             window.location = absolute_url;
                             window.location.reload();
-                            alert('Quote Copied!');
+                            alert('Invoice created from Quote!');
                         }
                         if (response.success === 0) {
                             // The validation was not successful created
                             btn.html('<h2 class="text-center"><i class="fa fa-check"></i></h2>');                        
                             window.location = absolute_url;
                             window.location.reload();
-                            alert('Quote not Copied! Duplicate Invoice. Copy your Quote to another quote and then copy to invoice. Each quote must have a matching invoice.');
+                            alert('Invoice NOT created from Quote! Duplicate Invoice. Copy your Quote to another quote and then copy to invoice. Each quote must have a matching invoice.');
+                        }    
+                        
+            },
+            error: function(xhr, status, error) {                         
+                        console.warn(xhr.responseText);
+                        alert('Status: ' + status + ' An error: ' + error.toString());
+            }
+        });
+    });
+    
+    // Creates the purchase order
+    $(document).on('click', '#quote_to_so_confirm', function () {        
+        var url = $(location).attr('origin') + "/invoice/quote/quote_to_so_confirm";
+        var btn = $('.quote_to_so_confirm');
+        var absolute_url = new URL($(location).attr('href'));
+        btn.html('<h6 class="text-center"><i class="fa fa-spin fa-spinner"></i></h6>');
+        //take the quote id from the public url
+        quote_id = absolute_url.href.substring(absolute_url.href.lastIndexOf('/') + 1);        
+        $.ajax({type: 'GET',
+            contentType: "application/json; charset=utf-8",
+            data: {
+                quote_id: quote_id,
+                client_id: $('#client_id').val(),
+                group_id: $('#so_group_id').val(),
+                po: $('#po_number').val(),
+                person: $('#po_person').val(),
+                password: $('#password').val()
+            },                            
+            url: url,
+            cache: false,
+            dataType: 'json',
+            success: function (data) {
+                        var response =  parsedata(data);
+                        if (response.success === 1) {
+                            // The validation was successful and invoice was created
+                            btn.html('<h2 class="text-center"><i class="fa fa-check"></i></h2>');                        
+                            window.location = absolute_url;
+                            window.location.reload();
+                            alert('Sales Order created from Quote and you entered your Purchase Order Number!');
+                        }
+                        if (response.success === 0) {
+                            // The validation was not successfully created
+                            btn.html('<h2 class="text-center"><i class="fa fa-check"></i></h2>');                        
+                            window.location = absolute_url;
+                            window.location.reload();
+                            alert('Sales Order not created from Quote! Duplicate Sales Order. Copy your Quote to another quote and then copy to sales order. Each quote must have a matching sales order.');
                         }    
                         
             },

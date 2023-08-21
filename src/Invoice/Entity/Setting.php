@@ -16,7 +16,7 @@ class Setting
     #[Column(type: 'string(50)')]
     private string $setting_key = '';
     
-    #[Column(type: 'longText')]
+    #[Column(type: 'string(191)')]
     private string $setting_value = '';
         
     public function __construct(

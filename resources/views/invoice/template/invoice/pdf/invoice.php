@@ -4,6 +4,8 @@ declare(strict_types=1);
 use App\Invoice\Helpers\DateHelper;
 use App\Invoice\Entity\Sumex;
 use Yiisoft\Html\Html;
+
+$vat = $s->get_setting('enable_vat_registration');
 ?>
 
 <!DOCTYPE html>
@@ -21,7 +23,7 @@ use Yiisoft\Html\Html;
             <b><?= Html::encode($inv->getClient()->getClient_name()); ?></b>
         </div>
         <?php if ($inv->getClient()->getClient_vat_id()) {
-            echo '<div>' .$s->trans('vat_id_short') . ': ' . $inv->getClient()->getClient_vat_id() . '</div>';
+            echo '<div>' .$tranlator->translate('invoice.invoice.vat.reg.no') . ': ' . $inv->getClient()->getClient_vat_id() . '</div>';
         }
         if ($inv->getClient()->getClient_tax_code()) {
             echo '<div>' .$s->trans('tax_code_short') . ': ' . $inv->getClient()->getClient_tax_code() . '</div>';
@@ -60,9 +62,9 @@ use Yiisoft\Html\Html;
     <div class="invoice-details clearfix">
         <table>
             <tr>
-                <td><?php echo $s->trans('invoice_date') . ':'; ?></td>
+                <td><?php echo $translator->translate('invoice.invoice.date.issued') . ':'; ?></td>
                     <?php
-                        $date = $client->getClient_date_created();
+                        $date = $inv->getDate_created();
                         if ($date && $date != "0000-00-00") {
                             //use the DateHelper
                             $datehelper = new DateHelper($s);
@@ -73,6 +75,22 @@ use Yiisoft\Html\Html;
                     ?> 
                 <td><?php echo Html::encode($date); ?></td>
             </tr>
+            <?php if ($vat === '1') { ?>
+            <tr>
+                <td><?php echo $translator->translate('invoice.invoice.date.supplied') . ':'; ?></td>
+                    <?php
+                        $date_sp = $inv->getDate_supplied();
+                        if ($date_sp && $date_sp != "0000-00-00") {
+                            //use the DateHelper
+                            $datehelper = new DateHelper($s);
+                            $date = $datehelper->date_from_mysql($date_sp);
+                        } else {
+                            $date = null;
+                        }
+                    ?> 
+                <td><?php echo Html::encode($date); ?></td>
+            </tr>
+            <?php } ?>
             <tr>
                 <td><?php echo $s->trans('expires') . ': '; ?></td>
                 <?php
@@ -91,7 +109,7 @@ use Yiisoft\Html\Html;
         </table>
     </div>
 
-    <h3 class="invoice-title"><b><?php echo Html::encode($s->trans('invoice') . ' ' . $inv->getNumber()); ?></b></h3>
+    <h3 class="invoice-title"><b><?= $vat === '0' ? Html::encode($s->trans('invoice') . ' ' . $inv->getNumber()) : ''; ?></b></h3>
 
     <table class="items table-primary table table-borderless no-margin">
         <thead style="display: none">
@@ -103,7 +121,12 @@ use Yiisoft\Html\Html;
             <?php if ($show_item_discounts) : ?>
                 <th class="item-discount text-right"><?= Html::encode($s->trans('discount')); ?></th>
             <?php endif; ?>
+            <?php if ($vat === '0') { ?>     
             <th class="item-price text-right"><?= Html::encode($s->trans('tax')); ?></th>    
+            <?php } else { ?>
+                <th class="item-price text-right"><?= Html::encode($translator->translate('invoice.invoice.vat.abbreviation')); ?></th>    
+                <th class="item-price text-right">%</th>
+            <?php } ?> 
             <th class="item-total text-right"><?= Html::encode($s->trans('total')); ?></th>
         </tr>
         </thead>
@@ -139,6 +162,11 @@ use Yiisoft\Html\Html;
                 </td>
                 <td class="text-right">
                     <?php  
+                        echo Html::encode($item->getTaxRate()?->getTax_rate_percent()); 
+                    ?>
+                </td>
+                <td class="text-right">
+                    <?php  
                         echo Html::encode($s->format_currency($inv_item_amount?->getTotal())); 
                     ?>
                 </td>
@@ -151,15 +179,22 @@ use Yiisoft\Html\Html;
         <tbody class="invoice-sums">
 
         <tr>
-            <td <?php echo($show_item_discounts ? 'colspan="6"' : 'colspan="5"'); ?>
-                    class="text-right"><?= Html::encode($s->trans('subtotal'))." (".Html::encode($s->trans('price'))."-".Html::encode($s->trans('discount')).") x ".Html::encode($s->trans('qty')); ?></td>
+            <?php if ($vat === '0') { ?>
+            <td <?php echo($show_item_discounts ? 'colspan="7"' : 'colspan="6"'); ?>
+                    class="text-right"><?= Html::encode(
+                            $s->trans('subtotal'))." (".Html::encode($s->trans('price'))."-".Html::encode($s->trans('discount')).") x ".Html::encode($s->trans('qty')); ?></td>
+            <?php } else { ?>
+            <td <?php echo($show_item_discounts ? 'colspan="7"' : 'colspan="6"'); ?>
+                    class="text-right"><?= Html::encode(
+                            $s->trans('subtotal')); ?></td> 
+            <?php } ?> 
             <td class="text-right"><?php echo Html::encode($s->format_currency($inv_amount->getItem_subtotal())); ?></td>
         </tr>
 
         <?php if ($inv_amount->getItem_tax_total() > 0) { ?>
             <tr>
-                <td <?php echo($show_item_discounts ? 'colspan="6"' : 'colspan="5"'); ?> class="text-right">
-                    <?= Html::encode($s->trans('item_tax')); ?>
+                <td <?php echo($show_item_discounts ? 'colspan="7"' : 'colspan="6"'); ?> class="text-right">
+                    <?= Html::encode( $vat === '1' ? $translator->translate('invoice.invoice.vat.break.down') : $s->trans('item_tax')); ?>
                 </td>
                 <td class="text-right">
                     <?php echo Html::encode($s->format_currency($inv_amount->getItem_tax_total())); ?>
@@ -167,10 +202,10 @@ use Yiisoft\Html\Html;
             </tr>
         <?php } ?>
             
-        <?php if (!empty($inv_tax_rates)) { ?>    
+        <?php if (!empty($inv_tax_rates) && ($vat === '0')) { ?>    
         <?php  foreach ($inv_tax_rates as $inv_tax_rate) : ?>
             <tr>
-                <td <?php echo ($show_item_discounts ? 'colspan="6"' : 'colspan="5"'); ?> class="text-right">
+                <td <?php echo ($show_item_discounts ? 'colspan="7"' : 'colspan="6"'); ?> class="text-right">
                     <?php echo Html::encode($inv_tax_rate->getTaxRate()->getTax_rate_name()) . ' (' . Html::encode($s->format_amount($inv_tax_rate->getTaxRate()->getTax_rate_percent())) . '%)'; ?>
                 </td>
                 <td class="text-right">
@@ -178,29 +213,30 @@ use Yiisoft\Html\Html;
                 </td>
             </tr>
         <?php endforeach ?>
-        <?php } ?>    
-        <?php if ($inv->getDiscount_percent() !== '0.00') : ?>
+        <?php } ?>   
+        <?php if ($vat === '0') { ?>    
+        <?php if ($inv->getDiscount_percent() !== 0.00) { ?>
             <tr>
-                <td <?php echo($show_item_discounts ? 'colspan="6"' : 'colspan="5"'); ?> class="text-right">
+                <td <?php echo($show_item_discounts ? 'colspan="7"' : 'colspan="6"'); ?> class="text-right">
                     <?= Html::encode($s->trans('discount')); ?>
                 </td>
                 <td class="text-right">
                     <?php echo Html::encode($s->format_amount($inv->getDiscount_percent())); ?>%
                 </td>
             </tr>
-        <?php endif; ?>
-        <?php if ($inv->getDiscount_amount() !== '0.00') : ?>
+        <?php } elseif ($inv->getDiscount_amount() !== 0.00) { ?>
             <tr>
-                <td <?php echo($show_item_discounts ? 'colspan="6"' : 'colspan="5"'); ?> class="text-right">
+                <td <?php echo($show_item_discounts ? 'colspan="7"' : 'colspan="6"'); ?> class="text-right">
                     <?= Html::encode($s->trans('discount')); ?>
                 </td>
                 <td class="text-right">
                     <?php echo Html::encode($s->format_currency($inv->getDiscount_amount())); ?>
                 </td>
             </tr>
-        <?php endif; ?>
+        <?php } ?>
+        <?php } ?>
         <tr>
-            <td <?php echo($show_item_discounts ? 'colspan="6"' : 'colspan="5"'); ?> class="text-right">
+            <td <?php echo($show_item_discounts ? 'colspan="7"' : 'colspan="6"'); ?> class="text-right">
                 <b><?= Html::encode($s->trans('total')); ?></b>
             </td>
             <td class="text-right">

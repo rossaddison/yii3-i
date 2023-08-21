@@ -23,15 +23,18 @@ use Yiisoft\Security\Random;
  */
 final class InvRepository extends Select\Repository
 {
-private EntityWriter $entityWriter;
+    private EntityWriter $entityWriter;
+    private SR $sR;
 
     /**
      * @param Select<TEntity> $select
      * @param EntityWriter $entityWriter
+     * @param SR $sR
      */
-    public function __construct(Select $select, EntityWriter $entityWriter)
+    public function __construct(Select $select, EntityWriter $entityWriter, SR $sR)
     {
         $this->entityWriter = $entityWriter;
+        $this->sR = $sR;
         parent::__construct($select);
     }
     
@@ -159,6 +162,13 @@ private EntityWriter $entityWriter;
      */
     public function repoInvUnLoadedquery(string $id): Inv|null {
         $query = $this->select()
+                      ->where(['id' => $id]);
+        return  $query->fetchOne() ?: null;
+    }
+    
+    public function repoInvLoadInvAmountquery(string $id): Inv|null {
+        $query = $this->select()
+                      ->load('invamount')  
                       ->where(['id' => $id]);
         return  $query->fetchOne() ?: null;
     }
@@ -358,13 +368,18 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @return (int|string)[][]
-     *
-     * @psalm-return array{1: array{label: string, class: 'draft', href: 1}, 2: array{label: string, class: 'sent', href: 2}, 3: array{label: string, class: 'viewed', href: 3}, 4: array{label: string, class: 'paid', href: 4}}
+     * 
+     * @param SR $s
+     * @return array
      */
     public function getStatuses(SR $s): array
     {
         return array(
+            '0' => array(
+                'label' => $s->trans('all'),
+                'class' => 'all',
+                'href' => 0
+            ),
             '1' => array(
                 'label' => $s->trans('draft'),
                 'class' => 'draft',
@@ -384,8 +399,28 @@ private EntityWriter $entityWriter;
                 'label' => $s->trans('paid'),
                 'class' => 'paid',
                 'href' => 4
+            ),
+            '5' => array(
+                'label' => $s->trans('overdue'),
+                'class' => 'overdue',
+                'href' => 5
             )
         );       
+    }
+    
+    /**
+     * 
+     * @param string $key
+     * @return string
+     */
+    public function getSpecificStatusArrayLabel(string $key) : string
+    {
+        $statuses_array = $this->getStatuses($this->sR);
+        /**
+         * @var array $statuses_array[$key]
+         * @var string $statuses_array[$key]['label']
+         */
+        return $statuses_array[$key]['label'];
     }
     
     /**
@@ -454,8 +489,10 @@ private EntityWriter $entityWriter;
          * @var Inv $invoice
          */
         foreach ($invoices as $invoice) {
-            $invoice_amount = ($iaR->repoInvAmountCount((int)$invoice->getId())> 0 ? $iaR->repoInvquery((int)$invoice->getId()) : null);            
-            $sum += (null!==$invoice_amount ? $invoice_amount->getItem_subtotal() ?? 0.00 : 0.00);
+            $invoice_amount = $iaR->repoInvquery((int)$invoice->getId());            
+            if (null!==$invoice_amount) {
+               $sum += $invoice_amount->getItem_subtotal() ?: 0.00;
+            }   
         }
         return $sum;
     }
@@ -478,8 +515,10 @@ private EntityWriter $entityWriter;
          * @var Inv $invoice
          */
         foreach ($invoices as $invoice) {  
-            $invoice_amount = ($iaR->repoInvAmountCount((int)$invoice->getId())> 0 ? $iaR->repoInvquery((int)$invoice->getId()) : null);            
-            $sum += (null!==$invoice_amount ? $invoice_amount->getTotal() ?? 0.00 : 0.00);
+            $invoice_amount = $iaR->repoInvquery((int)$invoice->getId());            
+            if (null!==$invoice_amount) {
+               $sum += $invoice_amount->getTotal() ?: 0.00;
+            }   
         }
         return $sum;
     }
@@ -501,8 +540,10 @@ private EntityWriter $entityWriter;
          * @var Inv $invoice
          */
         foreach ($invoices as $invoice) {
-            $invoice_amount = ($iaR->repoInvAmountCount((int)$invoice->getId())> 0 ? $iaR->repoInvquery((int)$invoice->getId()) : null);            
-            $sum += (null!==$invoice_amount ? $invoice_amount->getItem_subtotal() ?? 0.00 : 0.00);
+            $invoice_amount = $iaR->repoInvquery((int)$invoice->getId());            
+            if (null!==$invoice_amount) { 
+              $sum += $invoice_amount->getItem_subtotal();
+            } 
         }
         return $sum;
     }
@@ -524,8 +565,10 @@ private EntityWriter $entityWriter;
          * @var Inv $invoice
          */
         foreach ($invoices as $invoice) {
-            $invoice_amount = ($iaR->repoInvAmountCount((int)$invoice->getId())> 0 ? $iaR->repoInvquery((int)$invoice->getId()) : null);            
-            $sum += (null!==$invoice_amount ? $invoice_amount->getItem_tax_total() ?? 0.00 : 0.00);
+            $invoice_amount = $iaR->repoInvquery((int)$invoice->getId());            
+            if (null!==$invoice_amount) {
+              $sum += $invoice_amount->getItem_tax_total();
+            } 
         }
         return $sum;
     }

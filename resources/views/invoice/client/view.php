@@ -33,22 +33,42 @@
                     echo $modal_create_quote;
                     echo $modal_create_inv;
                 ?>
-                <a href="#create-quote" class="btn btn-default" data-toggle="modal"
+                <a href="#create-quote" class="btn btn-primary" data-toggle="modal"
                    data-client-id="<?= $client->getClient_id(); ?>" style="text-decoration:none">
                    <i class="fa fa-file-text"></i><?= $s->trans('create_quote'); ?>
                 </a>
-                <a href="#create-inv" class="btn btn-default" data-toggle="modal"
+                <a href="#create-inv" class="btn btn-success" data-toggle="modal"
                    data-client-id="<?= $client->getClient_id(); ?>" style="text-decoration:none">
                    <i class="fa fa-file-text"></i><?= $s->trans('create_invoice'); ?>
                 </a>
+                <?php if ($cpR->repoClientCount((string)$client->getClient_id()) === 0 ) { ?>
+                <a href="<?= $urlGenerator->generate('clientpeppol/add', ['client_id' => $client->getClient_id()]); ?>" 
+                   class="btn btn-info" style="text-decoration:none">
+                     <i class="fa fa-plus"></i> <?= $translator->translate('invoice.client.peppol.add'); ?>
+                </a>
+                <?php } ?>
+                <?php if ($cpR->repoClientCount((string)$client->getClient_id()) > 0 ) { ?>
+                <a href="<?= $urlGenerator->generate('clientpeppol/edit', ['client_id' => $client->getClient_id()]); ?>" 
+                   class="btn btn-warning" style="text-decoration:none">
+                     <i class="fa fa-edit"></i> <?= $translator->translate('invoice.client.peppol.edit'); ?>
+                </a>
+                <?php } ?>
                 <a href="<?= $urlGenerator->generate('client/edit', ['id' => $client->getClient_id()]); ?>"
-                   class="btn btn-default" style="text-decoration:none">
-                   <i class="fa fa-edit"></i><?= $s->trans('edit'); ?>
+                   class="btn btn-danger" style="text-decoration:none">
+                    <i class="fa fa-edit"></i><?= $s->trans('edit'); ?>
+                </a>
+                <a href="<?= $urlGenerator->generate('postaladdress/add', ['client_id' => $client->getClient_id()]); ?>"
+                   class="btn btn-primary" style="text-decoration:none">
+                    <i class="fa fa-plus"></i><?= $translator->translate('invoice.client.postaladdress.add'); ?>
+                </a>
+                <a href="<?= $urlGenerator->generate('del/add',['client_id' => $client->getClient_id()]); ?>"
+                   class="btn btn-success" style="text-decoration:none">
+                   <i class="fa fa-plus fa-margin"></i><?= $translator->translate('invoice.invoice.delivery.location.add'); ?>
                 </a>
                 <a class="btn btn-danger"
                    href="<?= $urlGenerator->generate('client/delete', ['id'=>$client->getClient_id()]); ?>"
                    onclick="return confirm('<?= $s->trans('delete_client_warning'); ?>');" style="text-decoration:none">
-                   <i class="fa fa-trash-o"></i> <?= $s->trans('delete'); ?>
+                   <i class="fa fa-trash-o fa-margin"></i> <?= $s->trans('delete'); ?>
                 </a>
         </div>
     </div>
@@ -131,10 +151,22 @@
             </div>
 
             <hr>
+            
+            <div class="row">
+                <div class="col-xs-12 col-md-6">
+                    <div class="panel panel-default no-margin">
+                        <div class="panel-heading"><?= $translator->translate('invoice.invoice.delivery.location.client'); ?></div>
+                            <div class="panel-body table-content">
+                                <?php echo $delivery_locations; ?>
+                            </div>
+                    </div>
+                </div>
+            </div>  
+            
+            <hr>
 
             <div class="row">
                 <div class="col-xs-12 col-md-6">
-
                     <div class="panel panel-default no-margin">
                         <div class="panel-heading"><?= $s->trans('contact_information'); ?></div>
                         <div class="panel-body table-content">

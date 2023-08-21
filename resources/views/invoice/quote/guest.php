@@ -39,7 +39,7 @@ $header = Div::tag()
 
 $toolbarReset = A::tag()
     ->addAttributes(['type' => 'reset'])
-    ->addClass('btn btn-danger me-1')
+    ->addClass('btn btn-danger me-1 ajax-loader')
     ->content(I::tag()->addClass('bi bi-bootstrap-reboot'))
     ->href($urlGenerator->generate($currentRoute->getName()))
     ->id('btn-reset')
@@ -117,7 +117,11 @@ $toolbar = Div::tag();
             DataColumn::create()
                 ->attribute('date_expires')
                 ->value(static fn ($model): string => ($model->getDate_expires())->format($datehelper->style())
-            ),                  
+            ),
+            DataColumn::create()
+                ->attribute('date_required')
+                ->value(static fn ($model): string => ($model->getDate_required())->format($datehelper->style())
+            ), 
             DataColumn::create()
                 ->attribute('id')
                 ->label($s->trans('total'))
@@ -144,21 +148,13 @@ $toolbar = Div::tag();
         )
         ->rowAttributes(['class' => 'align-middle'])
         ->summaryAttributes(['class' => 'mt-3 me-3 summary text-end'])
+        ->summary($grid_summary)
+        ->emptyTextAttributes(['class' => 'card-header bg-warning text-black'])
+        ->emptyText((string)$translator->translate('invoice.invoice.no.records'))
         ->tableAttributes(['class' => 'table table-striped text-center h-75','id'=>'table-quote-guest'])
         ->toolbar(
             Form::tag()->post($urlGenerator->generate('quote/guest'))->csrf($csrf)->open() .
             Div::tag()->addClass('float-end m-3')->content($toolbarReset)->encode(false)->render() .
             Form::tag()->close()
         );          
-?>
-<?php
-    $pageSize = $paginator->getCurrentPageSize();
-    if ($pageSize > 0) {
-      echo Html::p(
-        sprintf('Showing %s out of %s quotes: Max '. $max . ' quotes per page: Total Quotes '.$paginator->getTotalItems() , $pageSize, $paginator->getTotalItems()),
-        ['class' => 'text-muted']
-    );
-    } else {
-      echo Html::p('No records');
-    }
 ?>

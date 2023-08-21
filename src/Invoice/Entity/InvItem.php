@@ -22,6 +22,9 @@ class InvItem
     #[Column(type: 'integer(11)', nullable: false)]
     private ?int $inv_id =  null;
     
+    #[Column(type: 'integer(11)', nullable: true)]
+    private ?int $so_item_id =  null;
+    
     #[Column(type: 'date', nullable: false)]
     private mixed $date_added;
     
@@ -46,7 +49,7 @@ class InvItem
     #[Column(type: 'boolean', nullable: false)]
     private ?bool $is_recurring =  false;
      
-   #[Column(type: 'string(50)', nullable: true)]
+    #[Column(type: 'string(50)', nullable: true)]
     private ?string $product_unit =  '';
     
     #[Column(type: 'integer(11)', nullable: true)]
@@ -67,27 +70,40 @@ class InvItem
     
     #[BelongsTo(target: \App\Invoice\Entity\Task::class, nullable: true, fkAction: 'NO ACTION')]
     private ?Task $task = null;
-     #[Column(type: 'integer(11)', nullable: true, default:null)]
+    #[Column(type: 'integer(11)', nullable: true, default:null)]
     private ?int $task_id =  null;
      
     #[BelongsTo(target: \App\Invoice\Entity\Inv::class, nullable: false, fkAction: 'NO ACTION')]
-    private ?Inv $inv = null;  
-         
+    private ?Inv $inv = null; 
+    
+    #[Column(type: 'integer(2)', nullable: true, default:0)]
+    private ?int $belongs_to_vat_invoice =  null;
+
+    #[Column(type: 'integer(11)', nullable: true)]
+    private ?int $delivery_id =  null;
+
+    #[Column(type: 'longText', nullable: true)]
+    private ?string $note =  null;
+    
     public function __construct(
         int $id = null,
         string $name = '',
         string $description = '',
         float $quantity = null,
         float $price = null,
-        float $discount_amount = null,
+        float $discount_amount = null,  
         int $order = null,
         bool $is_recurring = false,
         string $product_unit = '',
         int $inv_id = null,
+        int $so_item_id = null,    
         int $tax_rate_id = null,
         int $product_id = null,
         int $task_id = null,
         int $product_unit_id = null,            
+        int $belongs_to_vat_invoice = null,
+        int $delivery_id = null,
+        string $note = null,
     )
     {
         $this->id=$id;
@@ -102,10 +118,14 @@ class InvItem
         $this->is_recurring=$is_recurring;
         $this->product_unit=$product_unit;
         $this->inv_id=$inv_id;
+        $this->so_item_id=$so_item_id;
         $this->tax_rate_id=$tax_rate_id;
         $this->product_id=$product_id;
         $this->product_unit_id=$product_unit_id;
         $this->date=new \DateTimeImmutable();
+        $this->belongs_to_vat_invoice=$belongs_to_vat_invoice;
+        $this->delivery_id=$delivery_id;
+        $this->note=$note;
     }
      
     public function getId(): int|null
@@ -116,7 +136,7 @@ class InvItem
     public function setId(int $id) : void
     {
       $this->id =  $id;
-    }    
+    }
     
     public function getTaxRate() : TaxRate|null {
       return $this->tax_rate;
@@ -164,7 +184,17 @@ class InvItem
     
     public function setInv_id(int $inv_id) : void
     {
-      $this->inv_id =  $inv_id;
+      $this->inv_id = $inv_id;
+    }
+    
+    public function getSo_item_id(): string
+    {
+     return (string)$this->so_item_id;
+    }
+    
+    public function setSo_item_id(int $so_item_id) : void
+    {
+      $this->so_item_id = $so_item_id;
     }
     
     public function getTax_rate_id(): string
@@ -174,7 +204,7 @@ class InvItem
     
     public function setTax_rate_id(int $tax_rate_id) : void
     {
-      $this->tax_rate_id =  $tax_rate_id;
+      $this->tax_rate_id = $tax_rate_id;
     }
         
      public function getDate_added(): DateTimeImmutable
@@ -185,7 +215,7 @@ class InvItem
     
     public function setDate_added(DateTime $date_added) : void
     {
-      $this->date_added =  $date_added;
+      $this->date_added = $date_added;
     }
     
     public function getProduct_id(): string
@@ -195,12 +225,12 @@ class InvItem
     
     public function setProduct_id(int $product_id) : void
     {
-      $this->product_id =  $product_id;
+      $this->product_id = $product_id;
     }
     
     public function getTask_id(): string
     {
-     return (string)$this->task_id;
+      return (string)$this->task_id;
     }
     
     public function setTask_id(int $task_id) : void
@@ -225,7 +255,7 @@ class InvItem
     
     public function setDescription(string $description) : void
     {
-      $this->description =  $description;
+      $this->description = $description;
     }
     
     public function getQuantity(): float|null
@@ -235,7 +265,7 @@ class InvItem
     
     public function setQuantity(float $quantity) : void
     {
-      $this->quantity =  $quantity;
+      $this->quantity = $quantity;
     }
     
     public function getPrice(): ?float
@@ -245,7 +275,7 @@ class InvItem
     
     public function setPrice(float $price) : void
     {
-      $this->price =  $price;
+      $this->price = $price;
     }
     
     public function getDiscount_amount(): ?float
@@ -255,8 +285,11 @@ class InvItem
     
     public function setDiscount_amount(float $discount_amount) : void
     {
-      $this->discount_amount =  $discount_amount;
+      $this->discount_amount = $discount_amount;
     }
+    
+    // For Charges and Allowances see the extension table InvItemAllowanceCharges
+    // which extends this entity by means of inv_item_id
     
     public function getOrder(): int|null
     {
@@ -265,7 +298,7 @@ class InvItem
     
     public function setOrder(int $order) : void
     {
-      $this->order =  $order;
+      $this->order = $order;
     }
     
     public function getIs_recurring(): ?bool
@@ -275,7 +308,7 @@ class InvItem
     
     public function setIs_recurring(bool $is_recurring) : void
     {
-      $this->is_recurring =  $is_recurring;
+      $this->is_recurring = $is_recurring;
     }
     
     public function getDate() : DateTimeImmutable  
@@ -307,6 +340,36 @@ class InvItem
     {
       $this->product_unit_id =  $product_unit_id;
     }
+    
+    public function setBelongs_to_vat_invoice(int $belongs_to_vat_invoice) : void
+    {
+      $this->belongs_to_vat_invoice = $belongs_to_vat_invoice;        
+    }    
+    
+    public function getBelongs_to_vat_invoice() : string
+    {
+      return (string)$this->belongs_to_vat_invoice;  
+    }
+
+    public function getDelivery_id(): string
+    {
+      return (string)$this->delivery_id;
+    }
+    
+    public function setDelivery_id(int $delivery_id) : void
+    {
+      $this->delivery_id =  $delivery_id;
+    }
+    
+    public function getNote(): ?string
+    {
+      return $this->note;
+    }
+    
+    public function setNote(string $note): void
+    {
+      $this->note = $note;
+    }  
     
     public function isNewRecord(): bool
     {

@@ -60,9 +60,10 @@ use App\Widget\OffsetPagination;
 <table class="table table-hover table-striped">
    <thead>
     <tr>
-                
         <th><?= $s->trans('tax_rate_name'); ?></th>
         <th><?= $s->trans('tax_rate_percent'); ?></th>
+        <th><?= $translator->translate('invoice.peppol.tax.rate.code'); ?></th>
+        <th><?= $translator->translate('invoice.storecove.tax.rate.code'); ?></th>
         <th><?= $translator->translate('invoice.default'); ?></th>
         <th><?= $s->trans('options'); ?></th>
     </tr>
@@ -74,6 +75,8 @@ use App\Widget\OffsetPagination;
                 
       <td><?= Html::encode($taxrate->getTax_rate_name()); ?></td>
       <td><?= Html::encode($taxrate->getTax_rate_percent()); ?></td>
+      <td><?= Html::encode($taxrate->getPeppol_tax_rate_code()); ?></td>
+      <td><?= Html::encode(ucfirst(str_replace('_', ' ', $taxrate->getStorecove_tax_type()))); ?></td>
       <td><?= ($taxrate->getTax_rate_default()) ? '<span class="label active">' . $s->trans('yes') . '</span>' : '<span class="label inactive">' . $s->trans('no') . '</span>'; ?></td>          
 
         <td>

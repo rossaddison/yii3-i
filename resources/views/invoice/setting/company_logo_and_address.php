@@ -13,9 +13,27 @@ use Yiisoft\Html\Html;
             </td>
             <td style="width:40%;text-align:left">
                 <?php 
+                    if ($s->get_setting('enable_vat_registration') === '1' && $isInvoice) { 
+                        echo '<div><b>'.Html::encode($translator->translate('invoice.invoice.vat.invoice')). '</b></div>';
+                        echo '<div><br><b>'. $translator->translate('invoice.invoice.number').'</b> : '.Html::encode($document_number) .'</div>';
+                       // echo '<div><br><b>'. $translator->translate('invoice.client.number').'</b> : '.Html::encode($client_number) .'</div>';
+                        echo '<div><b>'. $translator->translate('invoice.client.purchase.order.number').'</b> : '.Html::encode($client_purchase_order_number) .'</div>';
+                        echo '<div><br><b>'. $translator->translate('invoice.invoice.tax.point').'</b> : '.Html::encode($date_tax_point) .'</div>';
+                    }
+                    if ($s->get_setting('enable_vat_registration') === '1' && $isQuote) { 
+                        echo '<div><b>'.Html::encode($translator->translate('invoice.quote.vat.quote')). '</b></div>';
+                        echo '<div><br><b>'. $translator->translate('invoice.quote.number').'</b> : '.Html::encode($document_number) .'</div>';
+                        echo '<div><b>'. $translator->translate('invoice.client.number').'</b> : '.Html::encode($client_number) .'</div>';
+                    } 
+                    if ($s->get_setting('enable_vat_registration') === '1' && $isSalesOrder) {
+                        echo '<div><b>'.Html::encode($translator->translate('invoice.salesorder.vat.salesorder')). '</b></div>';
+                        echo '<div><br><b>'. $translator->translate('invoice.salesorder.number').'</b> : '.Html::encode($document_number) .'</div>';
+                        echo '<div><b>'. $translator->translate('invoice.client.number').'</b> : '.Html::encode($client_number) .'</div>';
+                    }
+                    echo '<div><br></div>';
                     echo '<div><b>'.Html::encode($company['name']).'</b></div>';
                     echo '<div><br></div>';
-                    echo '<div>' . $s->trans('vat_id_short') . ': ' . Html::encode($company['vat_id']) . '</div>';
+                    echo '<div>' . $translator->translate('invoice.invoice.vat.reg.no'). ': ' . Html::encode($company['vat_id']) . '</div>';
                     echo '<div>' . $s->trans('tax_code_short') . ': ' . Html::encode($company['tax_code']) . '</div>';
                     echo '<div><br></div>';
                     echo '<div>' . Html::encode($company['address_1'] ? $s->trans('street_address') .': '. $company['address_1'] : ''). '</div>';

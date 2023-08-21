@@ -11,7 +11,6 @@
                 <div class="row">
                     <div class="col-xs-12 col-md-6">
                         <div class="form-group">
-                            
                             <label for="settings[install_test_data]" <?= $s->where('install_test_data'); ?>>
                                 <?= $translator->translate('invoice.test.data.install'); ?>
                             </label>
@@ -31,7 +30,7 @@
                     </div>
                     <div class="col-xs-12 col-md-6">
                         <div class="form-group">
-                            <label for="settings[use_test_data]" data-toggle="tooltip" title="<?= $s->where('use_test_data'); ?>">
+                            <label for="settings[use_test_data]" <?= $s->where('use_test_data'); ?>">
                                 <?= $translator->translate('invoice.test.data.use'); ?>
                             </label>
                             <?php $body['settings[use_test_data]'] = $s->get_setting('use_test_data'); ?>

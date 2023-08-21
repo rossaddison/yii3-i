@@ -17,43 +17,6 @@ class OrderReference implements XmlSerializable
     }
 
     /**
-     * 
-     * @return null|string
-     */
-    public function getId(): ?string
-    {
-        return $this->id;
-    }
-
-    /**
-     * @param null|string $id
-     * @return OrderReference
-     */
-    public function setId(?string $id): OrderReference
-    {
-        $this->id = $id;
-        return $this;
-    }
-
-    /**
-     * @return null|string
-     */
-    public function getSalesOrderId(): ?string
-    {
-        return $this->salesOrderId;
-    }
-
-    /**
-     * @param null|string $salesOrderId
-     * @return OrderReference
-     */
-    public function setSalesOrderId(?string $salesOrderId): OrderReference
-    {
-        $this->salesOrderId = $salesOrderId;
-        return $this;
-    }
-
-    /**
      * @see https://github.com/OpenPEPPOL/peppol-bis-invoice-3/search?q=SalesOrderId
      * @param Writer $writer
      * @return void

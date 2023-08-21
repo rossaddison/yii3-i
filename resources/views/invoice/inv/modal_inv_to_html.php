@@ -23,7 +23,7 @@ declare(strict_types=1);
         </div>
         <div class="modal-footer">
             <div class="btn-group">
-                <button type="button" data-toggle="tooltip" title="html">
+                <button type="button" data-bs-toggle = "tooltip" title="html">
                 <label>
                     <i class="fa fa-code"></i>
                     <?php if ((null!==$s->get_setting('pdf_html_inv')) && ($s->get_setting('pdf_html_inv') === '1')) { ?>

@@ -78,9 +78,11 @@ use Cycle\Annotated\Annotation\Relation\BelongsTo;
             }
             $ab = '';
             $default = '';
-            $result='';
             switch ($column->getAbstractType()) {
-                //Special column type, usually mapped as integer + auto-incrementing flag and added as table primary index column. You can define only one primary column in your table (you can still create a compound primary key, see below).
+                //Special column type, usually mapped as integer + auto-incrementing flag 
+                //and added as table primary index column. 
+                //You can define only one primary column in your table 
+                //(you can still create a compound primary key, see below).
                 case 'primary':
                     $ab = '     #[Column(type:'."'".$column->getAbstractType()."')]"."\n";
                     $ate_or_lic='private ';
@@ -218,7 +220,7 @@ use Cycle\Annotated\Annotation\Relation\BelongsTo;
               echo '     '.$ate_or_lic. $questionmark.$column->getType()." $".$column->getName(). ' =  '.$init.';'."\n"; 
               $construct .= "     ".$column->getType()." $".$column->getName(). ' = '.$init.','."\n    ";
             }
-            
+                        
             echo '     '."\n";
         }
             echo '     public function __construct('."\n";
@@ -230,18 +232,23 @@ use Cycle\Annotated\Annotation\Relation\BelongsTo;
             }
             echo '     }'."\n";
             
+            $nullify_relation_string = '';
             foreach ($relations as $relation) {
                 echo '    '."\n";
                 echo '    public function get'.$relation->getCamelcase_name().'() : ?'.$relation->getCamelcase_name()."\n";
-                echo ' {'."\n";
+                echo '    {'."\n";
                 echo '      return $this->'.$relation->getLowercase_name().';'."\n";
                 echo '    }'."\n";
                 echo '    '."\n";
-                echo '    public function set'.$relation->getCamelcase_name().'(?'.$relation->getCamelcase_name().'): void'."\n";
-                echo ' {'."\n";
-                echo '      $this->'.$relation->getLowercase_name().';'."\n";
+                echo '    public function set'.$relation->getCamelcase_name().'(?'.$relation->getCamelcase_name().' $'.$relation->getLowercase_name().'): void'."\n";
+                echo '    {'."\n";
+                echo '      $this->'.$relation->getLowercase_name().' = $'.$relation->getLowercase_name().';'."\n";
                 echo '    }'."\n";
+                $nullify_relation_string .= 'int $'.$relation->getLowercase_name(). '_id, ';
             }
+            
+            //remove the last comma and space in the string
+            $final_string = substr($nullify_relation_string, 0, -2);
             
             foreach ($orm_schema->getColumns() as $column) {
                 echo '    '."\n";
@@ -260,6 +267,16 @@ use Cycle\Annotated\Annotation\Relation\BelongsTo;
                 echo '    {'."\n";
                 echo '      $this->'.$column->getName().' =  $'.$column->getName().';'."\n";
                 echo '    }'."\n";          
-            }
+            }   
     ?>
+
+    public function nullifyRelationOnChange(<?= $final_string; ?>) : void 
+    {
+            <?php foreach ($relations as $relation) {
+                $lcn = $relation->getLowercase_name();
+                echo 'if ($this->'.$lcn.'_id <> $'.$lcn.'_id) {'."\n";
+                echo '            $this->'.$lcn.' = null;'."\n";
+                echo '        }'."\n"; 
+            } ?>
+    }
 }

@@ -8,6 +8,9 @@ use Yiisoft\Html\Html;
  * @var bool $show_buttons 
  */
 
+$t_charge = $translator->translate('invoice.invoice.allowance.or.charge.charge'); 
+$t_allowance = $translator->translate('invoice.invoice.allowance.or.charge.allowance');
+$vat = $s->get_setting('enable_vat_registration');
 ?>
 
 <div class="table-striped table-responsive">
@@ -17,6 +20,7 @@ use Yiisoft\Html\Html;
                 <th></th>
                 <th><?= $s->trans('item'); ?></th>
                 <th><?= $s->trans('description'); ?></th>
+                <th><?= $translator->translate('invoice.invoice.note'); ?></th>
                 <th><?= $s->trans('quantity'); ?></th>
                 <th><?= $s->trans('price'); ?></th>
                 <th><?= $s->trans('tax_rate'); ?></th>
@@ -62,7 +66,7 @@ use Yiisoft\Html\Html;
                     <div class="input-group">
                         <span class="input-group-text"><?= $s->trans('item_discount'); ?></span>
                         <input type="text" name="item_discount_amount" class="input-sm form-control amount"
-                               data-toggle="tooltip" data-placement="bottom"
+                               data-bs-toggle = "tooltip" data-placement="bottom"
                                title="<?= $s->get_setting('currency_symbol') . ' ' . $s->trans('per_item'); ?>" value="0.00">
                     </div>
                 </td>
@@ -93,6 +97,10 @@ use Yiisoft\Html\Html;
                     <div class="input-group">
                         <span class="input-group-text"><?= $s->trans('description'); ?></span>
                         <textarea name="item_description" class="form-control"></textarea>
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-text"><?= $translator->translate('invoice.invoice.note'); ?></span>
+                        <textarea name="item_note" class="form-control"></textarea>
                     </div>
                 </td>
                 <td class="td-amount">
@@ -141,10 +149,10 @@ use Yiisoft\Html\Html;
                     </td>
                     <td class="td-text">
                         <div class="input-group">
-                            <input type="text" disabled="true" maxlength="1" size="1" name="inv_id" value="<?= $item->getInv_id(); ?>" data-toggle="tooltip" title="inv_item->inv_id">
-                            <input type="text" disabled="true" maxlength="1" size="1" name="item_id" value="<?= $item->getId(); ?>" data-toggle="tooltip" title="inv_item->getId()">
-                            <input type="text" disabled="true" maxlength="1" size="1" name="item_product_id" value="<?= $item->getProduct_id() ? $item->getProduct_id() : '0'; ?>" data-toggle="tooltip" title="inv_item->product_id">
-                            <input type="text" disabled="true" maxlength="1" size="1" name="item_task_id" value="<?= $item->getTask_id() ? $item->getTask_id() : '0' ?>" data-toggle="tooltip" title="inv_item->task_id">
+                            <input type="text" disabled="true" maxlength="1" size="1" name="inv_id" value="<?= $item->getInv_id(); ?>" data-bs-toggle = "tooltip" title="inv_item->inv_id">
+                            <input type="text" disabled="true" maxlength="1" size="1" name="item_id" value="<?= $item->getId(); ?>" data-bs-toggle = "tooltip" title="inv_item->getId()">
+                            <input type="text" disabled="true" maxlength="1" size="1" name="item_product_id" value="<?= $item->getProduct_id() ? $item->getProduct_id() : '0'; ?>" data-bs-toggle = "tooltip" title="inv_item->product_id">
+                            <input type="text" disabled="true" maxlength="1" size="1" name="item_task_id" value="<?= $item->getTask_id() ? $item->getTask_id() : '0' ?>" data-bs-toggle = "tooltip" title="inv_item->task_id">
                         </div>    
                         <div class="input-group">
                             <span class="input-group-text"><?= $item->getProduct_id() ? $s->trans('item') : $s->trans('tasks') ; ?></span>
@@ -173,27 +181,27 @@ use Yiisoft\Html\Html;
                     <td class="td-amount td-quantity">
                         <div class="input-group">
                             <span class="input-group-text"><?= $s->trans('quantity'); ?></span>
-                            <input disabled type="text" name="item_quantity" class="input-sm form-control amount" data-toggle="tooltip" title="inv_item->quantity"
+                            <input disabled type="text" name="item_quantity" class="input-sm form-control amount" data-bs-toggle = "tooltip" title="inv_item->quantity"
                                    value="<?= $numberhelper->format_amount($item->getQuantity()); ?>">
                         </div>
                     </td>
                     <td class="td-amount">
                         <div class="input-group">
                             <span class="input-group-text"><?= $s->trans('price'); ?></span>
-                            <input disabled type="text" name="item_price" class="input-sm form-control amount" data-toggle="tooltip" title="inv_item->price"
+                            <input disabled type="text" name="item_price" class="input-sm form-control amount" data-bs-toggle = "tooltip" title="inv_item->price"
                                    value="<?= $numberhelper->format_amount($item->getPrice()); ?>">
                         </div>
                     </td>
                     <td class="td-amount ">
                         <div class="input-group">
-                            <span class="input-group-text"><?= $s->trans('item_discount'); ?></span>
-                            <input disabled type="text" name="item_discount_amount" class="input-sm form-control amount" data-toggle="tooltip" title="inv_item->discount_amount"
+                            <span class="input-group-text"><?= $vat === '0' ? $s->trans('item_discount') : $translator->translate('invoice.invoice.cash.discount'); ?></span>
+                            <input disabled type="text" name="item_discount_amount" class="input-sm form-control amount" data-bs-toggle = "tooltip" title="inv_item->discount_amount"
                                    value="<?= $numberhelper->format_amount($item->getDiscount_amount()); ?>"
-                                   data-toggle="tooltip" data-placement="bottom"
+                                   data-bs-toggle = "tooltip" data-placement="bottom"
                                    title="<?= $s->get_setting('currency_symbol') . ' ' . $s->trans('per_item'); ?>">
                         </div>
                     </td>
-                    <td>
+                    
                     <?php
                        //get the percentage
                        $percentage = '';
@@ -202,9 +210,10 @@ use Yiisoft\Html\Html;
                           $percentage = $numberhelper->format_amount($tax_rate->getTax_rate_percent()) . '% - ' . Html::encode($tax_rate->getTax_rate_name());
                        } 
                     }?>
+                    <td>
                         <div class="input-group">
-                            <span class="input-group-text"><?= $s->trans('tax_rate'); ?></span>
-                            <select disabled name="item_tax_rate_id" class="form-control" data-toggle="tooltip" title="inv_item->tax_rate_id">
+                            <span class="input-group-text"><?= $vat === '0' ? $s->trans('tax_rate') : $translator->translate('invoice.invoice.vat.rate') ?></span>
+                            <select disabled name="item_tax_rate_id" class="form-control" data-bs-toggle = "tooltip" title="inv_item->tax_rate_id">
                                 <option value="0"><?= $s->trans('none'); ?></option>
                                 <?php foreach ($tax_rates as $tax_rate) { ?>
                                     <option value="<?php echo $tax_rate->getTax_rate_id(); ?>"
@@ -217,12 +226,13 @@ use Yiisoft\Html\Html;
                     </td>
                     <td class="td-icon text-right td-vert-middle">                        
                         <?php if ($show_buttons === true && $user_can_edit === true) { ?>
-                            <a href="<?= $urlGenerator->generate('inv/delete_inv_item',['id'=>$item->getId()]) ?>" class="btn btn-md btn-link" onclick="return confirm('<?= $s->trans('delete_record_warning'); ?>');"><i class="fa fa-trash"></i></a>
+                             <a href="<?= $urlGenerator->generate('acii/index', ['inv_item_id'=> $item->getId(), '_language'=>$currentRoute->getArgument('_language')]) ?>" class="btn btn-primary btn" data-bs-toggle = "tooltip" title="<?= $translator->translate('invoice.invoice.allowance.or.charge.index'); ?>"><i class="<?= $aciiR->repoInvItemCount((string)$item->getId()) > 0 ? 'fa fa-list' : 'fa fa-plus'; ?>"></i></a>
+                             <a href="<?= $urlGenerator->generate('inv/delete_inv_item',['id'=>$item->getId(),'_language'=>$currentRoute->getArgument('_language')]) ?>" class="btn btn-danger btn" onclick="return confirm('<?= $s->trans('delete_record_warning'); ?>');"><i class="fa fa-trash"></i></a>
                              <?php if  ($item->getTask_id()) { ?>    
-                              <a href="<?= $urlGenerator->generate('invitem/edit_task',['id'=>$item->getId()]) ?>" class="btn btn-md btn-link"><i class="fa fa-pencil"></i></a>
+                              <a href="<?= $urlGenerator->generate('invitem/edit_task',['id'=>$item->getId(), '_language'=>$currentRoute->getArgument('_language')]) ?>" class="btn btn-success btn"><i class="fa fa-pencil"></i></a>
                             <?php } ?>
                             <?php if  ($item->getProduct_id()) { ?>    
-                              <a href="<?= $urlGenerator->generate('invitem/edit_product',['id'=>$item->getId()]) ?>" class="btn btn-md btn-link"><i class="fa fa-pencil"></i></a>
+                              <a href="<?= $urlGenerator->generate('invitem/edit_product',['id'=>$item->getId(), '_language'=>$currentRoute->getArgument('_language')]) ?>" class="btn btn-success btn"><i class="fa fa-pencil"></i></a>
                             <?php } ?>
                         <?php } ?>
                     </td>
@@ -230,8 +240,12 @@ use Yiisoft\Html\Html;
                 <tr>
                     <td class="td-textarea">
                         <div class="input-group">
-                            <span class="input-group-text" data-toggle="tooltip" title="inv_item->description"><?= $s->trans('description'); ?></span>
+                            <span class="input-group-text" data-bs-toggle = "tooltip" title="inv_item->description"><?= $s->trans('description'); ?></span>
                             <textarea disabled name="item_description" class="form-control" ><?= Html::encode($item->getDescription()); ?></textarea>
+                        </div>
+                        <div class="input-group">
+                            <span class="input-group-text" data-bs-toggle = "tooltip" title="inv_item->note"><?= $translator->translate('invoice.invoice.note'); ?></span>
+                            <textarea disabled name="item_note" class="form-control" ><?= Html::encode($item->getNote()); ?></textarea>
                         </div>
                     </td>
                     <td class="td-amount">
@@ -249,51 +263,55 @@ use Yiisoft\Html\Html;
                     <td class="td-amount td-vert-middle">
                         <span><?= $s->trans('subtotal'); ?></span><br/>
                         
-                        <span name="subtotal" class="amount" data-toggle="tooltip" title="inv_item_amount->subtotal">
+                        <span name="subtotal" class="amount" data-bs-toggle = "tooltip" title="inv_item_amount->subtotal using InvItemController/edit_product->saveInvItemAmount">
+                            <!-- This subtotal is worked out in InvItemController/edit_product->saveInvItemAmount function -->
                             <?= $numberhelper->format_currency($inv_item_amount->repoInvItemAmountquery((string)$item->getId())?->getSubtotal()); ?>
                         </span>
                     </td>
                     <td class="td-amount td-vert-middle">
-                        <span><?= $s->trans('discount'); ?></span><br/>
-                        <span name="item_discount_total" class="amount" data-toggle="tooltip" title="inv_item_amount->discount">
+                        <span><?= $vat === '0' ? $s->trans('discount') : $translator->translate('invoice.invoice.early.settlement.cash.discount') ?></span><br/>
+                        <span name="item_discount_total" class="amount" data-bs-toggle = "tooltip" title="inv_item_amount->discount">
                             <?= $numberhelper->format_currency($inv_item_amount->repoInvItemAmountquery((string)$item->getId())?->getDiscount()); ?>
                         </span>
                     </td>
                     <td class="td-amount td-vert-middle">
-                        <span><?= $s->trans('tax'); ?></span><br/>
-                        <span name="item_tax_total" class="amount" data-toggle="tooltip" title="inv_item_amount->tax_total">
+                        <span><?= $vat === '0' ? $s->trans('tax') : $translator->translate('invoice.invoice.vat.abbreviation') ?></span><br/>
+                        <span name="item_tax_total" class="amount" data-bs-toggle = "tooltip" title="inv_item_amount->tax_total">
                             <?= $numberhelper->format_currency($inv_item_amount->repoInvItemAmountquery((string)$item->getId())?->getTax_total()); ?>
                         </span>
                     </td>
                     <td class="td-amount td-vert-middle">
                         <span><?= $s->trans('total'); ?></span><br/>
-                        <span name="item_total" class="amount" data-toggle="tooltip" title="inv_item_amount->total">
+                        <span name="item_total" class="amount" data-bs-toggle = "tooltip" title="inv_item_amount->total">
                             <?= $numberhelper->format_currency($inv_item_amount->repoInvItemAmountquery((string)$item->getId())?->getTotal()); ?>
                         </span>
                     </td>                   
                 </tr>
                 </tbody>
-            <?php $count = $count + 1;} ?> 
+            <?php 
+                 $count = $count + 1;} 
+                 /**************************/
+                 /* Invoice items end here */
+                 /**************************/                 
+            ?> 
         </table>
     </div>
      <br>
-     
+    <?php 
+        /***********************/
+        /*   Totals start here */
+        /***********************/
+    ?> 
     <div class="row">
-        <div class="col-xs-12 col-md-4" inv_tax_rates="<?php $inv_tax_rates; ?>">
-           
-        </div>
+        <div class="col-xs-12 col-md-4" inv_tax_rates="<?php $inv_tax_rates; ?>"></div>
         <div class="col-xs-12 visible-xs visible-sm"><br></div>
-
         <div class="col-xs-12 col-md-6 col-md-offset-2 col-lg-4 col-lg-offset-4">
             <table class="table table-bordered text-right">
                 <tr>
                     <td style="width: 40%;"><?= $s->trans('subtotal'); ?></td>
-                    <td style="width: 60%;" class="amount" id="amount_subtotal" data-toggle="tooltip" title="inv_amount->item_subtotal =  inv_item(s)->subtotal - inv_item(s)->discount"><?php echo $numberhelper->format_currency($inv_amount->getItem_subtotal() ?? 0.00); ?></td>
-                </tr>
-                <tr>
-                    <td><?= $s->trans('item_tax'); ?></td>
-                    <td class="amount" data-toggle="tooltip" id="amount_item_tax_total" title="inv_amount->item_tax_total"><?php echo $numberhelper->format_currency($inv_amount->getItem_tax_total() ?? 0.00); ?></td>
-                </tr>
+                    <td style="width: 60%;" class="amount" id="amount_subtotal" data-bs-toggle = "tooltip" title="inv_amount->item_subtotal =  inv_item(s)->subtotal - inv_item(s)->discount + inv_item(s)->charge"><?php echo $numberhelper->format_currency($inv_amount->getItem_subtotal() ?? 0.00); ?></td>
+                </tr>                
+                <?php if ($vat === '0') { ?>
                 <tr>
                     <td>
                         <?php if ($show_buttons === true && $user_can_edit === true) { ?>
@@ -304,7 +322,6 @@ use Yiisoft\Html\Html;
                     <td>
                         <?php if ($inv_tax_rates) {
                             foreach ($inv_tax_rates as $inv_tax_rate) { ?>
-                                
                                     <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                                     <?php if ($show_buttons === true && $user_can_edit === true) { ?>
                                     <span  class="btn btn-xs btn-link" onclick="return confirm('<?= $s->trans('delete_tax_warning'); ?>');">
@@ -314,7 +331,7 @@ use Yiisoft\Html\Html;
                                     <span class="text-muted">
                                         <?= Html::encode($inv_tax_rate->getTaxRate()->getTax_rate_name()) . ' ' . $numberhelper->format_amount($inv_tax_rate->getTaxRate()->getTax_rate_percent()) . '%' ?>
                                     </span>
-                                    <span class="amount" data-toggle="tooltip" title="inv_tax_rate->inv_tax_rate_amount">
+                                    <span class="amount" data-bs-toggle = "tooltip" title="inv_tax_rate->inv_tax_rate_amount">
                                         <?php echo $numberhelper->format_currency($inv_tax_rate->getInv_tax_rate_amount()); ?>
                                     </span>
                                 
@@ -324,13 +341,15 @@ use Yiisoft\Html\Html;
                         } ?>
                     </td>
                 </tr>
+                <?php } ?>
+                <?php if ($vat === '0') { ?>
                 <tr>
                     <td class="td-vert-middle"><?= $s->trans('discount'); ?></td>
                     <td class="clearfix">
                         <div class="discount-field">
                             <div class="input-group input-group-sm">
                                 <input id="inv_discount_amount" name="inv_discount_amount"
-                                       class="discount-option form-control input-sm amount" data-toggle="tooltip" title="inv->discount_amount" disabled
+                                       class="discount-option form-control input-sm amount" data-bs-toggle = "tooltip" title="inv->discount_amount" disabled
                                        value="<?= $numberhelper->format_amount($inv->getDiscount_amount() != 0 ? $inv->getDiscount_amount() : ''); ?>">
                                 <div
                                     class="input-group-text"><?= $s->get_setting('currency_symbol'); ?></div>
@@ -338,7 +357,7 @@ use Yiisoft\Html\Html;
                         </div>
                         <div class="discount-field">
                             <div class="input-group input-group-sm">
-                                <input id="inv_discount_percent" name="inv_discount_percent" data-toggle="tooltip" title="inv->discount_percent" disabled
+                                <input id="inv_discount_percent" name="inv_discount_percent" data-bs-toggle = "tooltip" title="inv->discount_percent" disabled
                                        value="<?= $numberhelper->format_amount($inv->getDiscount_percent() != 0 ? $inv->getDiscount_percent() : ''); ?>"
                                        class="discount-option form-control input-sm amount">
                                 <div class="input-group-text">&percnt;</div>
@@ -346,12 +365,34 @@ use Yiisoft\Html\Html;
                         </div>
                     </td>
                 </tr>
+                <?php } ?>
+<?php //------ Document Level Invoice Allowance or Charges ---// ?>               
+                <?php if ($vat === '1') { ?> 
+                  <?php foreach ($dl_acis as $aci) { ?>
+                  <tr>
+                    <td class="td-vert-middle"><?php echo ($aci->getAllowanceCharge()->getIdentifier() ? $translator->translate('invoice.invoice.allowance.or.charge.charge')  : $translator->translate('invoice.invoice.allowance.or.charge.allowance')). ': '. $aci->getAllowanceCharge()->getReason(); ?>
+                        <a href="<?= $urlGenerator->generate('invallowancecharge/edit',['id'=>$aci->getId()]); ?>"><i class="fa fa-pencil"></i></a>
+                        <a href="<?= $urlGenerator->generate('invallowancecharge/delete',['id'=>$aci->getId()]); ?>"><i class="fa fa-trash"></i></a></td>
+                    <td class="amount"><?= ($aci->getAllowanceCharge()->getIdentifier() === false ? '(' : '').$numberhelper->format_currency($aci->getAmount() !== 0 ? $aci->getAmount() : '').($aci->getAllowanceCharge()->getIdentifier() === false ? ')' : ''); ?></td>    
+                  </tr>
+                  <tr>
+                    <td class="td-vert-middle"><?php echo ($aci->getAllowanceCharge()->getIdentifier() ? $translator->translate('invoice.invoice.allowance.or.charge.charge.vat')  : $translator->translate('invoice.invoice.allowance.or.charge.allowance.vat')). ': '. $aci->getAllowanceCharge()->getReason(); ?></td>
+                    <td class="amount"><?= ($aci->getAllowanceCharge()->getIdentifier() === false ? '(' : '').$numberhelper->format_currency($aci->getVat() !== 0 ? $aci->getVat() : '').($aci->getAllowanceCharge()->getIdentifier() === false ? ')' : ''); ?></td>    
+                  </tr> 
+                  <?php } ?>
+                <?php } ?>
+                <tr>
+                    <td>
+                    <span><?= $vat === '1' ? $translator->translate('invoice.invoice.vat.break.down') : $s->trans('item_tax'); ?>
+                    </span>    
+                    </td>
+                    <td class="amount" data-bs-toggle = "tooltip" id="amount_item_tax_total" title="inv_amount->item_tax_total"><?php echo $numberhelper->format_currency($inv_amount->getItem_tax_total() + $inv_amount->getTax_total()  ?? 0.00); ?></td>
+                </tr>  
                 <tr>
                     <td><b><?= $s->trans('total'); ?></b></td>
-                    <td class="amount" id="amount_inv_total" data-toggle="tooltip" title="inv_amount->total"><b><?php echo $numberhelper->format_currency($inv_amount->getTotal() ?? 0.00); ?></b></td>
+                    <td class="amount" id="amount_inv_total" data-bs-toggle = "tooltip" title="inv_amount->total"><b><?php echo $numberhelper->format_currency($inv_amount->getTotal() ?? 0.00); ?></b></td>
                 </tr>
             </table>
         </div>
-
     </div>
     <hr>

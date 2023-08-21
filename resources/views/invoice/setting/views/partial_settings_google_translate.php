@@ -9,7 +9,6 @@
                 <?= 'Google Translate'; ?>
             </div>
             <div class="panel-body">
-
                 <div class="row">
                     <div class="col-xs-12 col-md-6">
                         <div class="form-group">
@@ -35,9 +34,10 @@
                                     </option>
                                     <?php } ?>
                             </select>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</div>    

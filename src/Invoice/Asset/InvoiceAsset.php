@@ -13,16 +13,16 @@ class InvoiceAsset extends AssetBundle
     public ?string $baseUrl = '@assetsUrl';
 
     public ?string $sourcePath = '@src/Invoice/Asset';
-
+    
     public array $css = [
         'invoice/css/style.css',
+        'invoice/css/yii3i.css',        
         'jquery-ui-1.13.2/jquery-ui.min.css',
         'jquery-ui-1.13.2/jquery-ui.structure.min.css',
         'jquery-ui-1.13.2/jquery-ui.theme.min.css',
         
         // bootstrapicons
         '//cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.min.css',        
-        
         '//cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css',        
         
         //'//unpkg.com/dropzone@5/dist/min/dropzone.min.css',
@@ -47,6 +47,7 @@ class InvoiceAsset extends AssetBundle
         'rebuild-1.13/js/select2.min.js',        
         'rebuild-1.13/js/quote.js',
         'rebuild-1.13/js/inv.js',
+        'rebuild-1.13/js/salesorder.js',
         'rebuild-1.13/js/client.js',
         'rebuild-1.13/js/setting.js',
         'rebuild-1.13/js/emailtemplate.js',

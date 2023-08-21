@@ -65,7 +65,7 @@
  */
  ?>       
 <h1><?php echo $heading; ?></h1>
-<?php echo $message; ?>
+<?php echo $message; ?><button onclick="history.back()"><?= $translator->translate('invoice.back'); ?></button>
 </body>
 </html>
 

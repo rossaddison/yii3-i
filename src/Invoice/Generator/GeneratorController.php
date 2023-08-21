@@ -18,13 +18,12 @@ use App\Invoice\Setting\SettingRepository;
 use App\Service\WebControllerService;
 use App\User\UserService;
 
+use Cycle\Database\DatabaseManager;
+
 use Google\Cloud\Translate\V3\TranslationServiceClient;
 
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
-
-use Cycle\Database\DatabaseManager;
-
 use Yiisoft\Aliases\Aliases;
 use Yiisoft\DataResponse\DataResponseFactoryInterface;
 use Yiisoft\Http\Method;
@@ -495,32 +494,34 @@ final class GeneratorController
                             ): Response {
         $file = self::CONTROLLER;
         $path = $this->getAliases();
-        /** @var Gentor $g */
         $g = $this->generator($currentRoute, $gr);
-        $table_name = $g->getPre_entity_table();
-        if (null==$table_name) {
-            return $this->webService->getRedirectResponse('generator/index');
+        if (null!==$g) {
+            $table_name = $g->getPre_entity_table();
+            if (null==$table_name) {
+                return $this->webService->getRedirectResponse('generator/index');
+            }
+            $id = $g->getGentor_id();
+            $relations = $grr->findRelations($id);
+            /** @psalm-suppress ArgumentTypeCoercion $g->getPre_entity_table() */
+            $orm = $dbal->database('default')
+                        ->table($table_name);
+            $content = $this->getContent($view,$g,$relations,$orm,$file);
+            $flash = $this->flash('success',($g->getCamelcase_capital_name() ?? '').$file.' generated at '.$path.'/'.($g->getCamelcase_capital_name() ?? '').$file);
+            $build_file = $this->build_and_save($path,$content,$file,($g->getCamelcase_capital_name() ?? 'Unknown'));
+            $parameters = [
+                'canEdit'=>$this->rbac(),
+                's'=> $settingRepository,
+                'title' => 'Generate '.$file,
+                'body' => $this->body($g),
+                'generator'=> $g,
+                'orm_schema'=>$orm,
+                'relations'=>$relations,
+                'flash'=> $flash,
+                'generated'=>$build_file,
+            ];
+            return $this->viewRenderer->render('__results', $parameters);
         }
-        $id = $g->getGentor_id();
-        $relations = $grr->findRelations($id);
-        /** @psalm-suppress ArgumentTypeCoercion $g->getPre_entity_table() */
-        $orm = $dbal->database('default')
-                    ->table($table_name);
-        $content = $this->getContent($view,$g,$relations,$orm,$file);
-        $flash = $this->flash('success',($g->getCamelcase_capital_name() ?? '').$file.' generated at '.$path.'/'.($g->getCamelcase_capital_name() ?? '').$file);
-        $build_file = $this->build_and_save($path,$content,$file,($g->getCamelcase_capital_name() ?? 'Unknown'));
-        $parameters = [
-            'canEdit'=>$this->rbac(),
-            's'=> $settingRepository,
-            'title' => 'Generate '.$file,
-            'body' => $this->body($g),
-            'generator'=> $g,
-            'orm_schema'=>$orm,
-            'relations'=>$relations,
-            'flash'=> $flash,
-            'generated'=>$build_file,
-        ];
-        return $this->viewRenderer->render('__results', $parameters);
+        return $this->webService->getNotFoundResponse();
     }
     
     /**
@@ -936,7 +937,7 @@ final class GeneratorController
      */
     private function build_and_save(string $generated_dir_path,string $content, string $file,string $name): GenerateCodeFileHelper{
         //echo $generated_dir_path;
-        $build_file = new GenerateCodeFileHelper("$generated_dir_path/$file", $content); 
+        $build_file = new GenerateCodeFileHelper("$generated_dir_path/$name$file", $content); 
         $build_file->save();
         return $build_file;
     }

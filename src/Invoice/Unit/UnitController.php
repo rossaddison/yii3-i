@@ -7,6 +7,7 @@ namespace App\Invoice\Unit;
 use App\Invoice\Entity\Unit;
 use App\Invoice\Setting\SettingRepository;
 use App\Invoice\Unit\UnitRepository;
+use App\Invoice\UnitPeppol\UnitPeppolRepository;
 use App\Service\WebControllerService;
 use App\User\UserService;
 
@@ -49,9 +50,10 @@ final class UnitController
      * @param CurrentRoute $currentRoute
      * @param Session $session
      * @param UnitRepository $unitRepository
+     * @param UnitPeppolRepository $upR
      * @param SettingRepository $settingRepository
      */
-    public function index(CurrentRoute $currentRoute, Session $session, UnitRepository $unitRepository, SettingRepository $settingRepository): \Yiisoft\DataResponse\DataResponse
+    public function index(CurrentRoute $currentRoute, Session $session, UnitRepository $unitRepository, UnitPeppolRepository $upR, SettingRepository $settingRepository): \Yiisoft\DataResponse\DataResponse
     {
         $units = $this->units($unitRepository);
         $pageNum = (int)$currentRoute->getArgument('page', '1');
@@ -64,6 +66,7 @@ final class UnitController
             ]),      
             'paginator'=> $paginator,
             's'=> $settingRepository,
+            'upR'=>$upR,
             'units' => $units, 
         ]; 
         return $this->viewRenderer->render('index', $parameters);

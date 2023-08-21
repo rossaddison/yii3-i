@@ -12,8 +12,10 @@ use Yiisoft\Validator\Rule\Email;
 final class ClientForm extends FormModel
 {
     private ?string $client_name='';
+    private ?string $client_number='';
     private ?string $client_address_1='';
     private ?string $client_address_2='';
+    private ?string $client_building_number='';
     private ?string $client_city='';
     private ?string $client_state='';
     private ?string $client_zip='';
@@ -33,10 +35,16 @@ final class ClientForm extends FormModel
     private ?string $client_veka='';    
     private ?string $client_birthdate='';
     private ?int $client_gender=0;
-
+    private ?int $postaladdress_id=null;
+    
     public function getClient_name() : string|null
     {
       return $this->client_name;
+    }
+    
+    public function getClient_number() : string|null
+    {
+      return $this->client_number;
     }
 
     public function getClient_address_1() : string|null
@@ -47,6 +55,11 @@ final class ClientForm extends FormModel
     public function getClient_address_2() : string|null
     {
       return $this->client_address_2;
+    }
+    
+    public function getClient_building_number() : string|null
+    {
+      return $this->client_building_number;
     }
 
     public function getClient_city() : string|null
@@ -134,21 +147,29 @@ final class ClientForm extends FormModel
       return $this->client_veka;
     }
     
-    public function getClient_birthdate(\App\Invoice\Setting\SettingRepository $s) : \DateTime
+    public function getClient_birthdate(\App\Invoice\Setting\SettingRepository $s) : \DateTime|null
     {
         $datehelper = new DateHelper($s);         
         $datetime = new \DateTime();
         $datetime->setTimezone(new \DateTimeZone($s->get_setting('time_zone') ? $s->get_setting('time_zone') : 'Europe/London')); 
         $datetime->format($datehelper->style());
-        $date = $datehelper->date_to_mysql(null!==$this->client_birthdate ? $this->client_birthdate : date('Y-m-d'));
-        $str_replace = str_replace($datehelper->separator(), '-', $date);
-        $datetime->modify($str_replace);
-        return $datetime;
+        if (!empty($this->client_birthdate)) { 
+            $date = $datehelper->date_to_mysql($this->client_birthdate);
+            $str_replace = str_replace($datehelper->separator(), '-', $date);
+            $datetime->modify($str_replace);
+            return $datetime;        
+        }
+        return null;
     }
 
     public function getClient_gender() : int|null
     {
       return $this->client_gender;
+    }
+    
+    public function getClient_postaladdress_id() : int|null
+    {
+      return $this->postaladdress_id;
     }
 
     /**

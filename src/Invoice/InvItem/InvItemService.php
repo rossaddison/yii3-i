@@ -42,7 +42,9 @@ final class InvItemService
        $tax_rate_id = ((null !==($form->getTax_rate_id())) ? $form->getTax_rate_id() : '');
        // The form is required to have a tax value even if it is a zero rate
        $model->setTax_rate_id((int)$tax_rate_id);
-       $model->setInv_id((int)$inv_id);       
+       $model->setInv_id((int)$inv_id);
+       $so_item_id = ((null !==($form->getSo_item_id())) ? $form->getSo_item_id() : '');
+       $model->setSo_item_id((int)$so_item_id);
        $product_id = ((null !==($form->getProduct_id())) ? $form->getProduct_id() : '');
        $model->setProduct_id((int)$product_id);       
        $product = $pr->repoProductquery($form->getProduct_id());
@@ -55,8 +57,9 @@ final class InvItemService
         $description = ((null !==($form->getDescription())) ? 
                                   $form->getDescription() : 
                                   $product->getProduct_description());
-
         $model->setDescription($description ?: '');
+        $note = ((null !==($form->getNote())) ? $form->getNote() : '');
+        $model->setNote($note ?: '');
        }
        $model->setQuantity($form->getQuantity() ?: 1);
        
@@ -74,10 +77,12 @@ final class InvItemService
        $model->setProduct_unit_id((int)$form->getProduct_unit_id());
        $tax_rate_percentage = $this->taxrate_percentage((int)$tax_rate_id, $trr);
        // Users are required to enter a tax rate even if it is zero percent.
+              
+       $model->setBelongs_to_vat_invoice((int)($s->get_setting('enable_vat_registration') ?: '0'));
        if ($product_id) {
          $this->repository->save($model);
          if (null!==$form->getQuantity() && null!==$form->getPrice() && null!==$form->getDiscount_amount() && null!==$tax_rate_percentage) {
-            $this->saveInvItemAmount((int)$model->getId(), $form->getQuantity(), $form->getPrice(), $form->getDiscount_amount(), $tax_rate_percentage, $iias, $iiar);
+            $this->saveInvItemAmount((int)$model->getId(), $form->getQuantity(), $form->getPrice(), $form->getDiscount_amount(), 0.00, 0.00,  $tax_rate_percentage, $iias, $iiar, $s);
          }
        }  
     }
@@ -106,6 +111,9 @@ final class InvItemService
        
        $model->setInv_id((int)$inv_id);
        
+       $so_item_id = ((null !==($form->getSo_item_id())) ? $form->getSo_item_id() : '');
+       $model->setSo_item_id((int)$so_item_id);
+       
        $product = $pr->repoProductquery($form->getProduct_id());
        if ($product) {
         $name = (( (null !==($form->getProduct_id())) && ($pr->repoCount($product_id)> 0) ) ? $product->getProduct_name() : '');  
@@ -115,6 +123,8 @@ final class InvItemService
                                  $form->getDescription() : 
                                  $product->getProduct_description());
         $model->setDescription($description ?: '');
+        $note = ((null !==($form->getNote())) ? $form->getNote() : '');
+        $model->setNote($note ?: '');
        }
        $model->setQuantity($form->getQuantity() ?: 1);
        
@@ -170,6 +180,8 @@ final class InvItemService
               $description = $task->getDescription();
        }
        $model->setDescription($description ?: '');
+       $note = ((null !==($form->getNote())) ? $form->getNote() : '');
+       $model->setNote($note ?: '');
        
        $model->setQuantity($form->getQuantity() ?: 1.00);
        $model->setProduct_unit('');
@@ -183,7 +195,7 @@ final class InvItemService
        if ($task_id) {
             $this->repository->save($model);                
             if (null!==$form->getQuantity() && null!==$form->getPrice() && null!==$form->getDiscount_amount() && null!==$tax_rate_percentage) {
-                $this->saveInvItemAmount((int)$model->getId(), $form->getQuantity(), $form->getPrice(), $form->getDiscount_amount(), $tax_rate_percentage, $iias, $iiar);
+                $this->saveInvItemAmount((int)$model->getId(), $form->getQuantity(), $form->getPrice(), $form->getDiscount_amount(), 0.00, 0.00, $tax_rate_percentage, $iias, $iiar, $s);
             }    
        }
     }
@@ -225,6 +237,8 @@ final class InvItemService
               $description = $task->getDescription();
        }
        $model->setDescription($description ?: '');
+       $note = ((null !==($form->getNote())) ? $form->getNote() : '');
+       $model->setNote($note ?: '');
        $model->setQuantity($form->getQuantity() ?: 1);
        $model->setProduct_unit('');
        $model->setPrice($form->getPrice() ?: 0.00);
@@ -240,28 +254,41 @@ final class InvItemService
     }
     
     /**
-     * 
      * @param int $inv_item_id
      * @param float $quantity
      * @param float $price
      * @param float $discount
+     * @param float $charge_total
+     * @param float $allowance_total
      * @param float $tax_rate_percentage
      * @param IIAS $iias
      * @param IIAR $iiar
+     * @param SR $s
      * @return void
      */
-    public function saveInvItemAmount(int $inv_item_id, float $quantity, float $price, float $discount, float $tax_rate_percentage, IIAS $iias, IIAR $iiar): void
+    public function saveInvItemAmount(int $inv_item_id, float $quantity, float $price, float $discount, float $charge_total, float $allowance_total, float $tax_rate_percentage, IIAS $iias, IIAR $iiar, SR $s): void
     {       
        $iias_array = [];
        $iias_array['inv_item_id'] = $inv_item_id;       
-       $sub_total = $quantity * $price;
-       $tax_total = (($sub_total * ($tax_rate_percentage/100)));
-       $discount_total = ($quantity*$discount);
-       
+       $sub_total = $quantity * $price;                
+       $discount_total = ($quantity * $discount);
+       $tax_total = 0.00;
+       // NO VAT
+       if ($s->get_setting('enable_vat_registration') === '0') { 
+           $tax_total = (($sub_total * ($tax_rate_percentage/100)));
+       }
+       // VAT
+       if ($s->get_setting('enable_vat_registration') === '1') { 
+            // EARLY SETTLEMENT CASH DISCOUNTS MUST BE REMOVED BEFORE VAT IS DETERMINED
+            // @see https://informi.co.uk/finance/how-vat-affected-discounts
+            $tax_total = ((($sub_total-$discount_total+$charge_total) * ($tax_rate_percentage/100)));
+       }
        $iias_array['discount'] = $discount_total;
+       $iias_array['charge'] = $charge_total;
+       $iias_array['allowance'] = $allowance_total;
        $iias_array['subtotal'] = $sub_total;
        $iias_array['taxtotal'] = $tax_total;
-       $iias_array['total'] = ($sub_total - $discount_total + $tax_total);       
+       $iias_array['total'] = ($sub_total - $discount_total + $charge_total - $allowance_total + $tax_total);       
        
        if ($iiar->repoCount((string)$inv_item_id) === 0) {
          $iias->saveInvItemAmountNoForm(new InvItemAmount(), $iias_array);} else {
@@ -319,6 +346,7 @@ final class InvItemService
             : $new_item->setTask_id((int)$item->getTask_id()); 
             $new_item->setName($item->getName() ?? '');
             $new_item->setDescription($item->getDescription() ?? '');
+            $new_item->setNote($item->getNote() ?? '');
             $new_item->setQuantity(($item->getQuantity()?: 1)*-1);
             $new_item->setPrice($item->getPrice() ?? 0.00);
             $new_item->setDiscount_amount($item->getDiscount_amount() ?? 0.00);

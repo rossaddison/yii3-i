@@ -17,7 +17,9 @@ use App\Invoice\Helpers\ClientHelper;
 use App\Invoice\Helpers\CountryHelper;
 use App\Invoice\Helpers\DateHelper;
 use App\Invoice\Helpers\NumberHelper;
+use App\Widget\LabelSwitch;
 
+$vat = $s->get_setting('enable_vat_registration');
 ?>
 <div class="panel panel-default">
 <div class="panel-heading">
@@ -28,11 +30,14 @@ use App\Invoice\Helpers\NumberHelper;
         $countryhelper = new CountryHelper();  
         $datehelper = new DateHelper($s);  
         $numberhelper = new NumberHelper($s);
-        echo $modal_delete_quote; 
-        echo $modal_add_quote_tax;  
+        echo $modal_delete_quote;
+        if ($vat === '0') {
+            echo $modal_add_quote_tax;
+        }  
         // modal_product_lookups is performed using below $modal_choose_items
         echo $modal_choose_items;
         echo $modal_quote_to_invoice;
+        echo $modal_quote_to_so;
         echo $modal_quote_to_pdf;
         echo $modal_copy_quote;
         echo $modal_delete_items;
@@ -40,9 +45,9 @@ use App\Invoice\Helpers\NumberHelper;
 <div>
 <br>
 <br>
-</div>    
+</div>
 <div>
-    <?php if ($invEdit) { 
+    <?php if ($invEdit && $quote->getStatus_id() === 1) { 
         echo $add_quote_item; 
     } ?>
 </div> 
@@ -54,7 +59,20 @@ use App\Invoice\Helpers\NumberHelper;
         echo($quote->getNumber() ? '#' . $quote->getNumber() :  $quote->getId());
     ?>
     </h1>
-    <div class="headerbar-item pull-right">
+        <div class="headerbar-item pull-right">
+
+        <?php
+            // Purpose: To remind the user that VAT is enabled
+            $s->get_setting('display_vat_enabled_message') === '1' ?
+            LabelSwitch::checkbox(
+                    'quote-view-label-switch',
+                    $s->get_setting('enable_vat_registration'),
+                    $translator->translate('invoice.quote.label.switch.on'),
+                    $translator->translate('invoice.quote.label.switch.off'),
+                    'quote-view-label-switch-id',
+                    '16'
+            ) : '';
+        ?>    
         <div class="options btn-group">
             <a class="btn btn-default" data-toggle="dropdown" href="#">
                 <i class="fa fa-chevron-down"></i><?= $s->trans('options'); ?>
@@ -69,10 +87,12 @@ use App\Invoice\Helpers\NumberHelper;
                     </a>
                 </li>
                 <li>
+                    <?php if ($vat === '0') { ?>
                     <a href="#add-quote-tax" data-toggle="modal"  style="text-decoration:none">
                         <i class="fa fa-plus fa-margin"></i>
                         <?= $s->trans('add_quote_tax'); ?>
                     </a>
+                    <?php }?>
                 </li>
                 <?php } ?>
                 <li>
@@ -88,13 +108,22 @@ use App\Invoice\Helpers\NumberHelper;
                         <?= $s->trans('download_pdf'); ?>
                     </a>
                 </li>
-                <?php if ($invEdit) { ?>
+                <?php if ($invEdit  && $quote->getStatus_id() !== 1) { ?>
                 <li>
                     <a href="<?= $urlGenerator->generate('quote/email_stage_0',['id'=> $quote->getId()]); ?>" style="text-decoration:none">
                         <i class="fa fa-send fa-margin"></i>
                         <?= $s->trans('send_email'); ?>
                     </a>
                 </li>
+                <?php // if quote has been approved (ie status 4) by the client without po number do not show quote to sales order again   
+                     if ($quote->getSo_id() === '0' && $quote->getStatus_id() === 4) { ?>
+                <li>
+                    <a href="#quote-to-so" data-toggle="modal"  style="text-decoration:none">
+                        <i class="fa fa-refresh fa-margin"></i>
+                        <?= $translator->translate('invoice.quote.to.so'); ?>
+                    </a>
+                </li>
+                <?php } ?>
                 <li>
                     <a href="#quote-to-invoice" data-toggle="modal"  style="text-decoration:none">
                         <i class="fa fa-refresh fa-margin"></i>
@@ -194,7 +223,7 @@ use App\Invoice\Helpers\NumberHelper;
                                 </div>
                                 <div class="quote-properties has-feedback">
                                     <label for="quote_date_created">
-                                        <?= $s->trans('date'); ?>
+                                        <?= $vat == '0' ? $translator->translate('invoice.invoice.date.issued') : $s->trans('quote_date'); ?>
                                     </label>
                                     <div class="input-group">
                                         <?php  $date = $quote->getDate_created() ?? null; 
@@ -250,20 +279,21 @@ use App\Invoice\Helpers\NumberHelper;
                                     </select>
                                 </div>
                                 <div class="quote-properties">
-                                    <label for="quote_password">
+                                    <label for="quote_password" hidden>
                                         <?= $s->trans('quote_password'); ?>
                                     </label>
-                                    <input type="text" id="quote_password" class="form-control input-sm" disabled value="<?= Html::encode($body['password'] ?? ''); ?>">
+                                    <input type="text" id="quote_password" class="form-control input-sm" disabled value="<?= Html::encode($body['password'] ?? ''); ?>" hidden>
                                 </div>
 
                                 <?php
                                     // show the guest url which the customer will click on to gain access to the site and this quote
                                     // there is no need to show it if it has not been sent yet ie. 1 => draft, 2 => sent
+                                    // Update: This button has been replaced with the below button
                                     if ($quote->getStatus_id() !== 1) { ?>
                                     <div class="quote-properties">
-                                        <label for="quote_guest_url"><?php echo $s->trans('guest_url'); ?></label>
-                                        <div class="input-group">
-                                            <input type="text" id="quote_guest_url" readonly class="form-control" value="<?=  '/invoice/quote/url_key/'.$quote->getUrl_key(); ?>">
+                                        <label for="quote_guest_url" hidden><?php echo $s->trans('guest_url'); ?></label>
+                                        <div class="input-group" hidden>
+                                            <input type="text" id="quote_guest_url" readonly class="form-control" value="<?=  '/invoice/quote/url_key/'.$quote->getUrl_key(); ?>" hidden>
                                             <span class="input-group-text to-clipboard cursor-pointer"
                                                   data-clipboard-target="#quote_guest_url">
                                                 <i class="fa fa-clipboard fa-fw"></i>
@@ -271,14 +301,23 @@ use App\Invoice\Helpers\NumberHelper;
                                         </div>
                                     </div>
                                     
-                                    <?php 
-                                        // 2=>Draft 3=>Sent 4=>Viewed 5=>Approvd 6=>Rejected
-                                        if (in_array($quote->getStatus_id(),[2,3,4,5,6])) 
+                                    <?php
+                                        if (($quote->getStatus_id() === 2 | $quote->getStatus_id() === 3 | $quote->getStatus_id() === 5)  && !$invEdit && ($quote->getSo_id() === '0' || $quote->getSo_id() === null)) 
                                     { ?>
                                     <div>
                                         <br>
                                         <a href="<?= $urlGenerator->generate('quote/url_key',['url_key' => $quote->getUrl_key()]); ?>" class="btn btn-success">  
-                                            <?= $s->trans('approve_this_quote').'/'.$s->trans('reject_this_quote'); ?></i>    
+                                            <?= $s->trans('approve_this_quote') ; ?></i>    
+                                        </a>
+                                    </div>
+                                    <?php } ?>
+                                    <?php                                        
+                                        if (($quote->getStatus_id() === 2 | $quote->getStatus_id() === 3 | $quote->getStatus_id() === 4 )  && !$invEdit && ($quote->getSo_id() === '0' || $quote->getSo_id() === null)) 
+                                    { ?>
+                                    <div>
+                                        <br>
+                                        <a href="<?= $urlGenerator->generate('quote/url_key',['url_key' => $quote->getUrl_key()]); ?>" class="btn btn-danger">  
+                                            <?= $s->trans('reject_this_quote') ; ?></i>    
                                         </a>
                                     </div>
                                     <?php } ?>
@@ -291,6 +330,15 @@ use App\Invoice\Helpers\NumberHelper;
                                     </div>
                                 <?php } ?>
                                 <input type="text" id="dropzone_client_id" readonly  hidden class="form-control" value="<?= $quote->getClient()->getClient_id(); ?>">
+                                <?php if ($quote->getSo_id()) { ?>  
+                                <div has-feedback">
+                                    <label for="salesorder_to_url"><?= $translator->translate('invoice.salesorder'); ?></label>
+                                    <div class="input-group">
+                                        <?= Html::a($sales_order_number, $urlGenerator->generate('salesorder/view',['id'=>$quote->getSo_id()]), ['class'=>'btn btn-success']); ?>
+                                    </div>
+                                </div>
+                                <?php } ?>
+                            
                             </div>
                         </div>
                     </div>

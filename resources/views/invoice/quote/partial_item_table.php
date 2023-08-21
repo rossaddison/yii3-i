@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use Yiisoft\Html\Html;
+
+$vat = $s->get_setting('enable_vat_registration');
 ?>
 
 <div class="table-striped table-responsive">
@@ -57,7 +59,7 @@ use Yiisoft\Html\Html;
                     <div class="input-group">
                         <span class="input-group-text"><?= $s->trans('item_discount'); ?></span>
                         <input type="text" name="item_discount_amount" class="input-sm form-control amount"
-                               data-toggle="tooltip" data-placement="bottom"
+                               data-bs-toggle = "tooltip" data-placement="bottom"
                                title="<?= $s->get_setting('currency_symbol') . ' ' . $s->trans('per_item'); ?>" value="0.00">
                     </div>
                 </td>
@@ -136,9 +138,9 @@ use Yiisoft\Html\Html;
                     </td>
                     <td class="td-text">
                         <div class="input-group">
-                            <input type="text" disabled="true" maxlength="1" size="1" name="quote_id" value="<?= $item->getQuote_id(); ?>" data-toggle="tooltip" title="quote_item->quote_id">
-                            <input type="text" disabled="true" maxlength="1" size="1" name="item_id" value="<?= $item->getId(); ?>" data-toggle="tooltip" title="quote_item->getId()">
-                            <input type="text" disabled="true" maxlength="1" size="1" name="item_product_id" value="<?= $item->getProduct_id(); ?>" data-toggle="tooltip" title="quote_item->product_id">
+                            <input type="text" disabled="true" maxlength="1" size="1" name="quote_id" value="<?= $item->getQuote_id(); ?>" data-bs-toggle = "tooltip" title="quote_item->quote_id">
+                            <input type="text" disabled="true" maxlength="1" size="1" name="item_id" value="<?= $item->getId(); ?>" data-bs-toggle = "tooltip" title="quote_item->getId()">
+                            <input type="text" disabled="true" maxlength="1" size="1" name="item_product_id" value="<?= $item->getProduct_id(); ?>" data-bs-toggle = "tooltip" title="quote_item->product_id">
                         </div>    
                         <div class="input-group">
                             <span class="input-group-text"><?= $s->trans('item'); ?></span>
@@ -155,23 +157,23 @@ use Yiisoft\Html\Html;
                     <td class="td-amount td-quantity">
                         <div class="input-group">
                             <span class="input-group-text"><?= $s->trans('quantity'); ?></span>
-                            <input disabled type="text" name="item_quantity" class="input-sm form-control amount" data-toggle="tooltip" title="quote_item->quantity"
+                            <input disabled type="text" name="item_quantity" class="input-sm form-control amount" data-bs-toggle = "tooltip" title="quote_item->quantity"
                                    value="<?= $numberhelper->format_amount($item->getQuantity()); ?>">
                         </div>
                     </td>
                     <td class="td-amount">
                         <div class="input-group">
                             <span class="input-group-text"><?= $s->trans('price'); ?></span>
-                            <input disabled type="text" name="item_price" class="input-sm form-control amount" data-toggle="tooltip" title="quote_item->price"
+                            <input disabled type="text" name="item_price" class="input-sm form-control amount" data-bs-toggle = "tooltip" title="quote_item->price"
                                    value="<?= $numberhelper->format_amount($item->getPrice()); ?>">
                         </div>
                     </td>
                     <td class="td-amount ">
                         <div class="input-group">
                             <span class="input-group-text"><?= $s->trans('item_discount'); ?></span>
-                            <input disabled type="text" name="item_discount_amount" class="input-sm form-control amount" data-toggle="tooltip" title="quote_item->discount_amount"
+                            <input disabled type="text" name="item_discount_amount" class="input-sm form-control amount" data-bs-toggle = "tooltip" title="quote_item->discount_amount"
                                    value="<?= $numberhelper->format_amount($item->getDiscount_amount()); ?>"
-                                   data-toggle="tooltip" data-placement="bottom"
+                                   data-bs-toggle = "tooltip" data-placement="bottom"
                                    title="<?= $s->get_setting('currency_symbol') . ' ' . $s->trans('per_item'); ?>">
                         </div>
                     </td>
@@ -185,8 +187,8 @@ use Yiisoft\Html\Html;
                        } 
                     }?>
                         <div class="input-group">
-                            <span class="input-group-text"><?= $s->trans('tax_rate'); ?></span>
-                            <select disabled name="item_tax_rate_id" class="form-control" data-toggle="tooltip" title="quote_item->tax_rate_id">
+                            <span class="input-group-text"><?= $vat === '0' ? $s->trans('tax_rate') : $translator->translate('invoice.invoice.vat.rate') ?></span>
+                            <select disabled name="item_tax_rate_id" class="form-control" data-bs-toggle = "tooltip" title="quote_item->tax_rate_id">
                                 <?php foreach ($tax_rates as $tax_rate) { ?>
                                     <option value="<?php echo $tax_rate->getTax_rate_id(); ?>"
                                             <?php if ($item->getTax_rate_id() == $tax_rate->getTax_rate_id()) { ?>selected="selected"<?php } ?>>
@@ -206,7 +208,7 @@ use Yiisoft\Html\Html;
                 <tr>
                     <td class="td-textarea">
                         <div class="input-group">
-                            <span class="input-group-text" data-toggle="tooltip" title="quote_item->description"><?= $s->trans('description'); ?></span>
+                            <span class="input-group-text" data-bs-toggle = "tooltip" title="quote_item->description"><?= $s->trans('description'); ?></span>
                             <textarea disabled name="item_description" class="form-control" ><?= Html::encode($item->getDescription()); ?></textarea>
                         </div>
                     </td>
@@ -218,25 +220,25 @@ use Yiisoft\Html\Html;
                     </td>
                     <td class="td-amount td-vert-middle">
                         <span><?= $s->trans('subtotal'); ?></span><br/>                        
-                        <span name="subtotal" class="amount" data-toggle="tooltip" title="quote_item_amount->subtotal">
+                        <span name="subtotal" class="amount" data-bs-toggle = "tooltip" title="quote_item_amount->subtotal">
                             <?= $numberhelper->format_currency($quote_item_amount->repoQuoteItemAmountquery((string)$item->getId())?->getSubtotal() ?? 0.00); ?>
                         </span>
                     </td>
                     <td class="td-amount td-vert-middle">
-                        <span><?= $s->trans('discount'); ?></span><br/>
-                        <span name="item_discount_total" class="amount" data-toggle="tooltip" title="quote_item_amount->discount">
+                        <span class="input-group-text"><?= $vat === '0' ? $s->trans('item_discount') : $translator->translate('invoice.invoice.cash.discount'); ?></span>
+                        <span name="item_discount_total" class="amount" data-bs-toggle = "tooltip" title="quote_item_amount->discount">
                             <?= $numberhelper->format_currency($quote_item_amount->repoQuoteItemAmountquery((string)$item->getId())?->getDiscount() ?? 0.00); ?>
                         </span>
                     </td>
                     <td class="td-amount td-vert-middle">
-                        <span><?= $s->trans('tax'); ?></span><br/>
-                        <span name="item_tax_total" class="amount" data-toggle="tooltip" title="quote_item_amount->tax_total">
+                        <span><?= $vat === '0' ? $s->trans('tax') : $translator->translate('invoice.invoice.vat.abbreviation') ?></span><br/>
+                        <span name="item_tax_total" class="amount" data-bs-toggle = "tooltip" title="quote_item_amount->tax_total">
                             <?= $numberhelper->format_currency($quote_item_amount->repoQuoteItemAmountquery((string)$item->getId())?->getTax_total() ?? 0.00); ?>
                         </span>
                     </td>
                     <td class="td-amount td-vert-middle">
                         <span><?= $s->trans('total'); ?></span><br/>
-                        <span name="item_total" class="amount" data-toggle="tooltip" title="quote_item_amount->total">
+                        <span name="item_total" class="amount" data-bs-toggle = "tooltip" title="quote_item_amount->total">
                             <?= $numberhelper->format_currency($quote_item_amount->repoQuoteItemAmountquery((string)$item->getId())?->getTotal() ?? 0.00); ?>
                         </span>
                     </td>                   
@@ -257,18 +259,22 @@ use Yiisoft\Html\Html;
             <table class="table table-bordered text-right">
                 <tr>
                     <td style="width: 40%;"><?= $s->trans('subtotal'); ?></td>
-                    <td style="width: 60%;" class="amount" id="amount_subtotal" data-toggle="tooltip" title="quote_amount->item_subtotal =  quote_item(s)->subtotal - quote_item(s)->discount"><?php echo $numberhelper->format_currency($quote_amount->getItem_subtotal() ?? 0.00); ?></td>
+                    <td style="width: 60%;" class="amount" id="amount_subtotal" data-bs-toggle = "tooltip" title="quote_amount->item_subtotal =  quote_item(s)->subtotal - quote_item(s)->discount"><?php echo $numberhelper->format_currency($quote_amount->getItem_subtotal() ?? 0.00); ?></td>
                 </tr>
                 <tr>
-                    <td><?= $s->trans('item_tax'); ?></td>
-                    <td class="amount" data-toggle="tooltip" id="amount_item_tax_total" title="quote_amount->item_tax_total"><?php echo $numberhelper->format_currency($quote_amount->getItem_tax_total() ?? 0.00); ?></td>
+                    <td>
+                    <span><?= $vat === '1' ? $translator->translate('invoice.invoice.vat.break.down') : $s->trans('item_tax'); ?>
+                    </span>    
+                    </td>
+                    <td class="amount" data-bs-toggle = "tooltip" id="amount_item_tax_total" title="quote_amount->item_tax_total"><?php echo $numberhelper->format_currency($quote_amount->getItem_tax_total() ?? 0.00); ?></td>
                 </tr>
+                <?php if ($vat === '0') { ?>
                 <tr>
                     <td>
                         <?php if ($invEdit) { ?>    
                             <a href="#add-quote-tax" data-toggle="modal" class="btn-xs"><i class="fa fa-plus-circle"></i></a>
                         <?php } ?>
-                        <?= $s->trans('quote_tax'); ?>
+                        <span><?= $vat === '0' ? $s->trans('quote_tax_rate') : $translator->translate('invoice.invoice.vat.rate') ?></span>
                     </td>
                     <td>
                         <?php if ($quote_tax_rates) {
@@ -282,7 +288,7 @@ use Yiisoft\Html\Html;
                                     <span class="text-muted">
                                         <?= Html::encode($quote_tax_rate->getTaxRate()->getTax_rate_name()) . ' ' . $numberhelper->format_amount($quote_tax_rate->getTaxRate()->getTax_rate_percent()) . '%' ?>
                                     </span>
-                                    <span class="amount" data-toggle="tooltip" title="quote_tax_rate->quote_tax_rate_amount">
+                                    <span class="amount" data-bs-toggle = "tooltip" title="quote_tax_rate->quote_tax_rate_amount">
                                         <?php echo $numberhelper->format_currency($quote_tax_rate->getQuote_tax_rate_amount()); ?>
                                     </span>                                
                             <?php }
@@ -291,13 +297,15 @@ use Yiisoft\Html\Html;
                         } ?>
                     </td>
                 </tr>
+                <?php } ?>
+                <?php if ($vat === '0') { ?>
                 <tr>
                     <td class="td-vert-middle"><?= $s->trans('discount'); ?></td>
                     <td class="clearfix">
                         <div class="discount-field">
                             <div class="input-group input-group-sm">
                                 <input id="quote_discount_amount" name="quote_discount_amount"
-                                       class="discount-option form-control input-sm amount" data-toggle="tooltip" title="quote->discount_amount" disabled
+                                       class="discount-option form-control input-sm amount" data-bs-toggle = "tooltip" title="quote->discount_amount" disabled
                                        value="<?= $numberhelper->format_amount($quote->getDiscount_amount() != 0 ? $quote->getDiscount_amount() : 0.00); ?>">
                                 <div
                                     class="input-group-text"><?= $s->get_setting('currency_symbol'); ?>
@@ -306,17 +314,18 @@ use Yiisoft\Html\Html;
                         </div>
                         <div class="discount-field">
                             <div class="input-group input-group-sm">
-                                <input id="quote_discount_percent" name="quote_discount_percent" data-toggle="tooltip" title="quote->discount_percent" disabled
+                                <input id="quote_discount_percent" name="quote_discount_percent" data-bs-toggle = "tooltip" title="quote->discount_percent" disabled
                                        value="<?= $numberhelper->format_amount($quote->getDiscount_percent() != 0 ? $quote->getDiscount_percent() : 0.00); ?>"
                                        class="discount-option form-control input-sm amount">
                                 <div class="input-group-text">&percnt;</div>
                             </div>
                         </div>
                     </td>
-                </tr>
+                </tr>                
+                <?php } ?>
                 <tr>
                     <td><b><?= $s->trans('total'); ?></b></td>
-                    <td class="amount" id="amount_quote_total" data-toggle="tooltip" title="quote_amount->total"><b><?php echo $numberhelper->format_currency($quote_amount->getTotal() ?? 0.00); ?></b></td>
+                    <td class="amount" id="amount_quote_total" data-bs-toggle = "tooltip" title="quote_amount->total"><b><?php echo $numberhelper->format_currency($quote_amount->getTotal() ?? 0.00); ?></b></td>
                 </tr>
             </table>
         </div>

@@ -70,6 +70,7 @@ class CurrencyHelper
     }    
 
     /**
+     * @see ISO 4217 alpha-3 ie. 3 letter currency codes
      * Get an array of all supported currencies
      *
      * @return (int|string)[][]

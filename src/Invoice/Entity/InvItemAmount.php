@@ -12,7 +12,7 @@ use App\Invoice\Entity\InvItem;
 #[Entity(repository: \App\Invoice\InvItemAmount\InvItemAmountRepository::class)]
 class InvItemAmount
 {
-    #[BelongsTo(target:InvItem::class, nullable: false)]
+    #[BelongsTo(target:InvItem::class, nullable: true)]
     private ?InvItem $inv_item = null;
         
     #[Column(type: 'primary')]
@@ -26,9 +26,15 @@ class InvItemAmount
      
     #[Column(type: 'decimal(20,2)', nullable: false, default: 0.00)]
     private ?float $tax_total =  0.00;
-     
+    
     #[Column(type: 'decimal(20,2)', nullable: false, default: 0.00)]
     private ?float $discount =  0.00;
+    
+    #[Column(type: 'decimal(20,2)', nullable: false, default: 0.00)]
+    private ?float $charge =  0.00;
+    
+    #[Column(type: 'decimal(20,2)', nullable: false, default: 0.00)]
+    private ?float $allowance =  0.00;
      
     #[Column(type: 'decimal(20,2)', nullable: false, default: 0.00)]
     private ?float $total =  0.00;
@@ -39,6 +45,8 @@ class InvItemAmount
         float $subtotal = 0.00,
         float $tax_total = 0.00,
         float $discount = 0.00,
+        float $charge = 0.00,
+        float $allowance = 0.00,
         float $total = 0.00
     )
     {
@@ -47,6 +55,8 @@ class InvItemAmount
         $this->subtotal=$subtotal;
         $this->tax_total=$tax_total;
         $this->discount=$discount;
+        $this->charge=$charge;
+        $this->allowance=$allowance;
         $this->total=$total;
     }
     
@@ -103,6 +113,26 @@ class InvItemAmount
     public function setDiscount(float $discount) : void
     {
       $this->discount =  $discount;
+    }
+    
+    public function getCharge(): ?float
+    {
+       return $this->charge;
+    }
+    
+    public function setCharge(float $charge) : void
+    {
+      $this->charge =  $charge;
+    }
+    
+    public function getAllowance(): ?float
+    {
+       return $this->allowance;
+    }
+    
+    public function setAllowance(float $allowance) : void
+    {
+       $this->allowance = $allowance;
     }
     
     public function getTotal(): ?float

@@ -12,10 +12,13 @@ use Cycle\ORM\Select;
 use Throwable;
 use Yiisoft\Aliases\Aliases;
 use Yiisoft\Config\ConfigInterface;
+use Yiisoft\Data\Paginator\OffsetPaginator;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Files\FileHelper;
 use Yiisoft\Files\PathMatcher\PathMatcher;
+use Yiisoft\Html\Html;
 use Yiisoft\Session\SessionInterface;
+use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 use Yiisoft\Yii\Runner\Http\HttpApplicationRunner;
@@ -31,17 +34,18 @@ final class SettingRepository extends Select\Repository
     public array $settings = [];
     
     private SessionInterface $session;
-
+    private TranslatorInterface $translator;        
     /**
      * 
      * @param Select<TEntity> $select 
      * @param EntityWriter $entityWriter
      * @param SessionInterface $session
      */
-    public function __construct(Select $select, EntityWriter $entityWriter, SessionInterface $session)
+    public function __construct(Select $select, EntityWriter $entityWriter, SessionInterface $session, TranslatorInterface $translator)
     {
         $this->entityWriter = $entityWriter;
         $this->session = $session;
+        $this->translator = $translator;
         parent::__construct($select);
     }
     
@@ -328,8 +332,11 @@ final class SettingRepository extends Select\Repository
          * @var string $params['company']['country']
          * @var string $params['company']['vat_id']
          * @var string $params['company']['tax_code']
+         * @var string $params['company']['tax_currency'],
          * @var string $params['company']['phone']
          * @var string $params['company']['fax']
+         * @var string $params['company']['iso_3166_country_identification_code']
+         * @var string $params['company']['iso_3166_country_identification_list_id']
          */
         $company_array = [
             'name' => $params['company']['name'],
@@ -341,10 +348,78 @@ final class SettingRepository extends Select\Repository
             'country' => $params['company']['country'],
             'vat_id' => $params['company']['vat_id'],
             'tax_code' => $params['company']['tax_code'],
+            'tax_currency' => $params['company']['tax_currency'],
             'phone' => $params['company']['phone'],
             'fax' => $params['company']['fax'],
+            'iso_3166_country_identification_code' => $params['company']['iso_3166_country_identification_code'],
+            'iso_3166_country_identification_list_id' => $params['company']['iso_3166_country_identification_list_id']
         ];
         return $company_array;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getTaxCurrencyFromConfigDetails() : string
+    {
+        /*
+         *  @var array $this->get_config_company_details()
+         */
+        $company_details = $this->get_config_company_details();
+        /** @var string $company_details['tax_currency'] */ 
+        return $company_details['tax_currency'];
+    }
+    
+    /**
+     * @see config/params.php 
+     * @return int
+     */
+    public function getSchemaProvidersMode() : int 
+    {
+        $config = $this->get_config_params();
+        $params = $config->get('params');
+        
+        $yii_cycle_array = (array)$params['yiisoft/yii-cycle'];
+        $schema_providers_array = (array)$yii_cycle_array['schema-providers'];
+        $php_file_array = (array)$schema_providers_array['Yiisoft\\Yii\\Cycle\\Schema\\Provider\\PhpFileSchemaProvider'];
+        return (int)$php_file_array['mode'];
+    }       
+    
+    /**
+     * 
+     * @return array
+     */
+    public function get_config_peppol() : array {
+        $config = $this->get_config_params();
+        $params = $config->get('params');
+        /**
+         * @var array $params['peppol']['invoice']
+         * @var array $params['peppol']['invoice']['AccountingSupplierParty']
+         * @var array $params['peppol']['invoice']['AccountingSupplierParty']['Party']
+         * @var array $params['peppol']['invoice']['AccountingSupplierParty']['Party']['PartyIdentification']['ID']
+         * @var string $params['peppol']['invoice']['AccountingSupplierParty']['Party']['PartyIdentification']['ID']['value']
+         * @var string $params['peppol']['invoice']['AccountingSupplierParty']['Party']['PartyIdentification']['ID']['schemeID']
+         * @var array $params['peppol']['invoice']['AccountingSupplierParty']['Party']['PostalAddress']
+         * @var array $params['peppol']['invoice']['AccountingSupplierParty']['Party']['Contact']
+         * @var array $params['peppol']['invoice']['AccountingSupplierParty']['Party']['PartyTaxScheme']         
+         * @var array $params['peppol']['invoice']['AccountingSupplierParty']['Party']['PartyLegalEntity'] 
+         * @var array $params['peppol']['invoice']['AccountingSupplierParty']['Party']['EndPointID']  
+         * @var string $params['peppol']['invoice']['TaxCurrencyCode']
+         * @var string $params['peppol']['invoice']['PaymentMeans'] 
+         * @var string $params['peppol']['invoice']['DocumentCurrencyCode'] 
+         */
+        $peppol_flat_array = [
+            'SupplierPartyIdentificationId' => $params['peppol']['invoice']['AccountingSupplierParty']['Party']['PartyIdentification']['ID']['value'],
+            'SupplierPartyIdentificationSchemeId' => $params['peppol']['invoice']['AccountingSupplierParty']['Party']['PartyIdentification']['ID']['schemeID'],
+            'SupplierPartyIdentificationPostalAddress' => $params['peppol']['invoice']['AccountingSupplierParty']['Party']['PostalAddress'],
+            'Contact' => $params['peppol']['invoice']['AccountingSupplierParty']['Party']['Contact'],
+            'PartyTaxScheme' => $params['peppol']['invoice']['AccountingSupplierParty']['Party']['PartyTaxScheme'], 
+            'PartyLegalEntity' => $params['peppol']['invoice']['AccountingSupplierParty']['Party']['PartyLegalEntity'],
+            'EndPointID' => $params['peppol']['invoice']['AccountingSupplierParty']['Party']['EndPointID'],
+            'PaymentMeans' => $params['peppol']['invoice']['PaymentMeans'],
+            'TaxCurrencyCode' => $params['peppol']['invoice']['TaxCurrencyCode']
+        ];
+        return $peppol_flat_array;
     }
     
     /**
@@ -420,7 +495,7 @@ final class SettingRepository extends Select\Repository
      * @return array
      */
     public function locale_language_array() : array {
-    // locale => src/Invoice/Language/{language folder name}    
+        // locale => src/Invoice/Language/{language folder name}    
         $language_list = [
             'af'=>'Afrikaans',
             'ar'=>'Arabic',
@@ -616,6 +691,16 @@ final class SettingRepository extends Select\Repository
         }   
     }
     
+    public function getTermsAndConditions() : array {
+        $array = [
+            // I have not accepted the terms
+            $this->translator->translate('invoice.term.1'),
+            // I have accepted the terms
+            $this->translator->translate('invoice.term.2'),
+        ];
+        return $array;
+    }
+    
     
     // Add to src/Invoice
     public static function getPlaceholderRelativeUrl(): string
@@ -644,6 +729,11 @@ final class SettingRepository extends Select\Repository
     public static function getCompanyPrivateLogosRelativefolderUrl(): string
     {        
         return DIRECTORY_SEPARATOR.'Company_private_logos';
+    }
+    
+    public static function getTempPeppolfolderRelativeUrl(): string
+    {        
+        return DIRECTORY_SEPARATOR.'Temp'.DIRECTORY_SEPARATOR.'Peppol'.DIRECTORY_SEPARATOR;
     }
     
     public static function getTempZugferdfolderRelativeUrl(): string
@@ -1076,6 +1166,12 @@ final class SettingRepository extends Select\Repository
                 //    'label' => 'Sandbox'                    
                 //)
             ),
+            'StoreCove' => array(
+                'apiKey' => array(
+                    'type' => 'password',
+                    'label' => 'Api Key',
+                )
+            ),
             // https://sandbox.braintreegateway.com/merchants
             'Braintree' => array(
                 'privateKey' => array(
@@ -1097,7 +1193,7 @@ final class SettingRepository extends Select\Repository
                 'sandbox' => array(
                     'type' => 'checkbox',
                     'label' => 'Sandbox'                    
-                )
+                ),
             ),
             // March 2023 
             //https://developer.paypal.com/docs/checkout/advanced/
@@ -1105,32 +1201,32 @@ final class SettingRepository extends Select\Repository
             //              Germany, Italy, Spain,
             //              United States, United Kingdom
             // https://developer.paypal.com/sdk/js/configuration/
-            'PayPal_Checkout' => array(                
-                'clientId' => array(
-                    'type' => 'password',
-                    'label' => 'Client Id',
-                ),
-                'clientSecret' => array(
-                    'type' => 'password',
-                    'label' => 'Client Secret',
-                ),
-                'returnUrl' => array(
-                    'type' => 'text',
-                    'label' => 'Return Url',
-                ),
-                'version' => array(
-                    'type' => 'checkbox',
-                    'label' => 'Omnipay Version'                    
-                ),
-                'sandbox' => array(
-                    'type' => 'checkbox',
-                    'label' => 'Sandbox'                    
-                ),
-                'webhookId' => array(
-                    'type' => 'text',
-                    'label' => 'Webhook Id',
-                )                
-            ), 
+            //'PayPal_Checkout' => array(                
+            //    'clientId' => array(
+            //        'type' => 'password',
+            //        'label' => 'Client Id',
+            //    ),
+            //    'clientSecret' => array(
+            //        'type' => 'password',
+            //        'label' => 'Client Secret',
+            //    ),
+            //    'returnUrl' => array(
+            //        'type' => 'text',
+            //        'label' => 'Return Url',
+            //    ),
+            //    'version' => array(
+            //        'type' => 'checkbox',
+            //        'label' => 'Omnipay Version'                    
+            //    ),
+            //    'sandbox' => array(
+            //        'type' => 'checkbox',
+            //        'label' => 'Sandbox'                    
+            //    ),
+            //    'webhookId' => array(
+            //        'type' => 'text',
+            //        'label' => 'Webhook Id',
+            //    )                
+            //), 
         );
         return $payment_gateways;
     }
@@ -1195,6 +1291,10 @@ final class SettingRepository extends Select\Repository
         'cron_key'=>[
           'why'=>'A cron job is used on the server to automatically email recurring invoices to clients.',
           'where'=>'This will be setup later.'
+        ],
+        'currency_code_from_to'=>[
+          'why'=>'If the sender\'s elected invoice\'s document\'s currency is different to their (the sender\'s) country\'s currency you will have to enter an exchange rate relevant to today here.',
+          'where'=>'src/Invoice/Helpers/Peppol/PeppolHelper/generate_invoice_peppol_ubl_xml_temp_file function'
         ],
         'currency_symbol' => [
           'why'=>'Used in NumberHelper/format_amount.',
@@ -1284,6 +1384,11 @@ final class SettingRepository extends Select\Repository
             'where'=>'src/Invoice/Helpers/MailerHelper/yii_mailer_send function variable email_attachment_with_pdf_template. ' .
             'Run with view/invoice Options...Send  using MailerInvForm'
         ],
+        'enable_vat_registration'=>[
+            'why' => 'VAT uses line item tax and applying Invoice Taxes (whether before line item or after line tax) are disabled. Hence the tax_total field in the InvAmount Entity will always equal zero if VAT is used. ' .
+                     'A new nullable field ... belongs_to_vat_invoice...has been introduced in the InvItem entity to allow for companies making this transition. '  ,
+            'where' => 'This setting is used in resources/views/invoice/inv/view.php',
+        ],
         'first_day_of_week' => [
           'why'=>'This is used in the javascript function on views/layout/invoice.php along with the datehelper datepicker function.',
           'where'=>'views/layout/invoice.php'
@@ -1307,20 +1412,22 @@ final class SettingRepository extends Select\Repository
             '---Step--5: Choose the Json File option and Download the file to src/Invoice/Google_translate_unique_folder'."\r\n".
             '---Step--6: You will have to enable the Cloud Translation API and provide your billing details. You will be charged 0 currency. '."\r\n".
             '---Step--7: Move the file from views/generator/output_overwrite to eg. src/Invoice/Language/{your language}',
-            'where'=>'GeneratorController/google_translate_lang'
+            'where'=>'GeneratorController/google_translate_lang',
+            //'menu' => true,
         ],
         'google_translate_en_app_php'=>[
             'why'=>'If you are wanting to translate resources/messages/en/app.php make sure you have loaded a copy in the ../Language/English folder.',
-            'where'=>'GeneratorController/google_translate_lang'
+            'where'=>'GeneratorController/google_translate_lang',
+            
         ],       
         'google_translate_locale'=>[
             'why'=>'To save time manually translating an ip_lang file using Google Translate Online, the Google Translate API https://github.com/googleapis/google-cloud-php-translate can be used to translate to your chosen locale. eg. es / Spanish',
             'where'=>'GeneratorController/google_translate_lang'
-        ],        
-        'install_test_data' => [
-          'why'=>'This is used by Generator..Reset Data and Generator..Remove Data during the testing of data',
-          'where'=>'invoice/test_data_reset and invoice/test_data_remove'
-        ], 
+        ],
+        'include_delivery_period'=>[
+            'why'=>'A group of business terms providing information on the invoice period. Also called delivery period. If the group is used, the invoiceing period start date and/or end date must be used. ',
+            'where'=>'src/Invoice/Delivery/DeliveryController'
+        ],    
         'include_zugferd' => [
             'why'=>'ZUGFeRD stands for Zentraler User Guide des Forums elektronische Rechnung Deutschland ' .
                    'It is a uniform standard for the electronic transmission of invoice data in Germany. ' .
@@ -1329,7 +1436,11 @@ final class SettingRepository extends Select\Repository
                    'This enables both you and the recipients of your documents to automatically transfer the invoice data to third-party systems with little effort. ' . 
                    'With the help of the standard, the entire content of the invoice can be transferred to an ERP system. ',
             'where'=> 'src/Invoice/Libraries and src/Invoice/Helpers/ZugFerdHelper' 
-        ],
+        ],     
+        'install_test_data' => [
+          'why'=>'This is used by Generator..Reset Data and Generator..Remove Data during the testing of data',
+          'where'=>'invoice/test_data_reset and invoice/test_data_remove'
+        ], 
         'invoice_default_payment_method'=>[
             'why'=>'Default: 1 => None, 2 => Cash, 3 => Cheque, 4 => Card/Direct Debit - Succeeded ' .
                  '5 => Card/Direct Debit - Processing 6 => Card/Direct Debit - Customer Ready.',
@@ -1363,7 +1474,11 @@ final class SettingRepository extends Select\Repository
         'monospace_amounts'=>[
           'why'=>'Evenly spaced characters for better presentation.',
           'where'=>'views/layout/invoice.php and views/layout/guest.php'
-        ],        
+        ],
+        'mpdf_ltr' => [
+          'why'=>'Settings for https://mpdf.github.io/',
+          'where'=>'src/Invoice/Helpers/MpdfHelper.php function initialize_pdf',  
+        ],    
         'number_format'=>[
           'why'=>'When the number format is chosen, the decimal point, and thousands_separator settings have to be derived from the number_format array located in SettingsRepository using the tab_index_number_format function in the SettingController',
           'where'=>'SettingController/tab_index_number_format'
@@ -1387,7 +1502,7 @@ final class SettingRepository extends Select\Repository
         'pdf_invoice_template_overdue'=>[
             'why'=>'Clients can download pdfs online if logged in and given observer status. This represents the overdue template. ie. if an invoice is overdue and is used alongside the normal and paid template.',
             'where'=>'src/Invoice/Helpers/TemplateHelper/select_pdf_invoice_template function.'
-        ],           
+        ],
         'quote_overview_period'=>[
             'why'=>'This setting is used on the dashboard so that the quotes that are shown will either be this-month, last-month, this-quarter, last-quarter, this-year, or last-year',
             'where'=>'views/invoice/dashboard/index.php and also in InvoiceController/dashboard function'
@@ -1397,7 +1512,26 @@ final class SettingRepository extends Select\Repository
             'where'=> 'Sent: src/Invoice/Setting/SettingRepository/invoice_mark_sent with InvController (several places) '.
                       'View: src/Invoice/Setting/SettingRepository/invoice_mark_viewed InvController/url_key (when users view their invoices online) '.  
                       'Paid: src/Invoice/Helpers/NumberHelper/inv_balance_zero_set_to_read_only_if_fully_paid. ', 
-        ],    
+        ],
+        'stand_in_code' => [
+            'why' => 'If a tax point date cannot be determined because a Delivery Period has been setup and there is no Date Supplied (ie. Actual Delivery Date) and no subsequent Date Issued, this code mutually excludes the tax point date value on an e-invoice. If you are using Accrual Based Vat Accouning use 3 Issue date or most likely 35 Supply date, if you are using Cash Based Vat Accounting use 432. The tax point date must be excluded from an e-invoice if Delivery Periods are used. ',
+            'where' => 'src/Invoice/Inv/InvService/BothInv function and set_tax_point function. It is not included in AddInv and SaveInv since these two functions are deprecated.',
+            'href' => 'https://docs.peppol.eu/poacc/billing/3.0/syntax/ubl-invoice/cac-InvoicePeriod/cbc-DescriptionCode/'
+        ],
+        'storecove_country' => [
+            'why' => 'The first step in sending an invoice is to create a sender. This sender is called a \'LegalEntity\'. LegalEntities can both send and receive, but for now we will focus on their sending role. Although the LegalEntity we are creating now can contain dummy data, you should carefully choose the LegalEntity’s country, because this will be important for the contents of the invoice.',
+            'where' => 'src/Invoice/Helpers/StoreCove/StoreCoveHelper',            
+        ],
+        'storecove_sender_identifier' => [
+            'why' => 'Legal Identifiers - A legal identifier identifies the legal entity from a legal perspective. It can be a local chambre of commerce number, or a DUNS, GLN, etc. However, in many countries the tax identifier is also the legal identifiers. In that case you don’t need to set this up separately. '.
+                      'Tax Identifiers - A tax identifier identifies the legal entity from a tax perspective. In the EU, all tax identifiers are VAT numbers and are prefixed with the ISO3166-2 country code, e.g. "IT12345678901". In India, the tax identifier is issued by the state in which the LegalEntity resides. '.
+                      'It’s first two digits are always the numercial code of the state that issued it.',
+            'where' => 'src/Invoice/Helpers/StoreCove/StoreCoveHelper function maximum_pre_json_php_object_for_an_invoice()',            
+        ],
+        'storecove_sender_identifier_basis' => [
+            'why' => 'Before selecting here, check that it is available in the sender identifier list. If not available, the available identifier will be chosen.',
+            'where' => 'src/Invoice/Helpers/StoreCove/StoreCoveHelper function maximum_pre_json_php_object_for_an_invoice()',            
+        ],       
         'tax_rate_decimal_places'=>[
           'why'=>'TODO: Currency decimal places vary per country. The decimal column of the TaxRate table, tax_rate_percent column has to be adjusted during runtime using the ALTER COMMAND sql statement preferably in a FRAGMENT',
           'where'=>'SettingController/tab_index_change_decimal_column'
@@ -1412,7 +1546,6 @@ final class SettingRepository extends Select\Repository
     }
    
     /**
-     * 
      * @param string $setting
      * @param bool $debug_mode
      * @return string
@@ -1422,6 +1555,8 @@ final class SettingRepository extends Select\Repository
         $tooltip = $this->tooltip_array();
         $why = '';
         $where = '';
+        $reference = '';
+        $menu = false;
         /** 
          * @var array $value 
          * @var string $key
@@ -1439,11 +1574,46 @@ final class SettingRepository extends Select\Repository
                     if ($_key === 'where') {
                         $where = $_value;
                     }
+                    if ($_key === 'reference') {
+                        $reference = $_value;
+                    }
+                    if ($_key === 'menu') {
+                        $menu = $_value;
+                    }
                 }
             }
         }
-        $information = 'data-toggle = "tooltip"'.' '.'title = "'. $why .' and is used in '.$where.'"';
+        $information = (!$menu ? 'data-bs-toggle = "tooltip" data-bs-placement= "bottom" '.' '.'title = "' : ''). $why .' and is used in '.$where.'"';
         $build = $debug_mode ? $information : '';
+        return $build;
+    }
+        
+    /**
+     * @param string $setting
+     * @param bool $debug_mode
+     * @return string
+     */
+    public function href(string $setting, bool $debug_mode = true) : string {
+        $tooltip = $this->tooltip_array();
+        $href = '';
+        /** 
+         * @var array $value 
+         * @var string $key
+         */
+        foreach ($tooltip as $key => $value) {
+            if ($key === $setting) {
+                /** 
+                 * @var string $_value 
+                 * @var string $_key
+                 */
+                foreach ($value as $_key => $_value) {
+                    if ($_key === 'href') {
+                        $href = $_value;
+                    }
+                }
+            }
+        }
+        $build = $debug_mode ? $href : '';
         return $build;
     }
     
@@ -1594,6 +1764,32 @@ final class SettingRepository extends Select\Repository
     }
     
     /**
+     * @return array
+     */
+    public function get_payment_term_array(TranslatorInterface $translator): array 
+    {
+        $array = [
+            $translator->translate('invoice.payment.term'),
+            $translator->translate('invoice.payment.term.0.days'),
+            $translator->translate('invoice.payment.term.net.15.days'),
+            $translator->translate('invoice.payment.term.net.30.days'),
+            $translator->translate('invoice.payment.term.net.60.days'),
+            $translator->translate('invoice.payment.term.net.90.days'),
+            $translator->translate('invoice.payment.term.net.120.days'),
+            $translator->translate('invoice.payment.term.eom.15.days'),
+            $translator->translate('invoice.payment.term.eom.30.days'),
+            $translator->translate('invoice.payment.term.eom.60.days'),
+            $translator->translate('invoice.payment.term.eom.90.days'),
+            $translator->translate('invoice.payment.term.eom.120.days'),
+            $translator->translate('invoice.payment.term.mfi.15'),
+            $translator->translate('invoice.payment.term.general'),
+            $translator->translate('invoice.payment.term.polite'),
+            $translator->translate('invoice.payment.term.pia'),
+        ];
+        return $array;
+    }
+    
+    /**
      * @return string[]
      *
      * @psalm-return list{'af', 'ar', 'az', 'be', 'bg', 'bs', 'ca', 'cs', 'da', 'de', 'el', 'es', 'et', 'fa', 'fi', 'fr', 'he', 'hr', 'hu', 'hy', 'id', 'it', 'ja', 'ka', 'kk', 'ko', 'kz', 'lt', 'lv', 'ms', 'nb-NO', 'nl', 'pl', 'pt', 'pt-BR', 'ro', 'ru', 'sk', 'sl', 'sr', 'sr-Latn', 'sv', 'tg', 'th', 'tr', 'uk', 'uz', 'vi', 'zh-CN', 'zh-TW'}
@@ -1689,4 +1885,31 @@ final class SettingRepository extends Select\Repository
         }
         return $this->get_setting('public_logo_png_prefix');
     }
-}
+    
+    /**
+     * 
+     * @param OffsetPaginator $paginator
+     * @param TranslatorInterface $translator
+     * @param int $max
+     * @param string $entity_plural
+     * @param string $status_string
+     * @return string
+     */
+    public function grid_summary(OffsetPaginator $paginator, TranslatorInterface $translator, int $max, string $entity_plural, string $status_string) : string {        
+        $pageSize = $paginator->getCurrentPageSize();
+        if ($pageSize > 0) {
+          return Html::tag('b',
+            sprintf($translator->translate('invoice.invoice.showing.of').
+                    $translator->translate('invoice.invoice.max'). 
+                    ' '.$max. ' '. 
+                    $entity_plural.
+                    $translator->translate('invoice.invoice.per.page.total').
+                    $entity_plural.': '.
+                    $paginator->getTotalItems() , $pageSize, $paginator->getTotalItems()). ' ',
+            ['class' => 'card-header bg-warning text-black']
+          ). (!empty($status_string) ? 
+          Html::tag('b', $status_string,['class'=>'card-header bg-info text-black']) : '');
+        }
+        return '';
+    }
+ }

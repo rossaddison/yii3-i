@@ -37,7 +37,6 @@ final class InvAmountService
     }
 
     /**
-     * 
      * @param InvAmount $model
      * @param int $basis_inv_id
      * @param string $new_inv_id
@@ -46,17 +45,15 @@ final class InvAmountService
     public function initializeCreditInvAmount(InvAmount $model, int $basis_inv_id, string $new_inv_id) : void
     {
        $basis_invoice = $this->repository->repoInvquery($basis_inv_id);
-       if (null!==$basis_invoice) {
-        $new_inv_id ? $model->setInv_id((int)$new_inv_id) : '';
-        $model->setSign(1);
-        null!==$basis_invoice->getItem_subtotal() ? $model->setItem_subtotal(($basis_invoice->getItem_subtotal() ?: 0.00)*-1) : '';
-        null!==$basis_invoice->getItem_tax_total() ? $model->setItem_tax_total(($basis_invoice->getItem_tax_total() ?: 0.00)*-1) : '';
-        null!==$basis_invoice->getTax_total() ? $model->setTax_total(($basis_invoice->getTax_total() ?: 0.00)*-1) : '';
-        null!==$basis_invoice->getTotal() ? $model->setTotal(($basis_invoice->getTotal() ?: 0.00)*-1) : ''; 
-        $model->setPaid(0.00);
-        null!==$basis_invoice->getBalance() ? $model->setBalance(($basis_invoice->getBalance()?: 0.00)*-1) : ''; 
-        $this->repository->save($model);
-       }
+       $new_inv_id ? $model->setInv_id((int)$new_inv_id) : '';
+       $model->setSign(1);
+       null!==$basis_invoice ? $model->setItem_subtotal(($basis_invoice->getItem_subtotal() ?: 0.00)*-1) : '';
+       null!==$basis_invoice ? $model->setItem_tax_total(($basis_invoice->getItem_tax_total() ?: 0.00)*-1) : '';
+       null!==$basis_invoice ? $model->setTax_total(($basis_invoice->getTax_total() ?: 0.00)*-1) : '';
+       null!==$basis_invoice ? $model->setTotal(($basis_invoice->getTotal() ?: 0.00)*-1) : ''; 
+       $model->setPaid(0.00);
+       null!==$basis_invoice ? $model->setBalance(($basis_invoice->getBalance()?: 0.00)*-1) : ''; 
+       $this->repository->save($model);
     }
 
     /**
@@ -69,18 +66,16 @@ final class InvAmountService
     public function initializeCopyInvAmount(InvAmount $model, int $basis_inv_id, string $new_inv_id) : void
     {
         $basis_invoice = $this->repository->repoInvquery($basis_inv_id);
-        if ($basis_invoice) {
-            $new_inv_id ? $model->setInv_id((int)$new_inv_id) : '';
-            $model->setSign(1);
-            /** @psalm-suppress PossiblyNullArgument, PossiblyNullReference */
-            $model->setItem_subtotal($basis_invoice->getItem_subtotal());
-            $model->setItem_tax_total($basis_invoice->getItem_tax_total() ?: 0.00);
-            $model->setTax_total($basis_invoice->getTax_total() ?: 0.00);
-            $model->setTotal($basis_invoice->getTotal() ?: 0.00); 
-            $model->setPaid(0.00);
-            $model->setBalance($basis_invoice->getTotal() ?: 0.00); 
-            $this->repository->save($model);
-        }
+        $new_inv_id ? $model->setInv_id((int)$new_inv_id) : '';
+        $model->setSign(1);
+        /** @psalm-suppress PossiblyNullArgument, PossiblyNullReference */
+        $model->setItem_subtotal($basis_invoice->getItem_subtotal());
+        $model->setItem_tax_total($basis_invoice->getItem_tax_total() ?: 0.00);
+        $model->setTax_total($basis_invoice->getTax_total() ?: 0.00);
+        $model->setTotal($basis_invoice->getTotal() ?: 0.00); 
+        $model->setPaid(0.00);
+        $model->setBalance($basis_invoice->getTotal() ?: 0.00); 
+        $this->repository->save($model);
     } 
 
     /**

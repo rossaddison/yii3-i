@@ -17,48 +17,8 @@ class SettlementPeriod implements XmlSerializable
     {
         $this->startDate = $startDate;
         $this->endDate = $endDate;
-    }        
-
-    /**
-     * 
-     * @return DateTime
-     */
-    public function getStartDate(): DateTime
-    {
-        return $this->startDate;
-    }
-
-    /**
-     * 
-     * @param DateTime $startDate
-     * @return SettlementPeriod
-     */
-    public function setStartDate(DateTime $startDate): SettlementPeriod
-    {
-        $this->startDate = $startDate;
-        return $this;
-    }
-
-    /**
-     * 
-     * @return DateTime
-     */
-    public function getEndDate(): DateTime
-    {
-        return $this->endDate;
-    }
-
-    /**
-     * 
-     * @param DateTime $endDate
-     * @return SettlementPeriod
-     */
-    public function setEndDate(DateTime $endDate): SettlementPeriod
-    {
-        $this->endDate = $endDate;
-        return $this;
-    }
-
+    } 
+    
     /**
      * 
      * @param Writer $writer

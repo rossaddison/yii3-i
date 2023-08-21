@@ -51,7 +51,7 @@ use Yiisoft\Html\Html;
                     <div class="input-group">
                         <span class="input-group-text"><?= $s->trans('item_discount'); ?></span>
                         <input type="text" name="item_discount_amount" class="input-sm form-control amount"
-                               data-toggle="tooltip" data-placement="bottom"
+                               data-bs-toggle = "tooltip" data-placement="bottom"
                                title="<?= $s->get_setting('currency_symbol') . ' ' . $s->trans('per_item'); ?>">
                     </div>
                 </td>
@@ -121,9 +121,9 @@ use Yiisoft\Html\Html;
                 <tr>
                     <td rowspan="2" class="td-icon"><i class="fa fa-arrows"></i></td>
                     <td class="td-text">
-                        <input type="hidden" name="quote_id" value="<?= $item->quote_id; ?>" data-toggle="tooltip" title="quote_item->quote_id">
-                        <input type="hidden" name="item_id" value="<?= $item->getId(); ?>" data-toggle="tooltip" title="quote_item->getId()">
-                        <input type="hidden" name="item_product_id" value="<?= $item->product_id; ?>" data-toggle="tooltip" title="quote_item->product_id">
+                        <input type="hidden" name="quote_id" value="<?= $item->quote_id; ?>" data-bs-toggle = "tooltip" title="quote_item->quote_id">
+                        <input type="hidden" name="item_id" value="<?= $item->getId(); ?>" data-bs-toggle = "tooltip" title="quote_item->getId()">
+                        <input type="hidden" name="item_product_id" value="<?= $item->product_id; ?>" data-bs-toggle = "tooltip" title="quote_item->product_id">
                         <div class="input-group">
                             <span class="input-group-text"><?= $s->trans('item'); ?></span>
                             <select name="item_name" class="form-control">
@@ -140,23 +140,23 @@ use Yiisoft\Html\Html;
                     <td class="td-amount td-quantity">
                         <div class="input-group">
                             <span class="input-group-text"><?= $s->trans('quantity'); ?></span>
-                            <input type="text" name="item_quantity" class="input-sm form-control amount" data-toggle="tooltip" title="quote_item->quantity"
+                            <input type="text" name="item_quantity" class="input-sm form-control amount" data-bs-toggle = "tooltip" title="quote_item->quantity"
                                    value="<?= $numberhelper->format_amount($item->quantity); ?>">
                         </div>
                     </td>
                     <td class="td-amount">
                         <div class="input-group">
                             <span class="input-group-text"><?= $s->trans('price'); ?></span>
-                            <input type="text" name="item_price" class="input-sm form-control amount" data-toggle="tooltip" title="quote_item->price"
+                            <input type="text" name="item_price" class="input-sm form-control amount" data-bs-toggle = "tooltip" title="quote_item->price"
                                    value="<?= $numberhelper->format_amount($item->price); ?>">
                         </div>
                     </td>
                     <td class="td-amount ">
                         <div class="input-group">
                             <span class="input-group-text"><?= $s->trans('item_discount'); ?></span>
-                            <input type="text" name="item_discount_amount" class="input-sm form-control amount" data-toggle="tooltip" title="quote_item->discount_amount"
+                            <input type="text" name="item_discount_amount" class="input-sm form-control amount" data-bs-toggle = "tooltip" title="quote_item->discount_amount"
                                    value="<?= $numberhelper->format_amount($item->discount_amount); ?>"
-                                   data-toggle="tooltip" data-placement="bottom"
+                                   data-bs-toggle = "tooltip" data-placement="bottom"
                                    title="<?= $s->get_setting('currency_symbol') . ' ' . $s->trans('per_item'); ?>">
                         </div>
                     </td>
@@ -171,7 +171,7 @@ use Yiisoft\Html\Html;
                     }?>
                         <div class="input-group">
                             <span class="input-group-text"><?= $s->trans('tax_rate'); ?></span>
-                            <select name="item_tax_rate_id" class="form-control" data-toggle="tooltip" title="quote_item->tax_rate_id">
+                            <select name="item_tax_rate_id" class="form-control" data-bs-toggle = "tooltip" title="quote_item->tax_rate_id">
                                 <option value="0"><?= $s->trans('none'); ?></option>
                                 <?php foreach ($tax_rates as $tax_rate) { ?>
                                     <option value="<?php echo $tax_rate->getId(); ?>"
@@ -189,14 +189,14 @@ use Yiisoft\Html\Html;
                 <tr>
                     <td class="td-textarea">
                         <div class="input-group">
-                            <span class="input-group-text" data-toggle="tooltip" title="quote_item->description"><?= $s->trans('description'); ?></span>
+                            <span class="input-group-text" data-bs-toggle = "tooltip" title="quote_item->description"><?= $s->trans('description'); ?></span>
                             <textarea name="item_description" class="form-control" ><?= Html::encode($item->description); ?></textarea>
                         </div>
                     </td>
                     <td class="td-amount">
                         <div class="input-group">
                             <span class="input-group-text"><?= $s->trans('product_unit'); ?></span>
-                            <select name="item_product_unit_id" class="form-control" data-toggle="tooltip" title="quote_item->product_unit_id">
+                            <select name="item_product_unit_id" class="form-control" data-bs-toggle = "tooltip" title="quote_item->product_unit_id">
                                 <option value="0"><?= $s->trans('none'); ?></option>
                                 <?php foreach ($units as $unit) { ?>
                                     <option value="<?= $unit->getId(); ?>"
@@ -211,25 +211,25 @@ use Yiisoft\Html\Html;
                     <td class="td-amount td-vert-middle">
                         <span><?= $s->trans('subtotal'); ?></span><br/>
                         
-                        <span name="subtotal" class="amount" data-toggle="tooltip" title="quote_item_amount->subtotal">
+                        <span name="subtotal" class="amount" data-bs-toggle = "tooltip" title="quote_item_amount->subtotal">
                             <?= $numberhelper->format_currency($quote_item_amount->repoQuoteItemAmountquery((string)$item->getId())->subtotal); ?>
                         </span>
                     </td>
                     <td class="td-amount td-vert-middle">
                         <span><?= $s->trans('discount'); ?></span><br/>
-                        <span name="item_discount_total" class="amount" data-toggle="tooltip" title="quote_item_amount->discount">
+                        <span name="item_discount_total" class="amount" data-bs-toggle = "tooltip" title="quote_item_amount->discount">
                             <?= $numberhelper->format_currency($quote_item_amount->repoQuoteItemAmountquery((string)$item->getId())->discount); ?>
                         </span>
                     </td>
                     <td class="td-amount td-vert-middle">
                         <span><?= $s->trans('tax'); ?></span><br/>
-                        <span name="item_tax_total" class="amount" data-toggle="tooltip" title="quote_item_amount->tax_total">
+                        <span name="item_tax_total" class="amount" data-bs-toggle = "tooltip" title="quote_item_amount->tax_total">
                             <?= $numberhelper->format_currency($quote_item_amount->repoQuoteItemAmountquery((string)$item->getId())->tax_total); ?>
                         </span>
                     </td>
                     <td class="td-amount td-vert-middle">
                         <span><?= $s->trans('total'); ?></span><br/>
-                        <span name="item_total" class="amount" data-toggle="tooltip" title="quote_item_amount->total">
+                        <span name="item_total" class="amount" data-bs-toggle = "tooltip" title="quote_item_amount->total">
                             <?= $numberhelper->format_currency($quote_item_amount->repoQuoteItemAmountquery((string)$item->getId())->total); ?>
                         </span>
                     </td>

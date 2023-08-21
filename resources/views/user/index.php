@@ -50,7 +50,7 @@ $toolbarApplyChange = Button::tag()
 
 $toolbarReset = A::tag()
     ->addAttributes(['type' => 'reset'])
-    ->addClass('btn btn-danger me-1')
+    ->addClass('btn btn-danger me-1 ajax-loader')
     ->content(I::tag()->addClass('bi bi-bootstrap-reboot'))
     ->href($urlGenerator->generate($currentRoute->getName()))
     ->id('btn-reset')

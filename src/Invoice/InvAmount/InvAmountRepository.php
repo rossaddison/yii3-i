@@ -231,8 +231,10 @@ private EntityWriter $entityWriter;
         // 2 => class: 'sent', href: 2}, 
         // 3 => class: 'viewed', href: 3}, 
         // 4 => class: 'paid', href: 4}}
+        
+        /** @var array $status */
         foreach ($iR->getStatuses($sR) as $key => $status) {
-            $status_specific_invoices = $this->repoStatusTotals($key, $range, $sR);
+            $status_specific_invoices = $this->repoStatusTotals((int)$key, $range, $sR);
             $total = 0.00;
              /** @var InvAmount $inv_amount */
             foreach ($status_specific_invoices as $inv_amount) {
@@ -244,7 +246,7 @@ private EntityWriter $entityWriter;
                 'label' => $status['label'],
                 'href' => (string) $status['href'],
                 'sum_total' => $total,
-                'num_total' => $this->repoStatusTotals_Num_Total($key, $range, $sR)
+                'num_total' => $this->repoStatusTotals_Num_Total((int)$key, $range, $sR)
             ];
         }
         return $return;

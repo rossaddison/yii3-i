@@ -14,6 +14,8 @@ use App\Invoice\Helpers\DateHelper;
 use App\Invoice\Helpers\CountryHelper;
 use App\Invoice\Helpers\CurrencyHelper;
 use App\Invoice\Helpers\NumberHelper;
+use App\Invoice\Helpers\Peppol\PeppolArrays;
+use App\Invoice\Helpers\StoreCove\StoreCoveArrays;
 use App\Invoice\Libraries\Sumex;
 use App\Invoice\TaxRate\TaxRateRepository as TR;
 //use App\Invoice\Libraries\Sumex;
@@ -72,7 +74,7 @@ final class SettingController
         $this->s = $s;
     }
     
-    // The debug index is simply a list of the settings that is useful to change when debugging and appears in red    
+    // The debug index is simply a list of the settings that are useful to change when debugging and appears in red    
     
     /**
      * @param CurrentRoute $currentRoute
@@ -126,6 +128,7 @@ final class SettingController
         $numberhelper = new NumberHelper($this->s);
         $countries = new CountryHelper();
         $crypt = new Crypt();
+        $peppol_arrays = new PeppolArrays();
         $matrix = $this->s->expandDirectoriesMatrix($aliases->get('@language'), 0);
         /**
          * @psalm-suppress PossiblyInvalidArgument $matrix
@@ -175,6 +178,10 @@ final class SettingController
                 'pdf_quote_templates'=>$this->s->get_quote_templates('pdf'),
                 'email_templates_quote'=>$eR->repoEmailTemplateType('quote'),
             ]),
+            'salesorders'=>$this->viewRenderer->renderPartialAsString('/invoice/setting/views/partial_settings_client_purchase_orders',[
+                's'=>$this->s,
+                'invoice_groups'=>$gR->findAllPreloaded(),
+            ]),
             'taxes'=>$this->viewRenderer->renderPartialAsString('/invoice/setting/views/partial_settings_taxes',[
                 's'=>$this->s,
                 'tax_rates'=>$tR->findAllPreloaded(),
@@ -194,7 +201,32 @@ final class SettingController
                 'payment_methods'=>$pm->findAllPreloaded(),                
                 'crypt'=> $crypt
             ]),
+            'mpdf' => $this->viewRenderer->renderPartialAsString('/invoice/setting/views/partial_settings_mpdf',[
+                's'=>$this->s,
+            ]),            
             'projects_tasks'=>$this->viewRenderer->renderPartialAsString('/invoice/setting/views/partial_settings_projects_tasks',[
+                's'=>$this->s,
+            ]),            
+            'vat_registered'=>$this->viewRenderer->renderPartialAsString('/invoice/setting/views/partial_settings_vat_registered',[
+                's'=>$this->s,
+            ]),
+            'peppol_electronic_invoicing'=>$this->viewRenderer->renderPartialAsString('/invoice/setting/views/partial_settings_peppol',[
+                's'=>$this->s,
+                'config_tax_currency' => $this->s->get_config_peppol()['TaxCurrencyCode'] ?: $this->s->get_config_company_details()['tax_currency'],
+                'gateway_currency_codes'=>CurrencyHelper::all(),
+                // if delivery/invoice periods are used, a tax point date cannot be determined
+                // because goods have not been delivered ie. no date supplied, and no invoice has been issued ie. no date issued/created after the goods have been delivered
+                // A stand-in-code or description code 'stands in' or substitutes for how the tax point will be determined/calculated
+                // If a stand-in-code exists, it is because a tax point cannot be determined
+                // Therefore they are mutually exclusive. 
+                // They cannot both exist at the same time.
+                'stand_in_codes'=> $peppol_arrays->getUncl2005subset(),
+                // use crypt to decode the store cove api key
+                'crypt' => $crypt    
+            ]),
+            'storecove'=>$this->viewRenderer->renderPartialAsString('/invoice/setting/views/partial_settings_storecove',[
+                'countries'=>$countries->get_country_list((string)$this->session->get('_language')),
+                'sender_identifier_array'=>StoreCoveArrays::store_cove_sender_identifier_array(),
                 's'=>$this->s,
             ]),
         ];
@@ -232,7 +264,7 @@ final class SettingController
                             // Set thousands_separator and decimal_point according to number_format
                             // Derive the 'decimal_point' and 'thousands_separator' setting from the chosen ..number format eg. 1000,000.00 if it has a value
                            $this->tab_index_number_format($value, $sR);
-                        }
+                        }   
                     }
                     else {
                        // The key does not exist because the repoCount is not greater than zero => add

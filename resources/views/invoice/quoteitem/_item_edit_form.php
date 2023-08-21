@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use Yiisoft\Html\Html;
 use Yiisoft\Yii\Bootstrap5\Alert;
-use App\Invoice\Helpers\DateHelper;
 
 /**
  * @var \Yiisoft\View\View $this
@@ -15,11 +14,13 @@ use App\Invoice\Helpers\DateHelper;
  * @var string $title
  */
 
-//if (!empty($errors)) {
-//    foreach ($errors as $field => $error) {
-//        echo Alert::widget()->options(['class' => 'alert-danger'])->body(Html::encode($field . ':' . $error));
-//    }
-//}
+if (!empty($errors)) {
+    foreach ($errors as $field => $error) {
+        echo Alert::widget()->options(['class' => 'alert-danger'])->body(Html::encode($field . ':' . $error));
+    }
+}
+
+$vat = $s->get_setting('enable_vat_registration') === '1' ? true : false;
 
 ?>
 <div class="panel panel-default">
@@ -37,7 +38,7 @@ use App\Invoice\Helpers\DateHelper;
     <th><?= $s->trans('description'); ?></th>
     <th><?= $s->trans('quantity'); ?></th>
     <th><?= $s->trans('price'); ?></th>
-    <th><?= $s->trans('tax_rate'); ?></th>
+    <th><?= $vat === false ? $s->trans('tax_rate') : $translator->translate('invoice.invoice.vat.rate') ?></th>
     <th><?= $s->trans('subtotal'); ?></th>
     <th><?= $s->trans('tax'); ?></th>
     <th><?= $s->trans('total'); ?></th>
@@ -78,15 +79,15 @@ use App\Invoice\Helpers\DateHelper;
                 </td>
                 <td class="td-amount td-vert-middle">
                     <div class="input-group">
-                        <span class="input-group-text"><?= $s->trans('item_discount'); ?></span>
+                         <span class="input-group-text"><?= $vat === false ? $s->trans('item_discount') : $translator->translate('invoice.invoice.cash.discount'); ?></span>
                         <input type="number" name="discount_amount" class="input-sm form-control amount has-feedback" required
-                               data-toggle="tooltip" data-placement="bottom"
+                               data-bs-toggle = "tooltip" data-placement="bottom"
                                title="<?= $s->get_setting('currency_symbol') . ' ' . $s->trans('per_item'); ?>" value="<?= $numberhelper->format_amount($body['discount_amount'] ?? ''); ?>">
                     </div>
                 </td>
                 <td td-vert-middle>
                     <div class="input-group">
-                        <span class="input-group-text"><?= $s->trans('tax_rate'); ?></span>
+                        <span class="input-group-text"><?= $vat === false ? $s->trans('tax_rate') : $translator->translate('invoice.invoice.vat.rate') ?></span>
                         <select name="tax_rate_id" class="form-control has-feedback" required>
                             <option value=""> <?= $s->trans('tax_rate'); ?></option>
                             <?php foreach ($tax_rates as $tax_rate) { ?>
@@ -98,7 +99,7 @@ use App\Invoice\Helpers\DateHelper;
                     </div>
                 </td>
                 <td class="td-icon text-right td-vert-middle">                   
-                    <button type="submit" class="btn btn btn-info" data-toggle="tooltip" title="quoteitem/add"><i class="fa fa-plus"></i><?= $s->trans('save'); ?></button>
+                    <button type="submit" class="btn btn btn-info" data-bs-toggle = "tooltip" title="quoteitem/add"><i class="fa fa-plus"></i><?= $s->trans('save'); ?></button>
                 </td>
             </tr>
             <tr>
@@ -126,11 +127,11 @@ use App\Invoice\Helpers\DateHelper;
                     <span name="subtotal" class="amount"></span>
                 </td>
                 <td class="td-amount td-vert-middle">
-                    <span><?= $s->trans('discount'); ?></span><br/>
+                    <span><?= $vat === false ? $s->trans('discount') : $translator->translate('invoice.invoice.early.settlement.cash.discount') ?></span><br/>
                     <span name="discount_total" class="amount"></span>
                 </td>
                 <td class="td-amount td-vert-middle">
-                    <span><?= $s->trans('tax'); ?></span><br/>
+                    <span><?= $vat === false ? $s->trans('tax') : $translator->translate('invoice.invoice.vat.abbreviation')  ?></span><br/>
                     <span name="tax_total" class="amount"></span>
                 </td>
                 <td class="td-amount td-vert-middle">
@@ -140,11 +141,6 @@ use App\Invoice\Helpers\DateHelper;
             </tr>
 </tbody>
 </table>
-</div>
-<div class="col-xs-12 col-md-4">           
-            <div class="btn-group">
-               <button hidden class="btn_quote_item_add_row btn btn-primary btn-md active"><i class="fa fa-plus"></i><?php echo $s->trans('add_new_row'); ?></button>                              
-            </div>           
 </div>
 </form>
 <br>

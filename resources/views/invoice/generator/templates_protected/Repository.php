@@ -9,13 +9,12 @@ namespace <?= $generator->getNamespace_path() .DIRECTORY_SEPARATOR. $generator->
 use <?= $generator->getNamespace_path() .DIRECTORY_SEPARATOR.'Entity' .DIRECTORY_SEPARATOR.$generator->getCamelcase_capital_name().';'."\n"; ?>
 use Cycle\ORM\Select;
 use Throwable;
-use Yiisoft\Data\Reader\DataReaderInterface;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of <?php echo $generator->getCamelcase_capital_name()."\n"; ?>
  * @extends Select\Repository<TEntity>
  */
 final class <?= $generator->getCamelcase_capital_name(); ?>Repository extends Select\Repository
@@ -34,16 +33,16 @@ private EntityWriter $entityWriter;
     /**
      * Get <?= $generator->getSmall_singular_name(); ?>s  without filter
      *
-     * @psalm-return DataReaderInterface<int,<?= $generator->getCamelcase_capital_name(); ?>>
+     * @psalm-return EntityReader
      */
-    public function findAllPreloaded(): DataReaderInterface
+    public function findAllPreloaded(): EntityReader
     {
         <?php if (!empty($relations)) {
-            echo '$query = $this->select()';
+            $echo = '$query = $this->select()';
             foreach ($relations as $relation) {
-                    echo "            ->load('".$relation->getLowercase_name()."')";
+                    $echo .= "->load('".$relation->getLowercase_name()."')";
             }
-            echo ";";
+            echo $echo.";";
         } else {
             echo '$query = $this->select();';    
         }
@@ -52,9 +51,9 @@ private EntityWriter $entityWriter;
     }
     
     /**
-     * @psalm-return DataReaderInterface<int, <?= $generator->getCamelcase_capital_name(); ?>>
+     * @psalm-return EntityReader
      */
-    public function getReader(): DataReaderInterface
+    public function getReader(): EntityReader
     {
         return (new EntityReader($this->select()))
             ->withSort($this->getSort());
@@ -66,24 +65,35 @@ private EntityWriter $entityWriter;
     private function getSort(): Sort
     {
         return Sort::only(['id'])->withOrder(['id' => 'asc']);
-    }
+    }    
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|<?= $generator->getCamelcase_capital_name() ?>|null $<?php echo $generator->getSmall_singular_name(). "\n" ?>
+     * @psalm-param TEntity $<?php echo $generator->getSmall_singular_name(). "\n" ?>
+     * @throws Throwable 
+     * @return void
      */
-    public function save(<?= $generator->getCamelcase_capital_name(); ?> $<?= $generator->getSmall_singular_name(); ?>): void
+    public function save(array|<?= $generator->getCamelcase_capital_name() ?>|null $<?= $generator->getSmall_singular_name(); ?>): void
     {
         $this->entityWriter->write([$<?= $generator->getSmall_singular_name(); ?>]);
     }
     
     /**
-     * @throws Throwable
+     * @see Reader/ReadableDataInterface|InvalidArgumentException
+     * @param array|<?= $generator->getCamelcase_capital_name(); ?>|null $<?= $generator->getSmall_singular_name(). "\n" ?>  
+     * @throws Throwable 
+     * @return void
      */
-    public function delete(<?= $generator->getCamelcase_capital_name(); ?> $<?= $generator->getSmall_singular_name(); ?>): void
+    public function delete(array|<?= $generator->getCamelcase_capital_name(); ?>|null $<?= $generator->getSmall_singular_name(); ?>): void
     {
         $this->entityWriter->delete([$<?= $generator->getSmall_singular_name(); ?>]);
     }
     
+    /**
+     * @param Select $query
+     * @return EntityReader
+     */
     private function prepareDataReader(Select $query): EntityReader
     {
         return (new EntityReader($query))->withSort(
@@ -93,11 +103,11 @@ private EntityWriter $entityWriter;
     }    
     
     /**
-     * 
      * @param string $id
+     * @psalm-return TEntity|null
      * @return <?= $generator->getCamelcase_capital_name(); ?>|null
      */
-    public function repo<?= $generator->getCamelcase_capital_name(); ?>query(string $id): <?= $generator->getCamelcase_capital_name(); ?>
+    public function repo<?= $generator->getCamelcase_capital_name(); ?><?= !empty($relations) ? 'Loaded' : 'Unloaded' ?>query(string $id): <?= $generator->getCamelcase_capital_name(); ?>|null
     {
         <?php if (!empty($relations)) {
             echo '$query = $this->select()';

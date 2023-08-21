@@ -27,6 +27,8 @@ final class InvItemAmountService
        $model->setSubtotal((float)$invitem['subtotal']);
        $model->setTax_total((float)$invitem['taxtotal']);
        $model->setDiscount((float)$invitem['discount']);
+       $model->setCharge((float)$invitem['charge']);
+       $model->setAllowance((float)$invitem['allowance']);
        $model->setTotal((float)$invitem['total']); 
        $this->repository->save($model);
     }

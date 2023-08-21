@@ -60,7 +60,7 @@ $s->get_setting('gateway_braintree_version') == '0' ? $assetManager->register(br
 // The InvoiceController/index receives the $session->get('_language') or 'drop-down' locale user selection and saves it into a setting called 'cldr'
 // The $s value is configured for the layout in config/params.php yii-soft/view Reference::to and NOT by means of the InvoiceController
 
-switch ($session->get('_language') ?? $session->set('_language','en')) {
+switch ($session->get('_language')) {
     case 'af' : $assetManager->register(af_Asset::class); $locale = 'Afrikaans'; break;
     case 'ar' : $assetManager->register(ar_Asset::class); $locale = 'Arabic'; break;
     case 'az' : $assetManager->register(az_Asset::class); $locale = 'Azerbaijani'; break;
@@ -129,10 +129,22 @@ echo Nav::widget()
         ['label' => $translator->translate('invoice.invoice'), 'url' => $urlGenerator->generate('invoice/index'),],
     ] :
     [               
-        ['label' => $translator->translate('invoice.quote'), 
+         ['label' => $translator->translate('invoice.client'), 
+          'items' => [
+                     ['options'=>['class'=>'nav fs-4'],'label' => $translator->translate('invoice.view'),
+                      'url'=>$urlGenerator->generate('client/guest')],
+                    ],
+         ],
+         ['label' => $translator->translate('invoice.quote'), 
           'items' => [
                      ['options'=>['class'=>'nav fs-4'],'label' => $translator->translate('invoice.view'),
                       'url'=>$urlGenerator->generate('quote/guest')],
+                    ],
+         ],
+         ['label' => $translator->translate('invoice.salesorder'), 
+          'items' => [
+                     ['options'=>['class'=>'nav fs-4'], 'label' => $translator->translate('invoice.view'),
+                      'url'=>$urlGenerator->generate('salesorder/guest')],
                     ],
          ],
          ['label' => $translator->translate('invoice.invoice'), 
@@ -149,6 +161,12 @@ echo Nav::widget()
                       'url'=>$urlGenerator->generate('payment/guest_online_log')] 
                     ],
          ],
+         ['label' => $translator->translate('invoice.setting'), 
+          'items' => [
+                     ['options'=>['class'=>'nav fs-4'],'label' => $translator->translate('invoice.view'),
+                      'url'=>$urlGenerator->generate('userinv/guest')],
+                    ],
+         ],   
     ]       
 );
 
@@ -268,6 +286,23 @@ echo NavBar::end();
 <div id="main-area">
     <main class="container py-4">
         <?php echo $content; ?>
+        <div id="fullpage-loader" style="display: none">
+            <div class="loader-content">
+                <i id="loader-icon" class="fa fa-cog fa-spin"></i>
+                <div id="loader-error" style="display: none">
+                   <br/>
+                    <a href="" class="btn btn-primary btn-sm" target="_blank">
+                        <i class="fa fa-support"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="text-right">
+                <button type="button" class="fullpage-loader-close btn btn-link tip" aria-label="<?php $s->trans('close'); ?>"
+                        title="<?= $s->trans('close'); ?>" data-placement="left">
+                    <span aria-hidden="true"><i class="fa fa-close"></i></span>
+                </button>
+            </div>
+        </div>
     </main>
 </div>
 <footer class="container py-4">

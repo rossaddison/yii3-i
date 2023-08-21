@@ -15,6 +15,7 @@ use App\Invoice\Helpers\DateHelper;
 use App\Invoice\Helpers\NumberHelper;
 use App\Invoice\Helpers\ClientHelper;
 use App\Invoice\Inv\InvRepository;
+use App\Invoice\InvAllowanceCharge\InvAllowanceChargeRepository as ACIR;
 use App\Invoice\InvAmount\InvAmountRepository;
 use App\Invoice\InvItemAmount\InvItemAmountRepository as IIAR;
 use App\Invoice\InvItem\InvItemRepository as IIR;
@@ -95,6 +96,7 @@ final class PaymentController
      * @param SessionInterface $session
      * @param Request $request
      * @param ValidatorInterface $validator
+     * @param ACIR $aciR
      * @param SettingRepository $settingRepository
      * @param InvRepository $invRepository
      * @param InvAmountRepository $iaR
@@ -111,6 +113,7 @@ final class PaymentController
      */
     public function add(ViewRenderer $head, SessionInterface $session, Request $request, 
                         ValidatorInterface $validator,
+                        ACIR $aciR,
                         SettingRepository $settingRepository,                        
                         InvRepository $invRepository,
                         InvAmountRepository $iaR,
@@ -215,7 +218,7 @@ final class PaymentController
                     $payment_id = $payment->getId();
                     
                     // Recalculate the invoice
-                    $number_helper->calculate_inv((string)$inv_id, $iiR, $iiaR, $itrR, $iaR, $invRepository, $pmtR);
+                    $number_helper->calculate_inv((string)$inv_id, $aciR, $iiR, $iiaR, $itrR, $iaR, $invRepository, $pmtR);
                     $this->flash($session, 'info', $settingRepository->trans('record_successfully_created')); 
                                         
                     // Retrieve the custom array
@@ -372,6 +375,7 @@ final class PaymentController
      * @param InvRepository $invRepository
      * @param InvAmountRepository $iaR
      * @param PaymentRepository $pmtR
+     * @param ACIR $aciR
      * @param IIR $iiR
      * @param IIAR $iiaR
      * @param ITRR $itrR
@@ -382,6 +386,7 @@ final class PaymentController
                            InvRepository $invRepository,
                            InvAmountRepository $iaR,
                            PaymentRepository $pmtR,
+                           ACIR $aciR,
                            IIR $iiR,
                            IIAR $iiaR,
                            ITRR $itrR,         
@@ -395,7 +400,7 @@ final class PaymentController
                 // and 'if ($request->getMethod() === Method::POST) {' used here in association with this delete function.
                 // config/route payment/delete has both GET and POST METHOD.
                 $this->paymentService->deletePayment($payment);
-                $number_helper->calculate_inv((string)$inv_id, $iiR, $iiaR, $itrR, $iaR, $invRepository, $pmtR);
+                $number_helper->calculate_inv((string)$inv_id, $aciR, $iiR, $iiaR, $itrR, $iaR, $invRepository, $pmtR);
                 $this->flash($session, 'danger', 'Deleted.');
                 return $this->webService->getRedirectResponse('payment/index');
             }
@@ -430,6 +435,7 @@ final class PaymentController
      */
     public function edit(ViewRenderer $head, SessionInterface $session, Request $request, CurrentRoute $currentRoute,
                         ValidatorInterface $validator,
+                        ACIR $aciR,
                         SettingRepository $settingRepository,                          
                         InvRepository $invRepository,
                         InvAmountRepository $iaR,                        
@@ -483,7 +489,7 @@ final class PaymentController
                     $pcR->repoPaymentCount($payment_id) > 0 ? $this->edit_save_custom_fields($custom, $validator, $pcR, $payment_id) : '';
                     $this->edit_save_form_fields($edited_body, $currentRoute, $validator, $pmtR);
                     // Recalculate the invoice
-                    $number_helper->calculate_inv($inv_id, $iiR, $iiaR, $itrR, $iaR, $invRepository, $pmtR);
+                    $number_helper->calculate_inv($inv_id, $aciR, $iiR, $iiaR, $itrR, $iaR, $invRepository, $pmtR);
                     $this->flash($session, 'info', $settingRepository->trans('record_successfully_updated')); 
                     return $this->webService->getRedirectResponse('payment/index');
                 }    
@@ -602,10 +608,12 @@ final class PaymentController
              ->withPageSize((int)$settingRepository->get_setting('default_list_limit'))
              ->withCurrentPage($page)
              ->withNextPageToken((string) $page);
-            $canEdit = $this->rbac($session);
+            $canEdit = $this->userService->hasPermission('editPayment');
+            $canView = $this->userService->hasPermission('viewPayment');
             $parameters = [
                 'alert'=>$this->alert($session),
                 'canEdit'=>$canEdit,
+                'canView'=>$canView,
                 'page'=>$page,
                 'paginator' => $paginator,
                 'sortOrder' => $query_params['sort'] ?? '', 
@@ -706,10 +714,13 @@ final class PaymentController
          ->withPageSize((int)$settingRepository->get_setting('default_list_limit'))
          ->withCurrentPage($page)
          ->withNextPageToken((string) $page);
-        $canEdit = $this->rbac($session);
+        $canEdit = $this->userService->hasPermission('editPayment');
+        $canView = $this->userService->hasPermission('viewPayment');
         $parameters = [
             'alert'=>$this->alert($session),
             'canEdit'=>$canEdit,
+            'canView'=>$canView,
+            'grid_summary'=> $settingRepository->grid_summary($paginator, $this->translator, (int)$settingRepository->get_setting('default_list_limit'), $this->translator->translate('invoice.payments'), ''),
             'page'=>$page,
             'paginator' => $paginator,
             'sortOrder' => $query_params['sort'] ?? '', 

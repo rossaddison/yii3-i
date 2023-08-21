@@ -21,6 +21,8 @@ use App\Invoice\InvAmount\InvAmountRepository as IAR;
 use App\Invoice\Inv\InvRepository as IR;
 use App\Invoice\InvCustom\InvCustomRepository as icR;
 use App\Invoice\PaymentCustom\PaymentCustomRepository as pcR;
+use App\Invoice\SalesOrderCustom\SalesOrderCustomRepository as socR;
+use App\Invoice\SalesOrder\SalesOrderRepository as SOR;
 use App\Invoice\UserInv\UserInvRepository as uiR;
 use App\Invoice\Helpers\DateHelper as DHelp;
 use App\Invoice\Helpers\NumberHelper as NHelp;
@@ -34,10 +36,11 @@ Class TemplateHelper {
     private qcR $qcR;
     private icR $icR;
     private pcR $pcR;
+    private socR $socR;
     private cfR $cfR;
     private cvR $cvR;
 
-    public function __construct(SRepo $s, ccR $ccR, qcR $qcR, icR $icR, pcR $pcR, cfR $cfR, cvR $cvR) {
+    public function __construct(SRepo $s, ccR $ccR, qcR $qcR, icR $icR, pcR $pcR, socR $socR, cfR $cfR, cvR $cvR) {
         $this->s = $s;
         $this->d = new DHelp($s);
         $this->n = new NHelp($s);
@@ -47,6 +50,7 @@ Class TemplateHelper {
         $this->cfR = $cfR;
         $this->cvR = $cvR;
         $this->pcR = $pcR;
+        $this->socR = $socR;
     }
     
     /**
@@ -60,11 +64,12 @@ Class TemplateHelper {
      * @param IAR $iaR
      * @param QR $qR
      * @param QAR $qaR
+     * @param SOR $soR
      * @param uiR $uiR
      * @return string
      */
     
-    public function parse_template(string $pk, bool $isInvoice, string $body, CR $cR, CVR $cvR, IR $iR, IAR $iaR, QR $qR,  QAR $qaR, uiR $uiR)
+    public function parse_template(string $pk, bool $isInvoice, string $body, CR $cR, CVR $cvR, IR $iR, IAR $iaR, QR $qR,  QAR $qaR, SOR $soR, uiR $uiR)
     {
     $template_vars = [];
     $var = '';            
@@ -73,6 +78,7 @@ Class TemplateHelper {
                 $userinv = new UserInv();
                 $replace = '';
                 switch ($var) {
+                    // client
                     case 'client_name':
                         $client = $iR->repoCount($pk) > 0 ? $iR->repoInvLoadedquery($pk) : null;
                         if ($client) { $replace = $client->getClient()?->getClient_name();}
@@ -145,6 +151,7 @@ Class TemplateHelper {
                         $client = $iR->repoCount($pk) > 0 ? $iR->repoInvLoadedquery($pk) : null;
                         if ($client) {$replace = $client->getClient()?->getClient_veka();}
                         break;
+                    // user
                     case 'user_company':
                         $invoice = $iR->repoCount($pk) > 0 ? $iR->repoInvUnloadedquery($pk) : null;
                         if ($invoice) {$userinv = $uiR->repoUserInvUserIdCount($invoice->getUser_id()) > 0 ? $uiR->repoUserInvUserIdquery($invoice->getUser_id()) : null;}
@@ -229,7 +236,8 @@ Class TemplateHelper {
                         $invoice = $iR->repoCount($pk) > 0 ? $iR->repoInvUnloadedquery($pk) : null;
                         if ($invoice) {$userinv = $uiR->repoUserInvUserIdCount($invoice->getUser_id()) > 0 ? $uiR->repoUserInvUserIdquery($invoice->getUser_id()) : null;}
                         if ($userinv) {$replace = $userinv->getRcc();}
-                        break;    
+                        break;
+                    // quote
                     case 'quote_item_subtotal':
                         $quote_amount = $qaR->repoQuoteAmountCount($pk) > 0 ? $qaR->repoQuotequery($pk) : null;                    
                         if ($quote_amount) {$replace = $this->n->format_currency($quote_amount->getItem_subtotal());}
@@ -258,10 +266,17 @@ Class TemplateHelper {
                         $quote = $qR->repoCount($pk) > 0 ? $qR->repoQuoteUnloadedquery($pk) : null;
                         if ($quote) {$replace = '/invoice/quote/url_key/'. $quote->getUrl_key();}
                         break;
-                     case 'quote_number':
+                    case 'quote_number':
                         $quote = $qR->repoCount($pk) > 0 ? $qR->repoQuoteUnloadedquery($pk) : null;
                         if ($quote) {$replace = $quote->getNumber() ?? '';}
                         break;
+                    // salesorder    
+                    case 'salesorder_notes':
+                        $so = $soR->repoCount($pk) > 0 ? $soR->repoSalesOrderUnloadedquery($pk) : null;
+                        if ($so) {$replace = $so->getNotes() ?? '';}
+                        break;
+                    
+                    // invoice    
                     case 'invoice_guest_url':                        
                         $invoice = $iR->repoCount($pk) > 0 ? $iR->repoInvUnloadedquery($pk) : null;
                         if ($invoice) {$replace = '/invoice/inv/url_key/'. $invoice->getUrl_key();}
@@ -319,6 +334,11 @@ Class TemplateHelper {
                                 $quote = $qR->repoCount($pk) > 0 ? $qR->repoQuoteLoadedquery($pk) : null;
                                 if ($quote) {$replace_custom = $this->qcR->repoFormValuequery((string)$quote->getId(), $cf_id[1]);}
                                 break;
+                            case 'salesorder_custom': 
+                                // $pk = so id;
+                                $so = $soR->repoCount($pk) > 0 ? $soR->repoSalesOrderLoadedquery($pk) : null;
+                                if ($so) {$replace_custom = $this->socR->repoFormValuequery((string)$so->getId(), $cf_id[1]);}
+                                break;    
                             case 'inv_custom':
                                 // $pk = inv id; 
                                 $invoice = $iR->repoCount($pk) > 0 ? $iR->repoInvLoadedquery($pk) : null;

@@ -17,7 +17,16 @@ class AllowanceCharge implements XmlSerializable
     private ?TaxTotal $taxTotal;
     private ?TaxCategory $taxCategory;
     
-    public function __construct(bool $chargeIndicator, ?int $allowanceChargeReasonCode, ?string $allowanceChargeReason, ?int $multiplierFactorNumeric, ?float $baseAmount, float $amount, ?TaxTotal $taxTotal, ?TaxCategory $taxCategory) {
+    public function __construct(
+            bool $chargeIndicator, 
+            ?int $allowanceChargeReasonCode, 
+            ?string $allowanceChargeReason, 
+            ?int $multiplierFactorNumeric, 
+            ?float $baseAmount, 
+            float $amount, 
+            ?TaxTotal $taxTotal, 
+            ?TaxCategory $taxCategory
+        ) {
         $this->chargeIndicator = $chargeIndicator;
         $this->allowanceChargeReasonCode = $allowanceChargeReasonCode;
         $this->allowanceChargeReason = $allowanceChargeReason;
@@ -26,166 +35,6 @@ class AllowanceCharge implements XmlSerializable
         $this->amount = $amount;
         $this->taxTotal = $taxTotal;
         $this->taxCategory = $taxCategory;
-    }
-
-    /**
-     * 
-     * @return bool
-     */
-    public function isChargeIndicator(): bool
-    {
-        return $this->chargeIndicator;
-    }
-
-    /**
-     * 
-     * @param bool $chargeIndicator
-     * @return AllowanceCharge
-     */
-    public function setChargeIndicator(bool $chargeIndicator): AllowanceCharge
-    {
-        $this->chargeIndicator = $chargeIndicator;
-        return $this;
-    }
-
-    /**
-     * 
-     * @return int|null
-     */
-    public function getAllowanceChargeReasonCode(): ?int
-    {
-        return $this->allowanceChargeReasonCode;
-    }
-
-    /**
-     * 
-     * @param int|null $allowanceChargeReasonCode
-     * @return AllowanceCharge
-     */
-    public function setAllowanceChargeReasonCode(?int $allowanceChargeReasonCode): AllowanceCharge
-    {
-        $this->allowanceChargeReasonCode = $allowanceChargeReasonCode;
-        return $this;
-    }
-
-    /**
-     * 
-     * @return string|null
-     */
-    public function getAllowanceChargeReason(): ?string
-    {
-        return $this->allowanceChargeReason;
-    }
-
-    /**
-     * 
-     * @param string|null $allowanceChargeReason
-     * @return AllowanceCharge
-     */
-    public function setAllowanceChargeReason(?string $allowanceChargeReason): AllowanceCharge
-    {
-        $this->allowanceChargeReason = $allowanceChargeReason;
-        return $this;
-    }
-
-    /**
-     * 
-     * @return int|null
-     */
-    public function getMultiplierFactorNumeric(): ?int
-    {
-        return $this->multiplierFactorNumeric;
-    }
-
-    /**
-     * 
-     * @param int|null $multiplierFactorNumeric
-     * @return AllowanceCharge
-     */
-    public function setMultiplierFactorNumeric(?int $multiplierFactorNumeric): AllowanceCharge
-    {
-        $this->multiplierFactorNumeric = $multiplierFactorNumeric;
-        return $this;
-    }
-
-    /**
-     * 
-     * @return float|null
-     */
-    public function getBaseAmount(): ?float
-    {
-        return $this->baseAmount;
-    }
-
-    /**
-     * 
-     * @param float|null $baseAmount
-     * @return AllowanceCharge
-     */
-    public function setBaseAmount(?float $baseAmount): AllowanceCharge
-    {
-        $this->baseAmount = $baseAmount;
-        return $this;
-    }
-
-    /**
-     * 
-     * @return float
-     */
-    public function getAmount(): float
-    {
-        return $this->amount;
-    }
-
-    /**
-     * 
-     * @param float $amount
-     * @return AllowanceCharge
-     */
-    public function setAmount(float $amount): AllowanceCharge
-    {
-        $this->amount = $amount;
-        return $this;
-    }
-
-    /**
-     * 
-     * @return TaxCategory|null
-     */
-    public function getTaxCategory(): ?TaxCategory
-    {
-        return $this->taxCategory;
-    }
-
-    /**
-     * 
-     * @param TaxCategory|null $taxCategory
-     * @return AllowanceCharge
-     */
-    public function setTaxCategory(?TaxCategory $taxCategory): AllowanceCharge
-    {
-        $this->taxCategory = $taxCategory;
-        return $this;
-    }
-
-    /**
-     * 
-     * @return TaxTotal|null
-     */
-    public function getTaxtotal(): ?TaxTotal
-    {
-        return $this->taxTotal;
-    }
-
-    /**
-     * 
-     * @param TaxTotal|null $taxTotal
-     * @return AllowanceCharge
-     */
-    public function setTaxtotal(?TaxTotal $taxTotal): AllowanceCharge
-    {
-        $this->taxTotal = $taxTotal;
-        return $this;
     }
 
     /**

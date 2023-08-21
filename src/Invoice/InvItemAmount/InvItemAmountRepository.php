@@ -1,5 +1,4 @@
-<?php
-
+<?php 
 declare(strict_types=1); 
 
 namespace App\Invoice\InvItemAmount;
@@ -36,7 +35,8 @@ private EntityWriter $entityWriter;
      */
     public function findAllPreloaded(): EntityReader
     {
-        $query = $this->select()->load('inv_item');
+        $query = $this->select()
+                      ->load('inv_item');
         return $this->prepareDataReader($query);
     }
     
@@ -90,7 +90,9 @@ private EntityWriter $entityWriter;
      * @psalm-return TEntity|null
      */
     public function repoInvItemAmountquery(string $inv_item_id): InvItemAmount|null {
-        $query = $this->select()->load(['inv_item'])->where(['inv_item_id' => $inv_item_id]);
+        $query = $this->select()
+                      ->load(['inv_item'])
+                      ->where(['inv_item_id' => $inv_item_id]);
         return  $query->fetchOne() ?: null;        
     }
     
@@ -99,7 +101,6 @@ private EntityWriter $entityWriter;
      * @param string $inv_item_id
      * @return int
      */
-    
     public function repoCount(string $inv_item_id): int {
         $query = $this->select()
                       ->where(['inv_item_id'=>$inv_item_id]);

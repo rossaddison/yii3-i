@@ -27,20 +27,26 @@ use App\Invoice\InvTaxRate\InvTaxRateService as ITRS;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Session\SessionInterface;
 use Yiisoft\Security\Random;
+use Yiisoft\Translator\TranslatorInterface as Translator;
+
+use \DateTimeImmutable;
 
 final class InvService
 {
     private InvRepository $repository;
     private SessionInterface $session;
-
-    public function __construct(IR $repository, SessionInterface $session)
+    private Translator $translator;
+        
+    public function __construct(IR $repository, SessionInterface $session, Translator $translator)
     {
         $this->repository = $repository;
-        $this->session = $session;    
+        $this->session = $session;
+        $this->translator = $translator;
     }
     
     /**
-     * 
+     * https://github.com/yiisoft/demo/issues/462
+     * addInv and saveInv have been combined into bothInv
      * @param User $user
      * @param Inv $model
      * @param InvForm $form
@@ -50,11 +56,21 @@ final class InvService
     public function addInv(User $user, Inv $model, InvForm $form, SR $s): Inv
     {        
        $datehelper = new DateHelper($s);
-       $datetime = $datehelper->get_or_set_with_style(null!==$form->getDate_created()? $form->getDate_created() : new \DateTime());
-       $datetimeimmutable = new \DateTimeImmutable($datetime instanceof \DateTime ? $datetime->format('Y-m-d H:i:s') : 'now');
-       $model->setDate_created($datetimeimmutable);
+                     
+       $datetime_created = $datehelper->get_or_set_with_style(null!==$form->getDate_created()? $form->getDate_created() : new \DateTime());
+       $datetimeimmutable_created = new \DateTimeImmutable($datetime_created instanceof \DateTime ? $datetime_created->format('Y-m-d H:i:s') : 'now');
+       $model->setDate_created($datetimeimmutable_created);
+       
+       $datetime_supplied = $datehelper->get_or_set_with_style(null!==$form->getDate_supplied()? $form->getDate_supplied() : new \DateTime());
+       $datetimeimmutable_supplied = new \DateTimeImmutable($datetime_supplied instanceof \DateTime ? $datetime_supplied->format('Y-m-d H:i:s') : 'now');
+       $model->setDate_supplied($datetimeimmutable_supplied);
+       
+       $datetime_tax_point = $datehelper->get_or_set_with_style(null!==$form->getDate_tax_point()? $form->getDate_tax_point() : new \DateTime());
+       $datetimeimmutable_tax_point = new \DateTimeImmutable($datetime_tax_point instanceof \DateTime ? $datetime_tax_point->format('Y-m-d H:i:s') : 'now');
+       $model->setDate_tax_point($datetimeimmutable_tax_point);
+       
        $model->setDate_due($s);
-       null!==$form->getClient_id() ? $model->setClient_id((int)$form->getClient_id()) : '';       
+       null!==$form->getClient_id() ? $model->setClient_id((int)$form->getClient_id()) : ''; 
        null!==$form->getGroup_id() ? $model->setGroup_id((int)$form->getGroup_id()) : '';
        null!==$form->getStatus_id() ? $model->setStatus_id($form->getStatus_id()) : ''; 
        null!==$form->getDiscount_amount() ? $model->setDiscount_amount($form->getDiscount_amount()) : '';
@@ -62,7 +78,9 @@ final class InvService
        null!==$form->getUrl_key() ? $model->setUrl_key($form->getUrl_key()) : '';
        null!==$form->getPassword() ? $model->setPassword($form->getPassword()) : '';
        null!==$form->getPayment_method() ? $model->setPayment_method($form->getPayment_method()) : '';
-       null!==$form->getTerms() ? $model->setTerms($form->getTerms()) : ''; 
+       null!==$form->getTerms() ? $model->setTerms($form->getTerms()) : $this->translator->translate('invoice.payment.terms.default'); 
+       null!==$form->getNote() ? $model->setNote($form->getNote()) : ''; 
+       null!==$form->getDocumentDescription() ? $model->setDocumentDescription($form->getDocumentDescription()) : ''; 
        null!==$form->getCreditinvoice_parent_id() ? $model->setCreditinvoice_parent_id($form->getCreditinvoice_parent_id() ?: 0) : '';
        if ($model->isNewRecord()) {
             // Draft invoices CANNOT be viewed by Clients. 
@@ -84,17 +102,23 @@ final class InvService
                 $model->setIs_read_only(false);                
             }
             null!==$form->getNumber() ? $model->setNumber($form->getNumber()) : '';
+            null!==$form->getSo_id() ? $model->setSo_id((int)$form->getSo_id()) : ''; 
+            null!==$form->getQuote_id() ? $model->setQuote_id((int)$form->getQuote_id()) : '';
             $model->setUser_id((int)$user->getId());
-            $model->setUrl_key(Random::string(32));            
+            $model->setUrl_key(Random::string(32)); 
             $model->setDate_created(new \DateTimeImmutable('now'));
             $model->setTime_created((new \DateTimeImmutable('now'))->format('H:i:s'));
             $model->setPayment_method(1);
-            $model->setDate_due($s);            
+            $model->setDate_due($s); 
+            // These fields are necessary if you are on a VAT basis or cash basis form of invoicing
+            // Otherwise they can be ignored
+            $model->setDate_supplied(new \DateTimeImmutable('now'));                        
+            $model->setDate_tax_point(new \DateTimeImmutable('now'));
        }
        $this->repository->save($model);
        return $model;
     }
-    
+      
     /**
      * 
      * @param User $user
@@ -106,11 +130,20 @@ final class InvService
      */
     public function saveInv(User $user, Inv $model, InvForm $form, SR $s, GR $gR): Inv 
     {  
-       //$before_save = $model; 
        $datehelper = new DateHelper($s);
-       $datetime = $datehelper->get_or_set_with_style(null!==$form->getDate_created()? $form->getDate_created() : new \DateTime());
-       $datetimeimmutable = new \DateTimeImmutable($datetime instanceof \DateTime ? $datetime->format('Y-m-d H:i:s') : 'now');
-       $model->setDate_created($datetimeimmutable);
+       
+       $datetime_created = $datehelper->get_or_set_with_style(null!==$form->getDate_created()? $form->getDate_created() : new \DateTime());
+       $datetimeimmutable_created = new \DateTimeImmutable($datetime_created instanceof \DateTime ? $datetime_created->format('Y-m-d H:i:s') : 'now');
+       $model->setDate_created($datetimeimmutable_created);
+       
+       $datetime_supplied = $datehelper->get_or_set_with_style(null!==$form->getDate_supplied()? $form->getDate_supplied() : new \DateTime());
+       $datetimeimmutable_supplied = new \DateTimeImmutable($datetime_supplied instanceof \DateTime ? $datetime_supplied->format('Y-m-d H:i:s') : 'now');
+       $model->setDate_supplied($datetimeimmutable_supplied);
+       
+       // build the tax point       
+       $datetimeimmutable_tax_point = $this->set_tax_point($model, $datetimeimmutable_supplied, $datetimeimmutable_created);
+       null!==$datetimeimmutable_tax_point ? $model->setDate_tax_point($datetimeimmutable_tax_point) : '';
+              
        $model->setDate_due($s);
        
        null!==$form->getClient_id() ? $model->setClient($model->getClient()?->getClient_id() == $form->getClient_id() ? $model->getClient() : null): '';
@@ -118,15 +151,19 @@ final class InvService
        
        null!==$form->getGroup_id() ? $model->setGroup($model->getGroup()?->getId() == $form->getGroup_id() ? $model->getGroup() : null): '';
        $model->setGroup_id((int)$form->getGroup_id());       
-       
+        
        null!==$form->getStatus_id() ? $model->setStatus_id($form->getStatus_id()) : '';
        null!==$form->getDiscount_percent() ? $model->setDiscount_percent($form->getDiscount_percent()) : '';
        null!==$form->getDiscount_amount() ? $model->setDiscount_amount($form->getDiscount_amount()) : '';
        null!==$form->getUrl_key() ? $model->setUrl_key($form->getUrl_key()) : '';
        null!==$form->getPassword() ? $model->setPassword($form->getPassword()) : '';
        null!==$form->getPayment_method() ? $model->setPayment_method($form->getPayment_method()) : '';
-       null!==$form->getTerms() ? $model->setTerms($form->getTerms()) : ''; 
+       null!==$form->getTerms() ? $model->setTerms($form->getTerms()) : $this->translator->translate('invoice.payment.terms.default'); 
+       null!==$form->getNote() ? $model->setNote($form->getNote()) : ''; 
+       null!==$form->getDocumentDescription() ? $model->setDocumentDescription($form->getDocumentDescription()) : ''; 
        null!==$form->getCreditinvoice_parent_id() ? $model->setCreditinvoice_parent_id($form->getCreditinvoice_parent_id() ?: 0) : '';
+       null!==$form->getDelivery_id() ? $model->setDelivery_id($form->getDelivery_id()) : '';
+       null!==$form->getContract_id() ? $model->setContract_id($form->getContract_id()) : '';
        if ($model->isNewRecord()) {
             if ($s->get_setting('mark_invoices_sent_copy') === '1') {
                 $model->setStatus_id(2);
@@ -137,6 +174,8 @@ final class InvService
                 $model->setIs_read_only(false);                
             }           
             null!==$form->getNumber() ? $model->setNumber($form->getNumber()) : '';
+            null!==$form->getSo_id() ? $model->setSo_id((int)$form->getSo_id()) : ''; 
+            null!==$form->getQuote_id() ? $model->setQuote_id((int)$form->getQuote_id()) : '';
             $model->setUser_id((int)$user->getId());
             $model->setUrl_key(Random::string(32));            
             $model->setDate_created(new \DateTimeImmutable('now'));
@@ -152,6 +191,122 @@ final class InvService
        $this->repository->save($model);
        return $model;
     }
+    
+    /**
+     * bothInv replaces addInv and saveInv.
+     * @see https://github.com/yiisoft/demo/issues/462
+     * @param User $user
+     * @param Inv $model
+     * @param InvForm $form
+     * @param SR $s
+     * @param GR $gR
+     * @return Inv
+     */
+    public function bothInv(User $user, Inv $model, InvForm $form, SR $s, GR $gR): Inv 
+    {  
+       $model->nullifyRelationOnChange((int)$form->getGroup_id(),(int)$form->getClient_id(), );
+       $datehelper = new DateHelper($s);
+             
+       $datetime_created = $datehelper->get_or_set_with_style(null!==$form->getDate_created()? $form->getDate_created() : new \DateTime());
+       $datetimeimmutable_created = new \DateTimeImmutable($datetime_created instanceof \DateTime ? $datetime_created->format('Y-m-d H:i:s') : 'now');
+       $model->setDate_created($datetimeimmutable_created);
+       
+       $datetime_supplied = $datehelper->get_or_set_with_style(null!==$form->getDate_supplied()? $form->getDate_supplied() : new \DateTime());
+       $datetimeimmutable_supplied = new \DateTimeImmutable($datetime_supplied instanceof \DateTime ? $datetime_supplied->format('Y-m-d H:i:s') : 'now');
+       $model->setDate_supplied($datetimeimmutable_supplied);
+              
+       $datetimeimmutable_tax_point = $this->set_tax_point($model, $datetimeimmutable_supplied, $datetimeimmutable_created);
+       null!==$datetimeimmutable_tax_point ? $model->setDate_tax_point($datetimeimmutable_tax_point) : '';
+              
+       $model->setDate_due($s);
+       
+       null!==$form->getClient_id() ? $model->setClient_id((int)$form->getClient_id()) : '';
+       null!==$form->getGroup_id() ? $model->setGroup_id((int)$form->getGroup_id()) : '';
+       null!==$form->getStatus_id() ? $model->setStatus_id($form->getStatus_id()) : '';
+       null!==$form->getDelivery_id() ? $model->setDelivery_id($form->getDelivery_id()) : '';
+       null!==$form->getDelivery_location_id() ? $model->setDelivery_location_id($form->getDelivery_location_id()) : '';
+       null!==$form->getDiscount_percent() ? $model->setDiscount_percent($form->getDiscount_percent()) : '';
+       null!==$form->getDiscount_amount() ? $model->setDiscount_amount($form->getDiscount_amount()) : '';
+       null!==$form->getUrl_key() ? $model->setUrl_key($form->getUrl_key()) : '';
+       null!==$form->getPassword() ? $model->setPassword($form->getPassword()) : '';
+       null!==$form->getPayment_method() ? $model->setPayment_method($form->getPayment_method()) : '';
+       null!==$form->getTerms() ? $model->setTerms($form->getTerms()) 
+                                : $this->translator->translate('invoice.payment.term.general'); 
+       null!==$form->getNote() ? $model->setNote($form->getNote()) : ''; 
+       null!==$form->getDocumentDescription() ? $model->setDocumentDescription($form->getDocumentDescription()) : ''; 
+       null!==$form->getCreditinvoice_parent_id() ? $model->setCreditinvoice_parent_id($form->getCreditinvoice_parent_id() ?: 0) : '';
+       null!==$form->getContract_id() ? $model->setContract_id($form->getContract_id()) : '';
+       if ($model->isNewRecord()) {
+            if ($s->get_setting('mark_invoices_sent_copy') === '1') {
+                $model->setStatus_id(2);
+                // If the read_only_toggle is set to 'sent', set this invoice to read only
+                $model->setIs_read_only(true);
+            } else {
+                $model->setStatus_id(1);
+                $model->setIs_read_only(false);                
+            }           
+            null!==$form->getNumber() ? $model->setNumber($form->getNumber()) : '';
+            null!==$form->getSo_id() ? $model->setSo_id((int)$form->getSo_id()) : ''; 
+            null!==$form->getQuote_id() ? $model->setQuote_id((int)$form->getQuote_id()) : '';
+            null!==$form->getDelivery_location_id() ? $model->setDelivery_location_id($form->getDelivery_location_id()) : '';
+            null!==$form->getContract_id() ? $model->setContract_id($form->getContract_id()) : '';            
+            $model->setUser_id((int)$user->getId());
+            $model->setUrl_key(Random::string(32));            
+            $model->setDate_created(new \DateTimeImmutable('now'));
+            $model->setTime_created((new \DateTimeImmutable('now'))->format('H:i:s'));
+            $model->setPayment_method(0);
+            $model->setDate_due($s);
+            $model->setDiscount_amount(0.00);
+       }
+       $this->repository->save($model);// Regenerate invoice numbers if the setting is changed
+       
+       $model->setStand_in_code($s->get_setting('stand_in_code'));
+       
+       if (!$model->isNewRecord() && $s->get_setting('generate_invoice_number_for_draft') === '1') {
+            $model->setNumber((string)$gR->generate_number((int)$form->getGroup_id(), true));  
+       }
+       $this->repository->save($model);
+       return $model;
+    }
+    
+    /**
+     * @see https://www.gov.uk/hmrc-internal-manuals/vat-time-of-supply/vattos3600
+     * @param Inv $inv
+     * @param null|DateTimeImmutable $date_supplied
+     * @param null|DateTimeImmutable $date_created
+     * @return null|DateTimeImmutable
+     */
+    public function set_tax_point(Inv $inv, ?DateTimeImmutable $date_supplied, ?DateTimeImmutable $date_created) : ?DateTimeImmutable {
+        // 'Date created' is used interchangeably with 'Date issued'
+        if (null!==$inv->getClient()?->getClient_vat_id()) {
+            if ($date_created > $date_supplied && null!==$date_created && null!==$date_supplied) {
+                $diff = $date_supplied->diff($date_created)->format('%R%a');
+                if ((int)$diff > 14) {
+                    // date supplied more than 14 days before invoice date
+                    return $date_supplied;
+                } else {
+                    // if the issue date (created) is within 14 days after the supply (basic) date then use the issue/created date.
+                    return $date_created;
+                }                                           
+            }
+            if ($date_created < $date_supplied) {
+                // normally set the tax point to the date_created
+                return $date_created;
+            }
+            if ($date_created === $date_supplied) {
+                // normally set the tax point to the date_created
+                return $date_created;
+            }
+        }
+        // If the client is not VAT registered, the tax point is the date supplied
+        if (null==$inv->getClient()?->getClient_vat_id()) {
+            return $date_supplied;
+        }
+        if (null==$date_supplied || null==$date_created) {
+            return null;
+        }
+        return null;
+    } 
     
     /**
      * @param Inv $model
@@ -205,6 +360,15 @@ final class InvService
        $datetime = $datehelper->get_or_set_with_style(null!==$details['date_created'] ? $details['date_created'] : new \DateTime());
        $datetimeimmutable = new \DateTimeImmutable($datetime instanceof \DateTime ? $datetime->format('Y-m-d H:i:s') : 'now');
        $model->setDate_created($datetimeimmutable);
+              
+       $datetime_supplied = $datehelper->get_or_set_with_style(null!==$details['date_supplied']? $details['date_supplied'] : new \DateTime());
+       $datetimeimmutable_supplied = new \DateTimeImmutable($datetime_supplied instanceof \DateTime ? $datetime_supplied->format('Y-m-d H:i:s') : 'now');
+       $model->setDate_supplied($datetimeimmutable_supplied);
+       
+       $datetime_tax_point = $datehelper->get_or_set_with_style(null!==$details['date_tax_point']? $details['date_tax_point'] : new \DateTime());
+       $datetimeimmutable_tax_point = new \DateTimeImmutable($datetime_tax_point instanceof \DateTime ? $datetime_tax_point->format('Y-m-d H:i:s') : 'now');
+       $model->setDate_tax_point($datetimeimmutable_tax_point);
+       
        $model->setDate_due($s);
        //$model->setDate_created($form->getDate_created());
        $model->setClient_id((int)$details['client_id']);
@@ -224,6 +388,10 @@ final class InvService
             $model->setUser($user);
             $model->setUrl_key($random::string(32));            
             $model->setDate_created(new \DateTimeImmutable('now'));
+            // VAT or cash basis tax system fields: ignore
+            $model->setDate_supplied(new \DateTimeImmutable('now'));
+            $model->setDate_tax_point(new \DateTimeImmutable('now'));
+            
             $model->setTime_created((new \DateTimeImmutable('now'))->format('H:i:s'));
             $model->setPayment_method(0);
             $model->setDate_due($s);

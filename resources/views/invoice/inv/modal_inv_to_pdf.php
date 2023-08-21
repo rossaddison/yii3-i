@@ -23,7 +23,7 @@ declare(strict_types=1);
         <div class="modal-footer">
             <div class="btn-group">
                 <!-- display Settings...View...Invoices...Pdf Settings...G(ie. stream)...Folder(ie.archive)...</>(ie Html)... -->
-                <button type="button" data-toggle="tooltip" title="stream/archive/html">
+                <button type="button" data-bs-toggle = "tooltip" title="stream/archive/html">
                 <label>
                     <i class="fa fa-google"></i>
                     <?php if ((null!==$s->get_setting('pdf_stream_inv')) && ($s->get_setting('pdf_stream_inv') === '1')) { ?>

@@ -20,7 +20,6 @@ final class TaxRateRepository extends Select\Repository
     private EntityWriter $entityWriter;
     
     /**
-     * 
      * @param Select<TEntity> $select     
      * @param EntityWriter $entityWriter
      */

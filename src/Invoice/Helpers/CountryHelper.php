@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Invoice\Helpers;
 
+use League\ISO3166\ISO3166;
 use Yiisoft\Aliases\Aliases;
 
 Class CountryHelper
@@ -41,11 +42,45 @@ public function get_country_list(string $cldr) : mixed
  * @param string $countrycode
  * @return mixed
  */
-public function get_country_name(string $cldr, string $countrycode)
+public function get_country_name(string $cldr, string $countrycode) : mixed
 {
     /** @var array $countries */
     $countries = $this->get_country_list($cldr);
     /** @var string $countries[$countrycode] */
     return (isset($countries[$countrycode]) ? $countries[$countrycode] : $countrycode);
 }
+
+/**
+ * @param string $cldr
+ * @param string $country_name
+ * @return string
+ */
+public function get_country_identification_code_with_country_list(string $cldr, string $country_name) : string {
+    /** @var array $countries */
+    $countries = $this->get_country_list($cldr);
+    /**
+     * @var array $key
+     * @var string $value
+     */
+    foreach ($countries as $key => $value) {
+        if ($country_name === $key[$value]) {
+            return $value;
+        }
+    }
+    return '';  
+}
+
+/**
+ * @see PeppolHelper ubl_delivery_location function
+ * @param string $name
+ * @return string
+ */
+public function get_country_identification_code_with_league(string $name) : string {
+    //https://github.com/thephpleague/iso3166
+    $data = (new ISO3166)->name($name); 
+    // return the 2-letter country code
+    /** @var string $data['alpha2'] */
+    return (!empty($data['alpha2']) ? $data['alpha2'] : '');
+}
+
 }
