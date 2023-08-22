@@ -420,6 +420,7 @@ class Invoice implements XmlSerializable {
     ]);
 
     /**
+     * @see src/Invoice/Helpers/Peppol/PeppolHelper function build_invoice_lines_array
      * @var array $this->invoiceLines
      * @var array $invoiceLine
      */

@@ -600,6 +600,7 @@ final class SalesOrderController
                         'salesorder_custom_values' => $salesorder_custom_values,
                         'partial_item_table'=>$this->viewRenderer->renderPartialAsString('/invoice/salesorder/partial_item_table',[
                             'invEdit' => $this->userService->hasPermission('editInv') ? true : false,    
+                            'invView' => $this->userService->hasPermission('viewInv') ? true : false,
                             'numberhelper'=> new NumberHelper($settingRepository),          
                             'products'=> $pR->findAllPreloaded(),
                             'so_items'=> $soiR->repoSalesOrderquery((string)$this->session->get('so_id')),

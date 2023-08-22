@@ -70,7 +70,9 @@ use App\Invoice\Helpers\Peppol\Exception\PeppolClientsAccountingCostNotFoundExce
 use App\Invoice\Helpers\Peppol\Exception\PeppolDeliveryLocationIDNotFoundException;
 use App\Invoice\Helpers\Peppol\Exception\PeppolDeliveryLocationCountryNameNotFoundException;
 use App\Invoice\Helpers\Peppol\Exception\PeppolInvoicePeriodDetailsIncompleteException;
+use App\Invoice\Helpers\Peppol\Exception\PeppolInvoiceNoteNotFoundException;
 use App\Invoice\Helpers\Peppol\Exception\PeppolProductUnitCodeNotFoundException;
+use App\Invoice\Helpers\Peppol\Exception\PeppolProductItemClassificationCodeSchemeIdNotFoundException;
 use App\Invoice\Helpers\Peppol\Exception\PeppolSalesOrderNotFoundException;
 use App\Invoice\Helpers\Peppol\Exception\PeppolSalesOrderPurchaseOrderNumberNotExistException;
 use App\Invoice\Helpers\Peppol\Exception\PeppolSalesOrderItemPurchaseOrderItemNumberNotExistException;
@@ -323,6 +325,9 @@ Class PeppolHelper {
       $profileID = 'urn:fdc:peppol.eu:2017:poacc:billing:01:1.0';
       $supplierAssignedAccountID = $this->SupplierAssignedAccountId($invoice, $cpR);
       $note = $invoice->getNote() ?: '';
+      if (empty($note)) {
+        throw new PeppolInvoiceNoteNotFoundException($this->t);
+      }
       if ($invoice->getSo_id()) {
         $sales_order = $soR->repoSalesOrderUnLoadedquery($invoice->getSo_id());
         if (null !== $sales_order) {
@@ -1036,13 +1041,26 @@ Class PeppolHelper {
           if ($product?->getUnitPeppol()?->getCode() === null && null!==$product) {
              throw new PeppolProductUnitCodeNotFoundException($this->t, $product);
           }
+          // Item Identification number eg. TRQWERQERQ9879
           $peppol_po_itemid = $this->Peppol_po_itemid($item, $soiR);
           if (empty($peppol_po_itemid)) {
             throw new PeppolSalesOrderItemPurchaseOrderItemNumberNotExistException($this->t);
           }
+          
+          // Item Line Number eg. Line 1 of 4
           $peppol_po_lineid = $this->Peppol_po_lineid($item, $soiR);
           if (empty($peppol_po_lineid)) {
             throw new PeppolSalesOrderItemPurchaseOrderLineNumberNotExistException($this->t);
+          }
+          /**
+           * Error
+           * Location: invoice_6p-24oxnINV115_peppol
+           * Element/context: /:Invoice[1]/cac:InvoiceLine[1]/cac:Item[1]/cac:CommodityClassification[1]/cbc:ItemClassificationCode[1]
+           * XPath test: ((not(contains(normalize-space(@listID), ' ')) and contains(' AA AB AC AD AE AF AG AH AI AJ AK AL AM AN AO AP .. ZZZ ', concat(' ', normalize-space(@listID), ' '))))
+           * Error message: [BR-CL-13]-Item classification identifier identification scheme identifier MUST be coded using one of the UNTDID 7143 list.
+           */
+          if (empty($item->getProduct()?->getProduct_icc_listid())) {
+            throw new PeppolProductItemClassificationCodeSchemeIdNotFoundException($this->t, $product); 
           }
           $price = (null !== $item->getPrice() ? $item->getPrice() : 0.00);
           $discount = (null !== $item->getDiscount_amount() ? $item->getDiscount_amount() : 0.00);

@@ -201,7 +201,7 @@ $vat = $s->get_setting('enable_vat_registration');
                         </div>
                     </td>
                     <td class="td-icon text-right td-vert-middle">
-                    <?php if ($invEdit) { ?>    
+                    <?php if ($invEdit || $invView) { ?>    
                         <a href="<?= $urlGenerator->generate('salesorderitem/edit',['id'=>$item->getId()]) ?>" class="btn btn-md btn-link"><i class="fa fa-pencil"></i></a>
                     </td>
                     <?php } ?>

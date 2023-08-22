@@ -90,7 +90,7 @@ class Product
     #[Column(type: 'integer(11)', nullable: true)]
     private ?int $unit_id = null;
     
-    #[BelongsTo(target:UnitPeppol::class, nullable: false, fkAction: "NO ACTION")]
+    #[BelongsTo(target:UnitPeppol::class, nullable: true, fkAction: "NO ACTION")]
     private ?UnitPeppol $unit_peppol = null;    
     #[Column(type: 'integer(11)', nullable: true)]
     private ?int $unit_peppol_id = null;

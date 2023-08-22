@@ -1,5 +1,5 @@
 <?php
-
+// Note this UBL is not currently being used. Refer to Invoice and PeppolHelper function build_invoice_lines_array
 namespace App\Invoice\Ubl;
 
 use Sabre\Xml\Writer;
