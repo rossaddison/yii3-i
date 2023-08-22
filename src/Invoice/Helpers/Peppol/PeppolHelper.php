@@ -1059,7 +1059,8 @@ Class PeppolHelper {
            * XPath test: ((not(contains(normalize-space(@listID), ' ')) and contains(' AA AB AC AD AE AF AG AH AI AJ AK AL AM AN AO AP .. ZZZ ', concat(' ', normalize-space(@listID), ' '))))
            * Error message: [BR-CL-13]-Item classification identifier identification scheme identifier MUST be coded using one of the UNTDID 7143 list.
            */
-          if (empty($item->getProduct()?->getProduct_icc_listid())) {
+          $listid = $product?->getProduct_icc_listid();
+          if (empty($listid) && null!==$product) {
             throw new PeppolProductItemClassificationCodeSchemeIdNotFoundException($this->t, $product); 
           }
           $price = (null !== $item->getPrice() ? $item->getPrice() : 0.00);
