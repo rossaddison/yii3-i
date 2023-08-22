@@ -23,9 +23,9 @@ class PeppolProductUnitCodeNotFoundException extends \RuntimeException implement
     return (!empty($this->product->getProduct_id()) && 
            !empty($this->product->getProduct_name())) ? 
       'Product id: '. 
-      (!empty($this->product->getProduct_id()) ?  !empty($this->product->getProduct_id()) : ''). 
+      (!empty($this->product->getProduct_id()) ?  $this->product->getProduct_id() : ''). 
       str_repeat(' ', 2). 
-      (!empty($this->product->getProduct_name()) ? !empty($this->product->getProduct_name()) : ''). 
+      (!empty($this->product->getProduct_name()) ? $this->product->getProduct_name() : ''). 
       str_repeat(' ', 2). 
       $this->translator->translate('invoice.product.unit.code.not.found')
                                  : 
