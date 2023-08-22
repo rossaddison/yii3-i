@@ -160,7 +160,7 @@ final class ProductPropertyController
         $productproperty = $this->productproperty($currentRoute, $productpropertyRepository);
         if ($productproperty){
             $parameters = [
-                'title' => $this->translator->translate('invoice.edit'),
+                'title' => $settingRepository->trans('edit'),
                 'action' => ['productproperty/edit', ['id' => $productproperty->getProperty_id()]],
                 'errors' => [],
                 'body' => $this->body($productproperty),

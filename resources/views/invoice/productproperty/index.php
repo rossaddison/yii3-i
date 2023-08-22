@@ -32,7 +32,7 @@ use Yiisoft\Yii\DataView\OffsetPagination;
         H5::tag()
         ->addClass('bg-primary text-white p-3 rounded-top')
         ->content(
-          I::tag()->addClass('bi bi-receipt')->content(' ' . $translator->translate('put.your.translation.here'))
+          I::tag()->addClass('bi bi-receipt')->content(' ' . $translator->translate('invoice.product.property'))
         )
       )
       ->render();
