@@ -42,8 +42,8 @@
 <p><b>Xml electronic invoices - Can be output</b> if the following sequence is followed:</p>
 <p>a: A logged in Client sets up their Peppol details on their side via Client...View...Options...Edit Peppol Details for e-invoicing. </p> 
 <p>b: A quote is created and sent by the Administrator to the Client.</p>
-<p>c: A logged in Client creates a sales order from the quote with their purchase order number, purchase order line number, and their contact person in the modal.</p>
-<p>d: A logged in Client, on each of the sales order line items, inputs their line item reference number. (Mandatory or else exception will be raised). </p>
+<p>c: A logged in Client creates a sales order from the quote with their purchase order number, <s>purchase order line number</s>, and their contact person in the modal.</p>
+<p>d: A logged in Client, on each of the sales order line items, inputs their line item purchase order reference number, and their purchase order line number. (Mandatory or else exception will be raised). </p>
 <p>e: A logged in Administrator, requests that terms and conditions be accepted.</p>
 <p>f: A logged in Client accepts the terms and conditions. </p>
 <p>g: A logged in Administrator, updates the status of the sales order from assembled, approved, confirmed, to generate. </p> 
