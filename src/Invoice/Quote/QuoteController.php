@@ -283,7 +283,6 @@ final class QuoteController
         $body = $request->getQueryParams();
         $url_key = (string)$body['url_key'];
         $purchase_order_number = (string)$body['client_po_number'];
-        $purchase_order_line_number = (string)$body['client_po_line_number'];
         $purchase_order_person = (string)$body['client_po_person'];
         if (!empty($url_key)) {
             if ($qR->repoUrl_key_guest_count($url_key) > 0) { 
@@ -297,7 +296,6 @@ final class QuoteController
                     'group_id'=>$this->sR->get_setting('default_sales_order_group'), 
                     'status_id'=>4,
                     'client_po_number'=>$purchase_order_number,
-                    'client_po_line_number'=>$purchase_order_line_number,
                     'client_po_person'=>$purchase_order_person,
                     'number'=>$gR->generate_number((int)$this->sR->get_setting('default_sales_order_group')),  
                     'discount_amount'=>floatval($quote->getDiscount_amount()),

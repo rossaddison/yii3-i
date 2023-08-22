@@ -28,12 +28,7 @@ declare(strict_types=1);
             <label for="quote_with_purchase_order_number"><?= $translator->translate('invoice.quote.with.purchase.order.number') ?></label>
             <input type="text" name="quote_with_purchase_order_number" id="quote_with_purchase_order_number" class="form-control"
                    value="" autocomplete="off">
-        </div>
-        <div>
-            <label for="quote_with_purchase_order_line_number" data-bs-toggle="tooltip" title="<?= $translator->translate(''); ?>"><?= $translator->translate('invoice.quote.with.purchase.order.line.number') ?></label>
-            <input type="text" name="quote_with_purchase_order_line_number" id="quote_with_purchase_order_line_number" class="form-control"
-                   value="" autocomplete="off">
-        </div>  
+        </div> 
         <div>
             <label for="quote_with_purchase_order_person"><?= $translator->translate('invoice.quote.with.purchase.order.person') ?></label>
             <input type="text" name="quote_with_purchase_order_person" id="quote_with_purchase_order_person" class="form-control"

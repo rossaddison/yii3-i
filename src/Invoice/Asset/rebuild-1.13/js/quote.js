@@ -202,7 +202,6 @@ $(function () {
             data: {
                 url_key: $('#url_key').val(),
                 client_po_number: $('#quote_with_purchase_order_number').val(),
-                client_po_line_number: $('#quote_with_purchase_order_line_number').val(),
                 client_po_person: $('#quote_with_purchase_order_person').val()
             },                
             url: url,

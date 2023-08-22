@@ -52,7 +52,6 @@ final class SalesOrderService
         null!==$form->getGroup_id() ? $model->setGroup_id($form->getGroup_id()) : '';
         null!==$form->getClient_id() ? $model->setClient_id($form->getClient_id()) : '';
         null!==$form->getClient_po_number() ? $model->setClient_po_number($form->getClient_po_number()) : '';
-        null!==$form->getClient_po_line_number() ? $model->setClient_po_line_number($form->getClient_po_line_number()) : '';
         null!==$form->getClient_po_person() ? $model->setClient_po_person($form->getClient_po_person()) : '';
         null!==$form->getStatus_id() ? $model->setStatus_id($form->getStatus_id()) : '';
         null!==$form->getDiscount_amount() ? $model->setDiscount_amount($form->getDiscount_amount()) : '';
@@ -84,7 +83,6 @@ final class SalesOrderService
         null!==$form->getClient_id() ? $model->setClient_id($form->getClient_id()) : '';
         null!==$form->getGroup_id() ? $model->setGroup_id($form->getGroup_id()) : '';          
         null!==$form->getClient_po_number() ? $model->setClient_po_number($form->getClient_po_number()) : '';
-        null!==$form->getClient_po_line_number() ? $model->setClient_po_line_number($form->getClient_po_line_number()) : '';
         null!==$form->getClient_po_person() ? $model->setClient_po_person($form->getClient_po_person()) : '';
         null!==$form->getStatus_id() ? $model->setStatus_id($form->getStatus_id()) : '';
         null!==$form->getDiscount_percent() ? $model->setDiscount_percent($form->getDiscount_percent()) : '';

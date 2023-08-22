@@ -1006,14 +1006,18 @@ Class PeppolHelper {
   }
 
   /**
-   *
+   * 
    * @param Inv $invoice
    * @param InvoicePeriod $invoice_period
    * @param iiaR $iiaR
    * @param cpR $cpR
    * @param SOIR $soiR
    * @param ACIIR $aciiR
+   * @param unpR $unpR
    * @return array
+   * @throws PeppolProductUnitCodeNotFoundException
+   * @throws PeppolSalesOrderItemPurchaseOrderItemNumberNotExistException
+   * @throws PeppolSalesOrderItemPurchaseOrderLineNumberNotExistException
    * @throws PeppolClientNotFoundException
    */
   private function build_invoice_lines_array(Inv $invoice, InvoicePeriod $invoice_period, iiaR $iiaR, cpR $cpR, SOIR $soiR, ACIIR $aciiR, unpR $unpR): array {
@@ -1032,10 +1036,17 @@ Class PeppolHelper {
           if ($product?->getUnitPeppol()?->getCode() === null && null!==$product) {
              throw new PeppolProductUnitCodeNotFoundException($this->t, $product);
           }
+          $peppol_po_itemid = $this->Peppol_po_itemid($item, $soiR);
+          if (empty($peppol_po_itemid)) {
+            throw new PeppolSalesOrderItemPurchaseOrderItemNumberNotExistException($this->t);
+          }
+          $peppol_po_lineid = $this->Peppol_po_lineid($item, $soiR);
+          if (empty($peppol_po_lineid)) {
+            throw new PeppolSalesOrderItemPurchaseOrderLineNumberNotExistException($this->t);
+          }
           $price = (null !== $item->getPrice() ? $item->getPrice() : 0.00);
           $discount = (null !== $item->getDiscount_amount() ? $item->getDiscount_amount() : 0.00);
-          $peppol_po_itemid = $this->Peppol_po_itemid($item, $soiR);
-          $peppol_po_lineid = $this->Peppol_po_lineid($item, $soiR);
+          
           $item_id = $item->getId();
           $inv_item_amount = $this->getInvItemAmount((string) $item_id, $iiaR);
           if (null !== $inv_item_amount) {
