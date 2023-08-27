@@ -13,5 +13,5 @@
         <file name="public/index.php"/>
         <file name="yii"/>
         <file name="autoload.php"/>
-    </projectFiles>
+    </projectFiles>    
 </psalm>

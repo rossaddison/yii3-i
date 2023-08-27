@@ -87,7 +87,7 @@ use App\Service\WebControllerService;
 // App Helpers
 use App\Invoice\Helpers\ClientHelper;
 use App\Invoice\Helpers\CustomValuesHelper as CVH;
-Use App\Invoice\Helpers\DateHelper;
+use App\Invoice\Helpers\DateHelper;
 use App\Invoice\Helpers\MailerHelper;
 use App\Invoice\Helpers\NumberHelper;
 use App\Invoice\Helpers\PdfHelper;
@@ -142,7 +142,6 @@ final class InvController {
     private UserService $user_service;
     private ViewRenderer $view_renderer;
     private WebControllerService $web_service;
-
     /**
      * @param Crypt $crypt
      * @param DataResponseFactoryInterface $factory
@@ -184,7 +183,6 @@ final class InvController {
             UrlGenerator $url_generator,
             ViewRenderer $view_renderer,
             WebControllerService $web_service,
-      
     ) {
         $this->crypt = $crypt;
         $this->date_helper = new DateHelper($sR);
@@ -534,9 +532,9 @@ final class InvController {
             }
             return $this->web_service->getRedirectResponse('inv/index');
         } //null!==$basis_inv
-        return $this->web_service->getRedirectResponse('inv/index');
+       return $this->web_service->getRedirectResponse('inv/index');
     }
-
+    
     /**
      *
      * @param Inv $inv
