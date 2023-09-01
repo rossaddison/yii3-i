@@ -66,10 +66,10 @@
         "setasign/fpdf": "^1.8",
         "sabre/xml": "*",
         
-        "stripe/stripe-php": "12.0.0",
-        "amzn/amazon-pay-api-sdk-php": "2.6.2",
-        "braintree/braintree_php": "6.12.0",
-        "google/cloud-translate": "1.15.0",
+        "stripe/stripe-php": "*",
+        "amzn/amazon-pay-api-sdk-php": "*",
+        "braintree/braintree_php": "*",
+        "google/cloud-translate": "*",
         
         "psalm/plugin-symfony": "*",
         "yiisoft/arrays": "^3.0",
