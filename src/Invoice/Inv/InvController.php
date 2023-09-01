@@ -220,11 +220,11 @@ final class InvController {
      * @return string
      */
     private function alert(): string {
-        return $this->view_renderer->renderPartialAsString('/invoice/layout/alert',
-        [
-            'flash' => $this->flash('', ''),
-            'errors' => [],
-        ]);
+      return $this->view_renderer->renderPartialAsString('/invoice/layout/alert',
+      [
+        'flash' => $this->flash('', ''),
+        'errors' => [],
+      ]);
     }
 
     /**
@@ -2546,12 +2546,33 @@ final class InvController {
       return $this->web_service->getRedirectResponse('inv/view',['id'=>$id]); 
     } // peppol stream toggle
     
+    /**
+     * @see https://www.storecove.com/docs#_json_object
+     * @see StoreCove API key stored under Online Payment keys under Settings...View...Online Payment
+     * @param CurrentRoute $currentRoute
+     * @param CurrentUser $currentUser
+     * @param cpR $cpR
+     * @param IIAR $iiaR
+     * @param IR $invRepo
+     * @param ContractRepo $contractRepo
+     * @param DelRepo $delRepo
+     * @param DelPartyRepo $delPartyRepo
+     * @param DLR $dlR
+     * @param paR $paR
+     * @param ppR $ppR
+     * @param unpR $unpR
+     * @param SOR $soR
+     * @param UPR $upR
+     * @param ACIR $aciR
+     * @param ACIIR $aciiR
+     * @param SOIR $soiR
+     * @param TRR $trR
+     * @return Response
+     */
     public function storecove(CurrentRoute $currentRoute,
             CurrentUser $currentUser,
             cpR $cpR,
-            //IAR $iaR,
             IIAR $iiaR,
-            IIR $iiR,
             IR $invRepo,
             ContractRepo $contractRepo,
             DelRepo $delRepo,
@@ -2654,7 +2675,7 @@ final class InvController {
         }
         return '';
     }
-
+    
     // The accesschecker in config/routes ensures that only users with viewInv permission can reach this
 
     /**

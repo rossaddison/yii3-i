@@ -1,9 +1,18 @@
 # yii3-i
 Yii3 Invoice
 
-Introduction
+Features
 
-An invoicing system using Yii3 Demo's composer.json with additions.  The database is structured around Invoiceplane's database schema. It is intended to continue to use the rossaddison/yii-invoice fork of yiisoft/demo as a test bed for new innovations that the Yiisoft team introduce. 
+Cycle ORM Interface using Invoiceplane type database schema
+Generate VAT invoices using Mpdf
+Code Generator - Controller to views
+PCI Compliant Payment Gateway Interfaces - Braintree Sandbox, Stripe Sandbox, and Amazon Pay Integration Tested
+Generate openPeppol Ubl 2.1 Invoice 3.0.15 XML Invoices - Validate with Ecosio
+StoreCove API Connector with Json Invoice
+Invoice Cycle - Quote to Sales Order (with Client's Purchase Order details) to Invoice     
+Multiple Language Compliant - Steps to Generate new language files included.
+Separate Client Console and Company Console
+Install with Composer
 
 Currently 3 payment gateways have been introduced namely Amazon Pay, Braintree, and Stripe. 
 
