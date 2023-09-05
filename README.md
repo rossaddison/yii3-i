@@ -15,7 +15,7 @@ Yii3 Invoice
 * Install with Composer.
 
 **Installing with Composer in Windows**
-* Step 1: c:\windows\system32>**cd\**
+* Step 1: c:\windows\system32>cd\
 * Step 2: c:\>**md** wamp64\www\yii3-i
 * Step 3: c:\wamp64\yii3-i>**composer update**
 
@@ -30,10 +30,10 @@ Signup your second user as your Client/Customer.
 
 **To install at least a service and a product, and a foreign and a non-foreign client automatically follow these steps please:**
 
-** Step 1: ** Settings ... View ... General ... Install Test Data ... Yes  AND   Use Test Date ... Yes
-** Step 2. ** In the main Url type: invoice an press enter. The Invoice Controller will create 2 clients and products automatically.
+* Step 1: Settings ... View ... General ... Install Test Data ... Yes  AND   Use Test Date ... Yes
+* Step 2: In the main Url type: invoice an press enter. The Invoice Controller will create 2 clients and products automatically.
 
-** Steps to translate into another language: ** 
+**Steps to translate into another language:** 
 
 GeneratorController includes a function google_translate_lang ...            
 This function takes the English ip_lang array or gateway_lang located in 
