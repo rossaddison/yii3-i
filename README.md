@@ -32,7 +32,7 @@ Signup your second user as your Client/Customer.
 **To install at least a service and a product, and a foreign and a non-foreign client automatically follow these steps please:**
 
 * Step 1: Settings ... View ... General ... Install Test Data ... Yes  AND   Use Test Date ... Yes
-* Step 2: In the main Url type: invoice an press enter. The Invoice Controller will create 2 clients and products automatically.
+* Step 2: In the main Url type: invoice and press enter. The Invoice Controller will create 2 clients and products automatically.
 
 **The package by default will not use VAT and will use the traditional Invoiceplane type installation providing both line item tax and invoice tax** 
 
