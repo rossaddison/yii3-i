@@ -29,6 +29,12 @@ After installing, ensure mode is on **MODE_READ_AND_WRITE** for faster performan
 Signup your first user using **Create User Account**
 Signup your second user as your Client/Customer.
 
+**To enable your signed-up Client to make payments:** 
+* Step 1: Make sure you have created a client ie. Client ... View ... New
+* Step 1: Create a Settings...User Account
+* Step 2: Use the Assigned Client ... Burger Button ... and assign the New User Account to an existing Client.
+* Step 4: Make sure they are active.
+
 **To install at least a service and a product, and a foreign and a non-foreign client automatically follow these steps please:**
 
 * Step 1: Settings ... View ... General ... Install Test Data ... Yes  AND   Use Test Date ... Yes
