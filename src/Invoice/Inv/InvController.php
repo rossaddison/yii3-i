@@ -215,7 +215,7 @@ final class InvController {
         }
         $this->web_service = $web_service;
     }
-
+    
     /**
      * @return string
      */
@@ -2434,7 +2434,7 @@ final class InvController {
      * @param TRR $trR
      * @return Response
      */
-    public function peppol(CurrentRoute $currentRoute,
+     public function peppol(CurrentRoute $currentRoute,
             CurrentUser $currentUser,
             cpR $cpR,
             IAR $iaR,

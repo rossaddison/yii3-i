@@ -24,10 +24,10 @@
         
         "doctrine/collections": "^2.1",
         
-        "fakerphp/faker": "^1.14",
+        "fakerphp/faker": "^1.23.0",
         "httpsoft/http-message": "^1.1",
         
-        "nyholm/psr7": "*",
+        "nyholm/psr7": "^1.0",
         
         "php-http/guzzle7-adapter": "^1.0",
         "psr/container": "^2.0",
@@ -38,7 +38,7 @@
         "psr/http-server-middleware": "^1.0",
         "psr/log": "^3.0",
         "symfony/console": "^6.0",
-        "vlucas/phpdotenv": "^5.3",
+        "vlucas/phpdotenv": "^5.0",
         "yiisoft/access": "^1.0",
         "yiisoft/aliases": "^3.0",
                 
@@ -52,8 +52,8 @@
         "ext-json": "*",
         "ext-curl": "*",
         
-        "rossaddison/data": "dev-master",
-        "mpdf/mpdf": "^8.1.6", 
+        "yiisoft/data":"^1.0",
+        "mpdf/mpdf": "^8.0", 
         "digitalbazaar/json-ld": "*",
         "brick/money": "*",
         "brick/math": "*",
@@ -73,12 +73,12 @@
         
         "psalm/plugin-symfony": "*",
         "yiisoft/arrays": "^3.0",
-        "yiisoft/files": "*",
+        "yiisoft/files": "^2.0",
         "yiisoft/friendly-exception": "*",
         "yiisoft/json": "*",
                 
         "yiisoft/assets": "^4.0",
-        "yiisoft/auth": "^3.0",
+        "yiisoft/auth": "*",
         "yiisoft/cache": "^3.0",
         "yiisoft/cache-file": "^3.0",
         "yiisoft/config": "^1.0",
@@ -93,10 +93,10 @@
         "yiisoft/form": "*",
         
         "yiisoft/html": "^3.0",
-        "yiisoft/http": "^1.2",
+        "yiisoft/http": "*",
         "yiisoft/injector": "^1.0",
         
-        "yiisoft/log": "^2.0",
+        "yiisoft/log": "*",
         "yiisoft/log-target-file": "^3.0",
         "yiisoft/mailer": "^5.0",
         "yiisoft/mailer-symfony": "^3.0",
