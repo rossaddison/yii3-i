@@ -56,7 +56,7 @@
                 </td>
 
                 <td>
-                    <a href="<?= $urlGenerator->generate('inv/view', ['id'=> $invoice->getId()]); ?>"
+                    <a href="<?= $urlGenerator->generate('inv/view', ['_language' => $session->get('_language'), 'id'=> $invoice->getId()]); ?>"
                        title="<?= $s->trans('edit'); ?>" style="text-decoration:none">
                         <?php echo($invoice->getNumber() ? $invoice->getNumber() : $invoice->getId()); ?>
                     </a>
@@ -73,7 +73,7 @@
                 </td>
 
                 <td>
-                    <a href="<?= $urlGenerator->generate('client/view', ['id' => $invoice->getClient_id()]); ?>"
+                    <a href="<?= $urlGenerator->generate('client/view', ['_language' => $session->get('_language'), 'id' => $invoice->getClient_id()]); ?>"
                        title="<?= $s->trans('view_client'); ?>" style="text-decoration:none">
                         <?= Html::encode($clienthelper->format_client($invoice->getClient())); ?>
                     </a>
@@ -101,19 +101,19 @@
                         <ul class="dropdown-menu">
                             <?php if ($invoice->getIs_read_only() !== 1) { ?>
                                 <li>
-                                    <a href="<?= $urlGenerator->generate('inv/view', ['id' => $invoice->getId()]); ?>" style="text-decoration:none">
+                                    <a href="<?= $urlGenerator->generate('inv/view', ['_language' => $session->get('_language'), 'id' => $invoice->getId()]); ?>" style="text-decoration:none">
                                         <i class="fa fa-edit fa-margin"></i> <?= $s->trans('edit'); ?>
                                     </a>
                                 </li>
                             <?php } ?>
                             <li>
-                                <a href="<?= $urlGenerator->generate('inv/pdf', ['include' => true]); ?>"
+                                <a href="<?= $urlGenerator->generate('inv/pdf', ['_language' => $session->get('_language'), 'include' => true]); ?>"
                                    target="_blank" style="text-decoration:none">
                                     <i class="fa fa-print fa-margin"></i> <?= $s->trans('download_pdf'); ?>
                                 </a>
                             </li>
                             <li>
-                                <a href="<?= $urlGenerator->generate('inv/email_stage_0', ['id' => $invoice->getId()]); ?>" style="text-decoration:none">
+                                <a href="<?= $urlGenerator->generate('inv/email_stage_0', ['_language' => $session->get('_language'), 'id' => $invoice->getId()]); ?>" style="text-decoration:none">
                                     <i class="fa fa-send fa-margin"></i> <?= $s->trans('send_email'); ?>
                                 </a>
                             </li>
@@ -131,7 +131,7 @@
                                 ($s->get_setting('enable_invoice_deletion') === true && $invoice->getIs_read_only() !== 1)
                             ) { ?>
                                 <li>
-                                    <form action="<?= $urlGenerator->generate('inv/delete',['id'=> $invoice->getId()]); ?>" method="POST">
+                                    <form action="<?= $urlGenerator->generate('inv/delete',['_language' => $session->get('_language'), 'id'=> $invoice->getId()]); ?>" method="POST">
                                         <input type="hidden" id="_csrf" name="_csrf" value="<?= $csrf ?>">
                                         <button type="submit" class="dropdown-button"
                                                 onclick="return confirm('<?= $s->trans('delete_invoice_warning'); ?>');">
@@ -148,6 +148,5 @@
             $invoice_idx++;
         } ?>
         </tbody>
-
     </table>
 </div>

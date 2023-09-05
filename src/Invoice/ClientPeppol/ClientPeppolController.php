@@ -81,6 +81,7 @@ final class ClientPeppolController {
         'buttons' => $this->viewRenderer->renderPartialAsString('/invoice/layout/header_buttons', ['s' => $settingRepository, 'hide_submit_button' => false, 'hide_cancel_button' => false]),
         's' => $settingRepository,
         'client_id' => $client_id,
+        'receiver_identifier_array' => StoreCoveArrays::store_cove_receiver_identifier_array(),
         'electronic_address_scheme' => $electronic_address_scheme,
         'iso_6523_array' => $peppolarrays->getIso_6523_icd()
       ];

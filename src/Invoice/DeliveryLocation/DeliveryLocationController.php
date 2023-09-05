@@ -98,6 +98,7 @@ final class DeliveryLocationController {
       'body' => $request->getParsedBody(),
       's' => $settingRepository,
       'head' => $head,
+      'session' => $this->session,
       'electronic_address_scheme' => PeppolArrays::electronic_address_scheme()
     ];
 

@@ -835,7 +835,8 @@ final class ClientController
                       'invoices' => $iR->repoClient($client_id),
                       'clienthelper' => new ClientHelper($sR),
                       'datehelper' => new DateHelper($sR),
-                      'inv_statuses' => $iR->getStatuses($sR)
+                      'inv_statuses' => $iR->getStatuses($sR),
+                      'session' => $session,
                   ]),
                   'invoice_draft_table'=>$this->viewRenderer->renderPartialAsString('/invoice/inv/partial_inv_table', [
                       'iaR'=> $iaR,

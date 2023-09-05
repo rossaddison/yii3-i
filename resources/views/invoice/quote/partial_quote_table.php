@@ -40,7 +40,7 @@
                     </span>
                 </td>
                 <td>
-                    <a href="<?= $urlGenerator->generate('quote/view', ['id' =>$quote->getId()]); ?>"
+                    <a href="<?= $urlGenerator->generate('quote/view', ['_language' =>$session->get('_language'), 'id' =>$quote->getId()]); ?>"
                        title="<?= $s->trans('edit'); ?>" style="text-decoration:none">
                         <?=($quote->getNumber() ? $quote->getNumber() : $quote->getId()); ?>
                     </a>
@@ -52,7 +52,7 @@
                     <?= $datehelper->date_from_mysql($quote->getDate_expires()); ?>
                 </td>
                 <td>
-                    <a href="<?= $urlGenerator->generate('client/view', ['id'=>$quote->getClient_id()]); ?>"
+                    <a href="<?= $urlGenerator->generate('client/view', ['_language' =>$session->get('_language'), 'id'=>$quote->getClient_id()]); ?>"
                        title="<?= $s->trans('view_client'); ?>" style="text-decoration:none">
                         <?= Html::encode($clienthelper->format_client($quote->getClient())); ?>
                     </a>
@@ -69,23 +69,23 @@
                         </a>
                         <ul class="dropdown-menu">
                             <li>
-                                <a href="<?= $urlGenerator->generate('quote/view', ['id'=>$quote->getId()]); ?>" style="text-decoration:none">
+                                <a href="<?= $urlGenerator->generate('quote/view', ['_language' =>$session->get('_language'), 'id'=>$quote->getId()]); ?>" style="text-decoration:none">
                                     <i class="fa fa-edit fa-margin"></i> <?= $s->trans('edit'); ?>
                                 </a>
                             </li>
                             <li>
-                                <a href="<?= $urlGenerator->generate('quote/pdf', ['include'=> true]); ?>"
+                                <a href="<?= $urlGenerator->generate('quote/pdf', ['_language' =>$session->get('_language'), 'include'=> true]); ?>"
                                    target="_blank" style="text-decoration:none">
                                     <i class="fa fa-print fa-margin"></i> <?= $s->trans('download_pdf'); ?>
                                 </a>
                             </li>
                             <li>
-                                <a href="<?= $urlGenerator->generate('quote/email_stage_0',['id'=> $quote->getId()]); ?>" style="text-decoration:none">
+                                <a href="<?= $urlGenerator->generate('quote/email_stage_0',['_language' =>$session->get('_language'), 'id'=> $quote->getId()]); ?>" style="text-decoration:none">
                                     <i class="fa fa-send fa-margin"></i> <?= $s->trans('send_email'); ?>
                                 </a>
                             </li>
                             <li>
-                                <form action="<?= $urlGenerator->generate('quote/delete',['id'=> $quote->getId()]); ?>" method="POST">
+                                <form action="<?= $urlGenerator->generate('quote/delete',['_language' =>$session->get('_language'), 'id'=> $quote->getId()]); ?>" method="POST">
                                     <input type="hidden" id="_csrf" name="_csrf" value="<?= $csrf ?>"> 
                                     <button type="submit" class="dropdown-button"
                                             onclick="return confirm('<?= $s->trans('delete_quote_warning'); ?>');">
