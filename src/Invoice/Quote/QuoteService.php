@@ -39,7 +39,6 @@ final class QuoteService
     }
     
     /**
-     * 
      * @param User $user
      * @param Quote $model
      * @param QuoteForm $form
@@ -140,6 +139,7 @@ final class QuoteService
         if ($model->isNewRecord()) {
              $model->setInv_id(0);
              $model->setSo_id(0);
+             !empty($form->getNumber()) ? $model->setNumber($form->getNumber()) : '';
              $model->setStatus_id(1);
              $model->setUser($user);
              $model->setUser_id((int)$user->getId());

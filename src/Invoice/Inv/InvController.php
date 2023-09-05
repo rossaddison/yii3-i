@@ -433,7 +433,7 @@ final class InvController {
             'creditinvoice_parent_id' => 0,
             'status_id' => 1,
             'is_read_only' => 0,
-            'number' => $this->sR->get_setting('generate_invoice_number_for_draft') === '1' ? $gR->generate_number((int) $body['inv_group_id'], true) : '',
+            'number' => $this->sR->get_setting('generate_invoice_number_for_draft') === '1' ? $gR->generate_number((int) $body['inv_group_id'], false) : '',
             'discount_amount' => floatval(0),
             'discount_percent' => floatval(0),
             'url_key' => Random::string(32),

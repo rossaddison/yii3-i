@@ -88,7 +88,7 @@ private EntityWriter $entityWriter;
    * @param bool $set_next
    * @return mixed
    */
-    public function generate_number(int $id, bool $set_next = true) : mixed
+    public function generate_number(int $id, bool $set_next = false) : mixed
     {
         /** @var Group $group */
         $group = $this->repoGroupquery((string)$id);
@@ -173,10 +173,11 @@ private EntityWriter $entityWriter;
     {
         $result = $this->repoGroupquery((string)$id) ?: null;
         if (null!==$result) {
-            $incremented_next_id = (int)$result->getNext_id();
+            $current_id = $result->getNext_id();        
+            $incremented_next_id = (int)$result->getNext_id() + 1;
             $result->setNext_id($incremented_next_id); 
             $this->save($result);
-            return (int)$result->getNext_id();
+            return (int)$current_id;
         } else {
             return 0;
         }     
