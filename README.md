@@ -21,6 +21,7 @@ Yii3 Invoice
 
 Adjust c:\wamp64\yii3-i\config\common\params.php file line approx. 193 to **MODE_WRITE_ONLY** for installation.
 This will automatically build up the tables under database yii3-i.
+
 ````'mode' => PhpFileSchemaProvider::MODE_WRITE_ONLY,````
 
 After installing, ensure mode is on **MODE_READ_AND_WRITE** for faster performance.
@@ -32,6 +33,10 @@ Signup your second user as your Client/Customer.
 
 * Step 1: Settings ... View ... General ... Install Test Data ... Yes  AND   Use Test Date ... Yes
 * Step 2: In the main Url type: invoice an press enter. The Invoice Controller will create 2 clients and products automatically.
+
+**The package by default will not use VAT and will use the traditional Invoiceplane type installation providing both line item tax and invoice tax** 
+
+**If you require VAT based invoices, ensure VAT is setup by going to  Settings ... Views ... Value Added Tax and use a separate database for this purpose. Only line item tax will be available.**
 
 **Steps to translate into another language:** 
 
@@ -50,7 +55,7 @@ outputting it to ````resources/views/generator/output_overwrite.````
 * Step 4: Add Key.
 * Step 5: Choose the Json File option and Download the file to src/Invoice/Google_translate_unique_folder.
 * Step 6: You will have to enable the Cloud Translation API and provide your billing details. You will be charged 0 currency.
-* Step 7: Move the file from views/generator/output_overwrite to eg. src/Invoice/Language/{your language}',
+* Step 7: Move the file from views/generator/output_overwrite to eg. src/Invoice/Language/{your language}'
 
 [![Yii2](https://img.shields.io/badge/Powered_by-Yii_Framework-green.svg?style=flat)](https://www.yiiframework.com/) [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT) ![stable](https://img.shields.io/static/v1?label=No%20Release&message=0.0.0&color=9cf)  ![Downloads](https://img.shields.io/static/v1?label=Downloads/week&message=185&color=9cf)  ![Build](https://img.shields.io/static/v1?label=Build&message=Passing&color=66ff00)
 ![Dependency Checker](https://img.shields.io/static/v1?label=Dependency%20Checker&message=Passing&color=66ff00) ![Static Analysis](https://img.shields.io/static/v1?label=Static%20Analysis&message=Passing&color=66ff00)
