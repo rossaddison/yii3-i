@@ -202,7 +202,7 @@ $vat = $s->get_setting('enable_vat_registration');
                                 <td class="amount"><?= $numberhelper->format_currency($item->getPrice() ?? 0.00); ?></td>
                                 <td class="amount"><?= $numberhelper->format_currency($item->getDiscount_amount() ?? 0.00); ?></td>
                                 <td class="amount"><?= $numberhelper->format_currency($inv_item_amount->repoInvItemAmountquery((string)$item->getId())->getSubtotal() ?? 0.00); ?></td>
-                                <td class="amount"><?= $numberhelper->format_currency($inv_item_amount->repoInvItemAmountquery((string)$item->getId())->getTaxRate()?->getTax_rate_percent() ??  0.00); ?></td>
+                                <td class="amount"><?= $numberhelper->format_currency($inv_item_amount->repoInvItemAmountquery((string)$item->getId())->getInvItem()?->getTaxRate()?->getTax_rate_percent() ??  0.00); ?></td>
                             </tr>
                         <?php endforeach ?>
                         <tr>
