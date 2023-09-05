@@ -1,7 +1,7 @@
 # yii3-i
 Yii3 Invoice
 
-Features
+**Features**
 
 * Cycle ORM Interface using Invoiceplane type database schema. 
 * Generate VAT invoices using Mpdf. 
@@ -13,6 +13,20 @@ Features
 * Multiple Language Compliant - Steps to Generate new language files included. 
 * Separate Client Console and Company Console. 
 * Install with Composer.
+
+**Installing with Composer in Windows**
+* Step 1: c:\windows\system32>**cd\**
+* Step 2: c:\>**md** wamp64\www\yii3-i
+* Step 3: c:\wamp64\yii3-i>**composer update**
+
+Adjust c:\wamp64\yii3-i\config\common\params.php file line approx. 193 to **MODE_WRITE_ONLY** for installation.
+This will automatically build up the tables under database yii3-i.
+````'mode' => PhpFileSchemaProvider::MODE_WRITE_ONLY,````
+
+After installing ensure mode is on **MODE_READ_AND_WRITE** for faster performance.
+
+Signup your first user using **Create User Account**
+Signup your second user as your Client/Customer.
 
 [![Yii2](https://img.shields.io/badge/Powered_by-Yii_Framework-green.svg?style=flat)](https://www.yiiframework.com/) [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT) ![stable](https://img.shields.io/static/v1?label=No%20Release&message=0.0.0&color=9cf)  ![Downloads](https://img.shields.io/static/v1?label=Downloads/week&message=185&color=9cf)  ![Build](https://img.shields.io/static/v1?label=Build&message=Passing&color=66ff00)
 ![Dependency Checker](https://img.shields.io/static/v1?label=Dependency%20Checker&message=Passing&color=66ff00) ![Static Analysis](https://img.shields.io/static/v1?label=Static%20Analysis&message=Passing&color=66ff00)
