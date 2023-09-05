@@ -27,6 +27,7 @@ This will automatically build up the tables under database yii3-i.
 After installing, ensure mode is on **MODE_READ_AND_WRITE** for faster performance.
 
 Signup your first user using **Create User Account**
+
 Signup your second user as your Client/Customer.
 
 **To enable your signed-up Client to make payments:** 
