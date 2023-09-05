@@ -32,9 +32,10 @@ Signup your second user as your Client/Customer.
 
 **To enable your signed-up Client to make payments:** 
 * Step 1: Make sure you have created a client ie. Client ... View ... New
-* Step 1: Create a Settings...User Account
-* Step 2: Use the Assigned Client ... Burger Button ... and assign the New User Account to an existing Client.
+* Step 2: Create a Settings...User Account
+* Step 3: Use the Assigned Client ... Burger Button ... and assign the New User Account to an existing Client.
 * Step 4: Make sure they are active.
+* Step 5: Make sure the relevant invoice has the status 'sent' either by manualy editing the status of the invoice under Invoice ... View ... Options or by actually sending the invoice to the client by email under Invoice ... View ... Options.
 
 **To install at least a service and a product, and a foreign and a non-foreign client automatically follow these steps please:**
 
