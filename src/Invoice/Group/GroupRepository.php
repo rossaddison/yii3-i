@@ -173,7 +173,7 @@ private EntityWriter $entityWriter;
     {
         $result = $this->repoGroupquery((string)$id) ?: null;
         if (null!==$result) {
-            $incremented_next_id = (int)$result->getNext_id() + 1;
+            $incremented_next_id = (int)$result->getNext_id();
             $result->setNext_id($incremented_next_id); 
             $this->save($result);
             return (int)$result->getNext_id();
