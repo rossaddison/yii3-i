@@ -29,8 +29,28 @@ Signup your first user using **Create User Account**
 Signup your second user as your Client/Customer.
 
 **To install at least a service and a product, and a foreign and a non-foreign client automatically follow these steps please:**
+
 ** Step 1: ** Settings ... View ... General ... Install Test Data ... Yes  AND   Use Test Date ... Yes
 ** Step 2. ** In the main Url type: invoice an press enter. The Invoice Controller will create 2 clients and products automatically.
+
+** Steps to translate into another language: ** 
+
+GeneratorController includes a function google_translate_lang ...            
+This function takes the English ip_lang array or gateway_lang located in 
+
+````src/Invoice/Language/English```` 
+
+and translates it into the chosen locale (Settings...View...Google Translate) 
+
+outputting it to ````resources/views/generator/output_overwrite.```` 
+
+* Step 1: Download https://curl.haxx.se/ca/cacert.pem into active c:\wamp64\bin\php\php8.1.12 folder.
+* Step 2: Select your project that you created under https://console.cloud.google.com/projectselector2/iam-admin/serviceaccounts?pportedpurview=project
+* Step 3: Click on Actions icon and select Manage Keys. 
+* Step 4: Add Key.
+* Step 5: Choose the Json File option and Download the file to src/Invoice/Google_translate_unique_folder.
+* Step 6: You will have to enable the Cloud Translation API and provide your billing details. You will be charged 0 currency.
+* Step 7: Move the file from views/generator/output_overwrite to eg. src/Invoice/Language/{your language}',
 
 [![Yii2](https://img.shields.io/badge/Powered_by-Yii_Framework-green.svg?style=flat)](https://www.yiiframework.com/) [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT) ![stable](https://img.shields.io/static/v1?label=No%20Release&message=0.0.0&color=9cf)  ![Downloads](https://img.shields.io/static/v1?label=Downloads/week&message=185&color=9cf)  ![Build](https://img.shields.io/static/v1?label=Build&message=Passing&color=66ff00)
 ![Dependency Checker](https://img.shields.io/static/v1?label=Dependency%20Checker&message=Passing&color=66ff00) ![Static Analysis](https://img.shields.io/static/v1?label=Static%20Analysis&message=Passing&color=66ff00)
