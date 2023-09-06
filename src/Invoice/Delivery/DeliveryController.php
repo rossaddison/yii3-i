@@ -207,11 +207,11 @@ final class DeliveryController {
      * @return Response
      */
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute,
-            ValidatorInterface $validator,
-            DeliveryRepository $deliveryRepository,
-            SettingRepository $settingRepository,
-            DLR $delRepo,
-            InvRepository $iR
+      ValidatorInterface $validator,
+      DeliveryRepository $deliveryRepository,
+      SettingRepository $settingRepository,
+      DLR $delRepo,
+      InvRepository $iR
     ): Response {
         $delivery = $this->delivery($currentRoute, $deliveryRepository);
         if ($delivery) {

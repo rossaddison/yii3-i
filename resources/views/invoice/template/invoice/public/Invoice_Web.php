@@ -185,6 +185,7 @@ $vat = $s->get_setting('enable_vat_registration');
                             <th class="text-right"><?= $s->trans('price'); ?></th>
                             <th class="text-right"><?= $s->trans('discount'); ?></th>
                             <th class="text-right"><?= $s->trans('total'); ?></th>
+                            <th class="text-right"><?= $vat === '0' ? $s->trans('item_tax') : $translator->translate('invoice.invoice.vat.abbreviation'); ?></th>
                         </tr>
                         </thead>
                         <tbody>
