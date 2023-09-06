@@ -63,9 +63,8 @@ $pagination = OffsetPagination::widget()
         <th><?= $s->trans('active'); ?></th>
         <th>Peppol</th>
         <th><?= $s->trans('client_name'); ?></th>
-         <th><?= $s->trans('birthdate'); ?></th>
-        <th><?= $s->trans('email_address'); ?></th>
-        <th><?= $s->trans('phone_number'); ?></th>
+        <th data-bs-toggle="tooltip" title="<?= $translator->translate('invoice.client.detail.changes'); ?>"><?= $s->trans('email_address'); ?></th>
+        <th data-bs-toggle="tooltip" title="<?= $translator->translate('invoice.client.detail.changes'); ?>"><?= $s->trans('phone_number'); ?></th>
         <th class="amount"><?= $s->trans('balance'); ?></th>
         <th><?= $s->trans('options'); ?></th>
         </tr>
@@ -80,7 +79,6 @@ $pagination = OffsetPagination::widget()
 		    <?= ($cpR->repoClientCount((string)$client->getClient_id()) !== 0 ) ? '<span class="label active">' . $s->trans('yes') . '</span>' : '<span class="label inactive">' . $s->trans('no') . '</span>'; ?>
 		</td>
                 <td><?= Html::a($client->getClient_name()." ".$client->getClient_surname(),$urlGenerator->generate('client/view',['id' => $client->getClient_id()]),['class' => 'btn btn-warning ms-2']);?></td>
-                <td><?= Html::encode(($client->getClient_birthdate())->format($datehelper->style())); ?></td>
                 <td><?= Html::encode($client->getClient_email()); ?></td>
                 <td><?= Html::encode($client->getClient_phone() ? $client->getClient_phone() : ($client->getClient_mobile() ? $client->getClient_mobile() : '')); ?></td>
                 <td class="amount"><?= $s->format_currency($iR->with_total($client->getClient_id(), $iaR)); ?></td>

@@ -16,6 +16,7 @@ $lang = [
   'invoice.client.contract.period.end' => 'Period End',
   'invoice.client.contract.reference' => 'Contract Reference',
   'invoice.client.custom' => 'Client Custom',
+  'invoice.client.detail.changes' => 'Please send us an email if this detail changes.',
   'invoice.client.note' => 'Client Note',
   'invoice.client.number' => 'Client Number',
   'invoice.client.purchase.order.number' => 'Client Purchase Order Number',
