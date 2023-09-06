@@ -203,7 +203,7 @@ final class DeliveryController {
      * @param DeliveryRepository $deliveryRepository
      * @param SettingRepository $settingRepository
      * @param DLR $delRepo
-     * @param IR $iR
+     * @param InvRepository $iR
      * @return Response
      */
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute,
