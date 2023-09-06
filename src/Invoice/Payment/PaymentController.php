@@ -614,6 +614,13 @@ final class PaymentController
                 'alert'=>$this->alert($session),
                 'canEdit'=>$canEdit,
                 'canView'=>$canView,
+                'grid_summary' => $settingRepository->grid_summary(
+                    $paginator,
+                    $this->translator,
+                    (int) $settingRepository->get_setting('default_list_limit'),
+                    $this->translator->translate('invoice.invoice.payments'),
+                    ''
+                ),                    
                 'page'=>$page,
                 'paginator' => $paginator,
                 'sortOrder' => $query_params['sort'] ?? '', 

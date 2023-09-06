@@ -181,6 +181,7 @@ return [
   'invoice.invoice.number.missing.therefore.use.invoice.id' => 'invoice-number-missing-therefore-invoice-id-',
   'invoice.invoice.no.records' => 'No records',
   'invoice.invoice.no.attachments' => 'No attachments',
+  'invoice.invoice.payments' => 'Payments',
   'invoice.invoice.pdf.archived.no' => 'Pdf NOT Archived at Uploads/Archive/Invoice',
   'invoice.invoice.pdf.archived.yes' => 'Pdf Archived at Uploads/Archive/Invoice',
   'invoice.invoice.per.page.total' => ' per page. Total ',

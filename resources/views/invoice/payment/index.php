@@ -84,7 +84,7 @@ $toolbar = Div::tag();
                 ->value(static fn ($model): string => $model->getNote()                        
             ),       
             DataColumn::create()
-                ->label($s->trans('invoice'))                
+                ->label($s->trans('invoice'))
                 ->attribute('inv_id')
                 ->value(static function ($model) use ($urlGenerator): string {
                    return Html::a($model->getInv()?->getNumber() ?? '', $urlGenerator->generate('inv/view',['id'=>$model->getInv_id()]),['style'=>'text-decoration:none'])->render();
@@ -123,18 +123,21 @@ $toolbar = Div::tag();
             ),        
             DataColumn::create()
                 ->label($s->trans('view')) 
+                ->visible($canView)
                 ->value(static function ($model) use ($urlGenerator): string {
                    return Html::a(Html::tag('i','',['class'=>'fa fa-eye fa-margin']), $urlGenerator->generate('inv/view',['id'=>$model->getInv_id()]),[])->render();
                 }                        
             ),
             DataColumn::create()
                 ->label($s->trans('edit')) 
+                ->visible($canEdit)
                 ->value(static function ($model) use ($s, $urlGenerator): string {
                    return $model->getInv()?->getIs_read_only() === false && $s->get_setting('disable_read_only') === (string)0 ? Html::a(Html::tag('i','',['class'=>'fa fa-edit fa-margin']), $urlGenerator->generate('inv/edit',['id'=>$model->getInv_id()]),[])->render() : '';
                 }                        
             ),
             DataColumn::create()
-                ->label($s->trans('delete')) 
+                ->label($s->trans('delete'))
+                ->visible($canEdit)
                 ->value(static function ($model) use ($s, $urlGenerator): string {
                     return $model->getInv()?->getIs_read_only() === false && $s->get_setting('disable_read_only') === (string)0 ? Html::a( Html::tag('button',
                         Html::tag('i','',['class'=>'fa fa-trash fa-margin']),
@@ -165,7 +168,7 @@ $toolbar = Div::tag();
         )
         ->rowAttributes(['class' => 'align-middle'])
         ->summaryAttributes(['class' => 'mt-3 me-3 summary text-end'])
-        //->summary($grid_summary)
+        ->summary($grid_summary)
         ->emptyTextAttributes(['class' => 'card-header bg-warning text-black'])
         ->emptyText((string)$translator->translate('invoice.invoice.no.records'))                         
         ->tableAttributes(['class' => 'table table-striped text-center h-75','id'=>'table-payment'])
