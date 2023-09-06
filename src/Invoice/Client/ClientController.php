@@ -486,7 +486,6 @@ final class ClientController
     public function guest(CurrentRoute $currentRoute, SessionInterface $session, cR $cR, iaR $iaR, iR $iR, sR $sR, cpR $cpR, ucR $ucR): 
         Response
     {
-        //$canEdit = $this->rbac($session);
         $pageNum = (int)$currentRoute->getArgument('page', '1');        
         $active = (int)$currentRoute->getArgument('active', '2');
         $user = $this->userService->getUser();
@@ -503,7 +502,7 @@ final class ClientController
                 'alert'=>$this->alert($session),
                 'iR'=> $iR,
                 'iaR'=> $iaR,
-                'canEdit' => true,
+                'editInv' => $this->userService->hasPermission('editInv'), 
                 'active'=>$active,
                 'pageNum'=>$pageNum,
                 'cpR'=>$cpR,

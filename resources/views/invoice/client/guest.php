@@ -90,6 +90,7 @@ $pagination = OffsetPagination::widget()
                             <i class="fa fa-cog"></i> <?= $s->trans('options'); ?>
                         </a>
                         <ul class="dropdown-menu">
+                            <?php if ($editInv) { ?>
                             <li>
                                 <a href="<?= $urlGenerator->generate('client/view',['id' => $client->getClient_id()]); ?>" style="text-decoration:none">
                                     <i class="fa fa-eye fa-margin"></i> <?= $s->trans('view'); ?>
@@ -100,6 +101,7 @@ $pagination = OffsetPagination::widget()
                                     <i class="fa fa-edit fa-margin"></i> <?= $s->trans('edit'); ?>
                                 </a>
                             </li>
+                            <?php } ?>
                             <?php if ($cpR->repoClientCount((string)$client->getClient_id()) === 0 ) { ?>
                             <li>
                                 <a href="<?= $urlGenerator->generate('clientpeppol/add', ['client_id' => $client->getClient_id()]); ?>" style="text-decoration:none">
@@ -114,11 +116,13 @@ $pagination = OffsetPagination::widget()
                                 </a>
                             </li>
                             <?php } ?>
+                            <?php if ($editInv) { ?>
                             <li>
                                 <a href="<?= $urlGenerator->generate('client/delete',['id' => $client->getClient_id()]); ?>" style="text-decoration:none" onclick="return confirm('<?= $s->trans('delete_client_warning').'?'; ?>');">
                                     <i class="fa fa-trash fa-margin"></i><?= $s->trans('delete'); ?>                                    
                                 </a>
                             </li>
+                            <?php } ?>
                         </ul>
                     </div>
                 </td>
