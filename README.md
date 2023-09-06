@@ -63,7 +63,29 @@ outputting it to ````resources/views/generator/output_overwrite.````
 * Step 4: Add Key.
 * Step 5: Choose the Json File option and Download the file to src/Invoice/Google_translate_unique_folder.
 * Step 6: You will have to enable the Cloud Translation API and provide your billing details. You will be charged 0 currency.
-* Step 7: Move the file from views/generator/output_overwrite to eg. src/Invoice/Language/{your language}'
+* Step 7: Move the file from views/generator/output_overwrite to eg. src/Invoice/Language/{your language}
+
+**Xml electronic invoices - Can be output if the following sequence is followed:**
+
+* a: A logged in Client sets up their Peppol details on their side via Client...View...Options...Edit Peppol Details for e-invoicing.
+
+* b: A quote is created and sent by the Administrator to the Client.
+
+* c: A logged in Client creates a sales order from the quote with their purchase order number, purchase order line number, and their contact person in the modal.
+
+* d: A logged in Client, on each of the sales order line items, inputs their line item purchase order reference number, and their purchase order line number. (Mandatory or else exception will be raised).
+
+* e: A logged in Administrator, requests that terms and conditions be accepted.
+
+* f: A logged in Client accepts the terms and conditions.
+
+* g: A logged in Administrator, updates the status of the sales order from assembled, approved, confirmed, to generate.
+
+* h: A logged in Administrator can generate an invoice if the sales order status is on 'generate'
+
+* i: A logged in Administrator can now generate a Peppol Xml Invoice using today's exchange rates setup on Settings...View...Peppol Electronic Invoicing...One of From Currency and One of To Currency
+
+* j: Peppol exceptions will be raised.
 
 [![Yii2](https://img.shields.io/badge/Powered_by-Yii_Framework-green.svg?style=flat)](https://www.yiiframework.com/) [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT) ![stable](https://img.shields.io/static/v1?label=No%20Release&message=0.0.0&color=9cf)  ![Downloads](https://img.shields.io/static/v1?label=Downloads/week&message=185&color=9cf)  ![Build](https://img.shields.io/static/v1?label=Build&message=Passing&color=66ff00)
 ![Dependency Checker](https://img.shields.io/static/v1?label=Dependency%20Checker&message=Passing&color=66ff00) ![Static Analysis](https://img.shields.io/static/v1?label=Static%20Analysis&message=Passing&color=66ff00)
