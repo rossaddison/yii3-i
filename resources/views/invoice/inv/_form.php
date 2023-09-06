@@ -96,6 +96,11 @@ echo $note_on_tax_point;
                             </option>
                         <?php } ?>
                     </select>
+                    <?php if (null!==$delivery->getId()) { ?>
+                    <span class="input-group-text">
+                        <a href="<?= $urlGenerator->generate('delivery/edit', ['id'=> $delivery->getId()]); ?>"><i class="fa fa-pencil fa-fw"></i></a>
+                    </span>  
+                    <?php } ?>
                     <span class="input-group-text">
                         <a href="<?= $s->href('stand_in_code'); ?>" <?= $s->where('stand_in_code'); ?>><i class="fa fa-question fa-fw"></i></a>
                     </span>
@@ -124,6 +129,11 @@ echo $note_on_tax_point;
                             </option>
                         <?php } ?>
                     </select>
+                    <?php if (null!==$del->getId()) { ?>
+                    <span class="input-group-text">
+                        <a href="<?= $urlGenerator->generate('del/edit', ['id'=> $del->getId()]); ?>"><i class="fa fa-pencil fa-fw"></i></a>
+                    </span>  
+                    <?php } ?>
                     <?php
                 } else {
                     echo Html::a($translator->translate('invoice.invoice.delivery.location.add'), $urlGenerator->generate('del/add', ['client_id' => $inv->getClient_id()]), ['class' => 'btn btn-danger btn-lg mt-3']);

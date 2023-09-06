@@ -4,7 +4,6 @@ declare(strict_types=1);
 use Yiisoft\Data\Paginator\OffsetPaginator;
 use Yiisoft\Html\Html;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\View\WebView;
 use Yiisoft\Html\Tag\A;
 use Yiisoft\Html\Tag\Div;
 use Yiisoft\Html\Tag\Form;
@@ -60,6 +59,23 @@ $toolbar = Div::tag();
     ->attribute('id')
     ->label($s->trans('id'))
     ->value(static fn(object $model) => Html::encode($model->getId())),
+    DataColumn::create()
+    ->attribute('start_date')
+    ->label($s->trans('start_date'))
+    ->value(static fn(object $model) => Html::encode(($model->getStart_date())->format($datehelper->style()))),
+    DataColumn::create()
+    ->attribute('actual_delivery_date')
+    ->label($s->trans('actual_delivery_date'))
+    ->value(static fn(object $model) => Html::encode(($model->getActual_delivery_date())->format($datehelper->style()))),
+    DataColumn::create()
+    ->attribute('end_date')
+    ->label($s->trans('end_date'))
+    ->value(static fn(object $model) => Html::encode(($model->getEnd_date())->format($datehelper->style()))),
+    DataColumn::create() 
+    ->value(static function ($model) use ($urlGenerator, $translator): string {
+        return Html::a($translator->translate('invoice.back'), $urlGenerator->generate('inv/edit', ['id' => $model->getInv_id()]), ['style' => 'text-decoration:none'])->render();
+    }
+    ),
     DataColumn::create()
     ->label($translator->translate('invoice.delivery.location.global.location.number'))
     ->attribute('delivery_location_id')

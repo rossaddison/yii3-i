@@ -30,34 +30,35 @@ if (!empty($errors)) {
 <?php $response = $head->renderPartial('invoice/layout/header_buttons',['s'=>$s, 'hide_submit_button'=>false ,'hide_cancel_button'=>false]); ?>        
 <?php echo (string)$response->getBody(); ?><div id="content">
 <div class="row">
-<div class="form-group has-feedback"> 
-<?php  $date = $body['date_created'] ?? null; 
-$datehelper = new DateHelper($s); 
-if ($date && $date !== "0000-00-00") { 
-    $date = $datehelper->date_from_mysql($date); 
-} else { 
-    $date = null; 
-} 
-   ?> 
+<div class="mb-3 form-group has-feedback">
+  <?php
+  $date = $datehelper->get_or_set_with_style($body['date_created']);
+  ?>
+  <label form-label for="date_created"><?= $translator->translate('invoice.invoice.delivery.date.created') . ' (' . $datehelper->display() . ')'; ?></label>
+  <div class="input-group">
+      <input type="text" name="date_created" id="date_created" placeholder="<?= ' (' . $datehelper->display() . ')'; ?>"
+              class="form-control input-sm datepicker" 
+              value="<?= null !== $date ? Html::encode($date instanceof \DateTimeImmutable ? $date->format($datehelper->style()) : $date) : null; ?>" role="presentation" autocomplete="off">
+       <span class="input-group-text">
+          <i class="fa fa-calendar fa-fw"></i>
+      </span>
+  </div>
+</div>    
+    
+<div class="mb-3 form-group has-feedback">
+  <?php
+  $datem = $datehelper->get_or_set_with_style($body['date_modified']);
+  ?>
+  <label form-label for="date_modified"><?= $translator->translate('invoice.invoice.delivery.date.modified') . ' (' . $datehelper->display() . ')'; ?></label>
+  <div class="input-group">
+      <input type="text" name="date_modified" id="date_modified" placeholder="<?= ' (' . $datehelper->display() . ')'; ?>"
+              class="form-control input-sm datepicker" 
+              value="<?= null !== $datem ? Html::encode($datem instanceof \DateTimeImmutable ? $datem->format($datehelper->style()) : $datem) : null; ?>" role="presentation" autocomplete="off">
+       <span class="input-group-text">
+          <i class="fa fa-calendar fa-fw"></i>
+      </span>
+  </div>
 </div>
-<div class="form-group">
-   <label for="date_created"><?= $translator->translate('invoice.invoice.delivery.date.created'); ?></label>
-   <input type="text" name="date_created" id="date_created" class="form-control input-sm datepicker"
-    value="<?= Html::encode($body['date_created'] ??  ''); ?>">
-</div>
-<div class="form-group has-feedback"> 
-<?php  $datem = $body['date_modified'] ?? null; 
-if ($datem && $datem !== "0000-00-00") { 
-    $mdate = $datehelper->date_from_mysql($datem); 
-} else { 
-    $mdate = null; 
-} 
-   ?>  
-<div class="form-group">
-   <label hidden for="date_modified"><?= $translator->translate('invoice.invoice.delivery.date.modified'); ?></label>
-   <input hidden type="text" name="date_modified" id="date_modified" class="form-control"
- value="<?= Html::encode($body['date_modified'] ??  ''); ?>">
- </div>
  <div class="form-group">
    <input type="hidden" name="id" id="id" class="form-control"
  value="<?= Html::encode($body['id'] ??  ''); ?>">
@@ -66,50 +67,51 @@ if ($datem && $datem !== "0000-00-00") {
    <input type="hidden" name="inv_id" id="inv_id" class="form-control"
  value="<?= $body['inv_id'] ?? $inv_id; ?>">
  </div>
- <div class="form-group has-feedback"> 
-<?php  $dated = $body['actual_delivery_date'] ?? null; 
  
-if ($dated && $date !== "0000-00-00") { 
-    $ddate = $datehelper->date_from_mysql($dated); 
-} else { 
-    $ddate = null; 
-} 
-?>  
-<div class="form-group">
-   <label for="actual_delivery_date"><?= $translator->translate('invoice.invoice.delivery.actual.delivery.date') ?></label>
-   <input type="text" name="actual_delivery_date" id="actual_delivery_date" class="form-control input-sm datepicker"
- value="<?= Html::encode($body['actual_delivery_date'] ??  ''); ?>">
- </div>
- <div class="mb-3 form-group has-feedback"> 
-     
-<?php  $dates = $body['start_date'] ?? null; 
- 
-if ($dates && $dates !== "0000-00-00") { 
-    $sdate = $datehelper->date_from_mysql($dates); 
-} else { 
-    $sdate = null; 
-} 
-   ?>  
-<div class="form-group">
-   <label for="start_date"><?= $translator->translate('invoice.invoice.delivery.start.date'); ?></label>
-   <input type="text" name="start_date" id="start_date" class="form-control input-sm datepicker"
- value="<?= Html::encode($body['start_date'] ??  ''); ?>">
- </div>
- <div class="mb-3 form-group has-feedback"> 
+<div class="mb-3 form-group has-feedback">
+  <?php
+  $adate = $datehelper->get_or_set_with_style($body['actual_delivery_date']);
+  ?>
+  <label form-label for="actual_delivery_date"><?= $translator->translate('invoice.invoice.delivery.actual.delivery.date') . ' (' . $datehelper->display() . ')'; ?></label>
+  <div class="input-group">
+      <input type="text" name="actual_delivery_date" id="actual_delivery_date" placeholder="<?= ' (' . $datehelper->display() . ')'; ?>"
+              class="form-control input-sm datepicker" 
+              value="<?= null !== $adate ? Html::encode($adate instanceof \DateTimeImmutable ? $adate->format($datehelper->style()) : $adate) : null; ?>" role="presentation" autocomplete="off">
+       <span class="input-group-text">
+          <i class="fa fa-calendar fa-fw"></i>
+      </span>
+  </div>
+</div>
+    
+<div class="mb-3 form-group has-feedback">
+  <?php
+  $sdate = $datehelper->get_or_set_with_style($body['start_date']);
+  ?>
+  <label form-label for="start_date"><?= $translator->translate('invoice.invoice.delivery.start.date') . ' (' . $datehelper->display() . ')'; ?></label>
+  <div class="input-group">
+      <input type="text" name="start_date" id="start_date" placeholder="<?= ' (' . $datehelper->display() . ')'; ?>"
+              class="form-control input-sm datepicker" 
+              value="<?= null !== $sdate ? Html::encode($sdate instanceof \DateTimeImmutable ? $sdate->format($datehelper->style()) : $sdate) : null; ?>" role="presentation" autocomplete="off">
+       <span class="input-group-text">
+          <i class="fa fa-calendar fa-fw"></i>
+      </span>
+  </div>
+</div> 
 
-<?php  $datee = $body['end_date'] ?? null; 
-
-if ($datee && $datee !== "0000-00-00") { 
-    $edate = $datehelper->date_from_mysql($datee); 
-} else { 
-    $edate = null; 
-} 
-   ?>  
- <div class="form-group">
-   <label for="end_date"><?= $translator->translate('invoice.invoice.delivery.end.date'); ?></label>
-   <input type="text" name="end_date" id="end_date" class="form-control input-sm datepicker"
-   value="<?= Html::encode($body['end_date'] ??  ''); ?>">
- </div>
+<div class="mb-3 form-group has-feedback">
+  <?php
+  $edate = $datehelper->get_or_set_with_style($body['end_date']);
+  ?>
+  <label form-label for="end_date"><?= $translator->translate('invoice.invoice.delivery.end.date') . ' (' . $datehelper->display() . ')'; ?></label>
+  <div class="input-group">
+      <input type="text" name="end_date" id="end_date" placeholder="<?= ' (' . $datehelper->display() . ')'; ?>"
+              class="form-control input-sm datepicker" 
+              value="<?= null !== $edate ? Html::encode($edate instanceof \DateTimeImmutable ? $edate->format($datehelper->style()) : $edate) : null; ?>" role="presentation" autocomplete="off">
+       <span class="input-group-text">
+          <i class="fa fa-calendar fa-fw"></i>
+      </span>
+  </div>
+</div>
      
 </div>
 <div class="form-group">

@@ -78,6 +78,7 @@ final class DeliveryController {
                 'del_count' => $delRepo->repoClientCount($inv->getClient_id()),
                 'dels' => $dels,
                 'inv_id' => $inv_id,
+                'inv' => $inv,
                 's' => $settingRepository,
                 'head' => $head,
             ];
@@ -151,6 +152,7 @@ final class DeliveryController {
             'paginator' => $paginator,
             'grid_summary' => $sR->grid_summary($paginator, $this->translator, (int) $sR->get_setting('default_list_limit'), $this->translator->translate('invoice.deliveries'), ''),
             'deliveries' => $this->deliveries($dR),
+            'max' =>(int) $sR->get_setting('default_list_limit'),
         ];
         return $this->viewRenderer->render('/invoice/delivery/index', $parameters);
     }
@@ -193,26 +195,36 @@ final class DeliveryController {
     }
 
     /**
-     *
+     * 
      * @param ViewRenderer $head
      * @param Request $request
      * @param CurrentRoute $currentRoute
      * @param ValidatorInterface $validator
      * @param DeliveryRepository $deliveryRepository
      * @param SettingRepository $settingRepository
+     * @param DLR $delRepo
+     * @param IR $iR
      * @return Response
      */
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute,
             ValidatorInterface $validator,
             DeliveryRepository $deliveryRepository,
             SettingRepository $settingRepository,
+            DLR $delRepo,
+            InvRepository $iR
     ): Response {
         $delivery = $this->delivery($currentRoute, $deliveryRepository);
         if ($delivery) {
+          $inv_id = $delivery->getInv_id();
+          $inv = $iR->repoInvLoadedquery((string) $inv_id);
+          if (null!==$inv) {
+            $dels = $delRepo->repoClientquery($inv->getClient_id());
             $parameters = [
                 'title' => $settingRepository->trans('edit'),
                 'action' => ['delivery/edit', ['id' => $delivery->getId()]],
                 'errors' => [],
+                'del_count' => $delRepo->repoClientCount($inv->getClient_id()),
+                'dels' => $dels,
                 'body' => $this->body($delivery),
                 'head' => $head,
                 's' => $settingRepository,
@@ -227,7 +239,8 @@ final class DeliveryController {
                 $parameters['body'] = $body;
                 $parameters['errors'] = $form->getFormErrors();
             }
-            return $this->viewRenderer->render('_form', $parameters);
+            return $this->viewRenderer->render('/invoice/delivery/_form', $parameters);
+          } // null!==$inv  
         }
         return $this->webService->getRedirectResponse('delivery/index');
     }

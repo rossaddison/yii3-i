@@ -5,7 +5,6 @@ use Yiisoft\Html\Html;
 use Yiisoft\Html\Tag\Form;
 use Yiisoft\Yii\Bootstrap5\Alert;
 use Yiisoft\Arrays\ArrayHelper;
-use Yiisoft\VarDumper\VarDumper;
 
 /**
  * @var \Yiisoft\View\View $this
@@ -257,9 +256,9 @@ if (!empty($errors)) {
             </div>
         </div>
         <div class="mb-3 form-group has-feedback">
-<?php
-$bdate = $datehelper->get_or_set_with_style($body['client_birthdate']);
-?>
+        <?php
+        $bdate = $datehelper->get_or_set_with_style($body['client_birthdate']);
+        ?>
             <label form-label for="client_birthdate"><?= $s->trans('birthdate') . ' (' . $datehelper->display() . ')'; ?></label>
             <div class="input-group">
                 <input type="text" name="client_birthdate" id="client_birthdate" placeholder="<?= ' (' . $datehelper->display() . ')'; ?>"
