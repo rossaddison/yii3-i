@@ -78,13 +78,25 @@ use Yiisoft\Yii\Bootstrap5\Modal;
                 foreach ($relations as $relation) {
                     echo Html::a($relation->getLowercase_name(),$urlGenerator->generate('generatorrelation/edit',['id' => $relation->getRelation_id()]),['class' => 'btn btn-primary btn-sm']);
                 }
-                echo Html::a($s->trans('edit'),
+                echo Html::a(Html::tag('button',
+                          Html::tag('i','',['class'=>'fa fa-pencil fa-margin']),
+                          [
+                              'type'=>'submit', 
+                              'class'=>'dropdown-button'
+                          ]
+                          ),
                 $urlGenerator->generate('generator/edit', ['id' => $generator->getGentor_id()]),
-                ['class' => 'btn btn-info btn-sm ms-2']
+                []
                 );                
-                echo Html::a($s->trans('view'),
-                $urlGenerator->generate('generator/view',['id' => $generator->getGentor_id()]),
-                ['class' => 'btn btn-warning btn-sm ms-2']
+                echo Html::a(Html::tag('button',
+                          Html::tag('i','',['class'=>'fa fa-eye fa-margin']),
+                          [
+                              'type'=>'submit', 
+                              'class'=>'dropdown-button'
+                          ]
+                          ),
+                $urlGenerator->generate('generator/view', ['id' => $generator->getGentor_id()]),
+                []
                 );
                 //modal delete button
                 echo '</div>';
