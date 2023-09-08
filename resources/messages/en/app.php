@@ -275,6 +275,7 @@ return [
   'invoice.peppol.tax.category.percent.not.found' => 'Peppol Tax Category percent (https://docs.peppol.eu/poacc/billing/3.0/codelist/UNCL5305/) missing.',
   'invoice.peppol.tax.rate.code' => 'Peppol Tax Rate Code',
   'invoice.peppol.trying.to.send.non.pdf.file' => 'Only pdf files are currently being sent with Peppol Invoices',
+  'invoice.peppol.unit' => 'Unit Classification using Peppol',
   'invoice.peppol.version' => 'Peppol Version',
   'invoice.peppol.xml.stream' => 'Stream ie. show on screen in browser instead of downloads folder.',
   'invoice.peppol.store.cove.1.1.1' => 'Register for API Access on the Store Cove website',

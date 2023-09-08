@@ -221,6 +221,8 @@ $this->beginPage();
                   ['options' => ['class' => 'nav fs-4 ajax-loader'], 'label' => $s->trans('view'), 'url' => $urlGenerator->generate('product/index')],
                   ['options' => ['class' => 'nav fs-4'], 'label' => $s->trans('family'), 'url' => $urlGenerator->generate('family/index')],
                   ['options' => ['class' => 'nav fs-4'], 'label' => $s->trans('unit'), 'url' => $urlGenerator->generate('unit/index')],
+                  ['options' => ['class' => 'nav fs-4'], 'label' => $translator->translate('invoice.peppol.unit'), 'url' => $urlGenerator->generate('unitpeppol/index')],
+                  
                 ],
               ],
               ['label' => $s->trans('tasks'),

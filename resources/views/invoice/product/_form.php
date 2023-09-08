@@ -85,6 +85,9 @@ if (!empty($errors)) {
                             <label for="unit_peppol_id">
                                 <?= $translator->translate('invoice.product.peppol.unit'); ?>
                             </label>
+                            <span>
+                                <a href="<?= $urlGenerator->generate('unitpeppol/index'); ?>"><i class="fa fa-pencil fa-fw"></i></a>
+                            </span> 
                             <select name="unit_peppol_id" id="unit_peppol_id" class="form-control" required>
                                 <option value=""><?= $s->trans('select_unit'); ?></option>
                                 <?php foreach ($unitpeppols as $unit_peppol) { ?>
@@ -93,6 +96,7 @@ if (!empty($errors)) {
                                     ><?= $unit_peppol->getCode(); ?></option>
                                 <?php } ?>
                             </select>
+                                   
                         </div>
 
                         <div class="form-group">
