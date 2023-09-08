@@ -13,12 +13,9 @@ use Yiisoft\Html\Html;
  */
 ?>
 
-<h1><label class="text-bg col-sm-10 col-form-label"><?= Html::encode($title) ?></h1>
+<h1><?= Html::encode($title) ?></h1>
 
-<div class="row">
-    <div class="row mb-3 form-group">
-
-    </div>
+<div class="form-group">
     <div class="row mb-3 form-group">
         <label for="route_suffix" class="text-bg col-sm-2 col-form-label" style="background:lightblue">Route Suffix</label>
         <label class="text-bg col-sm-10 col-form-label"><?= Html::encode($body['route_suffix'] ?? '') ?></label>
@@ -27,12 +24,11 @@ use Yiisoft\Html\Html;
         <label for="route_prefix" class="text-bg col-sm-2 col-form-label" style="background:lightblue">Route Prefix</label>
         <label class="text-bg col-sm-10 col-form-label"><?= Html::encode($body['route_prefix'] ?? '') ?></label>
     </div>
-    <div class="row mb-3 form-group no-margin">
+    <div class="row mb-3 form-group">
         <label for="camelcase_capital_name" class="text-bg col-sm-2 col-form-label" style="background:lightblue">Camelcase capital name</label>
         <label class="text-bg col-sm-10 col-form-label"><?= Html::encode($body['camelcase_capital_name'] ?? '') ?></label>
     </div>
-</div>
-<div class="row">
+
     <div class="row mb-3 form-group">
         <label for="small_singular_name" class="text-bg col-sm-2 col-form-label" style="background:lightblue">Small Singular Name</label>
         <label class="text-bg col-sm-10 col-form-label"><?= Html::encode($body['small_singular_name'] ?? '') ?></label>
@@ -57,8 +53,8 @@ use Yiisoft\Html\Html;
         <label for="repo_extra_camelcase_name" class="text-bg col-sm-2 col-form-label" style="background:lightblue">Repo extra camelcase name</label>
         <label class="text-bg col-sm-10 col-form-label"><?= Html::encode($body['repo_extra_camelcase_name'] ?? '') ?></label>
     </div>
-</div>
-<div class="row">
+
+
     <div class="row mb-3 form-group">
         <label for="paginator_next_page_attribute" class="text-bg col-sm-2 col-form-label" style="background:lightblue">Paginator Next Page Attribute</label>
         <label class="text-bg col-sm-10 col-form-label"><?= Html::encode($body['paginator_next_page_attribute'] ?? '') ?></label>
@@ -71,8 +67,7 @@ use Yiisoft\Html\Html;
         <label for="constrain_index_field" class="text-bg col-sm-2 col-form-label" style="background:lightblue">Index field used in a scope</label>
         <label class="text-bg col-sm-10 col-form-label"><?= Html::encode($body['constrain_index_field'] ?? '') ?></label>
     </div>
-</div>
-<div class="row">
+
     <div class="row mb-3">
         <label for="created_include" class="text-bg col-sm-2 col-form-label">Include Date Created Field in Mapper</label>
         <input type="hidden" name="created_include" value="0">

@@ -90,38 +90,17 @@ use Yiisoft\Yii\Bootstrap5\Modal;
                 echo '</div>';
                 echo str_repeat("&nbsp;", 2);
                 echo '<div class="btn-group">';
-                echo Modal::widget()
-                ->title('Please confirm that you want to delete this record #'.$generator->getGentor_id())
-                ->titleOptions(['class' => 'text-center'])
-                ->options(['class' => 'testMe'])
-                ->size(Modal::SIZE_SMALL)        
-                ->headerOptions(['class' => 'text-danger'])
-                ->bodyOptions(['class' => 'modal-body', 'style' => 'text-align:center;',])
-                ->footerOptions(['class' => 'text-dark'])
-                ->footer(
-                                Html::button(
-                                    'Close',
-                                    [
-                                        'type' => 'button',
-                                        'class' => ['btn btn-success btn-sm ms-2'],
-                                        'data' => [
-                                            'bs-dismiss' => 'modal',
-                                        ],
-                                    ]
-                                ) . "\n" .                
-                                Html::a('Yes Delete it Please ... I am sure!',
-                                $urlGenerator->generate('generator/delete',['id' => $generator->getGentor_id()]),
-                                ['class' => 'btn btn-danger btn-sm ms-2']
-                                )
-                            )
-                ->withoutCloseButton()
-                ->toggleButton([
-                                'class' => ['btn btn-danger btn-sm'],
-                                'label' => $s->trans('delete'),
-                            ])
-                ->begin();
-                echo '<p>Are you sure you want to delete this record? </p>';
-                echo Modal::end();
+                echo Html::a( Html::tag('button',
+                          Html::tag('i','',['class'=>'fa fa-trash fa-margin']),
+                          [
+                              'type'=>'submit', 
+                              'class'=>'dropdown-button',
+                              'onclick'=>"return confirm("."'".$s->trans('delete_record_warning')."');"
+                          ]
+                          ),
+                          $urlGenerator->generate('generator/delete',['id'=>$generator->getGentor_id()]),
+                          []                                         
+                        )->render();
                 echo '</div>';
                 echo Html::a('Entity'.DIRECTORY_SEPARATOR.$generator->getCamelcase_capital_name(),
                 $urlGenerator->generate('generator/entity',['id' => $generator->getGentor_id()]),

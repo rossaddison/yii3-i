@@ -163,7 +163,7 @@ final class GeneratorController
                 'title' => $s->trans('edit'),
                 'action' => ['generator/edit', ['id' => $generator->getGentor_id()]],
                 'errors' => [],
-                'body' => $generator,
+                'body' => $this->body($generator),
                 's'=>$s,
                 'tables'=>$dbal->database('default')->getTables(),
                 'selected_table'=>$generator->getPre_entity_table(),
