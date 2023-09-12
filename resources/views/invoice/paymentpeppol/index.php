@@ -22,6 +22,8 @@ use Yiisoft\Yii\DataView\OffsetPagination;
  * @var string $id
  */
 
+echo $alert;
+
 ?>
 <h1><?= $translator->translate('invoice.paymentpeppol') ?></h1>
 <?=
@@ -102,3 +104,4 @@ use Yiisoft\Yii\DataView\OffsetPagination;
         Div::tag()->addClass('float-end m-3')->content($toolbarReset)->encode(false)->render() .
         Form::tag()->close()
     );
+        

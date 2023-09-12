@@ -24,6 +24,8 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 final class GeneratorRelationController
 {
+    private Session $session;
+    private Flash $flash;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     private GeneratorRelationService $generatorrelationService;    
@@ -31,12 +33,15 @@ final class GeneratorRelationController
     private TranslatorInterface $translator;
 
     public function __construct(
+        Session $session,
         ViewRenderer $viewRenderer,
         WebControllerService $webService,
         GeneratorRelationService $generatorrelationService,
         UserService $userService,
         TranslatorInterface $translator
     ) {
+        $this->session = $session;
+        $this->flash = new Flash($session);
         $this->viewRenderer = $viewRenderer->withControllerName('invoice/generatorrelation')
                                            ->withLayout('@views/layout/invoice.php');
         $this->webService = $webService;
@@ -46,19 +51,19 @@ final class GeneratorRelationController
     }
     
     /**
-     * @param Session $session
      * @param GeneratorRelationRepository $generatorrelationRepository
      * @param SettingRepository $settingRepository
      */
-    public function index(Session $session,GeneratorRelationRepository $generatorrelationRepository, SettingRepository $settingRepository): \Yiisoft\DataResponse\DataResponse
+    public function index(GeneratorRelationRepository $generatorrelationRepository, SettingRepository $settingRepository): \Yiisoft\DataResponse\DataResponse
     {
-        $canEdit = $this->rbac($session);
+        $canEdit = $this->rbac();
         $generatorrelations = $this->generatorrelations($generatorrelationRepository);
         // $generator = $this->generatorrelation($generatorrelationRepository);
         $parameters = [
             's'=>$settingRepository,
             'canEdit' => $canEdit,
-            'generatorrelations' => $generatorrelations
+            'generatorrelations' => $generatorrelations,
+            'alert' => $this->alert()
         ]; 
         return $this->viewRenderer->render('index', $parameters);
     }
@@ -187,10 +192,10 @@ final class GeneratorRelationController
     /**
      * @return Response|true
      */
-    private function rbac(Session $session): bool|Response {
+    private function rbac(): bool|Response {
         $canEdit = $this->userService->hasPermission('editInv');
         if (!$canEdit){
-            $this->flash($session,'warning', $this->translator->translate('invoice.permission'));
+            $this->flash_message('warning', $this->translator->translate('invoice.permission'));
             return $this->webService->getRedirectResponse('generatorrelation/index');
         }
         return $canEdit;
@@ -223,13 +228,24 @@ final class GeneratorRelationController
         return $generatorrelations;
     }
     
-    //$this->flash
     /**
-     * @psalm-param 'warning' $level
+     * @return string
      */
-    private function flash(Session $session, string $level, string $message): Flash{
-        $flash = new Flash($session);
-        $flash->set($level, $message); 
-        return $flash;
+    private function alert(): string {
+      return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+      [ 
+        'flash' => $this->flash,
+        'errors' => [],
+      ]);
+    }
+
+    /**
+     * @param string $level
+     * @param string $message
+     * @return Flash
+     */
+    private function flash_message(string $level, string $message): Flash {
+        $this->flash->add($level, $message, true);
+        return $this->flash;
     }
 }

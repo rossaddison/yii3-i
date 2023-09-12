@@ -68,6 +68,28 @@ final class InvRepository extends Select\Repository
     }
     
     /**
+     * @param int $contract_id
+     * @return EntityReader
+     */
+    public function findAllWithContract(int $contract_id) : EntityReader
+    {
+        $query = $this->select()
+                      ->where(['contract_id' => $contract_id]);  
+        return $this->prepareDataReader($query);
+    }
+    
+    /**
+     * @param int $delivery_location_id
+     * @return EntityReader
+     */
+    public function findAllWithDeliveryLocation(int $delivery_location_id) : EntityReader
+    {
+        $query = $this->select()
+                      ->where(['delivery_location_id' => $delivery_location_id]);  
+        return $this->prepareDataReader($query);
+    }
+    
+    /**
      * Get invoices without filter
      *
      * @psalm-return EntityReader

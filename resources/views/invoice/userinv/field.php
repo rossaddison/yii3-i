@@ -3,14 +3,14 @@ declare(strict_types=1);
 
 use App\Invoice\Helpers\ClientHelper;
 use Yiisoft\Html\Html;
-use Yiisoft\Yii\Bootstrap5\Alert;
 
 $client_helper = new ClientHelper($s);
 /**
  * @var \Yiisoft\Router\UrlGeneratorInterface $urlGenerator
- * @var \Yiisoft\Session\Flash\FlashInterface $flash
  * @var Yiisoft\Yii\View\Csrf $csrf 
  */
+
+echo $alert;
 ?>
 <div id="headerbar">
     <h1 class="headerbar-title"><?= $s->trans('assigned_clients'); ?></h1>
@@ -28,40 +28,6 @@ $client_helper = new ClientHelper($s);
 </div>
 
 <div id="content">
-
-    <?php
-        $danger = $flash->get('danger');
-        if ($danger != null) {
-            $alert =  Alert::widget()
-                ->body($danger)
-                ->options([
-                    'class' => ['alert-danger shadow'],
-                ])
-            ->render();
-            echo $alert;
-        }
-        $info = $flash->get('info');
-        if ($info != null) {
-            $alert =  Alert::widget()
-                ->body($info)
-                ->options([
-                    'class' => ['alert-info shadow'],
-                ])
-            ->render();
-            echo $alert;
-        }
-        $warning = $flash->get('warning');
-        if ($warning != null) {
-            $alert =  Alert::widget()
-                ->body($warning)
-                ->options([
-                    'class' => ['alert-warning shadow'],
-                ])
-            ->render();
-            echo $alert;
-        }
-    ?>    
-
     <div class="row">
         <div class="col-xs-12 col-md-6 col-md-offset-3">
 

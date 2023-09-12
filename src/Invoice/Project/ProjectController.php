@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Invoice\Project;
 
-
 use App\Invoice\Client\ClientRepository;
 use App\Invoice\Entity\Project;
 use App\Invoice\Project\ProjectService;
@@ -19,7 +18,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Yiisoft\Data\Paginator\OffsetPaginator;
 use Yiisoft\Http\Method;
 use Yiisoft\Router\CurrentRoute;
-use Yiisoft\Session\SessionInterface;
+use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\Validator\ValidatorInterface;
@@ -27,6 +26,8 @@ use Yiisoft\Yii\View\ViewRenderer;
 
 final class ProjectController
 {
+    private Session $session;
+    private Flash $flash;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     private UserService $userService;
@@ -34,6 +35,7 @@ final class ProjectController
     private TranslatorInterface $translator;
     
     public function __construct(
+        Session $session,
         ViewRenderer $viewRenderer,
         WebControllerService $webService,
         UserService $userService,
@@ -41,6 +43,8 @@ final class ProjectController
         TranslatorInterface $translator,
     )    
     {
+        $this->session = $session;
+        $this->flash = new Flash($session);
         $this->viewRenderer = $viewRenderer->withControllerName('invoice/project')
                                            ->withLayout('@views/layout/invoice.php');
         $this->webService = $webService;
@@ -50,29 +54,26 @@ final class ProjectController
     }
     
     /**
-     * @param SessionInterface $session
      * @param ProjectRepository $projectRepository
      * @param SettingRepository $settingRepository
      * @param Request $request
      * @param ProjectService $service
      */
-    public function index(SessionInterface $session, ProjectRepository $projectRepository, SettingRepository $settingRepository, Request $request, ProjectService $service): \Yiisoft\DataResponse\DataResponse
+    public function index(ProjectRepository $projectRepository, SettingRepository $settingRepository, Request $request, ProjectService $service): \Yiisoft\DataResponse\DataResponse
     {            
         $pageNum = (int)$request->getAttribute('page', '1');
         $paginator = (new OffsetPaginator($this->projects($projectRepository)))
         ->withPageSize((int)$settingRepository->get_setting('default_list_limit'))
         ->withCurrentPage($pageNum);      
-        $canEdit = $this->rbac($session);
-        $flash = $this->flash($session, '','');
+        $canEdit = $this->rbac();
         $parameters = [
               'paginator' => $paginator,  
               's'=>$settingRepository,
               'canEdit' => $canEdit,
               'projects' => $this->projects($projectRepository),
-              'flash'=> $flash
+              'alert'=> $this->alert()
         ];  
         return $this->viewRenderer->render('index', $parameters);
-  
     }
     
     /**
@@ -97,7 +98,6 @@ final class ProjectController
             'body' => $request->getParsedBody(),
             's'=>$settingRepository,
             'head'=>$head,
-            
             'clients'=>$clientRepository->findAllPreloaded(),
         ];
         
@@ -111,6 +111,27 @@ final class ProjectController
             $parameters['errors'] = $form->getFormErrors();
         }
         return $this->viewRenderer->render('_form', $parameters);
+    }
+    
+    /**
+   * @return string
+   */
+   private function alert(): string {
+     return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+     [ 
+       'flash' => $this->flash,
+       'errors' => [],
+     ]);
+   }
+
+    /**
+     * @param string $level
+     * @param string $message
+     * @return Flash
+     */
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
     
     /**
@@ -157,20 +178,18 @@ final class ProjectController
     }
     
     /**
-     * 
-     * @param SessionInterface $session
      * @param CurrentRoute $currentRoute
      * @param ProjectRepository $projectRepository
      * @param SettingRepository $sR
      * @return Response
      */
-    public function delete(SessionInterface $session, CurrentRoute $currentRoute, 
+    public function delete(CurrentRoute $currentRoute, 
                            ProjectRepository $projectRepository,
                            SettingRepository $sR): Response {
         $project = $this->project($currentRoute, $projectRepository);
         if ($project) {
             $this->projectService->deleteProject($project);               
-            $this->flash($session, 'success', $sR->trans('record_successfully_deleted'));
+            $this->flash_message('success', $sR->trans('record_successfully_deleted'));
         }
         return $this->webService->getRedirectResponse('project/index'); 
     }
@@ -201,11 +220,11 @@ final class ProjectController
     /**
      * @return Response|true
      */
-    private function rbac(SessionInterface $session): bool|Response 
+    private function rbac(): bool|Response 
     {
         $canEdit = $this->userService->hasPermission('editInv');
         if (!$canEdit){
-            $this->flash($session,'warning', $this->translator->translate('invoice.permission'));
+            $this->flash_message('warning', $this->translator->translate('invoice.permission'));
             return $this->webService->getRedirectResponse('project/index');
         }
         return $canEdit;
@@ -249,18 +268,5 @@ final class ProjectController
           'name'=>$project->getName()
                 ];
         return $body;
-    }
-    
-    /**
-     * 
-     * @param SessionInterface $session
-     * @param string $level
-     * @param string $message
-     * @return Flash
-     */
-    private function flash(SessionInterface $session, string $level, string $message): Flash{
-        $flash = new Flash($session);
-        $flash->set($level, $message); 
-        return $flash;
     }
 }

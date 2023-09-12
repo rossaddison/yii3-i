@@ -14,7 +14,6 @@ use Yiisoft\Html\Tag\Div;
 use Yiisoft\Html\Tag\Form;
 use Yiisoft\Html\Tag\H5;
 use Yiisoft\Html\Tag\I;
-use Yiisoft\Yii\Bootstrap5\Alert;
 use Yiisoft\Yii\DataView\Column\DataColumn;
 use Yiisoft\Yii\DataView\GridView;
 use Yiisoft\Yii\DataView\OffsetPagination;
@@ -26,6 +25,8 @@ use Yiisoft\Yii\DataView\OffsetPagination;
  * @var OffsetPaginator $paginator
  * @var string $id
  */
+ 
+ echo $alert;
 
 ?>
 <?php 

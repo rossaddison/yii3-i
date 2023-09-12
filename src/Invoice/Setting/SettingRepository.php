@@ -1312,6 +1312,10 @@ final class SettingRepository extends Select\Repository
           'why'=>'This custom designed title appears in the top left corner of the current browser tab.',
           'where'=>'layout/invoice'
         ],
+        'date_tax_point'=>[
+          'why'=>'Necessary for calculating VAT submissions to Receivers of Revenue',
+          'where'=>'Refer to src\Invoice\Inv\InvService function set_tax_point. Variables used: 14 days, Date Supplied (Date Delivered), Date Created'   
+        ],
         'default_email_template' => [
           'why'=>'Build your first template using Settings...Email Template. Your first email to the customer will use this template. '.
                  'Typically you will include various fields from the database in this template by dragging and dropping them when you build this template. ' .
@@ -1860,12 +1864,22 @@ final class SettingRepository extends Select\Repository
     public function debug_mode_file_location(int $key) : string {
         $layout = '..resources/views/layout/';
         $common = '..resources/views/invoice/';
-        $array = [$layout.'invoice', 
+        $array = [//0
+                  $layout.'invoice', 
+                  //1
                   $common.'inv/view',
+                  //2
                   $common.'invitem/_item_form_product',
+                  //3
                   $common.'invitem/_item_form_task',
+                  //4
                   $common.'inv/view_custom_fields',
+                  //5
                   $common.'inv/partial_inv_attachments',
+                  //6
+                  $common.'inv/partial_inv_delivery_location',
+                  //7
+                  $common.'inv/partial_item_table' 
         ];
         return $array[$key];
     }

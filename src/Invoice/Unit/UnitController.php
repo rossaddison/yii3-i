@@ -25,6 +25,8 @@ use Yiisoft\Yii\View\ViewRenderer;
 
 final class UnitController
 {
+    private Flash $flash;
+    private Session $session;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     private UnitService $unitService;    
@@ -32,12 +34,15 @@ final class UnitController
     private TranslatorInterface $translator;
 
     public function __construct(
+        Session $session,
         ViewRenderer $viewRenderer,
         WebControllerService $webService,
         UnitService $unitService,
         UserService $userService,
         TranslatorInterface $translator
     ) {
+        $this->session = $session;
+        $this->flash = new Flash($session);
         $this->viewRenderer = $viewRenderer->withControllerName('invoice/unit')
                                            ->withLayout('@views/layout/invoice.php');
         $this->webService = $webService;
@@ -48,12 +53,11 @@ final class UnitController
     
     /**
      * @param CurrentRoute $currentRoute
-     * @param Session $session
      * @param UnitRepository $unitRepository
      * @param UnitPeppolRepository $upR
      * @param SettingRepository $settingRepository
      */
-    public function index(CurrentRoute $currentRoute, Session $session, UnitRepository $unitRepository, UnitPeppolRepository $upR, SettingRepository $settingRepository): \Yiisoft\DataResponse\DataResponse
+    public function index(CurrentRoute $currentRoute, UnitRepository $unitRepository, UnitPeppolRepository $upR, SettingRepository $settingRepository): \Yiisoft\DataResponse\DataResponse
     {
         $units = $this->units($unitRepository);
         $pageNum = (int)$currentRoute->getArgument('page', '1');
@@ -61,9 +65,7 @@ final class UnitController
             ->withPageSize((int)$settingRepository->get_setting('default_list_limit'))
             ->withCurrentPage($pageNum);
         $parameters = [
-            'alert'=>$this->viewRenderer->renderPartialAsString('/invoice/layout/alert',[
-                     'flash'=>$this->flash($session, '', ''),
-            ]),      
+            'alert'=> $this->alert(),
             'paginator'=> $paginator,
             's'=> $settingRepository,
             'upR'=>$upR,
@@ -73,17 +75,15 @@ final class UnitController
     }
     
     /**
-     * 
-     * @param Session $session
      * @param Request $request
      * @param SettingRepository $settingRepository
      * @param ValidatorInterface $validator
      * @return Response
      */
-    public function add(Session $session, Request $request, SettingRepository $settingRepository, ValidatorInterface $validator): Response
+    public function add(Request $request, SettingRepository $settingRepository, ValidatorInterface $validator): Response
     {
         $parameters = [
-            'title' => 'Add Unit',
+            'title' => $settingRepository->trans('add'),
             'action' => ['unit/add'],
             'errors' => [],
             'body' => $request->getParsedBody(),
@@ -94,7 +94,7 @@ final class UnitController
             $unit = new Unit();
             if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
                 $this->unitService->saveUnit($unit, $form);
-                $this->flash($session, 'info', $settingRepository->trans('record_successfully_created'));
+                $this->flash_message('info', $settingRepository->trans('record_successfully_created'));
                 return $this->webService->getRedirectResponse('unit/index');
             }
             $parameters['errors'] = $form->getFormErrors();
@@ -104,7 +104,6 @@ final class UnitController
     
     /**
      * 
-     * @param Session $session
      * @param Request $request
      * @param CurrentRoute $currentRoute
      * @param UnitRepository $unitRepository
@@ -112,7 +111,7 @@ final class UnitController
      * @param ValidatorInterface $validator
      * @return Response
      */
-    public function edit(Session $session, Request $request, CurrentRoute $currentRoute,
+    public function edit(Request $request, CurrentRoute $currentRoute,
             UnitRepository $unitRepository, SettingRepository $settingRepository, ValidatorInterface $validator): Response 
     {
         $unit = $this->unit($currentRoute, $unitRepository);
@@ -132,7 +131,7 @@ final class UnitController
                 $body = $request->getParsedBody();
                 if ($form->load($body) && $validator->validate($form)->isValid()) {
                     $this->unitService->saveUnit($unit, $form);
-                    $this->flash($session, 'info', $settingRepository->trans('record_successfully_updated'));
+                    $this->flash_message('info', $settingRepository->trans('record_successfully_updated'));
                     return $this->webService->getRedirectResponse('unit/index');
                 }
                 $parameters['body'] = $body;
@@ -144,23 +143,21 @@ final class UnitController
     }
     
     /**
-     * 
-     * @param Session $session
      * @param CurrentRoute $currentRoute
      * @param UnitRepository $unitRepository
      * @return Response
      */
-    public function delete(Session $session, CurrentRoute $currentRoute, UnitRepository $unitRepository): Response 
+    public function delete(CurrentRoute $currentRoute, UnitRepository $unitRepository): Response 
     {
         try {
-              /** @var Unit $unit */
-              $unit = $this->unit($currentRoute, $unitRepository);              
-              $this->unitService->deleteUnit($unit);
-              return $this->webService->getRedirectResponse('unit/index');
-	} catch (\Exception $e) {
-              unset($e);
-              $this->flash($session, 'danger', 'Cannot delete. Unit history exists.');
-              return $this->webService->getRedirectResponse('unit/index');
+          /** @var Unit $unit */
+          $unit = $this->unit($currentRoute, $unitRepository);              
+          $this->unitService->deleteUnit($unit);
+          return $this->webService->getRedirectResponse('unit/index');
+        } catch (\Exception $e) {
+          unset($e);
+          $this->flash_message('danger', $this->translator->translate('invoice.unit.history'));
+          return $this->webService->getRedirectResponse('unit/index');
         }
     }
     
@@ -218,15 +215,23 @@ final class UnitController
     }
     
     /**
-     * 
-     * @param Session $session
+     * @return string
+     */
+     private function alert(): string {
+      return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+      [ 
+        'flash' => $this->flash,
+        'errors' => [],
+      ]);
+    }
+
+    /**
      * @param string $level
      * @param string $message
      * @return Flash
      */
-    private function flash(Session $session, string $level, string $message): Flash {
-        $flash = new Flash($session);
-        $flash->set($level, $message); 
-        return $flash;
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
 }

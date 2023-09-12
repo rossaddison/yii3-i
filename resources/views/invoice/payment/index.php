@@ -23,6 +23,9 @@ use Yiisoft\Router\CurrentRoute;
  * @var TranslatorInterface $translator
  * @var WebView $this
  */
+ 
+ echo $alert;
+
 ?>
 <?php
 $header = Div::tag()
@@ -46,10 +49,6 @@ $toolbarReset = A::tag()
 
 $toolbar = Div::tag();
 ?>
-
-<div id="content" class="table-content">
-    <?= $alert; ?> 
-</div>
 
 <?php if ($canEdit && $canView) { ?>
     <div>

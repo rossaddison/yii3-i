@@ -8,9 +8,10 @@ use Yiisoft\Html\Html;
  * @var \App\Invoice\Entity\PaymentMethod $paymentmethod
  * @var \Yiisoft\Router\UrlGeneratorInterface $urlGenerator
  * @var bool $canEdit
- * @var string $id
- * @var \Yiisoft\Session\Flash\FlashInterface $flash 
+ * @var string $id 
  */
+
+echo $alert;
 
 ?>
 <div id="headerbar">
@@ -21,7 +22,6 @@ use Yiisoft\Html\Html;
 </div>
 
 <div id="content" class="table-content">
-    <?= $alert; ?>
     <div class="table-responsive">
         <table class="table table-hover table-striped">
             <thead>

@@ -17,7 +17,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Yiisoft\Data\Paginator\OffsetPaginator;
 use Yiisoft\Http\Method;
 use Yiisoft\Router\CurrentRoute;
-use Yiisoft\Session\SessionInterface;
+use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\Validator\ValidatorInterface;
@@ -25,6 +25,8 @@ use Yiisoft\Yii\View\ViewRenderer;
 
 final class GroupController
 {
+    private Flash $flash;
+    private Session $session;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     private UserService $userService;
@@ -32,6 +34,7 @@ final class GroupController
     private TranslatorInterface $translator;
     
     public function __construct(
+        Session $session,
         ViewRenderer $viewRenderer,
         WebControllerService $webService,
         UserService $userService,
@@ -39,6 +42,8 @@ final class GroupController
         TranslatorInterface $translator
     )    
     {
+        $this->session = $session;
+        $this->flash = new Flash($session);
         $this->webService = $webService;
         $this->userService = $userService;
         $this->viewRenderer = $viewRenderer;
@@ -55,26 +60,24 @@ final class GroupController
     }
     
     /**
-     * @param SessionInterface $session
      * @param GroupRepository $groupRepository
      * @param SettingRepository $settingRepository
      * @param Request $request
      * @param GroupService $service
      */
-    public function index(SessionInterface $session, GroupRepository $groupRepository, SettingRepository $settingRepository, Request $request, GroupService $service): \Yiisoft\DataResponse\DataResponse
+    public function index(GroupRepository $groupRepository, SettingRepository $settingRepository, Request $request, GroupService $service): \Yiisoft\DataResponse\DataResponse
     {    
         $pageNum = (int)$request->getAttribute('page', '1');
         $paginator = (new OffsetPaginator($this->groups($groupRepository)))
         ->withPageSize((int)$settingRepository->get_setting('default_list_limit'))
         ->withCurrentPage($pageNum);
-        $canEdit = $this->rbac($session);
-        $flash = $this->flash($session, '','');
+        $canEdit = $this->rbac();
         $parameters = [
               'paginator' => $paginator,
               's'=>$settingRepository,
               'canEdit' => $canEdit,
               'groups' => $this->groups($groupRepository),
-              'flash'=> $flash
+              'alert'=> $this->alert()
         ];  
         return $this->viewRenderer->render('group/index', $parameters);
     }
@@ -158,12 +161,11 @@ final class GroupController
     
     /**
      * 
-     * @param SessionInterface $session
      * @param CurrentRoute $currentRoute
      * @param GroupRepository $groupRepository
      * @return Response
      */
-    public function delete(SessionInterface $session, CurrentRoute $currentRoute, GroupRepository $groupRepository 
+    public function delete(CurrentRoute $currentRoute, GroupRepository $groupRepository 
     ): Response {
         try {
               $group = $this->group($currentRoute, $groupRepository);
@@ -174,7 +176,7 @@ final class GroupController
               return $this->webService->getRedirectResponse('group/index'); 
 	} catch (\Exception $e) {
               unset($e);
-              $this->flash($session, 'danger', 'Cannot delete. Group history exists.');
+              $this->flash_message('danger', $this->translator->translate('invoice.group.history'));
               return $this->webService->getRedirectResponse('group/index'); 
         }
     }
@@ -206,14 +208,13 @@ final class GroupController
     
     /**
      * 
-     * @param SessionInterface $session
      * @return bool|Response
      */
-    private function rbac(SessionInterface $session) : bool|Response
+    private function rbac() : bool|Response
     {
         $canEdit = $this->userService->hasPermission('editInv');
         if (!$canEdit){
-            $this->flash($session,'warning', $this->translator->translate('invoice.permission'));
+            $this->flash_message('warning', $this->translator->translate('invoice.permission'));
             return $this->webService->getRedirectResponse('group/index');
         }
         return $canEdit;
@@ -262,15 +263,23 @@ final class GroupController
     }
     
     /**
-     * 
-     * @param SessionInterface $session
-     * @param string $level
-     * @param string $message
-     * @return Flash
+     * @return string
      */
-    private function flash(SessionInterface $session, string $level, string $message): Flash{
-        $flash = new Flash($session);
-        $flash->set($level, $message); 
-        return $flash;
-    }
+     private function alert(): string {
+       return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+       [ 
+         'flash' => $this->flash,
+         'errors' => [],
+       ]);
+     }
+
+      /**
+       * @param string $level
+       * @param string $message
+       * @return Flash
+       */
+      private function flash_message(string $level, string $message): Flash {
+        $this->flash->add($level, $message, true);
+        return $this->flash;
+      }
 }

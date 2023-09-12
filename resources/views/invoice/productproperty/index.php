@@ -22,6 +22,8 @@ use Yiisoft\Yii\DataView\OffsetPagination;
  * @var string $id
  */
 
+echo $alert;
+
 ?>
 <h1><?= $translator->translate('invoice.product.property'); ?></h1>
 <?php 

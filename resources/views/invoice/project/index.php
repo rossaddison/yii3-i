@@ -3,39 +3,14 @@
 declare(strict_types=1);
 
 use Yiisoft\Html\Html;
-use Yiisoft\Yii\Bootstrap5\Alert;
 use App\Widget\OffsetPagination;
 
 /**
  * @var \App\Invoice\Entity\Project $project
  * @var \Yiisoft\Router\UrlGeneratorInterface $urlGenerator
- * @var \Yiisoft\Session\Flash\FlashInterface $flash 
  */
  
- $danger = $flash->get('danger');
-        if ($danger != null) {
-            $alert =  Alert::widget()
-            ->body($danger)
-            ->options(['class' => ['alert-danger shadow'],])
-            ->render();
-            echo $alert;
-        }
-        $info = $flash->get('info');
-        if ($info != null) {
-            $alert =  Alert::widget()
-            ->body($info)
-            ->options(['class' => ['alert-info shadow'],])
-            ->render();
-            echo $alert;
-        }
-        $warning = $flash->get('warning');
-        if ($warning != null) {
-            $alert =  Alert::widget()
-            ->body($warning)
-            ->options(['class' => ['alert-warning shadow'],])
-            ->render();
-            echo $alert;
-        }
+ echo $alert;
 ?>
 <div>
  <h5>Project</h5>
@@ -113,11 +88,11 @@ $pagination = OffsetPagination::widget()
     $pageSize = $paginator->getCurrentPageSize();
     if ($pageSize > 0) {
       echo Html::p(
-        sprintf('Showing %s out of %s projects', $pageSize, $paginator->getTotalItems()),
+        sprintf($translator->translate('invoice.index.footer.showing').' projects', $pageSize, $paginator->getTotalItems()),
         ['class' => 'text-muted']
     );
     } else {
-      echo Html::p('No records');
+      echo Html::p($translator->translate('invoice.records.no'));
     }
 ?>
 </div>

@@ -30,6 +30,8 @@ use Yiisoft\Yii\View\ViewRenderer;
 
 final class EmailTemplateController
 {
+    private SessionInterface $session;
+    private Flash $flash;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     private EmailTemplateService $emailtemplateService;
@@ -38,6 +40,7 @@ final class EmailTemplateController
     private Factory $factory;
 
     public function __construct(
+        SessionInterface $session,
         ViewRenderer $viewRenderer,
         WebControllerService $webService,
         EmailTemplateService $emailtemplateService,
@@ -45,6 +48,8 @@ final class EmailTemplateController
         TranslatorInterface $translator,
         Factory $factory
     ) {
+        $this->session = $session;
+        $this->flash = new Flash($session);
         $this->viewRenderer = $viewRenderer->withControllerName('invoice/emailtemplate')
                                            ->withLayout('@views/layout/invoice.php');
         $this->webService = $webService;
@@ -55,23 +60,22 @@ final class EmailTemplateController
     }
     
     /**
-     * @param SessionInterface $session
      * @param CurrentRoute $currentRoute
      * @param EmailTemplateRepository $emailtemplateRepository
      * @param SettingRepository $settingRepository
      */
-    public function index(SessionInterface $session, CurrentRoute $currentRoute, EmailTemplateRepository $emailtemplateRepository, SettingRepository $settingRepository): \Yiisoft\DataResponse\DataResponse
+    public function index(CurrentRoute $currentRoute, EmailTemplateRepository $emailtemplateRepository, SettingRepository $settingRepository): \Yiisoft\DataResponse\DataResponse
     {
-        $canEdit = $this->rbac($session); 
+        $canEdit = $this->rbac(); 
         $parameters = [              
             'paginator' => (new OffsetPaginator($this->emailtemplates($emailtemplateRepository)))
                             ->withPageSize((int)$settingRepository->get_setting('default_list_limit'))
                             ->withCurrentPage((int)$currentRoute->getArgument('page', '1')),
             's'=> $settingRepository,
-            'alert' => $this->alert($session),
+            'alert' => $this->alert(),
             'canEdit' => $canEdit,
             'email_templates' => $this->emailtemplates($emailtemplateRepository), 
-            'flash'=> $this->flash($session,'','')
+            'flash'=> $this->flash
         ];    
         return $this->viewRenderer->render('index', $parameters);
     }
@@ -83,13 +87,11 @@ final class EmailTemplateController
      * @param ValidatorInterface $validator
      * @param SettingRepository $settingRepository
      * @param CustomFieldRepository $customfieldRepository
-     * @param EmailTemplateRepository $emailtemplateRepository
      * @return Response
      */
     public function add(ViewRenderer $tag, Request $request, ValidatorInterface $validator, 
                         SettingRepository $settingRepository, 
-                        CustomFieldRepository $customfieldRepository,
-                        EmailTemplateRepository $emailtemplateRepository,
+                        CustomFieldRepository $customfieldRepository
                         ): Response
     {
         $parameters = [
@@ -129,17 +131,25 @@ final class EmailTemplateController
         return $this->viewRenderer->render('__form', $parameters, );
     }
     
+  /**
+   * @return string
+   */
+   private function alert(): string {
+     return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+     [ 
+       'flash' => $this->flash,
+       'errors' => [],
+     ]);
+   }
+
     /**
-     * 
-     * @param SessionInterface $session
-     * @return string
+     * @param string $level
+     * @param string $message
+     * @return Flash
      */
-    private function alert(SessionInterface $session) : string {
-        return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
-        [
-            'flash'=>$this->flash($session,'', ''),
-            'errors' => [],
-        ]);
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
 
     /**
@@ -271,10 +281,10 @@ final class EmailTemplateController
     /**
      * @return Response|true
      */
-    private function rbac(SessionInterface $session): bool|Response {
+    private function rbac(): bool|Response {
         $canEdit = $this->userService->hasPermission('editInv');
         if (!$canEdit){
-            $this->flash($session,'warning', $this->translator->translate('invoice.permission'));
+            $this->flash_message('warning', $this->translator->translate('invoice.permission'));
             return $this->webService->getRedirectResponse('emailtemplate/index');
         }
         return $canEdit;
@@ -319,16 +329,4 @@ final class EmailTemplateController
         ];
         return $body;
     }
-    
-    /**
-     * @param SessionInterface $session
-     * @param string $level
-     * @param string $message
-     * @return Flash
-     */   
-    private function flash(SessionInterface $session, string $level, string $message): Flash{
-        $flash = new Flash($session);
-        $flash->set($level, $message); 
-        return $flash;
-    } 
 }

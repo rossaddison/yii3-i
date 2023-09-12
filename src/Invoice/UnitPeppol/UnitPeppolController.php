@@ -20,7 +20,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Yiisoft\Data\Paginator\OffsetPaginator;
 use Yiisoft\Http\Method;
 use Yiisoft\Router\CurrentRoute;
-use Yiisoft\Session\SessionInterface;
+use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\Validator\ValidatorInterface;
@@ -30,7 +30,8 @@ use \Exception;
 
 final class UnitPeppolController
 {
-    private SessionInterface $session;
+    private Flash $flash;
+    private Session $session;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     private UserService $userService;
@@ -38,7 +39,7 @@ final class UnitPeppolController
         private TranslatorInterface $translator;
     
     public function __construct(
-        SessionInterface $session,
+        Session $session,
         ViewRenderer $viewRenderer,
         WebControllerService $webService,
         UserService $userService,
@@ -47,6 +48,7 @@ final class UnitPeppolController
     )    
     {
         $this->session = $session;
+        $this->flash = new Flash($session);
         $this->viewRenderer = $viewRenderer->withControllerName('invoice/unitpeppol')
                                            // The Controller layout dir is now redundant: replaced with an alias 
                                            ->withLayout('@views/layout/invoice.php');
@@ -56,6 +58,15 @@ final class UnitPeppolController
         $this->translator = $translator;
     }
     
+    /**
+     * 
+     * @param ViewRenderer $head
+     * @param Request $request
+     * @param ValidatorInterface $validator
+     * @param SettingRepository $settingRepository
+     * @param UnitRepository $unitRepository
+     * @return Response
+     */
     public function add(ViewRenderer $head, Request $request, 
                         ValidatorInterface $validator,
                         SettingRepository $settingRepository,                        
@@ -108,13 +119,23 @@ final class UnitPeppolController
     
     /**
      * @return string
-     */    
-    private function alert() : string {
-        return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
-        [
-            'flash'=>$this->flash('', ''),
-            'errors' => [],
-        ]);
+     */
+    private function alert(): string {
+      return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+      [ 
+        'flash' => $this->flash,
+        'errors' => [],
+      ]);
+    }
+
+    /**
+     * @param string $level
+     * @param string $message
+     * @return Flash
+     */
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
     
     /**
@@ -132,16 +153,19 @@ final class UnitPeppolController
         return $body;
     }
     
+    /**
+     * @param UnitPeppolRepository $unitpeppolRepository
+     * @param SettingRepository $settingRepository
+     * @return Response
+     */
     public function index(UnitPeppolRepository $unitpeppolRepository, SettingRepository $settingRepository): Response
     {      
-      $flash = $this->flash('' , '');
       $paginator = new OffsetPaginator($this->unitpeppols($unitpeppolRepository));
       $parameters = [
           'alert' => $this->alert(),  
           'unitpeppols' => $this->unitpeppols($unitpeppolRepository),
           'grid_summary'=> $settingRepository->grid_summary($paginator, $this->translator, (int)$settingRepository->get_setting('default_list_limit'), $this->translator->translate('invoice.unit.peppol'), ''),
-          'paginator'=> $paginator,
-          'flash'=> $flash
+          'paginator'=> $paginator
       ];
       return $this->viewRenderer->render('index', $parameters);
     }
@@ -159,21 +183,32 @@ final class UnitPeppolController
             $unitpeppol = $this->unitpeppol($currentRoute, $unitpeppolRepository);
             if ($unitpeppol) {
                 $this->unitpeppolService->deleteUnitPeppol($unitpeppol);               
-                $this->flash('info', $settingRepository->trans('record_successfully_deleted'));
+                $this->flash_message('info', $settingRepository->trans('record_successfully_deleted'));
                 return $this->webService->getRedirectResponse('unitpeppol/index'); 
             }
             return $this->webService->getRedirectResponse('unitpeppol/index'); 
 	} catch (Exception $e) {
-            $this->flash('danger', $e->getMessage());
+            $this->flash_message('danger', $e->getMessage());
             return $this->webService->getRedirectResponse('unitpeppol/index'); 
         }
     }
-        
+    
+    /**
+     * 
+     * @param ViewRenderer $head
+     * @param Request $request
+     * @param CurrentRoute $currentRoute
+     * @param ValidatorInterface $validator
+     * @param UnitPeppolRepository $unitpeppolRepository
+     * @param SettingRepository $settingRepository
+     * @param UnitRepository $unitRepository
+     * @return Response
+     */    
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute, 
-                        ValidatorInterface $validator,
-                        UnitPeppolRepository $unitpeppolRepository, 
-                        SettingRepository $settingRepository,                        
-                        UnitRepository $unitRepository
+      ValidatorInterface $validator,
+      UnitPeppolRepository $unitpeppolRepository, 
+      SettingRepository $settingRepository,                        
+      UnitRepository $unitRepository
     ): Response {
         $unitpeppol = $this->unitpeppol($currentRoute, $unitpeppolRepository);
         $enece = new Peppol_UNECERec20_11e();
@@ -202,17 +237,6 @@ final class UnitPeppolController
             return $this->viewRenderer->render('_form', $parameters);
         }
         return $this->webService->getRedirectResponse('unitpeppol/index');
-    }
-    
-    /**
-     * @param string $level
-     * @param string $message
-     * @return Flash
-     */
-    private function flash(string $level, string $message): Flash{
-        $flash = new Flash($this->session);
-        $flash->set($level, $message); 
-        return $flash;
     }
     
     //For rbac refer to AccessChecker    

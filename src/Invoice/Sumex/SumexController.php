@@ -17,7 +17,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Yiisoft\DataResponse\DataResponseFactoryInterface;
 use Yiisoft\Http\Method;
 use Yiisoft\Router\CurrentRoute;
-use Yiisoft\Session\SessionInterface;
+use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\Yii\View\ViewRenderer;
@@ -25,6 +25,8 @@ use Yiisoft\Validator\ValidatorInterface;
 
 final class SumexController
 {
+    private Flash $flash;
+    private Session $session;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     private UserService $userService;
@@ -33,6 +35,7 @@ final class SumexController
     private DataResponseFactoryInterface $factory;
 
     public function __construct(
+        Session $session,
         ViewRenderer $viewRenderer,
         WebControllerService $webService,
         UserService $userService,
@@ -41,6 +44,8 @@ final class SumexController
         DataResponseFactoryInterface $factory,
     )    
     {
+        $this->session = $session;
+        $this->flash = new Flash($session);
         $this->viewRenderer = $viewRenderer;      
         $this->webService = $webService;
         $this->userService = $userService;
@@ -58,37 +63,53 @@ final class SumexController
     }
     
     /**
-     * @param SessionInterface $session
      * @param SumexRepository $sumexRepository
      * @param SettingRepository $settingRepository
-     * @param Request $request
-     * @param SumexService $service
      */
-    public function index(SessionInterface $session, SumexRepository $sumexRepository, SettingRepository $settingRepository, Request $request, SumexService $service): \Yiisoft\DataResponse\DataResponse
+    public function index(SumexRepository $sumexRepository, 
+                          SettingRepository $settingRepository): \Yiisoft\DataResponse\DataResponse
     {
-         $canEdit = $this->rbac($session);
-         $flash = $this->flash($session, '','');
+         $canEdit = $this->rbac();
          $parameters = [
-      
           's'=>$settingRepository,
           'canEdit' => $canEdit,
           'sumexs' => $this->sumexs($sumexRepository),
-          'flash'=> $flash
+          'alert'=> $this->alert()
          ];
         
         return $this->viewRenderer->render('index', $parameters);
     }
     
+  /**
+   * @return string
+   */
+   private function alert(): string {
+     return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+     [ 
+       'flash' => $this->flash,
+       'errors' => [],
+     ]);
+   }
+
     /**
-     * 
+     * @param string $level
+     * @param string $message
+     * @return Flash
+     */
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
+    }
+    
+    /**
      * @param ViewRenderer $head
-     * @param SessionInterface $session
      * @param Request $request
      * @param ValidatorInterface $validator
      * @param SettingRepository $settingRepository
      * @return Response
      */    
-    public function add(ViewRenderer $head, Request $request, 
+    public function add(ViewRenderer $head, 
+                        Request $request, 
                         ValidatorInterface $validator,
                         SettingRepository $settingRepository
     ): Response
@@ -100,11 +121,9 @@ final class SumexController
             'body' => $request->getParsedBody(),
             's'=>$settingRepository,
             'head'=>$head,
-            
         ];
         
         if ($request->getMethod() === Method::POST) {
-            
             $form = new SumexForm();
             $model = new Sumex();
             if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
@@ -206,11 +225,11 @@ final class SumexController
     /**
      * @return Response|true
      */
-    private function rbac(SessionInterface $session): bool|Response 
+    private function rbac(): bool|Response 
     {
         $canEdit = $this->userService->hasPermission('editInv');
         if (!$canEdit){
-            $this->flash($session,'warning', $this->translator->translate('invoice.permission'));
+            $this->flash_message('warning', $this->translator->translate('invoice.permission'));
             return $this->webService->getRedirectResponse('sumex/index');
         }
         return $canEdit;
@@ -259,18 +278,5 @@ final class SumexController
           'casenumber'=>$sumex->getCasenumber()
         ];
         return $body;
-    }
-    
-    /**
-     * 
-     * @param SessionInterface $session
-     * @param string $level
-     * @param string $message
-     * @return Flash
-     */
-    private function flash(SessionInterface $session, string $level, string $message): Flash{
-        $flash = new Flash($session);
-        $flash->set($level, $message); 
-        return $flash;
     }
 }

@@ -32,43 +32,56 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 // Yiisoft
 use Yiisoft\Http\Method;
-use Yiisoft\Session\SessionInterface;
+use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\Yii\View\ViewRenderer;
 
 class ReportController
 {
+    private Session $session;
+    private Flash $flash;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     private UserService $userService; 
     private TranslatorInterface $translator;
         
-    public function __construct(ViewRenderer $viewRenderer, 
-                                WebControllerService $webService,
-                                UserService $userService,     
-                                TranslatorInterface $translator
-            )
+    public function __construct(
+        Session $session,
+        ViewRenderer $viewRenderer, 
+        WebControllerService $webService,
+        UserService $userService,     
+        TranslatorInterface $translator
+    )
     {
+        $this->session = $session;
+        $this->flash = new Flash($session);
         $this->viewRenderer = $viewRenderer->withControllerName('invoice/report')
                                            ->withLayout('@views/layout/invoice.php');
-                                           
         $this->webService = $webService;
         $this->userService = $userService;
         $this->translator = $translator;
     }
     
     /**
-     * 
-     * @param SessionInterface $session
      * @return string
      */
-    private function alert(SessionInterface $session) : string {
-        return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
-        [
-            'flash'=>$this->flash($session, '', ''),
-            'errors' => [],
-        ]);
+    private function alert(): string {
+      return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+      [ 
+        'flash' => $this->flash,
+        'errors' => [],
+      ]);
+    }
+
+    /**
+     * @param string $level
+     * @param string $message
+     * @return Flash
+     */
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
     
     /**
@@ -86,39 +99,24 @@ class ReportController
     }
     
     /**
-     * 
-     * @param SessionInterface $session
-     * @param string $level
-     * @param string $message
-     * @return Flash
-     */
-    private function flash(SessionInterface $session, string $level, string $message): Flash{
-        $flash = new Flash($session);
-        $flash->set($level, $message); 
-        return $flash;
-    }
-    
-    /**
-     * 
      * @param Request $request
      * @param ViewRenderer $head
-     * @param SessionInterface $session
      * @param ClientRepository $cR
      * @param InvAmountRepository $iaR
      * @param SettingRepository $sR
      * @return Response|\Mpdf\Mpdf|array|string
      * @psalm-suppress MixedInferredReturnType
      */
-    public function invoice_aging_index(Request $request, 
-                                        ViewRenderer $head, 
-                                        SessionInterface $session,
-                                        ClientRepository $cR,
-                                        InvAmountRepository $iaR,
-                                        SettingRepository $sR) : Response|\Mpdf\Mpdf|array|string
+    public function invoice_aging_index(
+      Request $request, 
+      ViewRenderer $head,
+      ClientRepository $cR,
+      InvAmountRepository $iaR,
+      SettingRepository $sR) : Response|\Mpdf\Mpdf|array|string
     {
         $parameters = [
             'head'=> $head,
-            'alerts' => $this->alert($session),
+            'alert' => $this->alert(),
             'action' => ['report/invoice_aging_index'],
         ];
         if ($request->getMethod() === Method::POST) { 
@@ -269,20 +267,21 @@ class ReportController
      * 
      * @param Request $request
      * @param ViewRenderer $head
-     * @param SessionInterface $session
      * @param PaymentRepository $pymtR
      * @param SettingRepository $sR
      * @return Response|\Mpdf\Mpdf|array|string
      * @psalm-suppress MixedInferredReturnType
      */
-    public function payment_history_index(Request $request, ViewRenderer $head, SessionInterface $session,                                         
-                                    PaymentRepository $pymtR,
-                                    SettingRepository $sR) : Response|\Mpdf\Mpdf|array|string
+    public function payment_history_index(
+      Request $request, 
+      ViewRenderer $head,                                         
+      PaymentRepository $pymtR,
+      SettingRepository $sR) : Response|\Mpdf\Mpdf|array|string
     {        
         $datehelper = new DateHelper($sR);
         $parameters = [
             'head'=> $head,
-            'alerts' => $this->alert($session),
+            'alert' => $this->alert(),
             'action' => ['report/payment_history_index'],            
             'datehelper' => $datehelper,
             'start_tax_year' => $datehelper->tax_year_to_immutable(),
@@ -358,7 +357,6 @@ class ReportController
      * 
      * @param Request $request
      * @param ViewRenderer $head
-     * @param SessionInterface $session
      * @param ClientRepository $cR
      * @param InvRepository $iR
      * @param InvAmountRepository $iaR
@@ -366,16 +364,18 @@ class ReportController
      * @return Response|\Mpdf\Mpdf|array|string
      * @psalm-suppress MixedInferredReturnType
      */
-    public function sales_by_client_index(Request $request, ViewRenderer $head, SessionInterface $session,                                         
-                                    ClientRepository $cR,
-                                    InvRepository $iR,
-                                    InvAmountRepository $iaR,
-                                    SettingRepository $sR) : Response|\Mpdf\Mpdf|array|string
+    public function sales_by_client_index(
+      Request $request, 
+      ViewRenderer $head, 
+      ClientRepository $cR,
+      InvRepository $iR,
+      InvAmountRepository $iaR,
+      SettingRepository $sR) : Response|\Mpdf\Mpdf|array|string
     {
         $datehelper = new DateHelper($sR);
         $parameters = [
             'head'=> $head,
-            'alerts' => $this->alert($session),
+            'alert' => $this->alert(),
             'action' => ['report/sales_by_client_index'],
             'datehelper'=> $datehelper,
             'start_tax_year' => $datehelper->tax_year_to_immutable(),
@@ -471,7 +471,6 @@ class ReportController
      * 
      * @param Request $request
      * @param ViewRenderer $head
-     * @param SessionInterface $session
      * @param ClientRepository $cR
      * @param InvRepository $iR
      * @param InvAmountRepository $iaR
@@ -479,16 +478,18 @@ class ReportController
      * @return Response|\Mpdf\Mpdf|array|string
      * @psalm-suppress MixedInferredReturnType
      */
-    public function sales_by_year_index(Request $request, ViewRenderer $head, SessionInterface $session,                                         
-                                    ClientRepository $cR,
-                                    InvRepository $iR,
-                                    InvAmountRepository $iaR,
-                                    SettingRepository $sR) : Response|\Mpdf\Mpdf|array|string
+    public function sales_by_year_index(
+      Request $request, 
+      ViewRenderer $head,
+      ClientRepository $cR,
+      InvRepository $iR,
+      InvAmountRepository $iaR,
+      SettingRepository $sR) : Response|\Mpdf\Mpdf|array|string
     {       
         $datehelper = new DateHelper($sR);
         $parameters = [
             'head'=> $head,
-            'alerts' => $this->alert($session),
+            'alert' => $this->alert(),
             'action' => ['report/sales_by_year_index'],            
             'datehelper' => $datehelper,
             'start_tax_year' => $datehelper->tax_year_to_immutable(),

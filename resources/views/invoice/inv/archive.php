@@ -1,44 +1,11 @@
 <?php
 declare(strict_types=1);
 
-use Yiisoft\Yii\Bootstrap5\Alert;
-
 /**
  * @var \Yiisoft\Router\UrlGeneratorInterface $urlGenerator
  */
 
-?>
-<?php
-    $danger = $flash->get('danger');
-    if ($danger != null) {
-        $alert =  Alert::widget()
-            ->body($danger)
-            ->options([
-                'class' => ['alert-danger shadow'],
-            ])
-        ->render();
-        echo $alert;
-    }
-    $info = $flash->get('info');
-    if ($info != null) {
-        $alert =  Alert::widget()
-            ->body($info)
-            ->options([
-                'class' => ['alert-info shadow'],
-            ])
-        ->render();
-        echo $alert;
-    }
-    $warning = $flash->get('warning');
-    if ($warning != null) {
-        $alert =  Alert::widget()
-            ->body($warning)
-            ->options([
-                'class' => ['alert-warning shadow'],
-            ])
-        ->render();
-        echo $alert;
-    }
+echo $alert;
 ?> 
 
 <div id="headerbar">

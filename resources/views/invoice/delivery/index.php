@@ -1,7 +1,6 @@
 <?php
 declare(strict_types=1);
 
-use Yiisoft\Data\Paginator\OffsetPaginator;
 use Yiisoft\Html\Html;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\Html\Tag\A;
@@ -15,14 +14,14 @@ use Yiisoft\Yii\DataView\OffsetPagination;
 use Yiisoft\Router\CurrentRoute;
 
 /**
- * @var \App\Invoice\Entity\Product $product
  * @var string $csrf
  * @var CurrentRoute $currentRoute
- * @var OffsetPaginator $paginator
+ * @var \Yiisoft\Data\Paginator\OffsetPaginator $paginator
  * @var \Yiisoft\Router\UrlGeneratorInterface $urlGenerator
  * @var TranslatorInterface $translator
- * @var \Yiisoft\Session\Flash\FlashInterface $flash_interface
  */
+
+  echo $alert;
 ?>
 
 <?php
@@ -49,9 +48,6 @@ $toolbarReset = A::tag()
 $toolbar = Div::tag();
 ?>
 <br>
-<div>
-    <?= $alert; ?>
-</div>
 <?=
   GridView::widget()
   ->columns(
@@ -110,9 +106,9 @@ $toolbar = Div::tag();
 $pageSize = $paginator->getCurrentPageSize();
 if ($pageSize > 0) {
   echo Html::p(
-    sprintf('Showing %s out of %s deliveries: Max ' . $max . ' deliveries per page: Total Deliveries ' . $paginator->getTotalItems(), $pageSize, $paginator->getTotalItems()),
+    sprintf($translator->translate('invoice.index.footer.showing').' deliveries: Max ' . $max . ' deliveries per page: Total Deliveries ' . $paginator->getTotalItems(), $pageSize, $paginator->getTotalItems()),
     ['class' => 'text-muted']
   );
 } else {
-  echo Html::p('No records');
+  echo Html::p($translator->translate('invoice.records.no'));
 }

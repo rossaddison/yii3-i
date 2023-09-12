@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use Yiisoft\Html\Html;
-use Yiisoft\Yii\Bootstrap5\Modal;
 
 /**
  * @var \App\Invoice\Entity\CompanyPrivate $companyprivate
@@ -12,9 +11,9 @@ use Yiisoft\Yii\Bootstrap5\Modal;
  * @var string $id
  */
 
+echo $alert;
 ?>
 <h1><?= $company_private; ?></h1>
-<?php echo $alert; ?>
 <div>
 <?php
     if ($canEdit) {
@@ -27,16 +26,16 @@ use Yiisoft\Yii\Bootstrap5\Modal;
       echo Html::br();
       $label = $companyprivate->getId() . " ";
       echo Html::label($label);
-      echo Html::a('Edit',
+      echo Html::a($s->trans('edit'),
       $urlGenerator->generate('companyprivate/edit', ['id' => $companyprivate->getId()]),
             ['class' => 'btn btn-info btn-sm ms-2']
           );
-      echo Html::a('View',
+      echo Html::a($s->trans('view'),
       $urlGenerator->generate('companyprivate/view', ['id' => $companyprivate->getId()]),
       ['class' => 'btn btn-warning btn-sm ms-2']
              );      
       //modal delete button
-      echo Html::a('Delete',
+      echo Html::a($s->trans('delete'),
       $urlGenerator->generate('companyprivate/delete', ['id' => $companyprivate->getId()]),
             ['class' => 'btn btn-danger btn-sm ms-2', 'onclick'=>"return confirm('".$s->trans('delete').'?'."')" ]
           );

@@ -42,155 +42,7 @@ final class InvService
         $this->repository = $repository;
         $this->session = $session;
         $this->translator = $translator;
-    }
-    
-    /**
-     * https://github.com/yiisoft/demo/issues/462
-     * addInv and saveInv have been combined into bothInv
-     * @param User $user
-     * @param Inv $model
-     * @param InvForm $form
-     * @param SR $s
-     * @return Inv $model
-     */
-    public function addInv(User $user, Inv $model, InvForm $form, SR $s): Inv
-    {        
-       $datehelper = new DateHelper($s);
-                     
-       $datetime_created = $datehelper->get_or_set_with_style(null!==$form->getDate_created()? $form->getDate_created() : new \DateTime());
-       $datetimeimmutable_created = new \DateTimeImmutable($datetime_created instanceof \DateTime ? $datetime_created->format('Y-m-d H:i:s') : 'now');
-       $model->setDate_created($datetimeimmutable_created);
-       
-       $datetime_supplied = $datehelper->get_or_set_with_style(null!==$form->getDate_supplied()? $form->getDate_supplied() : new \DateTime());
-       $datetimeimmutable_supplied = new \DateTimeImmutable($datetime_supplied instanceof \DateTime ? $datetime_supplied->format('Y-m-d H:i:s') : 'now');
-       $model->setDate_supplied($datetimeimmutable_supplied);
-       
-       $datetime_tax_point = $datehelper->get_or_set_with_style(null!==$form->getDate_tax_point()? $form->getDate_tax_point() : new \DateTime());
-       $datetimeimmutable_tax_point = new \DateTimeImmutable($datetime_tax_point instanceof \DateTime ? $datetime_tax_point->format('Y-m-d H:i:s') : 'now');
-       $model->setDate_tax_point($datetimeimmutable_tax_point);
-       
-       $model->setDate_due($s);
-       null!==$form->getClient_id() ? $model->setClient_id((int)$form->getClient_id()) : ''; 
-       null!==$form->getGroup_id() ? $model->setGroup_id((int)$form->getGroup_id()) : '';
-       null!==$form->getStatus_id() ? $model->setStatus_id($form->getStatus_id()) : ''; 
-       null!==$form->getDiscount_amount() ? $model->setDiscount_amount($form->getDiscount_amount()) : '';
-       null!==$form->getDiscount_percent() ? $model->setDiscount_percent($form->getDiscount_percent()) : '';
-       null!==$form->getUrl_key() ? $model->setUrl_key($form->getUrl_key()) : '';
-       null!==$form->getPassword() ? $model->setPassword($form->getPassword()) : '';
-       null!==$form->getPayment_method() ? $model->setPayment_method($form->getPayment_method()) : '';
-       null!==$form->getTerms() ? $model->setTerms($form->getTerms()) : $this->translator->translate('invoice.payment.terms.default'); 
-       null!==$form->getNote() ? $model->setNote($form->getNote()) : ''; 
-       null!==$form->getDocumentDescription() ? $model->setDocumentDescription($form->getDocumentDescription()) : ''; 
-       null!==$form->getCreditinvoice_parent_id() ? $model->setCreditinvoice_parent_id($form->getCreditinvoice_parent_id() ?: 0) : '';
-       if ($model->isNewRecord()) {
-            // Draft invoices CANNOT be viewed by Clients. 
-            // Mark the invoices as 'sent' so that clients can view their invoices when logged in
-            // Draft => 1, Sent => 2, Viewed => 3, Paid => 4
-            // To see if clients can view their invoices online under observer role
-            // instead of having to email them in order to get the invoice status marked as sent
-            // the setting under ...Invoices...Other Settings...Mark invoices as sent when copying an invoice can be used.
-            // For testing purposes, multiple invoices to this client can be copied and
-            // with this setting, marked as sent (without emailing), and therefore viewable by the client
-            // Logging in as client with observer status will see these invoices
-            // By default, mark_invoices_sent_copy will be set to '0'
-            if ($s->get_setting('mark_invoices_sent_copy') === '1') {
-                $model->setStatus_id(2);
-                // If the read_only_toggle is set to 'sent', set this invoice to read only
-                $model->setIs_read_only(true);
-            } else {
-                $model->setStatus_id(1);
-                $model->setIs_read_only(false);                
-            }
-            null!==$form->getNumber() ? $model->setNumber($form->getNumber()) : '';
-            null!==$form->getSo_id() ? $model->setSo_id((int)$form->getSo_id()) : ''; 
-            null!==$form->getQuote_id() ? $model->setQuote_id((int)$form->getQuote_id()) : '';
-            $model->setUser_id((int)$user->getId());
-            $model->setUrl_key(Random::string(32)); 
-            $model->setDate_created(new \DateTimeImmutable('now'));
-            $model->setTime_created((new \DateTimeImmutable('now'))->format('H:i:s'));
-            $model->setPayment_method(1);
-            $model->setDate_due($s); 
-            // These fields are necessary if you are on a VAT basis or cash basis form of invoicing
-            // Otherwise they can be ignored
-            $model->setDate_supplied(new \DateTimeImmutable('now'));                        
-            $model->setDate_tax_point(new \DateTimeImmutable('now'));
-       }
-       $this->repository->save($model);
-       return $model;
-    }
-      
-    /**
-     * 
-     * @param User $user
-     * @param Inv $model
-     * @param InvForm $form
-     * @param SR $s
-     * @param GR $gR
-     * @return Inv $model
-     */
-    public function saveInv(User $user, Inv $model, InvForm $form, SR $s, GR $gR): Inv 
-    {  
-       $datehelper = new DateHelper($s);
-       
-       $datetime_created = $datehelper->get_or_set_with_style(null!==$form->getDate_created()? $form->getDate_created() : new \DateTime());
-       $datetimeimmutable_created = new \DateTimeImmutable($datetime_created instanceof \DateTime ? $datetime_created->format('Y-m-d H:i:s') : 'now');
-       $model->setDate_created($datetimeimmutable_created);
-       
-       $datetime_supplied = $datehelper->get_or_set_with_style(null!==$form->getDate_supplied()? $form->getDate_supplied() : new \DateTime());
-       $datetimeimmutable_supplied = new \DateTimeImmutable($datetime_supplied instanceof \DateTime ? $datetime_supplied->format('Y-m-d H:i:s') : 'now');
-       $model->setDate_supplied($datetimeimmutable_supplied);
-       
-       // build the tax point       
-       $datetimeimmutable_tax_point = $this->set_tax_point($model, $datetimeimmutable_supplied, $datetimeimmutable_created);
-       null!==$datetimeimmutable_tax_point ? $model->setDate_tax_point($datetimeimmutable_tax_point) : '';
-              
-       $model->setDate_due($s);
-       
-       null!==$form->getClient_id() ? $model->setClient($model->getClient()?->getClient_id() == $form->getClient_id() ? $model->getClient() : null): '';
-       $model->setClient_id((int)$form->getClient_id());
-       
-       null!==$form->getGroup_id() ? $model->setGroup($model->getGroup()?->getId() == $form->getGroup_id() ? $model->getGroup() : null): '';
-       $model->setGroup_id((int)$form->getGroup_id());       
-        
-       null!==$form->getStatus_id() ? $model->setStatus_id($form->getStatus_id()) : '';
-       null!==$form->getDiscount_percent() ? $model->setDiscount_percent($form->getDiscount_percent()) : '';
-       null!==$form->getDiscount_amount() ? $model->setDiscount_amount($form->getDiscount_amount()) : '';
-       null!==$form->getUrl_key() ? $model->setUrl_key($form->getUrl_key()) : '';
-       null!==$form->getPassword() ? $model->setPassword($form->getPassword()) : '';
-       null!==$form->getPayment_method() ? $model->setPayment_method($form->getPayment_method()) : '';
-       null!==$form->getTerms() ? $model->setTerms($form->getTerms()) : $this->translator->translate('invoice.payment.terms.default'); 
-       null!==$form->getNote() ? $model->setNote($form->getNote()) : ''; 
-       null!==$form->getDocumentDescription() ? $model->setDocumentDescription($form->getDocumentDescription()) : ''; 
-       null!==$form->getCreditinvoice_parent_id() ? $model->setCreditinvoice_parent_id($form->getCreditinvoice_parent_id() ?: 0) : '';
-       null!==$form->getDelivery_id() ? $model->setDelivery_id($form->getDelivery_id()) : '';
-       null!==$form->getContract_id() ? $model->setContract_id($form->getContract_id()) : '';
-       if ($model->isNewRecord()) {
-            if ($s->get_setting('mark_invoices_sent_copy') === '1') {
-                $model->setStatus_id(2);
-                // If the read_only_toggle is set to 'sent', set this invoice to read only
-                $model->setIs_read_only(true);
-            } else {
-                $model->setStatus_id(1);
-                $model->setIs_read_only(false);                
-            }           
-            null!==$form->getNumber() ? $model->setNumber($form->getNumber()) : '';
-            null!==$form->getSo_id() ? $model->setSo_id((int)$form->getSo_id()) : ''; 
-            null!==$form->getQuote_id() ? $model->setQuote_id((int)$form->getQuote_id()) : '';
-            $model->setUser_id((int)$user->getId());
-            $model->setUrl_key(Random::string(32));            
-            $model->setDate_created(new \DateTimeImmutable('now'));
-            $model->setTime_created((new \DateTimeImmutable('now'))->format('H:i:s'));
-            $model->setPayment_method(0);
-            $model->setDate_due($s);
-            $model->setDiscount_amount(0.00);
-       }
-       $this->repository->save($model);// Regenerate invoice numbers if the setting is changed
-       if (!$model->isNewRecord() && $s->get_setting('generate_invoice_number_for_draft') === '1') {
-            $model->setNumber((string)$gR->generate_number((int)$form->getGroup_id(), true));  
-       }
-       $this->repository->save($model);
-       return $model;
-    }
+    }    
     
     /**
      * bothInv replaces addInv and saveInv.
@@ -204,6 +56,15 @@ final class InvService
      */
     public function bothInv(User $user, Inv $model, InvForm $form, SR $s, GR $gR): Inv 
     {  
+       // Only generate an Invoice Number if the following criteria are met:
+       // 1. It is NOT a new record ie. NOT a draft
+       // 2. The setting allowing for drafts having invoice numbers is OFF ie. only non-draft invoices
+       // 3. The current invoice ie. model (NOT form) has NO number associated with it ie. a NULL record
+       // 4. As an extra measure, the FORM has status 'sent' only so an invoice number can only be generated if set to 'sent' on current form.
+       if ((!$model->isNewRecord()) && ($s->get_setting('generate_invoice_number_for_draft') === '0') && (null==$model->getNumber())  && ($form->getStatus_id() == 2)) {
+          $model->setNumber((string)$gR->generate_number((int)$form->getGroup_id(), true));  
+       }
+      
        $model->nullifyRelationOnChange((int)$form->getGroup_id(),(int)$form->getClient_id(), );
        $datehelper = new DateHelper($s);
              
@@ -244,8 +105,13 @@ final class InvService
             } else {
                 $model->setStatus_id(1);
                 $model->setIs_read_only(false);                
-            }           
-            null!==$form->getNumber() ? $model->setNumber($form->getNumber()) : '';
+            }
+            // if draft invoices must get invoice numbers
+            if ($s->get_setting('generate_invoice_number_for_draft') === '1') {
+              $model->setNumber((string)$gR->generate_number((int)$form->getGroup_id(), true));  
+            } else {
+              $model->setNumber('');
+            }
             null!==$form->getSo_id() ? $model->setSo_id((int)$form->getSo_id()) : ''; 
             null!==$form->getQuote_id() ? $model->setQuote_id((int)$form->getQuote_id()) : '';
             null!==$form->getDelivery_location_id() ? $model->setDelivery_location_id($form->getDelivery_location_id()) : '';
@@ -261,10 +127,6 @@ final class InvService
        $this->repository->save($model);// Regenerate invoice numbers if the setting is changed
        
        $model->setStand_in_code($s->get_setting('stand_in_code'));
-       
-       if (!$model->isNewRecord() && $s->get_setting('generate_invoice_number_for_draft') === '1') {
-            $model->setNumber((string)$gR->generate_number((int)$form->getGroup_id(), true));  
-       }
        $this->repository->save($model);
        return $model;
     }

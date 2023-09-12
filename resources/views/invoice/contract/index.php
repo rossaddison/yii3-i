@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-use Yiisoft\Data\Paginator\OffsetPaginator;
+use App\Invoice\Entity\Inv;
 use Yiisoft\Html\Html;
-use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\View\WebView;
 use Yiisoft\Html\Tag\A;
 use Yiisoft\Html\Tag\Div;
@@ -14,18 +13,18 @@ use Yiisoft\Html\Tag\I;
 use Yiisoft\Yii\DataView\Column\DataColumn;
 use Yiisoft\Yii\DataView\GridView;
 use Yiisoft\Yii\DataView\OffsetPagination;
-use Yiisoft\Router\CurrentRoute;
 
 /**
- * @var \App\Invoice\Entity\Contrac $contract
+ * @var \App\Invoice\Entity\Contract $contract
  * @var string $csrf
  * @var CurrentRoute $currentRoute 
  * @var OffsetPaginator $paginator
  * @var \Yiisoft\Router\UrlGeneratorInterface $urlGenerator 
  * @var TranslatorInterface $translator
- * @var \Yiisoft\Session\Flash\FlashInterface $flash_interface 
  * @var WebView $this
  */ 
+
+ echo $alert;
 ?>
 <?php
     $header = Div::tag()
@@ -55,16 +54,34 @@ use Yiisoft\Router\CurrentRoute;
 <div>
     <h5><?= $translator->translate('invoice.invoice.contract.contracts'); ?></h5>
 </div>
-<br>
-<div>
-    <?= $alert; ?>
-</div>    
+<br>    
     <?= GridView::widget()
         ->columns(
             DataColumn::create()
                 ->attribute('id')
                 ->label($s->trans('id'))
                 ->value(static fn (object $model) => Html::encode($model->getId())
+            ),
+            DataColumn::create()
+                ->attribute('id')
+                ->label($translator->translate('invoice.invoice.contract.index.button.list'))
+                ->value(static function ($model) use ($urlGenerator, $iR) : string {
+                    $invoices = $iR->findAllWithContract($model->getId());
+                    $buttons = '';
+                    $button = '';
+                    /**
+                     * @var Inv $invoice
+                     */
+                    foreach ($invoices as $invoice) {
+                       $button = (string)Html::a($invoice->getNumber(), $urlGenerator->generate('inv/view',['id'=>$invoice->getId()]),
+                         ['class'=>'btn btn-primary btn-sm',
+                          'data-bs-toggle' => 'tooltip',
+                          'title' => $model->getReference() 
+                         ]);
+                       $buttons .= $button . str_repeat("&nbsp;", 1);
+                    }
+                    return $buttons;
+                }
             ),
             DataColumn::create()
                 ->label($s->trans('client'))                
@@ -137,7 +154,9 @@ use Yiisoft\Router\CurrentRoute;
         )
         ->rowAttributes(['class' => 'align-middle'])
         ->summaryAttributes(['class' => 'mt-3 me-3 summary text-end'])
-    ->summary('')
+        ->summary($grid_summary)
+        ->emptyTextAttributes(['class' => 'card-header bg-warning text-black'])
+        ->emptyText((string)$translator->translate('invoice.invoice.no.records'))
         ->tableAttributes(['class' => 'table table-striped text-center h-75','id'=>'table-contract'])
         ->toolbar(
             Form::tag()->post($urlGenerator->generate('contract/index'))->csrf($csrf)->open() .
@@ -149,11 +168,11 @@ use Yiisoft\Router\CurrentRoute;
         $pageSize = $paginator->getCurrentPageSize();
         if ($pageSize > 0) {
             echo Html::p(
-                sprintf('Showing %s out of %s contracts', $pageSize, $paginator->getTotalItems()),
+                sprintf($translator->translate('invoice.index.footer.showing').' contracts', $pageSize, $paginator->getTotalItems()),
                 ['class' => 'text-muted']
             );
         } else {
-            echo Html::p('No records');
+            echo Html::p($translator->translate('invoice.records.no'));
         }
     ?>
     </div>

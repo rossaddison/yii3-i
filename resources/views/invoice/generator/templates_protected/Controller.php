@@ -27,7 +27,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Yiisoft\Data\Paginator\OffsetPaginator;
 use Yiisoft\Http\Method;
 use Yiisoft\Router\CurrentRoute;
-use Yiisoft\Session\SessionInterface;
+use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\Validator\ValidatorInterface;
@@ -42,7 +42,8 @@ use \Exception;
 
 final class <?= $generator->getCamelcase_capital_name(); ?>Controller
 {
-    private SessionInterface $session;
+    private Flash $flash;
+    private Session $session;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     private UserService $userService;
@@ -54,7 +55,7 @@ final class <?= $generator->getCamelcase_capital_name(); ?>Controller
     private TranslatorInterface $translator;
     
     public function __construct(
-        SessionInterface $session,
+        Session $session,
         ViewRenderer $viewRenderer,
         WebControllerService $webService,
         UserService $userService,
@@ -63,6 +64,7 @@ final class <?= $generator->getCamelcase_capital_name(); ?>Controller
     )    
     {
         $this->session = $session;
+        $this->flash = new Flash($session);
         $this->viewRenderer = $viewRenderer->withControllerName('<?= $generator->getRoute_prefix().'/'.$generator->getRoute_suffix(); ?>')
                                            // The Controller layout dir is now redundant: replaced with an alias 
                                            ->withLayout('@<?= $generator->getController_layout_dir_dot_path() ?>');
@@ -121,11 +123,11 @@ final class <?= $generator->getCamelcase_capital_name(); ?>Controller
     
     /**
      * @return string
-     */    
+     */
     private function alert() : string {
         return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
         [
-            'flash'=>$this->flash('', ''),
+            'flash'=>$this->flash,
             'errors' => [],
         ]);
     }
@@ -159,14 +161,12 @@ final class <?= $generator->getCamelcase_capital_name(); ?>Controller
       $parameters = [
       '<?= $generator->getSmall_singular_name(); ?>s' => $this-><?= $generator->getSmall_singular_name(); ?>s($<?= $generator->getSmall_singular_name(); ?>Repository),
       'paginator' => $paginator,
-      'alerts' => $this->alert(),
+      'alert' => $this->alert(),
       'max' => (int) $settingRepository->get_setting('default_list_limit'),
       'grid_summary' => $settingRepository->grid_summary($paginator, $this->translator, (int) $settingRepository->get_setting('default_list_limit'), $this->translator->translate('plural'), ''),
     ];
     return $this->viewRenderer->render('/invoice/<?= $generator->getSmall_singular_name(); ?>/index', $parameters);
     }
-    
-    
     
     /**
      * 
@@ -181,12 +181,12 @@ final class <?= $generator->getCamelcase_capital_name(); ?>Controller
             $<?= $generator->getSmall_singular_name();?> = $this-><?= $generator->getSmall_singular_name();?>($currentRoute, $<?= $generator->getSmall_singular_name();?>Repository);
             if ($<?= $generator->getSmall_singular_name();?>) {
                 $this-><?= $generator->getSmall_singular_name();?>Service->delete<?= $generator->getCamelcase_capital_name(); ?>($<?= $generator->getSmall_singular_name();?>);               
-                $this->flash('info', $settingRepository->trans('record_successfully_deleted'));
+                $this->flash_message('info', $settingRepository->trans('record_successfully_deleted'));
                 return $this->webService->getRedirectResponse('<?= $generator->getSmall_singular_name();?>/index'); 
             }
             return $this->webService->getRedirectResponse('<?= $generator->getSmall_singular_name();?>/index'); 
 	} catch (Exception $e) {
-            $this->flash('danger', $e->getMessage());
+            $this->flash_message('danger', $e->getMessage());
             return $this->webService->getRedirectResponse('<?= $generator->getSmall_singular_name();?>/index'); 
         }
     }
@@ -250,10 +250,9 @@ final class <?= $generator->getCamelcase_capital_name(); ?>Controller
      * @param string $message
      * @return Flash
      */
-    private function flash(string $level, string $message): Flash{
-        $flash = new Flash($this->session);
-        $flash->set($level, $message); 
-        return $flash;
+    private function flash_message(string $level, string $message): Flash{
+        $this->flash->add($level, $message, true); 
+        return $this->flash;
     }
     
     //For rbac refer to AccessChecker    

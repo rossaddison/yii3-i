@@ -50,6 +50,7 @@ final class SettingController
     private Translator $translator;
     private UserService $userService;    
     private DataResponseFactoryInterface $factory;
+    private Flash $flash;
     private Session $session;
     private SettingRepository $s;
     
@@ -70,8 +71,20 @@ final class SettingController
         $this->translator = $translator;
         $this->userService = $userService;
         $this->factory = $factory;
+        $this->flash = new Flash($session);
         $this->session = $session;
         $this->s = $s;
+    }
+    
+    /**
+     * @return string
+     */
+    private function alert(): string {
+      return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+      [ 
+        'flash' => $this->flash,
+        'errors' => [],
+      ]);
     }
     
     // The debug index is simply a list of the settings that are useful to change when debugging and appears in red    
@@ -89,8 +102,8 @@ final class SettingController
         $parameters = [
               'paginator' => $paginator,
               's'=>$this->s,
+              'alert' => $this->alert(),
               'canEdit' => $canEdit,
-              'flash'=>$this->flash($this->session, '', ''),
               'settings' => $this->settings($this->s),
               'session'=>$this->session,
               'trans'=>$this->translator->translate('invoice.setting.translator.key'),
@@ -114,7 +127,9 @@ final class SettingController
      * @param TR $tR
      * @return Response
      */
-    public function tab_index(Request $request, ValidatorInterface $validator, ViewRenderer $head, 
+    public function tab_index(Request $request, 
+                              ValidatorInterface $validator, 
+                              ViewRenderer $head, 
                               ER $eR, 
                               GR $gR, 
                               PM $pm, 
@@ -137,10 +152,7 @@ final class SettingController
         $parameters = [
             'defat'=> $sR->withKey('default_language'),
             'action'=>['setting/tab_index'],
-            'alert'=>$this->viewRenderer->renderPartialAsString('/invoice/layout/alert',[
-                    'flash'=>$this->flash($this->session,'',''),
-                    'errors' => [],
-            ]),
+            'alert' => $this->alert(),
             's'=> $this->s,
             'head' => $head,
             'body'=> $request->getParsedBody(),
@@ -275,13 +287,20 @@ final class SettingController
                        $this->tab_index_debug_mode_ensure_all_settings_included(true, $key, $value, $validator);
                     }                
                 }
-                $this->flash($this->session, 'info', $this->s->trans('settings_successfully_saved'));
+                $this->flash_message('info', $this->s->trans('settings_successfully_saved'));
                 return $this->webService->getRedirectResponse('setting/tab_index');
                 }
             }
             return $this->viewRenderer->render('tab_index', $parameters);        
     }
     
+    /**
+     * 
+     * @param string $key
+     * @param string $value
+     * @param SettingRepository $sR
+     * @return void
+     */
     public function tab_index_settings_save(string $key, string $value, SettingRepository $sR) : void {
         $setting = $sR->withKey($key);
         if ($setting) {
@@ -364,12 +383,37 @@ final class SettingController
             $form = new SettingForm();
             if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
                 $this->settingService->saveSetting(new Setting(), $form);
-                $this->flash($this->session, 'info', $this->s->trans('record_successfully_updated'));
+                $this->flash_message('info', $this->s->trans('record_successfully_updated'));
                 return $this->webService->getRedirectResponse('setting/debug_index');
             }
             $parameters['errors'] = $form->getFormErrors();
         }
         return $this->viewRenderer->render('__form', $parameters);
+    }
+    
+    /**
+     * Use: Toggle between draft invoice has 1. invoice number generated or 2. no Invoice number generated 
+     * Route name: setting/draft route action setting/inv_draft_has_number_switch
+     * @see /config/common/routes.php
+     * @param CurrentRoute $currentRoute
+     * @return Response
+     */
+    public function inv_draft_has_number_switch(CurrentRoute $currentRoute): Response 
+    {
+      $setting = $this->setting($currentRoute, $this->s);
+      if ($setting) {
+          if ($setting->getSetting_value() == '0') {
+             $setting->setSetting_value('1');
+             $this->s->save($setting);
+             return $this->webService->getRedirectResponse('inv/index');
+          }
+          if ($setting->getSetting_value() == '1') {
+             $setting->setSetting_value('0');
+             $this->s->save($setting);
+             return $this->webService->getRedirectResponse('inv/index');
+          }
+      }
+      return $this->webService->getRedirectResponse('inv/index');
     }
     
     /**
@@ -399,7 +443,7 @@ final class SettingController
                 $body = $request->getParsedBody();
                 if ($form->load($body) && $validator->validate($form)->isValid()) {
                     $this->settingService->saveSetting($setting, $form);
-                    $this->flash($this->session, 'info', $this->s->trans('record_successfully_updated'));
+                    $this->flash_message('info', $this->s->trans('record_successfully_updated'));
                     return $this->webService->getRedirectResponse('setting/debug_index');
                 }
                 $parameters['body'] = $body;
@@ -433,24 +477,20 @@ final class SettingController
     {
         $setting = $this->setting($currentRoute,$this->s);
         if ($setting) {
-            $this->flash($this->session,'info','This record has been deleted.');
+            $this->flash_message('info','This record has been deleted.');
             $this->settingService->deleteSetting($setting);               
         }
         return $this->webService->getRedirectResponse('setting/debug_index');        
     }
     
     /**
-     * 
-     * @param Session $session
      * @param string $level
      * @param string $message
-     * @psalm-param ''|'info'|'warning' $level
      * @return Flash
      */
-    private function flash(Session $session, string $level, string $message): Flash{
-        $flash = new Flash($session);
-        $flash->set($level, $message); 
-        return $flash;
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
     
     /**
@@ -520,7 +560,7 @@ final class SettingController
     private function rbac(): bool|Response {
         $canEdit = $this->userService->hasPermission('editInv');
         if (!$canEdit){
-            $this->flash($this->session, 'warning', $this->translator->translate('invoice.permission'));
+            $this->flash_message('warning', $this->translator->translate('invoice.permission'));
             return $this->webService->getRedirectResponse('setting/index');
         }
         return $canEdit;
@@ -554,19 +594,22 @@ final class SettingController
         return $settings;
     }
     
+    /**
+     * @return \Yiisoft\DataResponse\DataResponse
+     */
     public function clear() : \Yiisoft\DataResponse\DataResponse
     {
         $directory = dirname(dirname(dirname(__DIR__))).DIRECTORY_SEPARATOR.'public'.DIRECTORY_SEPARATOR. 'assets';
         try {
             $filehelper = new FileHelper;
             $filehelper->clearDirectory($directory);
-            $this->flash($this->session,'info', 'Assets cleared at '.$directory);
+            $this->flash_message('info', $this->translator->translate('invoice.setting.assets.cleared.at').$directory);
             return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/successful',
-            ['heading'=>'Successful','message'=>'You have cleared the cache.'])); 
+            ['heading'=>$this->translator->translate('invoice.successful'),'message'=>$this->translator->translate('invoice.setting.you.have.cleared.the.cache')])); 
         } catch (\Exception $e) {            
-            $this->flash($this->session,'warning', 'Assets were not cleared at '.$directory. 'due to '.$e->getMessage());            
+            $this->flash_message('warning', $this->translator->translate('invoice.setting.assets.were.not.cleared.at') .$directory. $this->translator->translate('invoice.setting.as.a.result.of').$e->getMessage());            
             return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/unsuccessful',
-            ['heading'=>'Unsuccessful','message'=>'You have NOT cleared the cache due to a '. $e->getMessage().' error on the public assets folder.'])); 
+            ['heading'=>$this->translator->translate('invoice.unsuccessful'),'message'=> $this->translator->translate('invoice.setting.you.have.not.cleared.the.cache.due.to.a') . $e->getMessage(). $this->translator->translate('invoice.setting.error.on.the.public.assets.folder')])); 
         }
     }
     

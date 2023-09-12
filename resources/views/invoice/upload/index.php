@@ -16,11 +16,10 @@ use Yiisoft\Yii\DataView\OffsetPagination;
  * @var CurrentRoute $currentRoute 
  */
 
+echo $alert;
+
 ?>
 <h1><?= $translator->translate('invoice.upload.index'); ?></h1>
-<?php
-     echo $alert;
-?>     
 <div>
 <?php
     echo Html::a('Add', $urlGenerator->generate('upload/add'), 

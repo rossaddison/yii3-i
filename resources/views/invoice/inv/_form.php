@@ -248,8 +248,12 @@ echo $note_on_tax_point;
                 <span class="input-group-text">
                     <i class="fa fa-calendar fa-fw"></i>
                 </span>
+                <span class="input-group-text">
+                    <a href="<?= $s->href('date_tax_point'); ?>" <?= $s->where('date_tax_point'); ?>><i class="fa fa-question fa-fw"></i></a>
+                </span>
             </div>
         </div>
+        
     </div>
 
     <div class="form-group">

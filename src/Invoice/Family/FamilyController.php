@@ -30,6 +30,7 @@ final class FamilyController
     private FamilyService $familyService;    
     private UserService $userService;    
     private Session $session;
+    private Flash $flash;
     private TranslatorInterface $translator;
 
     public function __construct(
@@ -46,6 +47,7 @@ final class FamilyController
         $this->familyService = $familyService;
         $this->userService = $userService;
         $this->session = $session;
+        $this->flash = new Flash($session);
         $this->translator = $translator;
     }
     
@@ -64,9 +66,7 @@ final class FamilyController
             ->withPageSize((int)$settingRepository->get_setting('default_list_limit'))
             ->withCurrentPage($pageNum);
         $parameters = [
-            'alert'=>$this->viewRenderer->renderPartialAsString('/invoice/layout/alert',[
-                     'flash'=>$this->flash('', ''),
-            ]),      
+            'alert'=>$this->alert(),      
             'paginator'=> $paginator,
             's'=> $settingRepository,
             'familys' => $familys, 
@@ -114,7 +114,7 @@ final class FamilyController
         $family = $this->family($currentRoute, $familyRepository);
         if ($family) {
             $parameters = [
-                'title' => 'Edit family',
+                'title' => $settingRepository->trans('edit'),
                 'action' => ['family/edit', ['id' => $family->getFamily_id()]],
                 'errors' => [],
                 'body' => [
@@ -155,7 +155,7 @@ final class FamilyController
             return $this->webService->getRedirectResponse('family/index');  
 	} catch (\Exception $e) {
             unset($e);
-            $this->flash('danger', 'Cannot delete. Family history exists.');
+            $this->flash_message('danger', $this->translator->translate('invoice.family.history'));
             return $this->webService->getRedirectResponse('family/index');  
         }
     }
@@ -211,14 +211,23 @@ final class FamilyController
     }
     
    /**
-    * 
-    * @param string $level
-    * @param string $message
-    * @return Flash
-    */
-    private function flash(string $level, string $message): Flash{
-        $flash = new Flash($this->session);
-        $flash->set($level, $message); 
-        return $flash;
+   * @return string
+   */
+   private function alert(): string {
+     return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+     [ 
+       'flash' => $this->flash,
+       'errors' => [],
+     ]);
+   }
+
+    /**
+     * @param string $level
+     * @param string $message
+     * @return Flash
+     */
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
 }

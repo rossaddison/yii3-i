@@ -3,10 +3,7 @@
 declare(strict_types=1);
 
 use Yiisoft\Html\Html;
-use Yiisoft\Yii\Bootstrap5\Alert;
 use App\Widget\OffsetPagination;
-
- 
 
 /**
  * @var \App\Invoice\Entity\Setting $setting
@@ -15,7 +12,10 @@ use App\Widget\OffsetPagination;
  * @var \Yiisoft\Translator\TranslatorInterface $translator 
  */
 
+echo $alert;
+
 ?>
+
 <div>
  <h5><?= $s->trans('settings'); ?></h5>
  <a class="btn btn-success" href="<?= $urlGenerator->generate('setting/add'); ?>">
@@ -26,39 +26,14 @@ use App\Widget\OffsetPagination;
 $pagination = OffsetPagination::widget()
 ->paginator($paginator)
 ->urlGenerator(fn ($page) => $urlGenerator->generate('setting/debug_index', ['page' => $page]));
-        $danger = $flash->get('danger');
-        if ($danger != null) {
-            $alert =  Alert::widget()
-            ->body($danger)
-            ->options(['class' => ['alert-danger shadow'],])
-            ->render();
-            echo $alert;
-        }
-        $info = $flash->get('info');
-        if ($info != null) {
-            $alert =  Alert::widget()
-            ->body($info)
-            ->options(['class' => ['alert-info shadow'],])
-            ->render();
-            echo $alert;
-        }
-        $warning = $flash->get('warning');
-        if ($warning != null) {
-            $alert =  Alert::widget()
-            ->body($warning)
-            ->options(['class' => ['alert-warning shadow'],])
-            ->render();
-            echo $alert;
-        }
+
 ?>
 
 <?php
-                if ($pagination->isRequired()) {
-                   echo $pagination;
-                }
-
+  if ($pagination->isRequired()) {
+     echo $pagination;
+  }
 ?>
- 
                 
 <div class="table-responsive">
 <table class="table table-hover table-striped">
@@ -106,11 +81,11 @@ $pagination = OffsetPagination::widget()
     $pageSize = $paginator->getCurrentPageSize();
     if ($pageSize > 0) {
       echo Html::p(
-        sprintf('Showing %s out of %s settings', $pageSize, $paginator->getTotalItems()),
+        sprintf($translator->translate('invoice.index.footer.showing').' settings', $pageSize, $paginator->getTotalItems()),
         ['class' => 'text-muted']
     );
     } else {
-      echo Html::p('No records');
+      echo Html::p($translator->translate('invoice.records.no'));
     }
 ?>
 </div>

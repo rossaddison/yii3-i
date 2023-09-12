@@ -29,6 +29,7 @@ use \Exception;
 
 final class PostalAddressController
 {
+    private Flash $flash;
     private SessionInterface $session;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
@@ -46,6 +47,7 @@ final class PostalAddressController
     )    
     {
         $this->session = $session;
+        $this->flash = new Flash($session);
         $this->userService = $userService;
         $this->viewRenderer = $viewRenderer;
         if ($this->userService->hasPermission('viewInv') && !$this->userService->hasPermission('editInv')) {
@@ -61,7 +63,15 @@ final class PostalAddressController
         $this->translator = $translator;
     }
     
-    
+    /**
+     * 
+     * @param CurrentRoute $currentRoute
+     * @param ViewRenderer $head
+     * @param Request $request
+     * @param ValidatorInterface $validator
+     * @param ClientRepository $clientRepo
+     * @return Response
+     */
     public function add(CurrentRoute $currentRoute, ViewRenderer $head, Request $request, 
                         ValidatorInterface $validator, ClientRepository $clientRepo
     ) : Response
@@ -91,13 +101,23 @@ final class PostalAddressController
     
     /**
      * @return string
-     */    
-    private function alert() : string {
-        return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
-        [
-            'flash'=>$this->flash('', ''),
-            'errors' => [],
-        ]);
+     */
+    private function alert(): string {
+      return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+      [ 
+        'flash' => $this->flash,
+        'errors' => [],
+      ]);
+    }
+
+    /**
+     * @param string $level
+     * @param string $message
+     * @return Flash
+     */
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
     
     /**
@@ -119,9 +139,15 @@ final class PostalAddressController
         return $body;
     }
     
+    /**
+     * @param CurrentRoute $currentRoute
+     * @param PostalAddressRepository $postaladdressRepository
+     * @param SettingRepository $settingRepository
+     * @param ClientRepository $cR
+     * @return Response
+     */
     public function index(CurrentRoute $currentRoute, PostalAddressRepository $postaladdressRepository, SettingRepository $settingRepository, ClientRepository $cR): Response
     {      
-      $flash = $this->flash('' , '');
         $page = (int)$currentRoute->getArgument('page', '1');
         $postaladdresses = $this->postaladdresses($postaladdressRepository); 
         $paginator = (new OffsetPaginator($postaladdresses))
@@ -132,7 +158,7 @@ final class PostalAddressController
         'canEdit' => ($this->userService->hasPermission('viewInv') && $this->userService->hasPermission('editInv')) ? true : false,  
         's'=>$settingRepository,
         'postaladdresses' => $postaladdresses,
-        'flash'=> $flash,
+        'alert'=> $this->alert(),
         'paginator'=>$paginator,
         'max'=>(int)$settingRepository->get_setting('default_list_limit'),  
         'cR' => $cR
@@ -153,16 +179,26 @@ final class PostalAddressController
             $postaladdress = $this->postaladdress($currentRoute, $postaladdressRepository);
             if ($postaladdress) {
                 $this->postaladdressService->deletePostalAddress($postaladdress);               
-                $this->flash('info', $settingRepository->trans('record_successfully_deleted'));
+                $this->flash_message('info', $settingRepository->trans('record_successfully_deleted'));
                 return $this->webService->getRedirectResponse('postaladdress/index'); 
             }
             return $this->webService->getRedirectResponse('postaladdress/index'); 
 	} catch (Exception $e) {
-            $this->flash('danger', $e->getMessage());
+            $this->flash_message('danger', $e->getMessage());
             return $this->webService->getRedirectResponse('postaladdress/index'); 
         }
     }
-        
+    
+    /**
+     * 
+     * @param ViewRenderer $head
+     * @param Request $request
+     * @param CurrentRoute $currentRoute
+     * @param ValidatorInterface $validator
+     * @param PostalAddressRepository $postaladdressRepository
+     * @param SettingRepository $settingRepository
+     * @return Response
+     */    
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute, 
                         ValidatorInterface $validator,
                         PostalAddressRepository $postaladdressRepository, 
@@ -176,8 +212,7 @@ final class PostalAddressController
                 'action' => ['postaladdress/edit', ['id' => $postaladdress->getId()]],
                 'errors' => [],
                 'body' => $this->body($postaladdress),
-                'head'=>$head,
-                                
+                'head'=>$head  
             ];
             if ($request->getMethod() === Method::POST) {
                 $form = new PostalAddressForm();
@@ -193,18 +228,7 @@ final class PostalAddressController
         }
         return $this->webService->getRedirectResponse('postaladdress/index');
     }
-    
-    /**
-     * @param string $level
-     * @param string $message
-     * @return Flash
-     */
-    private function flash(string $level, string $message): Flash{
-        $flash = new Flash($this->session);
-        $flash->set($level, $message); 
-        return $flash;
-    }
-    
+       
     //For rbac refer to AccessChecker    
     
     /**

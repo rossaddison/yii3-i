@@ -78,6 +78,7 @@ class ProductController
     private InvItemService $invitemService;
     private UserService $userService;   
     private DataResponseFactoryInterface $responseFactory;
+    private Flash $flash;
     private SessionInterface $session;
     private TranslatorInterface $translator;
     private string $ffc = self::FILTER_FAMILY;
@@ -107,11 +108,11 @@ class ProductController
         $this->userService = $userService;
         $this->responseFactory = $responseFactory;
         $this->session = $session;
+        $this->flash = new Flash($session);
         $this->translator = $translator;
     }
     
     /**
-     * 
      * @param ViewRenderer $head
      * @param Request $request
      * @param ValidatorInterface $validator
@@ -173,15 +174,14 @@ class ProductController
     }
     
     /**
-     * 
      * @return string
      */
-    private function alert() : string {
-        return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
-        [
-            'flash'=>$this->flash('', ''),
-            'errors' => [],
-        ]);
+    private function alert(): string {
+      return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+      [ 
+        'flash' => $this->flash,
+        'errors' => [],
+      ]);
     }
     
     /**
@@ -238,26 +238,24 @@ class ProductController
             $product = $this->product($currentRoute, $pR);
             if ($product) { 
                 $this->productService->deleteProduct($product);  
-                $this->flash('info', $sR->trans('record_successfully_deleted'));
+                $this->flash_message('info', $sR->trans('record_successfully_deleted'));
             }
             return $this->webService->getRedirectResponse('product/index');
 	} catch (\Exception $e) {
            unset($e);
-           $this->flash('danger', 'Cannot delete. This product is on an invoice or quote.');
+           $this->flash_message('danger', $this->translator->translate('invoice.product.history'));
            return $this->webService->getRedirectResponse('product/index');   
         }
     }
     
     /**
-     * 
      * @param string $level
      * @param string $message
      * @return Flash
-     */    
-    private function flash(string $level, string $message): Flash{
-        $flash = new Flash($this->session);
-        $flash->set($level, $message); 
-        return $flash;
+     */
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
     
     /**
@@ -351,7 +349,7 @@ class ProductController
            $product_id = $this->productService->saveProduct($product, $form);
         }
         if (!empty($form->getFormErrors()->getErrorSummaryFirstErrors())) {
-           $this->flash('warning', $this->translator->translate('invoice.invoice.form.errors'));
+           $this->flash_message('warning', $this->translator->translate('invoice.invoice.form.errors'));
            return $this->webService->getRedirectResponse('product/index');  
         }
         return $product_id;
@@ -679,7 +677,7 @@ class ProductController
     private function rbac(): bool|Response {
         $canEdit = $this->userService->hasPermission('editInv');
         if (!$canEdit){
-            $this->flash('warning', $this->translator->translate('invoice.permission'));
+            $this->flash_message('warning', $this->translator->translate('invoice.permission'));
             return $this->webService->getRedirectResponse('product/index');
         }
         return $canEdit;

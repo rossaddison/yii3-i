@@ -71,6 +71,8 @@ final class ClientController
     private UserClientService $userclientService;     
     private CurrentUser $currentUser;
     private DataResponseFactoryInterface $factory;
+    private Flash $flash;
+    private SessionInterface $session;
     private TranslatorInterface $translator;
     
     public function __construct(
@@ -82,6 +84,7 @@ final class ClientController
         UserClientService $userclientService,
         CurrentUser $currentUser,
         DataResponseFactoryInterface $factory,
+        SessionInterface $session,
         TranslatorInterface $translator
     ) {
         $this->viewRenderer = $viewRenderer->withControllerName('invoice/client')
@@ -89,10 +92,11 @@ final class ClientController
         $this->webService = $webService;
         $this->clientService = $clientService;
         $this->clientCustomService = $clientCustomService;
-        $this->userService = $userService;
         $this->userclientService = $userclientService;
         $this->currentUser = $currentUser;
         $this->factory = $factory;
+        $this->session = $session;
+        $this->flash = new Flash($session);
         $this->viewRenderer = $viewRenderer;
         $this->userService = $userService;
         if ($this->userService->hasPermission('viewInv') && !$this->userService->hasPermission('editInv')) {
@@ -106,10 +110,13 @@ final class ClientController
         $this->translator = $translator;
     }
     
-    private function alert(SessionInterface $session) : string {
+    /**
+     * @return string
+     */
+    private function alert() : string {
         return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
         [
-            'flash'=>$this->flash($session, '', ''),
+            'flash'=>$this->flash,
             'errors' => [],
         ]);
     }
@@ -336,21 +343,21 @@ final class ClientController
         }
     }  
     
-    public function delete(SessionInterface $session,CurrentRoute $currentRoute,cR $cR, sR $sR
+    public function delete(CurrentRoute $currentRoute,cR $cR, sR $sR
     ): Response {
         try {
             $this->clientService->deleteClient($this->client($currentRoute, $cR)); 
-             $this->flash($session, 'info', $sR->trans('record_successfully_deleted'));
+             $this->flash_message('info', $sR->trans('record_successfully_deleted'));
             //UserClient Entity automatically deletes the UserClient record relevant to this client 
             return $this->webService->getRedirectResponse('client/index');
 	} catch (\Exception $e) {
               unset($e);
-              $this->flash($session, 'danger', 'Cannot delete. Client history exists.');
+              $this->flash_message('danger', $this->translator->translate('invoice.client.delete.history.exits.no'));
               return $this->webService->getRedirectResponse('client/index');
         }
     } 
     
-    public function edit(SessionInterface $session, Request $request, cR $cR, ccR $ccR, cfR $cfR, cvR $cvR, 
+    public function edit(Request $request, cR $cR, ccR $ccR, cfR $cfR, cvR $cvR, 
             ValidatorInterface $validator, paR $paR, sR $sR, CurrentRoute $currentRoute
     ): Response {
      $client = null!==$this->client($currentRoute, $cR) ? $this->client($currentRoute, $cR) : null;
@@ -372,7 +379,7 @@ final class ClientController
                 'aliases'=> new Aliases(['@invoice' => dirname(__DIR__), '@language' => dirname(__DIR__). DIRECTORY_SEPARATOR.'Language']),
                 'selected_country' => $selected_country ?: $sR->get_setting('default_country'),            
                 'selected_language' => $selected_language ?: $sR->get_setting('default_language'),
-                'datepicker_dropdown_locale_cldr' => $session->get('_language') ?? 'en',
+                'datepicker_dropdown_locale_cldr' => $this->session->get('_language') ?? 'en',
                 'postal_address_count' => $paR->repoClientCount((string)$client_id),
                 'postaladdresses' => $postaladdresses,
                 'countries'=> $countries->get_country_list($sR->get_setting('cldr')),
@@ -392,7 +399,7 @@ final class ClientController
                       $this->edit_save_custom_fields($edited_body, $validator, $ccR, (string)$client_id); 
                     }
                 }    
-                $this->flash($session, 'info', $sR->trans('record_successfully_updated'));
+                $this->flash_message('info', $sR->trans('record_successfully_updated'));
                 return $this->webService->getRedirectResponse('client/index');
             }
             return $this->viewRenderer->render('__form', $parameters);
@@ -451,17 +458,22 @@ final class ClientController
         }        
     }
     
-    private function flash(SessionInterface $session, string $level, string $message): Flash{
-        $flash = new Flash($session);
-        $flash->set($level, $message); 
-        return $flash;
+    /**
+     * 
+     * @param string $level
+     * @param string $message
+     * @return Flash
+     */
+    private function flash_message(string $level, string $message): Flash{
+        $this->flash->add($level, $message, true); 
+        return $this->flash;
     }
     
     
-     public function index(CurrentRoute $currentRoute, SessionInterface $session, cR $cR, iaR $iaR, iR $iR, sR $sR, cpR $cpR): 
+     public function index(CurrentRoute $currentRoute, cR $cR, iaR $iaR, iR $iR, sR $sR, cpR $cpR): 
         \Yiisoft\DataResponse\DataResponse
     {
-        $canEdit = $this->rbac($session);
+        $canEdit = $this->rbac();
         $pageNum = (int)$currentRoute->getArgument('page', '1');        
         $active = (int)$currentRoute->getArgument('active', '2');
         $paginator = (new OffsetPaginator($this->clients($cR, $active)))
@@ -469,7 +481,7 @@ final class ClientController
             ->withCurrentPage($pageNum);
         $parameters = [
             'paginator'=>$paginator,
-            'alert'=>$this->alert($session),
+            'alert'=>$this->alert(),
             'iR'=> $iR,
             'iaR'=> $iaR,
             'canEdit' => $canEdit,
@@ -499,7 +511,7 @@ final class ClientController
                 ->withCurrentPage($pageNum);
             $parameters = [
                 'paginator'=>$paginator,
-                'alert'=>$this->alert($session),
+                'alert'=>$this->alert(),
                 'iR'=> $iR,
                 'iaR'=> $iaR,
                 'editInv' => $this->userService->hasPermission('editInv'), 
@@ -533,10 +545,10 @@ final class ClientController
     /**
      * @return Response|true
      */
-    private function rbac(SessionInterface $session): bool|Response {
+    private function rbac(): bool|Response {
         $canEdit = $this->userService->hasPermission('editInv');
         if (!$canEdit){
-            $this->flash($session,'warning', $this->translator->translate('invoice.permission'));
+            $this->flash_message('warning', $this->translator->translate('invoice.permission'));
             return $this->webService->getRedirectResponse('client/index');
         }
         return $canEdit;
@@ -608,13 +620,12 @@ final class ClientController
     
     /**
      * 
-     * @param SessionInterface $session
      * @param ValidatorInterface $validator
      * @param Request $request
      * @param ccR $ccR
      * @return \Yiisoft\DataResponse\DataResponse
      */
-    public function save_custom_fields(SessionInterface $session, ValidatorInterface $validator, Request $request, ccR $ccR)
+    public function save_custom_fields(ValidatorInterface $validator, Request $request, ccR $ccR)
                     : \Yiisoft\DataResponse\DataResponse
     {
        $body = $request->getQueryParams();
@@ -622,7 +633,7 @@ final class ClientController
        $custom_field_body = [            
             'custom'=>$custom,            
         ];      
-       $client_id = (string)$session->get('client_id');
+       $client_id = (string)$this->session->get('client_id');
        if (!empty($custom_field_body['custom'])) {
             $db_array = [];
             $values = [];
@@ -746,7 +757,7 @@ final class ClientController
             if (null!==$client_id) {
               $parameters = [
                   'title' => $sR->trans('client'),
-                  'alert' => $this->alert($session),
+                  'alert' => $this->alert(),
                   'iR' => $iR,
                   'iaR' => $iaR,
                   'clienthelper' => new ClientHelper($sR),

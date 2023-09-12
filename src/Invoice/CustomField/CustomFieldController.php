@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Invoice\CustomField;
 
 use App\Invoice\Entity\CustomField;
-use App\Invoice\Entity\CustomValue;
 use App\Invoice\CustomField\CustomFieldService;
 use App\Invoice\CustomField\CustomFieldRepository;
 use App\Invoice\CustomValue\CustomValueRepository;
@@ -34,6 +33,7 @@ final class CustomFieldController
     private CustomFieldService $customfieldService;   
     private TranslatorInterface $translator;
     private SessionInterface $session;
+    private Flash $flash;
     
     public function __construct(
         ViewRenderer $viewRenderer,
@@ -51,10 +51,10 @@ final class CustomFieldController
         $this->customfieldService = $customfieldService;
         $this->translator = $translator;
         $this->session = $session;
+        $this->flash = new Flash($session);
     }
     
     /**
-     * @param SessionInterface $session
      * @param CustomFieldRepository $customfieldRepository
      * @param SettingRepository $settingRepository
      * @param Request $request
@@ -66,7 +66,7 @@ final class CustomFieldController
         ->withPageSize((int)$settingRepository->get_setting('default_list_limit'))
         ->withCurrentPage($pageNum);
         $canEdit = $this->rbac();
-        $flash = $this->flash('info' , $this->viewRenderer->renderPartialAsString('/invoice/info/custom_field'));
+        $this->flash_message('info' , $this->viewRenderer->renderPartialAsString('/invoice/info/custom_field'));
         $parameters = [
               'paginator' => $paginator,  
               's'=>$settingRepository,
@@ -75,14 +75,13 @@ final class CustomFieldController
               'customfields' => $this->customfields($customfieldRepository),
               'custom_tables' => $this->custom_tables(),            
               'custom_value_fields'=>$this->custom_value_fields(),
-              'flash'=> $flash,
+              'alert'=> $this->alert(),
        ];    
        return $this->viewRenderer->render('index', $parameters);
   
     }
     
     /**
-     * 
      * @param ViewRenderer $head
      * @param Request $request
      * @param ValidatorInterface $validator
@@ -106,9 +105,9 @@ final class CustomFieldController
             'custom_value_fields'=>['SINGLE-CHOICE','MULTIPLE-CHOICE'],
             'layout_header_buttons'=>$this->viewRenderer->renderPartialAsString('/invoice/layout/header_buttons',
             [
-                     'hide_submit_button'=>false,
-                     'hide_cancel_button'=>false,
-                     's'=>$settingRepository   
+              'hide_submit_button'=>false,
+              'hide_cancel_button'=>false,
+              's'=>$settingRepository   
             ]),
             // Create an array for "moduled" ES6 jquery script. The script is "moduled" and therefore deferred by default to avoid
             // the $ undefined reference error in the DOM.
@@ -127,7 +126,6 @@ final class CustomFieldController
     }
     
     /**
-     * 
      * @param ViewRenderer $head
      * @param Request $request
      * @param CurrentRoute $currentRoute
@@ -156,9 +154,9 @@ final class CustomFieldController
                 'custom_value_fields'=>['SINGLE-CHOICE','MULTIPLE-CHOICE'],
                 'layout_header_buttons'=>$this->viewRenderer->renderPartialAsString('/invoice/layout/header_buttons',
                 [
-                         'hide_submit_button'=>false,
-                         'hide_cancel_button'=>false,
-                         's'=>$settingRepository   
+                  'hide_submit_button'=>false,
+                  'hide_cancel_button'=>false,
+                  's'=>$settingRepository   
                 ]),
                 'positions'=>$this->positions($settingRepository)    
             ];
@@ -178,7 +176,6 @@ final class CustomFieldController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param CustomFieldRepository $customfieldRepository
      * @return Response
@@ -194,7 +191,7 @@ final class CustomFieldController
           }
         }
         // Return to the index and warn of existing custom values associated with the custom field
-        $this->flash('warning', $this->translator->translate('invoice.custom.value.delete'));        
+        $this->flash_message('warning', $this->translator->translate('invoice.custom.value.delete'));        
         return $this->webService->getRedirectResponse('customfield/index');
     }
     
@@ -229,7 +226,7 @@ final class CustomFieldController
     {
         $canEdit = $this->userService->hasPermission('editInv');
         if (!$canEdit){
-            $this->flash('warning', $this->translator->translate('invoice.permission'));
+            $this->flash_message('warning', $this->translator->translate('invoice.permission'));
             return $this->webService->getRedirectResponse('customfield/index');
         }
         return $canEdit;
@@ -278,15 +275,24 @@ final class CustomFieldController
     }
     
     /**
-     * 
+  * @return string
+  */
+   private function alert(): string {
+     return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+     [ 
+       'flash' => $this->flash,
+       'errors' => [],
+     ]);
+   }
+
+    /**
      * @param string $level
      * @param string $message
      * @return Flash
      */
-    private function flash(string $level, string $message): Flash{
-        $flash = new Flash($this->session);
-        $flash->set($level, $message); 
-        return $flash;
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
     
     /**
@@ -344,5 +350,4 @@ final class CustomFieldController
             'MULTIPLE-CHOICE'
         );
     }
-    
 }

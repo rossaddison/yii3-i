@@ -10,6 +10,8 @@ use App\Widget\OffsetPagination;
  * @var \Yiisoft\Router\UrlGeneratorInterface $urlGenerator
  * @var \Yiisoft\Session\Flash\FlashInterface $flash 
  */
+
+echo $alert;
 ?>
 
 <div>
@@ -37,7 +39,6 @@ use App\Widget\OffsetPagination;
     }
 ?>
 <div class="table-responsive">
-<?php echo $alerts; ?>
 <table class="table table-hover table-striped">
    <thead>
     <tr>        
@@ -95,11 +96,11 @@ use App\Widget\OffsetPagination;
     $pageSize = $paginator->getCurrentPageSize();
     if ($pageSize > 0) {
       echo Html::p(
-        sprintf('Showing %s out of %s tasks', $pageSize, $paginator->getTotalItems()),
+        sprintf($translator->translate('invoice.index.footer.showing').' tasks', $pageSize, $paginator->getTotalItems()),
         ['class' => 'text-muted']
     );
     } else {
-      echo Html::p('No records');
+      echo Html::p($translator->translate('invoice.records.no'));
     }
 ?>
 </div>

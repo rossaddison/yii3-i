@@ -1,5 +1,4 @@
 <?php
-
 declare(strict_types=1); 
 
 namespace App\Invoice\ItemLookup;
@@ -16,7 +15,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 use Yiisoft\Http\Method;
 use Yiisoft\Router\CurrentRoute;
-use Yiisoft\Session\SessionInterface;
+use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\Validator\ValidatorInterface;
@@ -24,6 +23,8 @@ use Yiisoft\Yii\View\ViewRenderer;
 
 final class ItemLookupController
 {
+    private Session $session;
+    private Flash $flash;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     private UserService $userService;
@@ -31,6 +32,7 @@ final class ItemLookupController
     private TranslatorInterface $translator;
     
     public function __construct(
+        Session $session,
         ViewRenderer $viewRenderer,
         WebControllerService $webService,
         UserService $userService,
@@ -38,6 +40,8 @@ final class ItemLookupController
         TranslatorInterface $translator
     )    
     {
+        $this->session = $session;
+        $this->flash = new Flash($session);
         $this->viewRenderer = $viewRenderer->withControllerName('invoice/itemlookup')
                                            ->withLayout('@views/layout/invoice.php');
         $this->webService = $webService;
@@ -47,26 +51,21 @@ final class ItemLookupController
     }
     
     /**
-     * @param SessionInterface $session
      * @param ItemLookupRepository $itemlookupRepository
      * @param SettingRepository $settingRepository
      * @param Request $request
      * @param ItemLookupService $service
      */
-    public function index(SessionInterface $session, ItemLookupRepository $itemlookupRepository, SettingRepository $settingRepository, Request $request, ItemLookupService $service): \Yiisoft\DataResponse\DataResponse
+    public function index(ItemLookupRepository $itemlookupRepository, SettingRepository $settingRepository, Request $request, ItemLookupService $service): \Yiisoft\DataResponse\DataResponse
     {
-       
-         $canEdit = $this->rbac($session);
-         $flash = $this->flash($session, '','');
-         $parameters = [
-      
-          's'=>$settingRepository,
-          'canEdit' => $canEdit,
-          'itemlookups' => $this->itemlookups($itemlookupRepository),
-          'flash'=> $flash
-         ];
-        
-        return $this->viewRenderer->render('index', $parameters);
+      $canEdit = $this->rbac();
+      $parameters = [
+       's'=>$settingRepository,
+       'canEdit' => $canEdit,
+       'itemlookups' => $this->itemlookups($itemlookupRepository),
+       'alert'=> $this->alert()
+      ];
+      return $this->viewRenderer->render('index', $parameters);
     }
     
     /**
@@ -84,13 +83,12 @@ final class ItemLookupController
     ): Response
     {
         $parameters = [
-            'title' => $this->translator->translate('invoice.add'),
-            'action' => ['itemlookup/add'],
-            'errors' => [],
-            'body' => $request->getParsedBody(),
-            's'=>$settingRepository,
-            'head'=>$head,
-            
+          'title' => $this->translator->translate('invoice.add'),
+          'action' => ['itemlookup/add'],
+          'errors' => [],
+          'body' => $request->getParsedBody(),
+          's'=>$settingRepository,
+          'head'=>$head,
         ];
         
         if ($request->getMethod() === Method::POST) {
@@ -116,20 +114,19 @@ final class ItemLookupController
      * @return Response
      */
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute,
-                        ValidatorInterface $validator,
-                        ItemLookupRepository $itemlookupRepository, 
-                        SettingRepository $settingRepository,                        
-
+      ValidatorInterface $validator,
+      ItemLookupRepository $itemlookupRepository, 
+      SettingRepository $settingRepository, 
     ): Response {
         $lookup = $this->itemlookup($currentRoute, $itemlookupRepository);
         if ($lookup) {
             $parameters = [
-                    'title' => 'Edit',
-                    'action' => ['itemlookup/edit', ['id' => $lookup->getId()]],
-                    'errors' => [],
-                    'body' => $this->body($lookup),
-                    'head'=>$head,
-                    's'=>$settingRepository,            
+              'title' => $settingRepository->trans('edit'),
+              'action' => ['itemlookup/edit', ['id' => $lookup->getId()]],
+              'errors' => [],
+              'body' => $this->body($lookup),
+              'head'=>$head,
+              's'=>$settingRepository,            
             ];
             if ($request->getMethod() === Method::POST) {
                 $form = new ItemLookupForm();
@@ -175,12 +172,12 @@ final class ItemLookupController
         $lookup = $this->itemlookup($currentRoute, $itemlookupRepository);
         if ($lookup) {
             $parameters = [
-                    'title' => $settingRepository->trans('view'),
-                    'action' => ['itemlookup/edit', ['id' => $lookup->getId()]],
-                    'errors' => [],
-                    'body' => $this->body($lookup),
-                    's'=>$settingRepository,             
-                    'itemlookup'=>$itemlookupRepository->repoItemLookupquery($lookup->getId()),
+              'title' => $settingRepository->trans('view'),
+              'action' => ['itemlookup/edit', ['id' => $lookup->getId()]],
+              'errors' => [],
+              'body' => $this->body($lookup),
+              's'=>$settingRepository,             
+              'itemlookup'=>$itemlookupRepository->repoItemLookupquery($lookup->getId()),
             ];
             return $this->viewRenderer->render('_view', $parameters);
         }
@@ -190,14 +187,14 @@ final class ItemLookupController
     /**
      * @return Response|true
      */
-    private function rbac(SessionInterface $session): bool|Response 
+    private function rbac(): bool|Response 
     {
-        $canEdit = $this->userService->hasPermission('editInv');
-        if (!$canEdit){
-            $this->flash($session,'warning', $this->translator->translate('invoice.permission'));
-            return $this->webService->getRedirectResponse('itemlookup/index');
-        }
-        return $canEdit;
+      $canEdit = $this->userService->hasPermission('editInv');
+      if (!$canEdit){
+          $this->flash_message('warning', $this->translator->translate('invoice.permission'));
+          return $this->webService->getRedirectResponse('itemlookup/index');
+      }
+      return $canEdit;
     }
     
     /**
@@ -207,13 +204,13 @@ final class ItemLookupController
      */
     private function itemlookup(CurrentRoute $currentRoute, ItemLookupRepository $itemlookupRepository): ItemLookup|null 
     {
-        $itemlookup = new ItemLookup();
-        $id = $currentRoute->getArgument('id');       
-        if (null!==$id) {
-            $itemlookup = $itemlookupRepository->repoItemLookupquery($id);
-            return $itemlookup;
-        }
-        return $itemlookup;
+      $itemlookup = new ItemLookup();
+      $id = $currentRoute->getArgument('id');       
+      if (null!==$id) {
+          $itemlookup = $itemlookupRepository->repoItemLookupquery($id);
+          return $itemlookup;
+      }
+      return $itemlookup;
     }
     
     /**
@@ -233,25 +230,33 @@ final class ItemLookupController
      * @return array
      */
     private function body(ItemLookup $itemlookup): array {
-        $body = [
-          'id'=>$itemlookup->getId(),
-          'name'=>$itemlookup->getName(),
-          'description'=>$itemlookup->getDescription(),
-          'price'=>$itemlookup->getPrice()
-        ];
-        return $body;
+      $body = [
+        'id'=>$itemlookup->getId(),
+        'name'=>$itemlookup->getName(),
+        'description'=>$itemlookup->getDescription(),
+        'price'=>$itemlookup->getPrice()
+      ];
+      return $body;
     }
     
-    /**
-     * 
-     * @param SessionInterface $session
-     * @param string $level
-     * @param string $message
-     * @return Flash
-     */
-    private function flash(SessionInterface $session, string $level, string $message): Flash{
-        $flash = new Flash($session);
-        $flash->set($level, $message); 
-        return $flash;
-    }
+  /**
+   * @return string
+   */
+   private function alert(): string {
+     return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+     [ 
+       'flash' => $this->flash,
+       'errors' => [],
+     ]);
+   }
+
+  /**
+   * @param string $level
+   * @param string $message
+   * @return Flash
+   */
+  private function flash_message(string $level, string $message): Flash {
+    $this->flash->add($level, $message, true);
+    return $this->flash;
+  }
 }

@@ -27,7 +27,7 @@ use Yiisoft\Yii\View\ViewRenderer;
 use \Exception;
 
 final class UploadController {
-
+    private Flash $flash;
     private SessionInterface $session;
     private SettingRepository $s;
     private DataResponseFactoryInterface $factory;
@@ -38,20 +38,21 @@ final class UploadController {
     private TranslatorInterface $translator;
 
     public function __construct(
-            SettingRepository $s,
-            SessionInterface $session,
-            DataResponseFactoryInterface $factory,
-            ViewRenderer $viewRenderer,
-            WebControllerService $webService,
-            UserService $userService,
-            UploadService $uploadService,
-            TranslatorInterface $translator,
+        SettingRepository $s,
+        SessionInterface $session,
+        DataResponseFactoryInterface $factory,
+        ViewRenderer $viewRenderer,
+        WebControllerService $webService,
+        UserService $userService,
+        UploadService $uploadService,
+        TranslatorInterface $translator,
     ) {
         $this->s = $s;
         $this->session = $session;
+        $this->flash = new Flash($session);
         $this->factory = $factory;
         $this->viewRenderer = $viewRenderer->withControllerName('invoice/upload')
-                ->withLayout('@views/layout/invoice.php');
+             ->withLayout('@views/layout/invoice.php');
         $this->webService = $webService;
         $this->userService = $userService;
         $this->uploadService = $uploadService;
@@ -91,7 +92,6 @@ final class UploadController {
 
     /**
      * @param ViewRenderer $head
-     * @param SessionInterface $session
      * @param Request $request
      * @param ValidatorInterface $validator
      * @param ClientRepository $clientRepository
@@ -126,11 +126,21 @@ final class UploadController {
      * @return string
      */
     private function alert(): string {
-        return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
-                        [
-                            'flash' => $this->flash('', ''),
-                            'errors' => [],
-        ]);
+      return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+      [ 
+        'flash' => $this->flash,
+        'errors' => [],
+      ]);
+    }
+
+    /**
+     * @param string $level
+     * @param string $message
+     * @return Flash
+     */
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
 
     /**
@@ -148,20 +158,19 @@ final class UploadController {
             if ($upload) {
                 $this->uploadService->deleteUpload($upload, $settingRepository);
                 $inv_id = (string) $this->session->get('inv_id');
-                $this->flash('info', $settingRepository->trans('record_successfully_deleted'));
+                $this->flash_message('info', $settingRepository->trans('record_successfully_deleted'));
                 return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
                                         ['heading' => '', 'message' => $settingRepository->trans('record_successfully_deleted'), 'url' => 'inv/view', 'id' => $inv_id]));
             }
             return $this->webService->getRedirectResponse('upload/index');
         } catch (Exception $e) {
-            $this->flash('danger', $e->getMessage());
+            $this->flash_message('danger', $e->getMessage());
             return $this->webService->getRedirectResponse('upload/index');
         }
     }
 
     /**
      * @param ViewRenderer $head
-     * @param SessionInterface $session
      * @param Request $request
      * @param CurrentRoute $currentRoute
      * @param ValidatorInterface $validator
@@ -170,7 +179,8 @@ final class UploadController {
      * @param ClientRepository $clientRepository
      * @return Response
      */
-    public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute,
+    public function edit(ViewRenderer $head, 
+            Request $request, CurrentRoute $currentRoute,
             ValidatorInterface $validator,
             UploadRepository $uploadRepository,
             SettingRepository $settingRepository,
@@ -252,7 +262,6 @@ final class UploadController {
     }
 
     /**
-     *
      * @param Upload $upload
      * @return array
      */
@@ -267,17 +276,6 @@ final class UploadController {
             'uploaded_date' => $upload->getUploaded_date()
         ];
         return $body;
-    }
-
-    /**
-     * @param string $level
-     * @param string $message
-     * @return Flash
-     */
-    private function flash(string $level, string $message): Flash {
-        $flash = new Flash($this->session);
-        $flash->set($level, $message);
-        return $flash;
     }
 
     /**

@@ -582,12 +582,9 @@ if (($invEdit && $inv->getStatus_id() === 1 || ($s->get_setting('enable_invoice_
             <div id="view_partial_inv_attachments" class="col-xs-12 col-md-6">
 <?= $partial_inv_attachments; ?>
             </div>
+            <div id="view_partial_inv_delivery_location" class="col-xs-12 col-md-6">
+<?= $partial_inv_delivery_location; ?>
+            </div>
         </div>
     </div>
 </div>
-<?php
-$acs = $aciR->repoACIquery($inv->getId());
-foreach ($acs as $ac) {
-    echo VarDumper::dump($ac);
-}
-?>

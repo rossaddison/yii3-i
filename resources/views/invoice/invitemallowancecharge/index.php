@@ -25,6 +25,8 @@ use Yiisoft\Router\CurrentRoute;
  * @var TranslatorInterface $translator
  * @var WebView $this
  */
+
+  echo $alert;
 ?>
 <?php
 $numberHelper = new NumberHelper($s);

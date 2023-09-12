@@ -43,6 +43,7 @@ final class GeneratorController
     private DataResponseFactoryInterface $factory;
     private GeneratorService $generatorService;   
     private Session $session;
+    private Flash $flash;
     private TranslatorInterface $translator;
     private UserService $userService;
     private ViewRenderer $viewRenderer;
@@ -76,23 +77,12 @@ final class GeneratorController
         $this->factory = $factory;
         $this->generatorService = $generatorService;
         $this->session = $session;
+        $this->flash = new Flash($session);
         $this->translator = $translator;
         $this->userService = $userService;
         $this->viewRenderer = $viewRenderer->withControllerName('invoice/generator')
                                            ->withLayout('@views/layout/invoice.php');
         $this->webService = $webService;
-    }
-    
-    /**
-     * 
-     * @return string
-     */
-    private function alert() : string {
-        return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
-        [
-            'flash'=>$this->flash('', ''),
-            'errors' => [],
-        ]);
     }
     
     /**
@@ -104,13 +94,12 @@ final class GeneratorController
     {
         $canEdit = $this->rbac();
         $generators = $this->generators($generatorRepository);
-        $flash = $this->flash('info' , $this->viewRenderer->renderPartialAsString('/invoice/info/generator'));        
         $parameters = [
             's'=>$settingRepository,
             'canEdit' => $canEdit,
             'generators' => $generators,
             'grr'=>$grr,
-            'flash'=> $flash
+            'alert'=> $this->alert()
         ]; 
         return $this->viewRenderer->render('index', $parameters);
     }
@@ -173,7 +162,7 @@ final class GeneratorController
                 $body = $request->getParsedBody();
                 if ($form->load($body) && $validator->validate($form)->isValid()) {
                     $this->generatorService->saveGenerator($generator, $form);
-                    $this->flash('warning', $s->trans('record_successfully_updated'));
+                    $this->flash_message('warning', $s->trans('record_successfully_updated'));
                     return $this->webService->getRedirectResponse('generator/index');
                 }
                 $parameters['body'] = $body;
@@ -197,7 +186,7 @@ final class GeneratorController
         try {
             $generator = $this->generator($currentRoute, $generatorRepository);
             if ($generator) {
-                $this->flash('danger', $s->trans('record_successfully_deleted'));
+                $this->flash_message('danger', $s->trans('record_successfully_deleted'));
                 $this->generatorService->deleteGenerator($generator);
                 return $this->webService->getRedirectResponse('generator/index');  
             }           
@@ -205,7 +194,7 @@ final class GeneratorController
         }
         catch (\Exception $e) {
            unset($e);  
-           $this->flash('danger','This record has existing Generator Relations so it cannot be deleleted. Delete these relations first.');
+           $this->flash_message('danger', $this->translator->translate('invoice.generator.history'));
         }
         return $this->webService->getRedirectResponse('generator/index');   
     }
@@ -239,7 +228,7 @@ final class GeneratorController
     private function rbac(): bool|Response {
         $canEdit = $this->userService->hasPermission('editInv');
         if (!$canEdit){
-            $this->flash('warning', $this->translator->translate('invoice.permission'));
+            $this->flash_message('warning', $this->translator->translate('invoice.permission'));
             return $this->webService->getRedirectResponse('generator/index');
         }
         return $canEdit;
@@ -270,15 +259,24 @@ final class GeneratorController
     }
     
     /**
-     * 
+     * @return string
+     */
+     private function alert(): string {
+      return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+      [ 
+        'flash' => $this->flash,
+        'errors' => [],
+      ]);
+    }
+
+    /**
      * @param string $level
      * @param string $message
      * @return Flash
      */
-    private function flash(string $level, string $message): Flash{
-        $flash = new Flash($this->session);
-        $flash->set($level, $message); 
-        return $flash;
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
     
     /**
@@ -340,17 +338,17 @@ final class GeneratorController
         $orm = $dbal->database('default')
                     ->table($table_name);
         $content = $this->getContent($view,$g,$relations,$orm,$file);
-        $flash = $this->flash('success',($g->getCamelcase_capital_name() ?? '').$file.' generated at '.$path.'/'.($g->getCamelcase_capital_name() ?? '').$file);
-        $build_file = $this->build_and_save($path,$content,$file,($g->getCamelcase_capital_name() ?? 'Unknown'));
+        $this->flash_message('success',($g->getCamelcase_capital_name() ?? '').$file.$this->translator->translate('invoice.generator.generated').$path.'/'.($g->getCamelcase_capital_name() ?? '').$file);
+        $build_file = $this->build_and_save($path,$content,$file,($g->getCamelcase_capital_name() ?? ''));
         $parameters = [
             'canEdit'=>$this->rbac(),
             's'=> $settingRepository,
-            'title' => 'Generate '.$file,
+            'title' => $this->translator->translate('invoice.generator.generate') .$file,
             'body' => $this->body($g),
             'generator'=> $g,
             'orm_schema'=>$orm,
             'relations'=>$relations,
-            'flash'=> $flash,
+            'alert'=> $this->alert(),
             'generated'=>$build_file,
         ];
         return $this->viewRenderer->render('__results', $parameters);
@@ -381,17 +379,17 @@ final class GeneratorController
         $orm = $dbal->database('default')
                     ->table($table_name);
         $content = $this->getContent($view,$g,$relations,$orm,$file);
-        $flash = $this->flash('success',($g->getCamelcase_capital_name() ?? '').$file.' generated at '.$path.'/'.($g->getCamelcase_capital_name() ?? '').$file);
-        $build_file = $this->build_and_save($path,$content,$file,$g->getCamelcase_capital_name() ?? 'Unknown');
+        $this->flash_message('success',($g->getCamelcase_capital_name() ?? '').$file.$this->translator->translate('invoice.generator.generated').$path.'/'.($g->getCamelcase_capital_name() ?? '').$file);
+        $build_file = $this->build_and_save($path,$content,$file,$g->getCamelcase_capital_name() ?? '');
         $parameters = [
             'canEdit'=>$this->rbac(),
             's'=> $settingRepository,
-            'title' => 'Generate '.$file,
+            'title' => $this->translator->translate('invoice.generator.generate').$file,
             'body' => $this->body($g),
             'generator'=> $g,
             'orm_schema'=>$orm,
             'relations'=>$relations,
-            'flash'=> $flash,
+            'alert'=> $this->alert(),
             'generated'=>$build_file,
         ];
         return $this->viewRenderer->render('__results', $parameters);
@@ -422,17 +420,17 @@ final class GeneratorController
         $orm = $dbal->database('default')
                     ->table($table_name);
         $content = $this->getContent($view,$g,$relations,$orm,$file);
-        $flash = $this->flash('success',($g->getCamelcase_capital_name() ?? '').$file.' generated at '.$path.'/'.($g->getCamelcase_capital_name() ?? '').$file);
-        $build_file = $this->build_and_save($path,$content,$file,($g->getCamelcase_capital_name() ?? 'Unknown'));
+        $this->flash_message('success',($g->getCamelcase_capital_name() ?? '').$file.$this->translator->translate('invoice.generator.generated').$path.'/'.($g->getCamelcase_capital_name() ?? '').$file);
+        $build_file = $this->build_and_save($path,$content,$file,($g->getCamelcase_capital_name() ?? ''));
         $parameters = [
             'canEdit'=>$this->rbac(),
             's'=> $settingRepository,
-            'title' => 'Generate '.$file,
+            'title' => $this->translator->translate('invoice.generator.generate').$file,
             'body' => $this->body($g),
             'generator'=> $g,
             'orm_schema'=>$orm,
             'relations'=>$relations,
-            'flash'=> $flash,
+            'alert'=> $this->alert(),
             'generated'=>$build_file,
         ];
         return $this->viewRenderer->render('__results', $parameters);
@@ -464,17 +462,17 @@ final class GeneratorController
         $orm = $dbal->database('default')
                     ->table($table_name);
         $content = $this->getContent($view,$g,$relations,$orm,$file);
-        $flash = $this->flash('success',($g->getCamelcase_capital_name() ?? '').$file.' generated at '.$path.'/'.($g->getCamelcase_capital_name() ?? '').$file);
+        $this->flash_message('success',($g->getCamelcase_capital_name() ?? '').$file.$this->translator->translate('invoice.generator.generated').$path.'/'.($g->getCamelcase_capital_name() ?? '').$file);
         $build_file = $this->build_and_save($path,$content,$file,($g->getCamelcase_capital_name() ?? 'Unknown' ));
         $parameters = [
             'canEdit'=>$this->rbac(),
             's'=> $settingRepository,
-            'title' => 'Generate '.$file,
+            'title' => $this->translator->translate('invoice.generator.generate').$file,
             'body' => $this->body($g),
             'generator'=> $g,
             'orm_schema'=>$orm,
             'relations'=>$relations,
-            'flash'=> $flash,
+            'alert'=> $this->alert(),
             'generated'=>$build_file,
         ];
         return $this->viewRenderer->render('__results', $parameters);
@@ -506,17 +504,17 @@ final class GeneratorController
             $orm = $dbal->database('default')
                         ->table($table_name);
             $content = $this->getContent($view,$g,$relations,$orm,$file);
-            $flash = $this->flash('success',($g->getCamelcase_capital_name() ?? '').$file.' generated at '.$path.'/'.($g->getCamelcase_capital_name() ?? '').$file);
-            $build_file = $this->build_and_save($path,$content,$file,($g->getCamelcase_capital_name() ?? 'Unknown'));
+            $this->flash_message('success',($g->getCamelcase_capital_name() ?? '').$file. $this->translator->translate('invoice.generator.generated').$path.'/'.($g->getCamelcase_capital_name() ?? '').$file);
+            $build_file = $this->build_and_save($path,$content,$file,($g->getCamelcase_capital_name() ?? ''));
             $parameters = [
                 'canEdit'=>$this->rbac(),
                 's'=> $settingRepository,
-                'title' => 'Generate '.$file,
+                'title' => $this->translator->translate('invoice.generator.generate').$file,
                 'body' => $this->body($g),
                 'generator'=> $g,
                 'orm_schema'=>$orm,
                 'relations'=>$relations,
-                'flash'=> $flash,
+                'alert'=> $this->alert(),
                 'generated'=>$build_file,
             ];
             return $this->viewRenderer->render('__results', $parameters);
@@ -550,17 +548,17 @@ final class GeneratorController
         $orm = $dbal->database('default')
                     ->table($table_name);
         $content = $this->getContent($view,$g,$relations,$orm,$file);
-        $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
+        $this->flash_message('success',$file.$this->translator->translate('invoice.generator.generated').$path.'/'.$file);
         $build_file = $this->build_and_save($path,$content,$file,'');
         $parameters = [
             'canEdit'=>$this->rbac(),
             's'=> $settingRepository,
-            'title' => 'Generate '.$file,
+            'title' => $this->translator->translate('invoice.generator.generate').$file,
             'body' => $this->body($g),
             'generator'=> $g,
             'orm_schema'=>$orm,
             'relations'=>$relations,
-            'flash'=> $flash,
+            'alert'=> $this->alert(),
             'generated'=>$build_file,
         ];
         return $this->viewRenderer->render('__results', $parameters);
@@ -592,17 +590,17 @@ final class GeneratorController
         $orm = $dbal->database('default')
                     ->table($table_name);
         $content = $this->getContent($view,$g,$relations,$orm,$file);
-        $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
+        $this->flash_message('success',$file.$this->translator->translate('invoice.generator.generate').$path.'/'.$file);
         $build_file = $this->build_and_save($path,$content,$file,'');
         $parameters = [
             'canEdit'=>$this->rbac(),
             's'=> $settingRepository,
-            'title' => 'Generate '.$file,
+            'title' => $this->translator->translate('invoice.generator.generate').$file,
             'body' => $this->body($g),
             'generator'=> $g,
             'orm_schema'=>$orm,
             'relations'=>$relations,
-            'flash'=> $flash,
+            'alert'=> $this->alert(),
             'generated'=>$build_file,
         ];
         return $this->viewRenderer->render('__results', $parameters);
@@ -632,17 +630,17 @@ final class GeneratorController
         $orm = $dbal->database('default')
                     ->table($table_name);
         $content = $this->getContent($view,$g,$relations,$orm,$file);
-        $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
+        $this->flash_message('success',$file.$this->translator->translate('invoice.generator.generated').$path.'/'.$file);
         $build_file = $this->build_and_save($path,$content,$file,'');
         $parameters = [
             'canEdit'=>$this->rbac(),
             's'=> $settingRepository,
-            'title' => 'Generate '.$file,
+            'title' => $this->translator->translate('invoice.generator.generate').$file,
             'body' => $this->body($g),
             'generator'=> $g,
             'orm_schema'=>$orm,
             'relations'=>$relations,
-            'flash'=> $flash,
+            'alert'=> $this->alert(),
             'generated'=>$build_file,
         ];
         return $this->viewRenderer->render('__results', $parameters);
@@ -673,17 +671,17 @@ final class GeneratorController
         $orm = $dbal->database('default')
                     ->table($table_name);
         $content = $this->getContent($view,$g,$relations,$orm,$file);
-        $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
+        $this->flash_message('success',$file.$this->translator->translate('invoice.generator.generated').$path.'/'.$file);
         $build_file = $this->build_and_save($path,$content,$file,'');
         $parameters = [
             'canEdit'=>$this->rbac(),
             's'=> $settingRepository,
-            'title' => 'Generate '.$file,
+            'title' => $this->translator->translate('invoice.generator.generate').$file,
             'body' => $this->body($g),
             'generator'=> $g,
             'orm_schema'=>$orm,
             'relations'=>$relations,
-            'flash'=> $flash,
+            'alert'=> $this->alert(),
             'generated'=>$build_file,
         ];
         return $this->viewRenderer->render('__results', $parameters);
@@ -715,17 +713,17 @@ final class GeneratorController
         $orm = $dbal->database('default')
                     ->table($table_name);
         $content = $this->getContent($view,$g,$relations,$orm,$file);
-        $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
+        $this->flash_message('success',$file.$this->translator->translate('invoice.generator.generated').$path.'/'.$file);
         $build_file = $this->build_and_save($path,$content,$file,'');
         $parameters = [
             'canEdit'=>$this->rbac(),
             's'=> $settingRepository,
-            'title' => 'Generate '.$file,
+            'title' => $this->translator->translate('invoice.generator.generate').$file,
             'body' => $this->body($g),
             'generator'=> $g,
             'orm_schema'=>$orm,
             'relations'=>$relations,
-            'flash'=> $flash,
+            'alert'=> $this->alert(),
             'generated'=>$build_file,
         ];
         return $this->viewRenderer->render('__results', $parameters);        
@@ -758,17 +756,17 @@ final class GeneratorController
         $orm = $dbal->database('default')
                     ->table($table_name);
         $content = $this->getContent($view,$g,$relations,$orm,$file);
-        $flash = $this->flash('success',$file.' generated at '.$path.'/'.$file);
+        $this->flash_message('success',$file.$this->translator->translate('invoice.generator.generated').$path.'/'.$file);
         $build_file = $this->build_and_save($path,$content,$file,'');
         $parameters = [
             'canEdit'=>$this->rbac(),
             's'=> $settingRepository,
-            'title' => 'Generate '.$file,
+            'title' => $this->translator->translate('invoice.generator.generate').$file,
             'body' => $this->body($g),
             'generator'=> $g,
             'orm_schema'=>$orm,
             'relations'=>$relations,
-            'flash'=> $flash,
+            'alert'=> $this->alert(),
             'generated'=>$build_file,
         ];
         return $this->viewRenderer->render('__results', $parameters);
@@ -865,7 +863,7 @@ final class GeneratorController
             ];
             $file_content = $this->viewRenderer->renderPartialAsString(
             '/invoice/generator/templates_protected/'.$file, $content_params);
-            $this->flash('success', $file.' generated at '. $path .'/'.$file);
+            $this->flash_message('success', $file.$this->translator->translate('invoice.generator.generated'). $path .'/'.$file);
             $this->build_and_save($path, $file_content, $file, $type);
             $parameters = [
                'alert' => $this->alert(),
@@ -873,7 +871,7 @@ final class GeneratorController
             ];      
             return $this->viewRenderer->render('__google_translate_lang', $parameters);
         }
-        $this->flash('info','File type not found.');
+        $this->flash_message('info', $this->translator->translate('invoice.generator.file.type.not.found'));
         return $this->webService->getRedirectResponse('site/index');
     }
     

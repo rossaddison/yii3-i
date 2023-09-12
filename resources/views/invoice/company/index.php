@@ -3,45 +3,17 @@
 declare(strict_types=1);
 
 use Yiisoft\Html\Html;
-use Yiisoft\Yii\Bootstrap5\Alert;
 
 /**
  * @var \App\Invoice\Entity\Company $company
  * @var \Yiisoft\Router\UrlGeneratorInterface $urlGenerator
  * @var bool $canEdit
- * @var string $id
- * @var \Yiisoft\Session\Flash\FlashInterface $flash 
  */
 
+echo $alert;
 ?>
 <h1><?= $company_public; ?></h1>
-<?php
-        $danger = $flash->get('danger');
-        if ($danger != null) {
-            $alert =  Alert::widget()
-            ->body($danger)
-            ->options(['class' => ['alert-danger shadow'],])
-            ->render();
-            echo $alert;
-        }
-        $info = $flash->get('info');
-        if ($info != null) {
-            $alert =  Alert::widget()
-            ->body($info)
-            ->options(['class' => ['alert-info shadow'],])
-            ->render();
-            echo $alert;
-        }
-        $warning = $flash->get('warning');
-        if ($warning != null) {
-            $alert =  Alert::widget()
-            ->body($warning)
-            ->options(['class' => ['alert-warning shadow'],])
-            ->render();
-            echo $alert;
-        }
-?>
-<div>
+
 <?php
     if ($canEdit) {
         echo Html::a('Add',
@@ -51,6 +23,7 @@ use Yiisoft\Yii\Bootstrap5\Alert;
     }
     
     //list all the items
+    
     /**
      * @var Company $company
      */
@@ -58,15 +31,15 @@ use Yiisoft\Yii\Bootstrap5\Alert;
       echo Html::br();
       $label = $company->getId() . " ";
       echo Html::label($label);
-      echo Html::a('Edit',
+      echo Html::a($s->trans('edit'),
       $urlGenerator->generate('company/edit', ['id' => $company->getId()]),
             ['class' => 'btn btn-info btn-sm ms-2']
           );
-      echo Html::a('View',
+      echo Html::a($s->trans('view'),
       $urlGenerator->generate('company/view', ['id' => $company->getId()]),
       ['class' => 'btn btn-warning btn-sm ms-2']
              );
-      echo Html::a('Delete',
+      echo Html::a($s->trans('delete'),
       $urlGenerator->generate('company/delete', ['id' => $company->getId()]),
       ['class' => 'btn btn-danger btn-sm ms-2', 
        'onclick'=>"return confirm('". $s->trans('delete_record_warning'). "')"
@@ -74,4 +47,3 @@ use Yiisoft\Yii\Bootstrap5\Alert;
       );
     }
 ?>
-</li>

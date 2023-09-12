@@ -41,6 +41,7 @@ use Yiisoft\Yii\View\ViewRenderer;
 
 final class InvRecurringController
 {
+    private Flash $flash;
     private DataResponseFactoryInterface $factory;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
@@ -85,6 +86,7 @@ final class InvRecurringController
         $this->invrecurringService = $invrecurringService;
         $this->invTaxRateService = $invtaxrateService;
         $this->session = $session;
+        $this->flash = new Flash($session);
         $this->s = $s;
         $this->iS = $iS;
         $this->translator = $translator;        
@@ -92,20 +94,28 @@ final class InvRecurringController
         $this->mailer = $mailer;
     }
     
-    /**
-     * 
-     * @return string
-     */
-    private function alert() : string {
-        return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
-        [
-            'flash'=>$this->flash($this->session, '', ''),
-            'errors' => [],
-        ]);
+   /**
+    * @return string
+    */
+    private function alert(): string {
+      return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+      [ 
+        'flash' => $this->flash,
+        'errors' => [],
+      ]);
     }
+
+     /**
+      * @param string $level
+      * @param string $message
+      * @return Flash
+      */
+     private function flash_message(string $level, string $message): Flash {
+       $this->flash->add($level, $message, true);
+       return $this->flash;
+     }
     
     /**
-     * 
      * @param InvRecurring $invrecurring
      * @return array
      */
@@ -264,27 +274,25 @@ final class InvRecurringController
     }
     
     /**
-     * 
-     * @param Session $session
      * @param CurrentRoute $currentRoute
      * @param IRR $invrecurringRepository
      * @return Response
      */
-    public function delete(Session $session, CurrentRoute $currentRoute,IRR $invrecurringRepository 
+    public function delete(CurrentRoute $currentRoute,IRR $invrecurringRepository 
     ): Response {
         try {
             $inv_recurring = $this->invrecurring($currentRoute,$invrecurringRepository);
             if ($inv_recurring) {
-                $this->invrecurringService->deleteInvRecurring($inv_recurring);               
-                $this->flash($session, 'info', 'Deleted.');
-                return $this->webService->getRedirectResponse('invrecurring/index'); 
-            }
+              $this->invrecurringService->deleteInvRecurring($inv_recurring);               
+              $this->flash_message('info', $this->translator->translate('invoice.invoice.recurring.deleted'));
+              return $this->webService->getRedirectResponse('invrecurring/index'); 
+          }
             return $this->webService->getNotFoundResponse();
 	} catch (\Exception $e) {
-            $this->flash($session, 'danger', $e->getMessage());
+            $this->flash_message('danger', $e->getMessage());
             unset($e);
             return $this->webService->getRedirectResponse('invrecurring/index'); 
-        }
+      }
     }
     
     /**
@@ -322,7 +330,7 @@ final class InvRecurringController
     {
         $canEdit = $this->userService->hasPermission('editInv');
         if (!$canEdit){
-            $this->flash($this->session,'warning', $this->translator->translate('invoice.permission'));
+            $this->flash_message('warning', $this->translator->translate('invoice.permission'));
             return $this->webService->getRedirectResponse('invrecurring/index');
         }
         return $canEdit;
@@ -351,11 +359,10 @@ final class InvRecurringController
     }
     
     /**
-     * @param Session $session
      * @param CurrentRoute $currentRoute
      * @param IRR $irR
      */
-    public function index(Session $session, CurrentRoute $currentRoute, IRR $irR): \Yiisoft\DataResponse\DataResponse
+    public function index(CurrentRoute $currentRoute, IRR $irR): \Yiisoft\DataResponse\DataResponse
     {
         $pageNum = (int)$currentRoute->getArgument('page', '1');
         $paginator = (new OffsetPaginator($this->invrecurrings($irR)))
@@ -363,27 +370,25 @@ final class InvRecurringController
         ->withCurrentPage($pageNum);
         $numberhelper = new NumberHelper($this->s);
         $canEdit = $this->rbac();
-        $flash = $this->flash($session, '','');
         $parameters = [        
-                'paginator'=>$paginator,
-                's'=>$this->s,
-                'canEdit' => $canEdit,
-                'recur_frequencies'=>$numberhelper->recur_frequencies(), 
-                'invrecurrings'=>$this->invrecurrings($irR),
-                'flash'=> $flash
+          'paginator'=>$paginator,
+          's'=>$this->s,
+          'canEdit' => $canEdit,
+          'recur_frequencies'=>$numberhelper->recur_frequencies(), 
+          'invrecurrings'=>$this->invrecurrings($irR),
+          'alert'=> $this->alert()
         ];
         return $this->viewRenderer->render('index', $parameters);  
     }
     
     /**
-     * 
      * @param ViewRenderer $head
      * @param Request $request
      * @param ValidatorInterface $validator
      * @return Response
      */
     public function add(ViewRenderer $head, Request $request, 
-                        ValidatorInterface $validator  
+      ValidatorInterface $validator  
 
     ) : Response
     {
@@ -406,19 +411,6 @@ final class InvRecurringController
             $parameters['errors'] = $form->getFormErrors();
         }
         return $this->viewRenderer->render('_form', $parameters);
-    }
-    
-    /**
-     * 
-     * @param Session $session
-     * @param string $level
-     * @param string $message
-     * @return Flash
-     */
-    private function flash(Session $session, string $level, string $message): Flash{
-        $flash = new Flash($session);
-        $flash->set($level, $message); 
-        return $flash;
-    }    
+    }       
 }
 

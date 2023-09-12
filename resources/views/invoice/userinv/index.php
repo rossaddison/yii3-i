@@ -20,6 +20,8 @@ use Yiisoft\Yii\DataView\GridView;
  * @var TranslatorInterface $translator
  * @var WebView $this
  */ 
+
+echo $alert;
 ?>
 <?php
     $header = Div::tag()
@@ -44,10 +46,7 @@ use Yiisoft\Yii\DataView\GridView;
 
     $toolbar = Div::tag();
 ?>
-<div>
-<?= $alert; ?>
-</div>
-
+<br>
 <div>
     <h5><?= $s->trans('users'); ?></h5>
     <div class="btn-group index-options">

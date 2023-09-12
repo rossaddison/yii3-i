@@ -33,7 +33,7 @@ use Yiisoft\Json\Json;
 use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Router\FastRoute\UrlGenerator;
 use Yiisoft\Session\Flash\Flash;
-use Yiisoft\Session\SessionInterface;
+use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\Validator\ValidatorInterface;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
@@ -41,6 +41,8 @@ use Yiisoft\Yii\View\ViewRenderer;
 
 final class InvItemController
 {
+    private Flash $flash;
+    private Session $session;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     private UserService $userService;
@@ -50,6 +52,7 @@ final class InvItemController
     private TranslatorInterface $translator;
     
     public function __construct(
+        Session $session,
         ViewRenderer $viewRenderer,
         WebControllerService $webService,
         UserService $userService,
@@ -59,6 +62,8 @@ final class InvItemController
         TranslatorInterface $translator,
     )    
     {
+        $this->session = $session;
+        $this->flash = new Flash($session);
         $this->viewRenderer = $viewRenderer->withControllerName('invoice/invitem')
                                            ->withLayout('@views/layout/invoice.php');                                                
         $this->webService = $webService;
@@ -71,7 +76,6 @@ final class InvItemController
     
     /**
      * @param ViewRenderer $head
-     * @param SessionInterface $session
      * @param Request $request
      * @param ValidatorInterface $validator
      * @param SR $sR
@@ -80,7 +84,7 @@ final class InvItemController
      * @param TRR $trR
      * @param IIAR $iiar
      */
-    public function add_product(ViewRenderer $head, SessionInterface $session, Request $request, 
+    public function add_product(ViewRenderer $head, Request $request, 
                         ValidatorInterface $validator,
                         SR $sR,
                         PR $pR,
@@ -89,7 +93,7 @@ final class InvItemController
                         IIAR $iiar,
     ) : \Yiisoft\DataResponse\DataResponse
     {
-        $inv_id = (string)$session->get('inv_id');
+        $inv_id = (string)$this->session->get('inv_id');
         $parameters = [
             'title' => $this->translator->translate('invoice.add'),
             'action' => ['invitem/add'],
@@ -108,10 +112,10 @@ final class InvItemController
         if ($request->getMethod() === Method::POST) {            
             $form = new InvItemForm();
             if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
-                  $this->invitemService->addInvItem_product(new InvItem(), $form, $inv_id, $pR, $trR, new IIAS($iiar), $iiar, $sR, $uR);
-                  $this->flash($session, 'info', $sR->trans('record_successfully_created'));
-                  return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
-                         ['heading'=>'', 'message'=>$sR->trans('record_successfully_created'),'url'=>'inv/view','id'=>$inv_id]));  
+              $this->invitemService->addInvItem_product(new InvItem(), $form, $inv_id, $pR, $trR, new IIAS($iiar), $iiar, $sR, $uR);
+              $this->flash_message('info', $sR->trans('record_successfully_created'));
+              return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
+                     ['heading'=>'', 'message'=>$sR->trans('record_successfully_created'),'url'=>'inv/view','id'=>$inv_id]));  
             }
             $parameters['errors'] = $form->getFormErrors();
         }
@@ -120,7 +124,6 @@ final class InvItemController
     
     /**
      * @param ViewRenderer $head
-     * @param SessionInterface $session
      * @param Request $request
      * @param ValidatorInterface $validator
      * @param SR $sR
@@ -129,7 +132,7 @@ final class InvItemController
      * @param TRR $trR
      * @param IIAR $iiar
      */
-    public function add_task(ViewRenderer $head, SessionInterface $session, Request $request, 
+    public function add_task(ViewRenderer $head, Request $request, 
                         ValidatorInterface $validator,
                         SR $sR,
                         TaskR $taskR,
@@ -138,7 +141,7 @@ final class InvItemController
                         IIAR $iiar,
     ) : \Yiisoft\DataResponse\DataResponse
     {
-        $inv_id = (string)$session->get('inv_id');
+        $inv_id = (string)$this->session->get('inv_id');
         $parameters = [
             'title' => $this->translator->translate('invoice.add'),
             'action' => ['invitem/add'],
@@ -158,7 +161,7 @@ final class InvItemController
             $form = new InvItemForm();
             if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
                   $this->invitemService->addInvItem_task(new InvItem(), $form, $inv_id, $taskR, $trR, new IIAS($iiar), $iiar, $sR);
-                  $this->flash($session, 'info', $sR->trans('record_successfully_created'));
+                  $this->flash_message('info', $sR->trans('record_successfully_created'));
                   return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
                          ['heading'=>'','message'=>$sR->trans('record_successfully_created'),'url'=>'inv/view','id'=>$inv_id]));  
             }
@@ -236,7 +239,6 @@ final class InvItemController
      * This function receives the data from the form that appears if you 
      * click on the pencil icon in the line item 
      * @param ViewRenderer $head
-     * @param SessionInterface $session
      * @param CurrentRoute $currentRoute
      * @param Request $request
      * @param ValidatorInterface $validator
@@ -251,13 +253,13 @@ final class InvItemController
      * @param IIAR $iiar
      * @return \Yiisoft\DataResponse\DataResponse|\Psr\Http\Message\ResponseInterface
      */
-    public function edit_product(ViewRenderer $head, SessionInterface $session, CurrentRoute $currentRoute, Request $request, ValidatorInterface $validator,
+    public function edit_product(ViewRenderer $head, CurrentRoute $currentRoute, Request $request, ValidatorInterface $validator,
                         IIR $iiR, SR $sR, TRR $trR, PR $pR, TaskR $taskR, UR $uR, IR $iR, IIAS $iias, IIAR $iiar, ACIIR $aciiR): \Yiisoft\DataResponse\DataResponse|\Psr\Http\Message\ResponseInterface  {
-        $inv_id = (string)$session->get('inv_id');
+        $inv_id = (string)$this->session->get('inv_id');
         $inv_item = $this->invitem($currentRoute, $iiR);
         if (null!==$inv_item) {
             $inv_item_id = $inv_item->getId();
-            $session->set('inv_item_id', $inv_item_id);
+            $this->session->set('inv_item_id', $inv_item_id);
             // How many allowances or charges does this specific item have?
             $inv_item_allowances_charges_count = $aciiR->repoInvItemcount((string)$inv_item_id);
             $inv_item_allowances_charges = $aciiR->repoInvItemquery((string)$inv_item_id);
@@ -312,13 +314,13 @@ final class InvItemController
                         //return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
                         //['heading'=>'Successful','message'=>$sR->trans('record_successfully_updated'),'url'=>'inv/view','id'=>$inv_id])); 
 
-                        $this->flash($session, 'info', $sR->trans('record_successfully_updated'));
+                        $this->flash_message('info', $sR->trans('record_successfully_updated'));
                         return $this->webService->getRedirectResponse('inv/view',['id'=>$inv_id]);
                 }    
                 } else {   
                     //return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
                     //['heading'=>'Not successful','message'=>'nosussss','url'=>'inv/view','id'=>$inv_id])); 
-                    $this->flash($session, 'info','not successful');
+                    $this->flash_message('info','not successful');
                     $this->webService->getRedirectResponse('inv/view',['id'=>$inv_id]);
                     }
                 $parameters['body'] = $body;
@@ -396,7 +398,6 @@ final class InvItemController
     /**
      * 
      * @param ViewRenderer $head
-     * @param SessionInterface $session
      * @param CurrentRoute $currentRoute
      * @param Request $request
      * @param ValidatorInterface $validator
@@ -411,9 +412,9 @@ final class InvItemController
      * @param IIAR $iiar
      * @return Response
      */
-    public function edit_task(ViewRenderer $head, SessionInterface $session, CurrentRoute $currentRoute, Request $request, ValidatorInterface $validator,
-                        IIR $iiR, SR $sR, TRR $trR, PR $pR, TaskR $taskR, UR $uR, IR $iR, IIAS $iias, IIAR $iiar): Response {
-        $inv_id = (string)$session->get('inv_id');
+    public function edit_task(ViewRenderer $head, CurrentRoute $currentRoute, Request $request, ValidatorInterface $validator,
+                        IIR $iiR, SR $sR, TRR $trR, TaskR $taskR, UR $uR, IR $iR, IIAS $iias, IIAR $iiar): Response {
+        $inv_id = (string)$this->session->get('inv_id');
         $inv_item = $this->invitem($currentRoute, $iiR);
         $parameters = [
             'title' => 'Edit',
@@ -454,55 +455,29 @@ final class InvItemController
             $parameters['errors'] = $form->getFormErrors();
         } 
         return $this->viewRenderer->render('_item_edit_task', $parameters);        
-    }
+    }           
     
+  /**
+   * @return string
+   */
+   private function alert(): string {
+     return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+     [ 
+       'flash' => $this->flash,
+       'errors' => [],
+     ]);
+   }
+
     /**
-     * 
-     * @param CurrentRoute $currentRoute
-     * @param IIR $iiR
-     * @return \Yiisoft\DataResponse\DataResponse|Response
-     */
-    public function delete(CurrentRoute $currentRoute, IIR $iiR): \Yiisoft\DataResponse\DataResponse|Response {
-            $inv_item = $this->invitem($currentRoute, $iiR);
-            if ($inv_item) {
-                $iiR->repoInvItemCount((string)$inv_item->getId()) === 1  ? (($this->invitemService->deleteInvItem($inv_item))): '';
-                return $this->viewRenderer->render('inv/index');
-            }
-            return $this->webService->getNotFoundResponse();
-    }            
-    
-    /**
-     * 
-     * @param SessionInterface $session
      * @param string $level
      * @param string $message
      * @return Flash
      */
-    private function flash(SessionInterface $session, string $level, string $message): Flash{
-        $flash = new Flash($session);
-        $flash->set($level, $message); 
-        return $flash;
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
-    
-    /**
-     * @param SessionInterface $session
-     * @param IIR $iiR
-     * @param SR $sR
-     */
-    public function index(SessionInterface $session, IIR $iiR, SR $sR): \Yiisoft\DataResponse\DataResponse
-    {       
-         $canEdit = $this->rbac($session);
-         $flash = $this->flash($session, '','');
-         $parameters = [      
-          's'=>$sR,
-          'inv_id'=>$session->get('inv_id'),
-          'canEdit' => $canEdit,
-          'invitems' => $this->invitems($iiR),
-          'flash'=> $flash
-         ];
-        return $this->viewRenderer->render('index', $parameters);
-    } 
-    
+        
     /**
      * @param CurrentRoute $currentRoute
      * @param IIR $iiR
@@ -549,20 +524,7 @@ final class InvItemController
         }
         return $this->factory->createResponse(Json::encode(($result ? ['success'=>1]:['success'=>0])));  
     }
-    
-    /**
-     * @return Response|true
-     */
-    private function rbac(SessionInterface $session): bool|Response 
-    {
-        $canEdit = $this->userService->hasPermission('editInv');
-        if (!$canEdit){
-            $this->flash($session,'warning', $this->translator->translate('invoice.permission'));
-            return $this->webService->getRedirectResponse('invitem/index');
-        }
-        return $canEdit;
-    }
-    
+        
     /**
      * 
      * @param CurrentRoute $currentRoute
@@ -576,12 +538,12 @@ final class InvItemController
         $inv_item = $this->invitem($currentRoute, $iiR);
         if ($inv_item) {
             $parameters = [
-                    'title' => $sR->trans('view'),
-                    'action' => ['invitem/edit', ['id' => $inv_item->getId()]],
-                    'errors' => [],
-                    'body' => $this->body($inv_item),
-                    's'=>$sR,             
-                    'invitem'=>$iiR->repoInvItemquery((string)$inv_item->getId()),
+              'title' => $sR->trans('view'),
+              'action' => ['invitem/edit', ['id' => $inv_item->getId()]],
+              'errors' => [],
+              'body' => $this->body($inv_item),
+              's'=>$sR,             
+              'invitem'=>$iiR->repoInvItemquery((string)$inv_item->getId()),
             ];
             return $this->viewRenderer->render('_view', $parameters);
         }

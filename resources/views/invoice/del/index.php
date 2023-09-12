@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 
+use App\Invoice\Helpers\DateHelper;
 use Yiisoft\Html\Html;
 use Yiisoft\Data\Paginator\OffsetPaginator;
 use Yiisoft\Translator\TranslatorInterface;
@@ -9,7 +10,6 @@ use Yiisoft\Html\Tag\Div;
 use Yiisoft\Html\Tag\Form;
 use Yiisoft\Html\Tag\H5;
 use Yiisoft\Html\Tag\I;
-use Yiisoft\Yii\Bootstrap5\Alert;
 use Yiisoft\Yii\DataView\Column\DataColumn;
 use Yiisoft\Yii\DataView\GridView;
 use Yiisoft\Yii\DataView\OffsetPagination;
@@ -21,6 +21,9 @@ use Yiisoft\Yii\DataView\OffsetPagination;
  * @var OffsetPaginator $paginator
  * @var string $id
  */
+
+echo $alert;
+
 ?>
 
 <?php
@@ -46,32 +49,6 @@ $toolbarReset = A::tag()
 $toolbar = Div::tag();
 ?>
 <h1><?= $translator->translate('invoice.delivery.location'); ?></h1>
-<?php
-$danger = $flash->get('danger');
-if ($danger != null) {
-  $alert = Alert::widget()
-    ->body($danger)
-    ->options(['class' => ['alert-danger shadow'],])
-    ->render();
-  echo $alert;
-}
-$info = $flash->get('info');
-if ($info != null) {
-  $alert = Alert::widget()
-    ->body($info)
-    ->options(['class' => ['alert-info shadow'],])
-    ->render();
-  echo $alert;
-}
-$warning = $flash->get('warning');
-if ($warning != null) {
-  $alert = Alert::widget()
-    ->body($warning)
-    ->options(['class' => ['alert-warning shadow'],])
-    ->render();
-  echo $alert;
-}
-?>
 
 <?=
   GridView::widget()
@@ -89,12 +66,41 @@ if ($warning != null) {
     }
     ),
     DataColumn::create()
+      ->attribute('id')
+      ->label($translator->translate('invoice.invoice.delivery.location.index.button.list'))
+      ->value(static function ($model) use ($urlGenerator, $iR, $s) : string {
+          $datehelper = new DateHelper($s);
+          $invoices = $iR->findAllWithDeliveryLocation($model->getId());
+          $buttons = '';
+          $button = '';
+          /**
+           * @var App\Invoice\Entity\Inv $invoice
+           */
+          foreach ($invoices as $invoice) {
+             $button = (string)Html::a($invoice->getNumber().' '.($invoice->getDate_created())->format($datehelper->style()), $urlGenerator->generate('inv/view',['id'=>$invoice->getId()]),
+               ['class'=>'btn btn-primary btn-sm',
+                'data-bs-toggle' => 'tooltip',
+                'title' => $invoice->getId() 
+               ]);
+             $buttons .= $button . str_repeat("&nbsp;", 1);
+          }
+          return $buttons;
+      }
+    ),  
+    DataColumn::create()
     ->label($translator->translate('invoice.delivery.location.global.location.number'))
     ->attribute('global_location_number')
     ->value(static function ($model): string {
       return (string) $model->getGlobal_location_number();
     }
     ),
+    DataColumn::create()
+    ->label($translator->translate('invoice.delivery.location.global.location.number'))
+    ->attribute('global_location_number')
+    ->value(static function ($model): string {
+      return (string) $model->getGlobal_location_number();
+    }
+    ),  
     DataColumn::create()
     ->label($s->trans('date_created'))
     ->attribute('date_created')

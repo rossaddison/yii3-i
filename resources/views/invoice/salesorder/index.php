@@ -25,6 +25,8 @@ use Yiisoft\Router\CurrentRoute;
  * @var WebView $this
  */
 
+echo $alert;
+
 $header = Div::tag()
     ->addClass('row')
     ->content(
@@ -100,10 +102,7 @@ $toolbar = Div::tag();
             </div>
     </div>
 </div>
-<div>
 <br>
-<?= $alert; ?>   
-</div>
 <?= GridView::widget()
     ->columns(
         DataColumn::create()

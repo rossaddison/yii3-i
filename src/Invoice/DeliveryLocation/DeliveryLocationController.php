@@ -8,6 +8,7 @@ use App\Invoice\Entity\DeliveryLocation;
 use App\Invoice\DeliveryLocation\DeliveryLocationService;
 use App\Invoice\DeliveryLocation\DeliveryLocationRepository;
 use App\Invoice\Client\ClientRepository as CR;
+use App\Invoice\Inv\InvRepository as IR;  
 use App\Invoice\Setting\SettingRepository;
 use App\Invoice\Helpers\Peppol\PeppolArrays;
 use App\User\UserService;
@@ -28,6 +29,7 @@ use \Exception;
 final class DeliveryLocationController {
 
   private SessionInterface $session;
+  private Flash $flash;
   private ViewRenderer $viewRenderer;
   private WebControllerService $webService;
   private UserService $userService;
@@ -48,6 +50,7 @@ final class DeliveryLocationController {
     DataResponseFactoryInterface $factory
   ) {
     $this->session = $session;
+    $this->flash = new Flash($session);
     $this->viewRenderer = $viewRenderer;
     $this->webService = $webService;
     $this->userService = $userService;
@@ -64,25 +67,31 @@ final class DeliveryLocationController {
     $this->factory = $factory;
   }
 
-  public function index(CurrentRoute $currentRoute, DeliveryLocationRepository $delRepository, SettingRepository $sR, CR $cR): Response {
-    $flash = $this->flash('', '');
+  public function index(CurrentRoute $currentRoute, DeliveryLocationRepository $delRepository, SettingRepository $sR, CR $cR, IR $iR): Response {
     $page = (int) $currentRoute->getArgument('page', '1');
     $dels = $delRepository->findAllPreloaded();
     $paginator = (new OffsetPaginator($dels))
       ->withPageSize((int) $sR->get_setting('default_list_limit'))
       ->withCurrentPage($page)
       ->withNextPageToken((string) $page);
+    $this->add_in_invoice_flash();
     $parameters = [
       'dels' => $this->dels($delRepository),
-      'flash' => $flash,
+      'alert' => $this->alert(),
       'paginator' => $paginator,
       'cR' => $cR,
+      // Use the invoice Repository to locate all the invoices relevant to this location
+      'iR' => $iR,  
       'alerts' => $this->alert(),
       'max' => (int) $sR->get_setting('default_list_limit'),
       'canEdit' => $this->userService->hasPermission('editInv'),
       'grid_summary' => $sR->grid_summary($paginator, $this->translator, (int) $sR->get_setting('default_list_limit'), $this->translator->translate('invoice.delivery.location.plural'), ''),
     ];
     return $this->viewRenderer->render('/invoice/del/index', $parameters);
+  }
+  
+  public function add_in_invoice_flash() : void {
+    $this->flash_message('info', $this->translator->translate('invoice.invoice.delivery.location.add.in.invoice'));
   }
 
   public function add(CurrentRoute $currentRoute, ViewRenderer $head, Request $request,
@@ -166,12 +175,12 @@ final class DeliveryLocationController {
       $del = $this->del($currentRoute, $delRepository);
       if ($del) {
         $this->delService->deleteDeliveryLocation($del);
-        $this->flash('info', $settingRepository->trans('record_successfully_deleted'));
+        $this->flash_message('info', $settingRepository->trans('record_successfully_deleted'));
         return $this->webService->getRedirectResponse('del/index');
       }
       return $this->webService->getRedirectResponse('del/index');
     } catch (Exception $e) {
-      $this->flash('danger', $e->getMessage());
+      $this->flash_message('danger', $e->getMessage());
       return $this->webService->getRedirectResponse('del/index');
     }
   }
@@ -252,25 +261,23 @@ final class DeliveryLocationController {
   }
 
   /**
-   * @param string $level
-   * @param string $message
-   * @return Flash
-   */
-  private function flash(string $level, string $message): Flash {
-    $flash = new Flash($this->session);
-    $flash->set($level, $message);
-    return $flash;
-  }
+  * @return string
+  */
+   private function alert(): string {
+     return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+     [ 
+       'flash' => $this->flash,
+       'errors' => [],
+     ]);
+   }
 
-  /**
-   * @return string
-   */
-  private function alert(): string {
-    return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
-        [
-          'flash' => $this->flash('', ''),
-          'errors' => [],
-    ]);
-  }
-
+    /**
+     * @param string $level
+     * @param string $message
+     * @return Flash
+     */
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
+    }
 }

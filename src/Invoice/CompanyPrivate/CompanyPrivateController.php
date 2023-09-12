@@ -26,6 +26,7 @@ use Yiisoft\Yii\View\ViewRenderer;
 final class CompanyPrivateController
 {
     private SessionInterface $session;
+    private Flash $flash;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     private UserService $userService;
@@ -42,6 +43,7 @@ final class CompanyPrivateController
     )    
     {
         $this->session = $session;
+        $this->flash = new Flash($session);
         $this->viewRenderer = $viewRenderer->withControllerName('invoice/companyprivate')
                                            ->withLayout('@views/layout/invoice.php');
         $this->webService = $webService;
@@ -97,7 +99,7 @@ final class CompanyPrivateController
         $aliases = $settingRepository->get_company_private_logos_folder_aliases();
         $targetPath = $aliases->get('@company_private_logos');
         if (!is_writable($targetPath)) { 
-            $this->flash('warning', $settingRepository->trans('is_not_writable'));
+            $this->flash_message('warning', $settingRepository->trans('is_not_writable'));
             return $this->webService->getRedirectResponse('companyprivate/index');
         }   
         if ($request->getMethod() === Method::POST) {
@@ -116,7 +118,7 @@ final class CompanyPrivateController
                     && $validator->validate($form)->isValid()
                 ) {
                     $this->companyprivateService->addCompanyPrivate(new CompanyPrivate(), $form, $settingRepository);
-                    $this->flash('info',$settingRepository->trans('record_successfully_created'));
+                    $this->flash_message('info',$settingRepository->trans('record_successfully_created'));
                     return $this->webService->getRedirectResponse('companyprivate/index');
                 }
             }
@@ -143,21 +145,31 @@ final class CompanyPrivateController
                 //$isuploaded = !is_uploaded_file($tmp) ? ' not uploaded' : '';
                 //$fileexists = file_exists($target_file_name) ? ' the file already exists' : '';
                 //$move = !move_uploaded_file($tmp, $target_file_name) ? ' not moved' :  '';
-                //$this->flash('info',$sR->trans('errors').$isuploaded.$fileexists.$move);
+                //$this->flash_message('info',$sR->trans('errors').$isuploaded.$fileexists.$move);
                 return true;
         }
         return false;    
     }
     
     /**
-     * @return string
-     */    
-    private function alert() : string {
-        return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
-        [
-            'flash'=>$this->flash('', ''),
-            'errors' => [],
-        ]);
+    * @return string
+    */
+    private function alert(): string {
+      return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+      [ 
+        'flash' => $this->flash,
+        'errors' => [],
+      ]);
+    }
+
+    /**
+     * @param string $level
+     * @param string $message
+     * @return Flash
+     */
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
     
     /**
@@ -191,7 +203,7 @@ final class CompanyPrivateController
             $aliases = $settingRepository->get_company_private_logos_folder_aliases();
             $targetPath = $aliases->get('@company_private_logos');
             if (!is_writable($targetPath)) { 
-                $this->flash('warning', $settingRepository->trans('is_not_writable'));
+                $this->flash_message('warning', $settingRepository->trans('is_not_writable'));
                 return $this->webService->getRedirectResponse('companyprivate/index');
             }   
             if ($request->getMethod() === Method::POST) {
@@ -226,7 +238,7 @@ final class CompanyPrivateController
                         );                
                         $companyprivateRepository->save($after_save);
 
-                        $this->flash('info',$settingRepository->trans('record_successfully_updated'));
+                        $this->flash_message('info',$settingRepository->trans('record_successfully_updated'));
                         return $this->webService->getRedirectResponse('companyprivate/index');
                     } // after  save
                 }
@@ -251,7 +263,7 @@ final class CompanyPrivateController
         $company_private = $this->companyprivate($currentRoute, $companyprivateRepository);
         if ($company_private) {
             $this->companyprivateService->deleteCompanyPrivate($company_private);
-            $this->flash('info', $sR->trans('record_successfully_deleted'));
+            $this->flash_message('info', $sR->trans('record_successfully_deleted'));
             return $this->webService->getRedirectResponse('companyprivate/index'); 
         }
         return $this->webService->getRedirectResponse('companyprivate/index');
@@ -286,12 +298,12 @@ final class CompanyPrivateController
      */
     private function rbac(): bool|Response 
     {
-        $canEdit = $this->userService->hasPermission('editInv');
-        if (!$canEdit){
-            $this->flash('warning', $this->translator->translate('invoice.permission'));
-            return $this->webService->getRedirectResponse('companyprivate/index');
-        }
-        return $canEdit;
+      $canEdit = $this->userService->hasPermission('editInv');
+      if (!$canEdit){
+          $this->flash_message('warning', $this->translator->translate('invoice.permission'));
+          return $this->webService->getRedirectResponse('companyprivate/index');
+      }
+      return $canEdit;
     }
     
     /**
@@ -321,35 +333,23 @@ final class CompanyPrivateController
     }
     
     /**
-     * 
      * @param CompanyPrivate $companyprivate
      * @return array
      */
     private function body(CompanyPrivate $companyprivate): array {
         $body = [                
-                    'id'=>$companyprivate->getId(),
-                    'company_id'=>$companyprivate->getCompany_id(),
-                    'vat_id'=>$companyprivate->getVat_id(),
-                    'tax_code'=>$companyprivate->getTax_code(),
-                    'iban'=>$companyprivate->getIban(),
-                    'gln'=>$companyprivate->getGln(),
-                    'rcc'=>$companyprivate->getRcc(),
-                    'logo_filename'=>$companyprivate->getLogo_filename(),
-                    'start_date'=>$companyprivate->getStart_date(),
-                    'end_date'=>$companyprivate->getEnd_date(),
+          'id'=>$companyprivate->getId(),
+          'company_id'=>$companyprivate->getCompany_id(),
+          'vat_id'=>$companyprivate->getVat_id(),
+          'tax_code'=>$companyprivate->getTax_code(),
+          'iban'=>$companyprivate->getIban(),
+          'gln'=>$companyprivate->getGln(),
+          'rcc'=>$companyprivate->getRcc(),
+          'logo_filename'=>$companyprivate->getLogo_filename(),
+          'start_date'=>$companyprivate->getStart_date(),
+          'end_date'=>$companyprivate->getEnd_date(),
         ];
         return $body;
-    }
-    
-    /**
-     * @param string $level
-     * @param string $message
-     * @return Flash
-     */            
-    private function flash(string $level, string $message): Flash{
-        $flash = new Flash($this->session);
-        $flash->set($level, $message); 
-        return $flash;
     }
 }
 

@@ -5,8 +5,8 @@
    use Yiisoft\Html\Html;
    /**    
     * @var \Yiisoft\Router\UrlGeneratorInterface $urlGenerator
-    * @var \Yiisoft\Session\Flash\FlashInterface $flash 
     */
+   echo $alert;
 ?>
 <div id="headerbar">
     <h1 class="headerbar-title"><?= $s->trans('email_templates'); ?></h1>
@@ -27,10 +27,6 @@
             }
         ?>
     </div>
-</div>
-<div id="content" class="table-content">
-    
-<?= $alert; ?>        
 </div>
 <div>
     <table class="table table-hover table-striped">

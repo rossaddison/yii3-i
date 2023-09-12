@@ -24,6 +24,9 @@ use Yiisoft\Router\CurrentRoute;
  * @var TranslatorInterface $translator
  * @var WebView $this
  */
+
+echo $alert;
+
 ?>
 <?php
 $header = Div::tag()
@@ -47,10 +50,6 @@ $toolbarReset = A::tag()
 
 $toolbar = Div::tag();
 ?>
-
-<div id="content" class="table-content">
-    <?= $alert; ?> 
-</div>
 
 <?= GridView::widget()
         ->columns(
@@ -121,10 +120,10 @@ $toolbar = Div::tag();
     $pageSize = $paginator->getCurrentPageSize();
     if ($pageSize > 0) {
       echo Html::p(
-        sprintf('Showing %s out of %s payments: Max '. $max . ' payments per page: Total Payments '.$paginator->getTotalItems() , $pageSize, $paginator->getTotalItems()),
+        sprintf($translator->translate('invoice.index.footer.showing').' payments: Max '. $max . ' payments per page: Total Payments '.$paginator->getTotalItems() , $pageSize, $paginator->getTotalItems()),
         ['class' => 'text-muted']
     );
     } else {
-      echo Html::p('No records');
+      echo Html::p($translator->translate('invoice.records.no'));
     }
 ?>

@@ -18,9 +18,9 @@ use Yiisoft\Yii\DataView\OffsetPagination;
  * @var \Yiisoft\Router\UrlGeneratorInterface $urlGenerator
  * @var bool $canEdit
  * @var string $id
- * @var \Yiisoft\Session\Flash\FlashInterface $flash 
  */
 
+echo $alert;
 ?>
 
 <?php
@@ -46,34 +46,6 @@ $toolbarReset = A::tag()
 $toolbar = Div::tag();
 ?>
 <h1><?= $translator->translate('invoice.client.postaladdress'); ?></h1>
-<?php
-        $danger = $flash->get('danger');
-        if ($danger != null) {
-            $alert =  Alert::widget()
-            ->body($danger)
-            ->options(['class' => ['alert-danger shadow'],])
-            ->render();
-            echo $alert;
-        }
-        $info = $flash->get('info');
-        if ($info != null) {
-            $alert =  Alert::widget()
-            ->body($info)
-            ->options(['class' => ['alert-info shadow'],])
-            ->render();
-            echo $alert;
-        }
-        $warning = $flash->get('warning');
-        if ($warning != null) {
-            $alert =  Alert::widget()
-            ->body($warning)
-            ->options(['class' => ['alert-warning shadow'],])
-            ->render();
-            echo $alert;
-        }
-        
-
-?>
 <?= GridView::widget()
         ->columns(
             DataColumn::create()
@@ -141,9 +113,9 @@ $toolbar = Div::tag();
     $pageSize = $paginator->getCurrentPageSize();
     if ($pageSize > 0) {
       echo Html::p(
-        sprintf('Showing %s out of %s invoices: Max '. $max . ' invoices per page: Total Invs '.$paginator->getTotalItems() , $pageSize, $paginator->getTotalItems()),
+        sprintf($translator->translate('invoice.index.footer.showing').' invoices: Max '. $max . ' invoices per page: Total Invs '.$paginator->getTotalItems() , $pageSize, $paginator->getTotalItems()),
         ['class' => 'text-muted']
     );
     } else {
-      echo Html::p('No records');
+      echo Html::p($translator->translate('invoice.records.no'));
     }

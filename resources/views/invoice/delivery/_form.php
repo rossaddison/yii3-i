@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 use Yiisoft\Html\Html;
 use Yiisoft\Yii\Bootstrap5\Alert;
-use App\Invoice\Helpers\DateHelper;
+use \DateTimeImmutable;
+use Yiisoft\VarDumper\VarDumper;
 
 /**
  * @var \Yiisoft\View\View $this
@@ -32,7 +33,8 @@ if (!empty($errors)) {
 <div class="row">
 <div class="mb-3 form-group has-feedback">
   <?php
-  $date = $datehelper->get_or_set_with_style($body['date_created']);
+  //echo VarDumper::dump($body['date_created']);
+  $date = $datehelper->get_or_set_with_style($body['date_created'] ?? new \DateTimeImmutable('now')) ;
   ?>
   <label form-label for="date_created"><?= $translator->translate('invoice.invoice.delivery.date.created') . ' (' . $datehelper->display() . ')'; ?></label>
   <div class="input-group">
@@ -47,7 +49,7 @@ if (!empty($errors)) {
     
 <div class="mb-3 form-group has-feedback">
   <?php
-  $datem = $datehelper->get_or_set_with_style($body['date_modified']);
+  $datem = $datehelper->get_or_set_with_style($body['date_modified'] ?? new \DateTimeImmutable('now'));
   ?>
   <label form-label for="date_modified"><?= $translator->translate('invoice.invoice.delivery.date.modified') . ' (' . $datehelper->display() . ')'; ?></label>
   <div class="input-group">
@@ -70,7 +72,7 @@ if (!empty($errors)) {
  
 <div class="mb-3 form-group has-feedback">
   <?php
-  $adate = $datehelper->get_or_set_with_style($body['actual_delivery_date']);
+  $adate = $datehelper->get_or_set_with_style($body['actual_delivery_date'] ?? new \DateTimeImmutable('now'));
   ?>
   <label form-label for="actual_delivery_date"><?= $translator->translate('invoice.invoice.delivery.actual.delivery.date') . ' (' . $datehelper->display() . ')'; ?></label>
   <div class="input-group">
@@ -85,7 +87,7 @@ if (!empty($errors)) {
     
 <div class="mb-3 form-group has-feedback">
   <?php
-  $sdate = $datehelper->get_or_set_with_style($body['start_date']);
+  $sdate = $datehelper->get_or_set_with_style($body['start_date'] ?? new \DateTimeImmutable('now'));
   ?>
   <label form-label for="start_date"><?= $translator->translate('invoice.invoice.delivery.start.date') . ' (' . $datehelper->display() . ')'; ?></label>
   <div class="input-group">
@@ -100,7 +102,7 @@ if (!empty($errors)) {
 
 <div class="mb-3 form-group has-feedback">
   <?php
-  $edate = $datehelper->get_or_set_with_style($body['end_date']);
+  $edate = $datehelper->get_or_set_with_style($body['end_date'] ?? new \DateTimeImmutable('now'));
   ?>
   <label form-label for="end_date"><?= $translator->translate('invoice.invoice.delivery.end.date') . ' (' . $datehelper->display() . ')'; ?></label>
   <div class="input-group">

@@ -74,7 +74,7 @@ use Yiisoft\DataResponse\DataResponseFactoryInterface;
 use Yiisoft\Http\Method;
 use Yiisoft\Json\Json;
 use Yiisoft\Router\CurrentRoute;
-use Yiisoft\Session\SessionInterface;
+use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\User\CurrentUser;
@@ -86,12 +86,13 @@ use \Exception;
 final class SalesOrderController
 {
     private DataResponseFactoryInterface $factory;
+    private Flash $flash;
     private InvService $invService;
     private InvCustomService $inv_custom_service;
     private InvAmountService $invAmountService;
     private InvItemService $invItemService;
     private InvTaxRateService $invTaxRateService;
-    private SessionInterface $session;
+    private Session $session;
     private SettingRepository $sR;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
@@ -106,7 +107,7 @@ final class SalesOrderController
         InvAmountService $invAmountService,
         InvItemService $invItemService,
         InvTaxRateService $invTaxRateService,
-        SessionInterface $session,
+        Session $session,
         SettingRepository $settingRepository,
         ViewRenderer $viewRenderer,
         WebControllerService $webService,
@@ -116,6 +117,7 @@ final class SalesOrderController
     )    
     {
         $this->factory = $factory;
+        $this->flash = new Flash($session);
         $this->invService = $invService;
         $this->inv_custom_service = $inv_custom_service;
         $this->invAmountService = $invAmountService;
@@ -230,7 +232,6 @@ final class SalesOrderController
     {      
         // If the language dropdown changes
         $this->session->set('_language', $currentRoute->getArgument('_language'));
-        
         $query_params = $request->getQueryParams();
         $page = (int)$currentRoute->getArgument('page','1');
         //status 0 => 'all';
@@ -457,7 +458,7 @@ final class SalesOrderController
                 'terms_and_conditions'=>$settingRepository->getTermsAndConditions(),
                 'custom_fields'=>$cfR->repoTablequery('salesorder_custom'),
                 'custom_values'=>$cvR->attach_hard_coded_custom_field_values_to_custom_field($cfR->repoTablequery('salesorder_custom')),
-                'no_delivery_locations' => $delRepo->repoClientCount($so->getClient_id()) > 0 ? '' : $this->flash('warning', $this->translator->translate('invoice.quote.delivery.location.none')),
+                'no_delivery_locations' => $delRepo->repoClientCount($so->getClient_id()) > 0 ? '' : $this->flash_message('warning', $this->translator->translate('invoice.quote.delivery.location.none')),
                 'alert'=>$this->alert(),
                 'so'=> $so,
                 'so_custom_values' => null!==$so_id ? $this->salesorder_custom_values($so_id, $socR) : null,
@@ -506,12 +507,12 @@ final class SalesOrderController
             $so = $this->salesorder($currentRoute, $salesorderRepository);
             if ($so) {
                 $this->salesorderService->deleteSo($so, $socR, $socS, $soiR, $soiS, $sotrR, $sotrS, $soaR, $soaS);               
-                $this->flash('info', $settingRepository->trans('record_successfully_deleted'));
+                $this->flash_message('info', $settingRepository->trans('record_successfully_deleted'));
                 return $this->webService->getRedirectResponse('salesorder/index'); 
             }
             return $this->webService->getRedirectResponse('salesorder/index'); 
 	} catch (Exception $e) {
-            $this->flash('danger', $e->getMessage());
+            $this->flash_message('danger', $e->getMessage());
             return $this->webService->getRedirectResponse('salesorder/index'); 
         }
     }
@@ -563,7 +564,26 @@ final class SalesOrderController
         } // quote_amount 
         return $this->webService->getNotFoundResponse();
     }
-        
+    
+    /**
+     * 
+     * @param CurrentRoute $currentRoute
+     * @param SettingRepository $settingRepository
+     * @param PR $pR
+     * @param CFR $cfR
+     * @param CVR $cvR
+     * @param GR $gR
+     * @param SoAR $soaR
+     * @param SoIAR $soiaR
+     * @param SoIR $soiR
+     * @param SoR $soR
+     * @param SoTRR $sotrR
+     * @param TRR $trR
+     * @param UNR $uR
+     * @param SoCR $socR
+     * @param InvRepo $invRepo
+     * @return Response
+     */    
     public function view(CurrentRoute $currentRoute, SettingRepository $settingRepository, PR $pR, CFR $cfR, CVR $cvR, GR $gR, SoAR $soaR, SoIAR $soiaR, SoIR $soiR, SoR $soR, SoTRR $sotrR, TRR $trR, UNR $uR, SoCR $socR, InvRepo $invRepo
         ): Response {
         $so = $this->salesorder($currentRoute, $soR);
@@ -691,7 +711,6 @@ final class SalesOrderController
                                              GR $gR, IIAR $iiaR, IIAS $iiaS, PR $pR, SOAR $soaR, SOCR $socR,
                                              SOIR $soiR, SOR $soR, SOTRR $sotrR, TRR $trR, UNR $unR, SettingRepository $sR) : \Yiisoft\DataResponse\DataResponse|Response
     {
-        
         $body = $request->getQueryParams();
         $so_id = (string)$body['so_id'];
         $so = $soR->repoSalesOrderUnloadedquery($so_id);
@@ -720,7 +739,7 @@ final class SalesOrderController
                 /**
                  * @psalm-suppress PossiblyNullArgument
                  */
-                $this->invService->addInv($this->userService->getUser(), $inv, $form, $sR);
+                $this->invService->bothInv($this->userService->getUser(), $inv, $form, $sR, $gR);
                 $inv_id = $inv->getId();
                 if (null!==$inv_id) {
                     // Transfer each so_item to inv_item and the corresponding so_item_amount to inv_item_amount for each item
@@ -732,11 +751,11 @@ final class SalesOrderController
                     $so->setInv_id($inv_id);
                     // Set salesorder's status to invoice generated
                     $so->setStatus_id(8);
-                    $this->flash('info', $this->translator->translate('invoice.salesorder.invoice.generated'));
+                    $this->flash_message('info', $this->translator->translate('invoice.salesorder.invoice.generated'));
                     $soR->save($so);
                     $parameters = ['success'=>1];
                     //return response to salesorder.js to reload page at location
-                    $this->flash('info',$this->translator->translate('invoice.salesorder.copied.to.invoice'));
+                    $this->flash_message('info',$this->translator->translate('invoice.salesorder.copied.to.invoice'));
                     return $this->factory->createResponse(Json::encode($parameters));          
                 }    
             } else {
@@ -998,14 +1017,14 @@ final class SalesOrderController
                                             // TODO logo
                                             'logo'=> '',
                                             'alert'=>$this->alert(),
-                                            'so' => $salesorder,
+                                            'salesorder' => $salesorder,
                                             'salesorder_item_amount'=>$soiaR,
                                             'salesorder_amount' => $salesorder_amount,
                                             'items' => $soiR->repoSalesOrderquery($salesorder_id),
                                             // Get all the salesorder tax rates that have been setup for this salesorder
                                             'salesorder_tax_rates' => $salesorder_tax_rates,
                                             'salesorder_url_key' => $url_key,
-                                            'flash_message' => $this->flash('info', ''),
+                                            'flash_message' => $this->flash_message('info', ''),
                                             //'attachments' => $attachments,
                                             'custom_fields' => $custom_fields,
                                             'clienthelper' => new ClientHelper($this->sR),
@@ -1036,25 +1055,24 @@ final class SalesOrderController
     }
     
     /**
+   * @return string
+   */
+   private function alert(): string {
+     return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+     [ 
+       'flash' => $this->flash,
+       'errors' => [],
+     ]);
+   }
+
+    /**
      * @param string $level
      * @param string $message
      * @return Flash
-     */   
-    private function flash(string $level, string $message): Flash{
-        $flash = new Flash($this->session);
-        $flash->set($level, $message); 
-        return $flash;
-    }
-    
-    /**
-     * @return string
-     */    
-    private function alert() : string {
-        return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
-        [
-            'flash'=>$this->flash('', ''),
-            'errors' => [],
-        ]);
+     */
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
 }
 

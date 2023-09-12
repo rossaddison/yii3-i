@@ -28,6 +28,7 @@ use \Exception;
 
 final class ClientPeppolController {
 
+  private Flash $flash;
   private SessionInterface $session;
   private ViewRenderer $viewRenderer;
   private WebControllerService $webService;
@@ -46,6 +47,7 @@ final class ClientPeppolController {
     DataResponseFactoryInterface $factory
   ) {
     $this->session = $session;
+    $this->flash = new Flash($session);
     $this->viewRenderer = $viewRenderer;
     $this->webService = $webService;
     $this->userService = $userService;
@@ -62,6 +64,14 @@ final class ClientPeppolController {
     $this->factory = $factory;
   }
 
+  /**
+   * 
+   * @param CurrentRoute $currentRoute
+   * @param Request $request
+   * @param ValidatorInterface $validator
+   * @param SettingRepository $settingRepository
+   * @return Response
+   */
   public function add(CurrentRoute $currentRoute, Request $request,
     ValidatorInterface $validator,
     SettingRepository $settingRepository
@@ -101,17 +111,6 @@ final class ClientPeppolController {
   }
 
   /**
-   * @return string
-   */
-  private function alert(): string {
-    return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
-        [
-          'flash' => $this->flash('', ''),
-          'errors' => [],
-    ]);
-  }
-
-  /**
    * @param ClientPeppol $clientpeppol
    * @return array
    */
@@ -136,6 +135,10 @@ final class ClientPeppolController {
     return $body;
   }
 
+  /**
+   * 
+   * @return array
+   */
   private function pep(): array {
     $pep = [
       'endpointid' => [
@@ -194,11 +197,18 @@ final class ClientPeppolController {
     return $pep;
   }
 
+  /**
+   * 
+   * @param ClientPeppolRepository $clientpeppolRepository
+   * @param SettingRepository $settingRepository
+   * @param Request $request
+   * @param ClientPeppolService $service
+   * @return Response
+   */
   public function index(ClientPeppolRepository $clientpeppolRepository, SettingRepository $settingRepository, Request $request, ClientPeppolService $service): Response {
-    $flash = $this->flash('', '');
     $parameters = [
       'clientpeppols' => $this->clientpeppols($clientpeppolRepository),
-      'flash' => $flash
+      'alert' => $this->alert()
     ];
     return $this->viewRenderer->render('index', $parameters);
   }
@@ -216,16 +226,27 @@ final class ClientPeppolController {
       $clientpeppol = $this->clientpeppol($currentRoute, $clientpeppolRepository);
       if ($clientpeppol) {
         $this->clientpeppolService->deleteClientPeppol($clientpeppol);
-        $this->flash('info', $settingRepository->trans('record_successfully_deleted'));
+        $this->flash_message('info', $settingRepository->trans('record_successfully_deleted'));
         return $this->webService->getRedirectResponse('clientpeppol/index');
       }
       return $this->webService->getRedirectResponse('clientpeppol/index');
     } catch (Exception $e) {
-      $this->flash('danger', $e->getMessage());
+      $this->flash_message('danger', $e->getMessage());
       return $this->webService->getRedirectResponse('clientpeppol/index');
     }
   }
 
+  /**
+   * 
+   * @param ViewRenderer $head
+   * @param Request $request
+   * @param CurrentRoute $currentRoute
+   * @param ValidatorInterface $validator
+   * @param ClientPeppolRepository $clientpeppolRepository
+   * @param SettingRepository $settingRepository
+   * @param ClientRepository $clientRepository
+   * @return Response
+   */
   public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute,
     ValidatorInterface $validator,
     ClientPeppolRepository $clientpeppolRepository,
@@ -276,14 +297,24 @@ final class ClientPeppolController {
   }
 
   /**
+    * @return string
+    */
+   private function alert(): string {
+     return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+     [ 
+       'flash' => $this->flash,
+       'errors' => [],
+     ]);
+   }
+    
+  /**
    * @param string $level
    * @param string $message
    * @return Flash
    */
-  private function flash(string $level, string $message): Flash {
-    $flash = new Flash($this->session);
-    $flash->set($level, $message);
-    return $flash;
+  private function flash_message(string $level, string $message): Flash {
+    $this->flash->add($level, $message, true);
+    return $this->flash;
   }
 
   //For rbac refer to AccessChecker

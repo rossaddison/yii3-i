@@ -29,6 +29,7 @@ use \Exception;
 final class AllowanceChargeController
 {
     private SessionInterface $session;
+    private Flash $flash;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     private UserService $userService;
@@ -45,6 +46,7 @@ final class AllowanceChargeController
     )    
     {
         $this->session = $session;
+        $this->flash = new Flash($session);
         $this->webService = $webService;
         $this->userService = $userService;
         $this->viewRenderer = $viewRenderer;
@@ -171,13 +173,13 @@ final class AllowanceChargeController
     
     /**
      * @return string
-     */    
+     */
     private function alert() : string {
-        return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
-        [
-            'flash'=>$this->flash('', ''),
-            'errors' => [],
-        ]);
+      return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+      [
+          'flash'=>$this->flash,
+          'errors' => [],
+      ]);
     }
     
     /**
@@ -201,7 +203,7 @@ final class AllowanceChargeController
     
     public function index(AllowanceChargeRepository $allowancechargeRepository, SettingRepository $settingRepository): Response
     {      
-       $flash = $this->flash('', '');
+       $flash = $this->flash_message('', '');
        $allowancecharges = $allowancechargeRepository->findAllPreloaded();
        $paginator = (new OffsetPaginator($allowancecharges));
        $parameters = [
@@ -226,12 +228,12 @@ final class AllowanceChargeController
             $allowancecharge = $this->allowancecharge($currentRoute, $allowancechargeRepository);
             if ($allowancecharge) {
                 $this->allowancechargeService->deleteAllowanceCharge($allowancecharge);               
-                $this->flash('info', $settingRepository->trans('record_successfully_deleted'));
+                $this->flash_message('info', $settingRepository->trans('record_successfully_deleted'));
                 return $this->webService->getRedirectResponse('allowancecharge/index'); 
             }
             return $this->webService->getRedirectResponse('allowancecharge/index'); 
 	} catch (Exception $e) {
-            $this->flash('danger', $e->getMessage());
+            $this->flash_message('danger', $e->getMessage());
             return $this->webService->getRedirectResponse('allowancecharge/index'); 
         }
     }
@@ -313,10 +315,9 @@ final class AllowanceChargeController
      * @param string $message
      * @return Flash
      */
-    private function flash(string $level, string $message): Flash{
-        $flash = new Flash($this->session);
-        $flash->set($level, $message); 
-        return $flash;
+    private function flash_message(string $level, string $message): Flash{
+        $this->flash->add($level, $message, true); 
+        return $this->flash;
     }
     
     //For rbac refer to AccessChecker    

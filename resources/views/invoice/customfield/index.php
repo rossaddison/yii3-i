@@ -3,37 +3,14 @@
 declare(strict_types=1);
 
 use Yiisoft\Html\Html;
-use Yiisoft\Yii\Bootstrap5\Alert;
 use App\Widget\OffsetPagination;
+
+echo $alert;
 
 /**
  * @var \Yiisoft\Router\UrlGeneratorInterface $urlGenerator
  */
- 
- $danger = $flash->get('danger');
-        if ($danger != null) {
-            $alert =  Alert::widget()
-            ->body($danger)
-            ->options(['class' => ['alert-danger shadow'],])
-            ->render();
-            echo $alert;
-        }
-        $info = $flash->get('info');
-        if ($info != null) {
-            $alert =  Alert::widget()
-            ->body($info)
-            ->options(['class' => ['alert-info shadow'],])
-            ->render();
-            echo $alert;
-        }
-        $warning = $flash->get('warning');
-        if ($warning != null) {
-            $alert =  Alert::widget()
-            ->body($warning)
-            ->options(['class' => ['alert-warning shadow'],])
-            ->render();
-            echo $alert;
-        }
+
 ?>
 <div id="headerbar">
     <h1 class="headerbar-title"><?= $s->trans('custom_fields'); ?></h1>
@@ -112,11 +89,11 @@ use App\Widget\OffsetPagination;
     $pageSize = $paginator->getCurrentPageSize();
     if ($pageSize > 0) {
       echo Html::p(
-        sprintf('Showing %s out of %s customfields. Max: '.$max. ' Total: '.$paginator->getTotalItems(), $pageSize, $paginator->getTotalItems()),
+        sprintf($translator->translate('invoice.index.footer.showing').' custom fields. Max: '.$max. ' Total: '.$paginator->getTotalItems(), $pageSize, $paginator->getTotalItems()),
         ['class' => 'text-muted']
     );
     } else {
-      echo Html::p('No records');
+      echo Html::p($translator->translate('invoice.records.no'));
     }
 ?>
 </div>

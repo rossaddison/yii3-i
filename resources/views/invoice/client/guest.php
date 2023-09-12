@@ -14,6 +14,8 @@ declare(strict_types=1);
 use App\Widget\OffsetPagination;
 use Yiisoft\Html\Html;
 
+echo $alert;
+
 $this->setTitle($s->trans('clients'));
 
 $pagination = OffsetPagination::widget()
@@ -46,9 +48,6 @@ $pagination = OffsetPagination::widget()
                 </a>    
             </div>
     </div>
-</div>
-<div>
-    <?= $alert ?>
 </div>
 <div id="content" class="table-content">
     <?php 
@@ -133,11 +132,11 @@ $pagination = OffsetPagination::widget()
         $pageSize = $paginator->getCurrentPageSize();
         if ($pageSize > 0) {
             echo Html::p(
-                sprintf('Showing %s out of %s clients', $pageSize, $paginator->getTotalItems()),
+                sprintf($translator->translate('invoice.index.footer.showing').' clients', $pageSize, $paginator->getTotalItems()),
                 ['class' => 'text-muted']
             );
         } else {
-            echo Html::p('No records');
+            echo Html::p($translator->translate('invoice.records.no'));
         }
     ?>
         

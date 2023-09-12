@@ -25,6 +25,7 @@ use Yiisoft\Router\CurrentRoute;
  * @var WebView $this
  */
 ?>
+<?= $alert; ?>
 <?php
 $header = Div::tag()
         ->addClass('row')
@@ -93,10 +94,7 @@ $toolbar = Div::tag();
             </a>
         </div>
     </div>
-</div>
-<div>
     <br>
-    <?= $alert; ?>
 </div>
 <?=
         GridView::widget()
@@ -226,12 +224,12 @@ $toolbar = Div::tag();
                 ->label($s->trans('delete'))
                 ->value(static function ($model) use ($s, $urlGenerator): string {
                     return $model->getIs_read_only() === false && $s->get_setting('disable_read_only') === (string) 0 && $model->getSo_id() === '0' && $model->getQuote_id() === '0' ? Html::a(Html::tag('button',
-                                    Html::tag('i', '', ['class' => 'fa fa-trash fa-margin']),
-                                    [
-                                        'type' => 'submit',
-                                        'class' => 'dropdown-button',
-                                        'onclick' => "return confirm(" . "'" . $s->trans('delete_record_warning') . "');"
-                                    ]
+                            Html::tag('i', '', ['class' => 'fa fa-trash fa-margin']),
+                            [
+                                'type' => 'submit',
+                                'class' => 'dropdown-button',
+                                'onclick' => "return confirm(" . "'" . $s->trans('delete_record_warning') . "');"
+                            ]
                             ),
                             $urlGenerator->generate('inv/delete', ['id' => $model->getId()]), []
                     )->render() : '';
@@ -245,12 +243,12 @@ $toolbar = Div::tag();
         ->id('w3-grid')
         ->paginator($paginator)
         ->pagination(
-                OffsetPagination::widget()
-                ->menuClass('pagination justify-content-center')
-                ->paginator($paginator)
-                // No need to use page argument since built-in. Use status bar value passed from urlGenerator to inv/guest
-                ->urlArguments(['status' => $status])
-                ->render(),
+          OffsetPagination::widget()
+          ->menuClass('pagination justify-content-center')
+          ->paginator($paginator)
+          // No need to use page argument since built-in. Use status bar value passed from urlGenerator to inv/guest
+          ->urlArguments(['status' => $status])
+          ->render(),
         )
         ->rowAttributes(['class' => 'align-middle'])
         ->summaryAttributes(['class' => 'mt-3 me-3 summary text-end'])
@@ -259,8 +257,8 @@ $toolbar = Div::tag();
         ->emptyText((string) $translator->translate('invoice.invoice.no.records'))
         ->tableAttributes(['class' => 'table table-striped text-center h-75', 'id' => 'table-invoice'])
         ->toolbar(
-                Form::tag()->post($urlGenerator->generate('quote/index'))->csrf($csrf)->open() .
-                Div::tag()->addClass('float-end m-3')->content($toolbarReset)->encode(false)->render() .
-                Form::tag()->close()
+          Form::tag()->post($urlGenerator->generate('quote/index'))->csrf($csrf)->open() .
+          Div::tag()->addClass('float-end m-3')->content($toolbarReset)->encode(false)->render() .
+          Form::tag()->close()
 );
 ?>

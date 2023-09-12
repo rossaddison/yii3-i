@@ -123,6 +123,7 @@ final class InvController {
     private Crypt $crypt;
     private DateHelper $date_helper;
     private DataResponseFactoryInterface $factory;
+    private Flash $flash;
     private InvAmountService $inv_amount_service;
     private InvCustomService $inv_custom_service;
     private InvService $inv_service;
@@ -187,6 +188,7 @@ final class InvController {
         $this->crypt = $crypt;
         $this->date_helper = new DateHelper($sR);
         $this->factory = $factory;
+        $this->flash = new Flash($session);
         $this->inv_allowance_charge_service = $inv_allowance_charge_service;
         $this->inv_amount_service = $inv_amount_service;
         $this->inv_service = $inv_service;
@@ -221,8 +223,8 @@ final class InvController {
      */
     private function alert(): string {
       return $this->view_renderer->renderPartialAsString('/invoice/layout/alert',
-      [
-        'flash' => $this->flash('', ''),
+      [ 
+        'flash' => $this->flash,
         'errors' => [],
       ]);
     }
@@ -257,7 +259,7 @@ final class InvController {
                     [
                         'invoices_archive' => $invoice_archive
                     ]),
-            'flash' => $this->flash('', '' . $flash_message),
+            'alert' => $this->alert(), 
             'body' => $request->getParsedBody(),
         ];
         return $this->view_renderer->render('/invoice/inv/archive', $parameters);
@@ -297,11 +299,11 @@ final class InvController {
                 $uPR->save($track_file);
                 return true;
             } else {
-                $this->flash('warning', 'Possible file upload attack: ' . $tmp);
+                $this->flash_message('warning', 'Possible file upload attack: ' . $tmp);
                 return false;
             }
         } else {
-            $this->flash('warning', $this->sR->trans('error_duplicate_file'));
+            $this->flash_message('warning', $this->sR->trans('error_duplicate_file'));
             return false;
         }
     }
@@ -456,7 +458,7 @@ final class InvController {
             $this->sumex_add_record($sumexR, (int) $saved_model->getId());
             $parameters = ['success' => 1];
             // Inform the user of generated invoice number for draft setting
-            $this->flash('info', $this->sR->get_setting('generate_invoice_number_for_draft') === '1' ? $this->sR->trans('generate_invoice_number_for_draft') . '=>' . $this->sR->trans('yes') : $this->sR->trans('generate_invoice_number_for_draft') . '=>' . $this->sR->trans('no') );
+            $this->flash_message('info', $this->sR->get_setting('generate_invoice_number_for_draft') === '1' ? $this->sR->trans('generate_invoice_number_for_draft') . '=>' . $this->sR->trans('yes') : $this->sR->trans('generate_invoice_number_for_draft') . '=>' . $this->sR->trans('no') );
             //return response to inv.js to reload page at location
             return $this->factory->createResponse(Json::encode($parameters));
         } else {
@@ -590,12 +592,12 @@ final class InvController {
             $inv = $this->inv($currentRoute, $invRepo);
             if ($inv) {
                 $this->inv_service->deleteInv($inv, $icR, $icS, $iiR, $iiS, $itrR, $itrS, $iaR, $iaS);
-                $this->flash('info', $this->sR->trans('record_successfully_deleted'));
+                $this->flash_message('info', $this->sR->trans('record_successfully_deleted'));
                 return $this->web_service->getRedirectResponse('inv/index');
             }
             return $this->web_service->getRedirectResponse('inv/index');
         } catch (\Exception $e) {
-            $this->flash('danger', $e->getMessage());
+            $this->flash_message('danger', $e->getMessage());
             unset($e);
             return $this->web_service->getRedirectResponse('inv/index');
         }
@@ -626,7 +628,7 @@ final class InvController {
                 }
             }
         } catch (\Exception $e) {
-            $this->flash('danger', $e->getMessage());
+            $this->flash_message('danger', $e->getMessage());
             unset($e);
         }
         $inv_id = (string) $this->session->get('inv_id');
@@ -643,7 +645,7 @@ final class InvController {
             $inv_tax_rate = $this->invtaxrate($currentRoute, $invtaxrateRepository);
             $this->inv_tax_rate_service->deleteInvTaxRate($inv_tax_rate);
         } catch (\Exception $e) {
-            $this->flash('danger', $e->getMessage());
+            $this->flash_message('danger', $e->getMessage());
             unset($e);
         }
         $inv_id = (string) $this->session->get('inv_id');
@@ -934,7 +936,7 @@ final class InvController {
         $mailer_helper = new MailerHelper($this->sR, $this->session, $this->logger, $this->mailer, $ccR, $qcR, $icR, $pcR, $socR, $cfR, $cvR);
         $template_helper = new TemplateHelper($this->sR, $ccR, $qcR, $icR, $pcR, $socR, $cfR, $cvR);
         if (!$mailer_helper->mailer_configured()) {
-            $this->flash('warning', $this->sR->trans('email_not_configured'));
+            $this->flash_message('warning', $this->sR->trans('email_not_configured'));
             return $this->web_service->getRedirectResponse('inv/index');
         }
         $inv = $this->inv($currentRoute, $iR, true);
@@ -957,14 +959,14 @@ final class InvController {
                     $custom_fields[$table] = $cfR->repoTablequery($table);
                 }
                 if ($template_helper->select_email_invoice_template($invoice) == '') {
-                    $this->flash('warning', 'Email templates not configured. Settings...Invoices...Invoice Templates...Default Email Template');
+                    $this->flash_message('warning', 'Email templates not configured. Settings...Invoices...Invoice Templates...Default Email Template');
                     return $this->web_service->getRedirectResponse('setting/tab_index');
                 }
                 $setting_status_email_template = $etR->repoEmailTemplatequery($template_helper->select_email_invoice_template($invoice)) ?: null;
-                null === $setting_status_email_template ? $this->flash('info',
+                null === $setting_status_email_template ? $this->flash_message('info',
                                         $this->sR->trans('default_email_template') . '=>' .
                                         $this->sR->trans('not_set')) : '';
-                empty($template_helper->select_pdf_invoice_template($invoice)) ? $this->flash('info',
+                empty($template_helper->select_pdf_invoice_template($invoice)) ? $this->flash_message('info',
                                         $this->sR->trans('default_pdf_template') . '=>' .
                                         $this->sR->trans('not_set')) : '';
                 $parameters = [
@@ -1174,7 +1176,7 @@ final class InvController {
             if (is_array($body)) {
                 $body['btn_cancel'] = 0;
                 if (!$mailer_helper->mailer_configured()) {
-                    $this->flash('warning', $this->sR->trans('email_not_configured'));
+                    $this->flash_message('warning', $this->sR->trans('email_not_configured'));
                     return $this->web_service->getRedirectResponse('inv/index');
                 }
                 /**
@@ -1219,10 +1221,10 @@ final class InvController {
 
                 // Custom fields are automatically included on the invoice
                 if ($this->email_stage_1($inv_id, $from, $to, $subject, $email_body, $cc, $bcc, $attachFiles,
-                                $cR, $ccR, $cfR, $cvR,
-                                $iaR, $icR, $iiaR, $iiR, $iR, $itrR,
-                                $pcR, $socR,
-                                $qR, $qaR, $qcR, $soR, $uiR, $sumexR, $this->view_renderer)) {
+                    $cR, $ccR, $cfR, $cvR,
+                    $iaR, $icR, $iiaR, $iiR, $iR, $itrR,
+                    $pcR, $socR,
+                    $qR, $qaR, $qcR, $soR, $uiR, $sumexR, $this->view_renderer)) {
                     $this->sR->invoice_mark_sent($inv_id, $iR);
                     return $this->factory->createResponse($this->view_renderer->renderPartialAsString('/invoice/setting/inv_message',
                                             ['heading' => '', 'message' => $this->sR->trans('email_successfully_sent'),
@@ -1249,10 +1251,9 @@ final class InvController {
      * @param string $message
      * @return Flash
      */
-    private function flash(string $level, string $message): Flash {
-        $flash = new Flash($this->session);
-        $flash->set($level, $message);
-        return $flash;
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
 
     /**
@@ -1413,13 +1414,13 @@ final class InvController {
                 ->withNextPageToken((string) $page);
         $inv_statuses = $invRepo->getStatuses($this->sR);
         $label = $invRepo->getSpecificStatusArrayLabel((string) $status);
+        $this->draft_flash($currentRoute);
         $parameters = [
             'page' => $page,
             'paginator' => $paginator,
             's' => $this->sR,
             'sortOrder' => $query_params['sort'] ?? '',
-            'alert' => $this->alert(),
-            'client_count' => $clientRepo->count(),
+            'alert' => $this->alert(),'client_count' => $clientRepo->count(),
             'invs' => $invs,
             'grid_summary' => $this->sR->grid_summary(
                     $paginator,
@@ -1977,7 +1978,7 @@ final class InvController {
                     $iR->save($copy);
                     $parameters = ['success' => 1];
                     //return response to inv.js to reload page at location
-                    $this->flash('info', $this->translator->translate('invoice.draft.guest'));
+                    $this->flash_message('info', $this->translator->translate('invoice.draft.guest'));
                     return $this->factory->createResponse(Json::encode($parameters));
                 }
             } else {
@@ -2371,7 +2372,7 @@ final class InvController {
                             'custom_fields' => $custom_fields,
                             'download_pdf_non_sumex_action' => ['inv/download_pdf', ['url_key' => $url_key]],
                             'download_pdf_sumex_action' => ['inv/download_pdf', ['url_key' => $url_key]],
-                            'flash_message' => $this->flash('info', ''),
+                            'flash_message' => $this->flash_message('info', ''),
                             'inv' => $inv,
                             'inv_amount' => $inv_amount,
                             'inv_tax_rates' => ($inv_id > 0) && $itrR->repoCount($inv_id) > 0 ? $itrR->repoInvquery($inv_id) : null,
@@ -2386,13 +2387,13 @@ final class InvController {
                     ];
                     return $this->view_renderer->render('/invoice/inv/url_key', $parameters);
                 } // if inv_amount
-                $this->flash('warning', 'There is no invoice amount.');
+                $this->flash_message('warning', 'There is no invoice amount.');
                 return $this->web_service->getNotFoundResponse();
             } // if user_inv
-            $this->flash('danger', 'Client not allocated to user.');
+            $this->flash_message('danger', 'Client not allocated to user.');
             return $this->web_service->getNotFoundResponse();
         } // if inv
-        $this->flash('danger', 'Invoice not found');
+        $this->flash_message('danger', 'Invoice not found');
         return $this->web_service->getNotFoundResponse();
     }
 
@@ -2542,7 +2543,7 @@ final class InvController {
           }  
         } // else
       } // $this->sR->repoCount
-      $this->flash('info',$this->translator->translate('invoice.peppol.stream.toggle'));
+      $this->flash_message('info',$this->translator->translate('invoice.peppol.stream.toggle'));
       return $this->web_service->getRedirectResponse('inv/view',['id'=>$id]); 
     } // peppol stream toggle
     
@@ -2707,11 +2708,12 @@ final class InvController {
      * @param UIR $uiR
      * @param UPR $upR
      * @param SumexR $sumexR
+     * @param DLR $dlR
      * @return \Yiisoft\DataResponse\DataResponse|Response
      */
     public function view(ViewRenderer $head, CurrentRoute $currentRoute, Request $request,
             CFR $cfR, CVR $cvR, PR $pR, IAR $iaR, IIAR $iiaR, IIR $iiR, IR $iR, IRR $irR, ITRR $itrR, PMR $pmR,
-            TRR $trR, FR $fR, UNR $uR, ACR $acR, ACIR $aciR, ACIIR $aciiR, CR $cR, GR $gR, ICR $icR, PYMR $pymR, TASKR $taskR, PRJCTR $prjctR, UIR $uiR, UPR $upR, SOR $soR, SumexR $sumexR)
+            TRR $trR, FR $fR, UNR $uR, ACR $acR, ACIR $aciR, ACIIR $aciiR, CR $cR, GR $gR, ICR $icR, PYMR $pymR, TASKR $taskR, PRJCTR $prjctR, UIR $uiR, UPR $upR, SOR $soR, SumexR $sumexR, DLR $dlR)
     : \Yiisoft\DataResponse\DataResponse|Response {
         $inv = $this->inv($currentRoute, $iR, false);
         if ($inv) {
@@ -2735,6 +2737,7 @@ final class InvController {
                 // Each file attachment is recorded in Upload table with invoice's url_key, and client_id
                 $url_key = $inv->getUrl_key();
                 $client_id = $inv->getClient_id();
+                $delivery_location_id = $inv->getDelivery_location_id();
                 $parameters = [
                     'sales_order_number' => $sales_order_number,
                     'title' => $this->sR->trans('view'),
@@ -2841,6 +2844,7 @@ final class InvController {
                     'modal_create_credit' => $this->view_modal_create_credit($currentRoute, $gR, $iR),
                     'view_custom_fields' => $this->view_custom_fields($cfR, $cvR, $inv_custom_values),
                     'partial_inv_attachments' => $this->view_partial_inv_attachments($currentRoute, $url_key, (int) $client_id, $upR),
+                    'partial_inv_delivery_location' => $this->view_partial_delivery_location($currentRoute, $dlR, $delivery_location_id)
                 ];
                 return $this->view_renderer->render('/invoice/inv/view', $parameters);
             } // if $inv_amount
@@ -2963,11 +2967,39 @@ final class InvController {
                     'invEdit' => $invEdit,
                     'invView' => $invView,
                     'partial_inv_attachments_list' => $this->view_renderer->renderPartialAsString('/invoice/inv/partial_inv_attachments_list', [
-                        'grid_summary' => $this->sR->grid_summary($paginator, $this->translator, (int) $this->sR->get_setting('default_list_limit'), $this->translator->translate('invoice.invoice.attachment.list'), ''),
-                        'paginator' => $paginator
+                      'grid_summary' => $this->sR->grid_summary($paginator, $this->translator, (int) $this->sR->get_setting('default_list_limit'), $this->translator->translate('invoice.invoice.attachment.list'), ''),
+                      'paginator' => $paginator
                     ]),
                     'action' => ['inv/attachment', ['id' => $this->session->get('inv_id'), '_language' => $currentRoute->getArgument('_language')]]
         ]);
+    }
+    
+    /**
+     * @param CurrentRoute $currentRoute
+     * @param DLR $dlr
+     * @param string $delivery_location_id
+     * @return string
+     */
+    private function view_partial_delivery_location(CurrentRoute $currentRoute, DLR $dlr, string $delivery_location_id) : string {
+      if (!empty($delivery_location_id)) {
+        $del = $dlr->repoDeliveryLocationquery($delivery_location_id);
+        if (null!==$del) {
+          return $this->view_renderer->renderPartialAsString('/invoice/inv/partial_inv_delivery_location',[
+            'title' => $this->translator->translate('invoice.invoice.delivery.location'),
+            'building_number' => $del->getBuildingNumber(),
+            'address_1' => $del->getAddress_1(),
+            'address_2' => $del->getAddress_2(),
+            'city' => $del->getCity(),
+            'state' => $del->getZip(),
+            'country' => $del->getCountry(),
+            'global_location_number' => $del->getGlobal_location_number(),
+            'delivery_location_url' => $this->url_generator->generate('del/view',['_language' => $currentRoute->getArgument('_language'), 'id' => $delivery_location_id])
+          ]);
+        } //null!==$del   
+      } else {
+          return '';
+      }
+      return '';
     }
 
     /**
@@ -2997,25 +3029,50 @@ final class InvController {
             ////$inv_item_allowances_charges=$aciiR->repoACIquery((string)$inv->getId());
             ////$inv_item_allowances_charges_count=$aciiR->repoCount((string)$inv->getId());
             return $this->view_renderer->renderPartialAsString('/invoice/inv/partial_item_table', [
-                        'dl_acis' => $acis,
-                        'aciiR' => $aciiR,
-                        'show_buttons' => $show_buttons,
-                        'numberhelper' => $this->number_helper,
-                        'products' => $pR->findAllPreloaded(),
-                        // Only tasks with complete or status of 3 are made available for selection
-                        'tasks' => $taskR->repoTaskStatusquery(3),
-                        'user_can_edit' => $this->user_service->hasPermission('editInv') ? true : false,
-                        'inv_items' => $iiR->repoInvquery((string) $this->session->get('inv_id')),
-                        'inv_item_amount' => $iiaR,
-                        'inv_tax_rates' => $inv_tax_rates,
-                        'inv_amount' => $inv_amount,
-                        'inv' => $iR->repoInvLoadedquery((string) $this->session->get('inv_id')),
-                        's' => $this->sR,
-                        'tax_rates' => $trR->findAllPreloaded(),
-                        'units' => $uR->findAllPreloaded()
+              'dl_acis' => $acis,
+              'aciiR' => $aciiR,
+              'show_buttons' => $show_buttons,
+              'numberhelper' => $this->number_helper,
+              'products' => $pR->findAllPreloaded(),
+              // Only tasks with complete or status of 3 are made available for selection
+              'tasks' => $taskR->repoTaskStatusquery(3),
+              'user_can_edit' => $this->user_service->hasPermission('editInv') ? true : false,
+              'inv_items' => $iiR->repoInvquery((string) $this->session->get('inv_id')),
+              'inv_item_amount' => $iiaR,
+              'inv_tax_rates' => $inv_tax_rates,
+              'inv_amount' => $inv_amount,
+              'inv' => $iR->repoInvLoadedquery((string) $this->session->get('inv_id')),
+              's' => $this->sR,
+              'tax_rates' => $trR->findAllPreloaded(),
+              'units' => $uR->findAllPreloaded()
             ]);
         } // inv
         return '';
     }
-
+    
+    /**
+     * Use: Toggle Button on Flash message reminder
+     * @param CurrentRoute $currentRoute
+     * @return void
+     */
+    private function draft_flash(CurrentRoute $currentRoute) : void {
+      // Get the current draft setting
+      $draft = $this->sR->get_setting('generate_invoice_number_for_draft');
+      // Get the setting_id to allow for editing
+      $setting = $this->sR->withKey('generate_invoice_number_for_draft');
+      $setting_url = '';
+      $setting_id = '';
+      if (null!==$setting) {
+        $setting_id = $setting->getSetting_id();
+        // The route name has been simplified and differs from the action 'setting/inv_draft_has_number_switch'
+        $setting_url = $this->url_generator->generate('setting/draft',['_language'=> $currentRoute->getArgument('_language'), 'setting_id'=>$setting_id]);
+      }
+      $level = $draft == '0' ? 'warning': 'info';
+      $on_off = $draft == '0' ? 'off' : 'on';
+      $message = ($this->translator->translate('invoice.invoice.draft.number.'
+        .$on_off)) . str_repeat("&nbsp;", 2)
+        .(!empty($setting_url) ? (string)Html::a(Html::tag('i','',['class'=>'fa fa-pencil']), $setting_url, ['class'=>'btn btn-primary']) 
+        : '');
+      $this->flash_message($level, $message);
+    }
 }

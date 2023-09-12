@@ -30,6 +30,7 @@ use \Exception;
 final class DeliveryController {
 
     private SessionInterface $session;
+    private Flash $flash;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     private UserService $userService;
@@ -37,14 +38,15 @@ final class DeliveryController {
     private TranslatorInterface $translator;
 
     public function __construct(
-            SessionInterface $session,
-            ViewRenderer $viewRenderer,
-            WebControllerService $webService,
-            UserService $userService,
-            DeliveryService $deliveryService,
-            TranslatorInterface $translator
+        SessionInterface $session,            
+        ViewRenderer $viewRenderer,
+        WebControllerService $webService,
+        UserService $userService,
+        DeliveryService $deliveryService,
+        TranslatorInterface $translator
     ) {
         $this->session = $session;
+        $this->flash = new Flash($session);
         $this->viewRenderer = $viewRenderer;
         $this->webService = $webService;
         $this->userService = $userService;
@@ -59,7 +61,17 @@ final class DeliveryController {
         $this->deliveryService = $deliveryService;
         $this->translator = $translator;
     }
-
+    
+    /**
+     * @param CurrentRoute $currentRoute
+     * @param ViewRenderer $head
+     * @param Request $request
+     * @param ValidatorInterface $validator
+     * @param SettingRepository $settingRepository
+     * @param InvRepository $iR
+     * @param DLR $delRepo
+     * @return Response
+     */
     public function add(CurrentRoute $currentRoute, ViewRenderer $head, Request $request,
             ValidatorInterface $validator,
             SettingRepository $settingRepository,
@@ -95,15 +107,25 @@ final class DeliveryController {
         return $this->webService->getNotFoundResponse();
     }
 
+ /**
+  * @return string
+  */
+   private function alert(): string {
+     return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+     [ 
+       'flash' => $this->flash,
+       'errors' => [],
+     ]);
+   }
+
     /**
-     * @return string
+     * @param string $level
+     * @param string $message
+     * @return Flash
      */
-    private function alert(): string {
-        return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
-                        [
-                            'flash' => $this->flash('', ''),
-                            'errors' => [],
-        ]);
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
 
     /**
@@ -184,12 +206,12 @@ final class DeliveryController {
             $delivery = $this->delivery($currentRoute, $deliveryRepository);
             if ($delivery) {
                 $this->deliveryService->deleteDelivery($delivery);
-                $this->flash('info', $settingRepository->trans('record_successfully_deleted'));
+                $this->flash_message('info', $settingRepository->trans('record_successfully_deleted'));
                 return $this->webService->getRedirectResponse('delivery/index');
             }
             return $this->webService->getRedirectResponse('delivery/index');
         } catch (Exception $e) {
-            $this->flash('danger', $e->getMessage());
+            $this->flash_message('danger', $e->getMessage());
             return $this->webService->getRedirectResponse('delivery/index');
         }
     }
@@ -207,11 +229,11 @@ final class DeliveryController {
      * @return Response
      */
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute,
-      ValidatorInterface $validator,
-      DeliveryRepository $deliveryRepository,
-      SettingRepository $settingRepository,
-      DLR $delRepo,
-      InvRepository $iR
+            ValidatorInterface $validator,
+            DeliveryRepository $deliveryRepository,
+            SettingRepository $settingRepository,
+            DLR $delRepo,
+            InvRepository $iR
     ): Response {
         $delivery = $this->delivery($currentRoute, $deliveryRepository);
         if ($delivery) {
@@ -243,17 +265,6 @@ final class DeliveryController {
           } // null!==$inv  
         }
         return $this->webService->getRedirectResponse('delivery/index');
-    }
-
-    /**
-     * @param string $level
-     * @param string $message
-     * @return Flash
-     */
-    private function flash(string $level, string $message): Flash {
-        $flash = new Flash($this->session);
-        $flash->set($level, $message);
-        return $flash;
     }
 
     //For rbac refer to AccessChecker

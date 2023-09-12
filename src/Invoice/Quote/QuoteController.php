@@ -111,7 +111,7 @@ use Yiisoft\Json\Json;
 use Yiisoft\Mailer\MailerInterface;
 use Yiisoft\Router\FastRoute\UrlGenerator;
 use Yiisoft\Router\CurrentRoute;
-use Yiisoft\Session\SessionInterface;
+use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Validator\ValidatorInterface;
 use Yiisoft\Yii\View\ViewRenderer;
@@ -125,6 +125,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 final class QuoteController
 {
     private DataResponseFactoryInterface $factory;
+    private Flash $flash;
     private NumberHelper $number_helper; 
     private InvAmountService $inv_amount_service;
     private InvService $inv_service;
@@ -145,7 +146,7 @@ final class QuoteController
     private QuoteItemService $quote_item_service;    
     private QuoteService $quote_service;
     private QuoteTaxRateService $quote_tax_rate_service;
-    private SessionInterface $session;
+    private Session $session;
     private Translator $translator;
     private SR $sR;
     private UrlGenerator $url_generator;
@@ -169,7 +170,7 @@ final class QuoteController
      * @param QuoteItemService $quote_item_service
      * @param QuoteService $quote_service
      * @param QuoteTaxRateService $quote_tax_rate_service
-     * @param SessionInterface $session
+     * @param Session $session
      * @param SR $sR
      * @param Translator $translator
      * @param UserService $user_service
@@ -197,7 +198,7 @@ final class QuoteController
         QuoteItemService $quote_item_service,    
         QuoteService $quote_service,
         QuoteTaxRateService $quote_tax_rate_service,
-        SessionInterface $session,
+        Session $session,
         SR $sR,
         Translator $translator,
         UserService $user_service,        
@@ -207,6 +208,7 @@ final class QuoteController
     )    
     {
         $this->factory = $factory;
+        $this->flash = new Flash($session);
         $this->inv_amount_service = $inv_amount_service;
         $this->inv_service = $inv_service;
         $this->inv_custom_service = $inv_custom_service;
@@ -227,7 +229,7 @@ final class QuoteController
         $this->quote_item_service = $quote_item_service;        
         $this->quote_service = $quote_service;
         $this->quote_tax_rate_service = $quote_tax_rate_service;
-        $this->session = $session;
+        $this->session = $session;        
         $this->sR = $sR;
         $this->translator = $translator;
         $this->user_service = $user_service;
@@ -247,15 +249,24 @@ final class QuoteController
     }
     
     /**
-     * 
-     * @return string
+   * @return string
+   */
+   private function alert(): string {
+     return $this->view_renderer->renderPartialAsString('/invoice/layout/alert',
+     [ 
+       'flash' => $this->flash,
+       'errors' => [],
+     ]);
+   }
+
+    /**
+     * @param string $level
+     * @param string $message
+     * @return Flash
      */
-    private function alert() : string {
-        return $this->view_renderer->renderPartialAsString('/invoice/layout/alert',
-        [
-            'flash'=>$this->flash('', ''),
-            'errors' => [],
-        ]);
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
     
     /**
@@ -305,7 +316,7 @@ final class QuoteController
                     'password'=> $quote->getPassword() ?? '',              
                     'notes'=>$quote->getNotes()
                 ];
-                $this->flash('info', $this->translator->translate('invoice.salesorder.agree.to.terms'));  
+                $this->flash_message('info', $this->translator->translate('invoice.salesorder.agree.to.terms'));  
                 $form = new SoForm();
                 $new_so = new SoEntity();
                 if (($form->load($so_body) 
@@ -442,7 +453,7 @@ final class QuoteController
             $this->default_taxes($quote, $trR, $validator);            
             $parameters = ['success'=>1];
             // Inform the user of generated invoice number for drat setting
-            $this->flash('info', 
+            $this->flash_message('info', 
                   $this->sR->get_setting('generate_quote_number_for_draft') === '1' 
                   ? $this->sR->trans('generate_quote_number_for_draft').'=>'.$this->sR->trans('yes') 
                   : $this->sR->trans('generate_quote_number_for_draft').'=>'.$this->sR->trans('no') );
@@ -574,13 +585,13 @@ final class QuoteController
             $quote = $this->quote($currentRoute, $quoteRepo);
             if ($quote) {
                 $this->quote_service->deleteQuote($quote, $qcR, $qcS, $qiR, $qiS, $qtrR, $qtrS, $qaR, $qaS); 
-                $this->flash('info','Deleted.');
+                $this->flash_message('info','Deleted.');
                 return $this->web_service->getRedirectResponse('quote/index'); 
             }
             return $this->web_service->getNotFoundResponse();
 	} catch (\Exception $e) {
             unset($e);
-            $this->flash('danger', 'Cannot delete.');
+            $this->flash_message('danger', 'Cannot delete.');
             return $this->web_service->getRedirectResponse('quote/index'); 
         }
     }
@@ -595,7 +606,7 @@ final class QuoteController
             $this->quote_item_service->deleteQuoteItem($this->quote_item($currentRoute,$qiR));
         } catch (\Exception $e) {
             unset($e);
-            $this->flash('danger', 'Cannot delete.');
+            $this->flash_message('danger', $this->translator->translate('invoice.quote.item.cannot.delete'));
         }
         $quote_id = (string)$this->session->get('quote_id');
         return $this->factory->createResponse($this->view_renderer->renderPartialAsString('/invoice/setting/quote_successful',
@@ -612,7 +623,7 @@ final class QuoteController
             $this->quote_tax_rate_service->deleteQuoteTaxRate($this->quotetaxrate($currentRoute,$quotetaxrateRepository));
         } catch (\Exception $e) {
             unset($e);
-            $this->flash('danger', 'Cannot delete.');
+            $this->flash_message('danger', $this->translator->translate('invoice.quote.tax.rate.cannot.delete'));
         }
         $quote_id = (string)$this->session->get('quote_id');
         return $this->factory->createResponse($this->view_renderer->renderPartialAsString('/invoice/setting/inv_message',
@@ -668,7 +679,7 @@ final class QuoteController
                 'custom_values'=>$cvR->attach_hard_coded_custom_field_values_to_custom_field($cfR->repoTablequery('quote_custom')),
                 // There will initially be no custom_values attached to this quote until they are filled in the field on the form
                 'quote_custom_values' => null!==$quote_id ? $this->quote_custom_values($quote_id, $qcR) : null,
-                'no_delivery_locations' => $delRepo->repoClientCount($quote->getClient_id()) > 0 ? '' : $this->flash('warning', $this->translator->translate('invoice.quote.delivery.location.none')),
+                'no_delivery_locations' => $delRepo->repoClientCount($quote->getClient_id()) > 0 ? '' : $this->flash_message('warning', $this->translator->translate('invoice.quote.delivery.location.none')),
                 'quote' => $quote,
                 'del_count'=> $delRepo->repoClientCount($quote->getClient_id()),
                 'alert'=>$this->alert(),
@@ -789,7 +800,7 @@ final class QuoteController
         $mailer_helper = new MailerHelper($this->sR, $this->session, $this->logger, $this->mailer, $ccR, $qcR, $icR, $pcR, $socR, $cfR, $cvR);
         $template_helper = new TemplateHelper($this->sR, $ccR, $qcR, $icR, $pcR, $socR, $cfR, $cvR);
         if (!$mailer_helper->mailer_configured()) {
-            $this->flash('warning', $this->sR->trans('email_not_configured'));
+            $this->flash_message('warning', $this->sR->trans('email_not_configured'));
             return $this->web_service->getRedirectResponse('quote/index');
         }
         $quote_entity = $this->quote($currentRoute, $qR, true);
@@ -811,16 +822,16 @@ final class QuoteController
                     $custom_fields[$table] = $cfR->repoTablequery($table);
                 }        
                 if ($template_helper->select_email_quote_template() == '') {
-                    $this->flash('warning', 'Email templates not configured. Settings...Quotes...Quote Templates...Default Email Template');
+                    $this->flash_message('warning', $this->translator->translate('invoice.quote.email.templates.not.configured'));
                     return $this->web_service->getRedirectResponse('setting/tab_index');
                 }
                 $setting_status_email_template =  $etR->repoEmailTemplatequery($template_helper->select_email_quote_template()) 
                                                ?: null;
-                null===$setting_status_email_template ? $this->flash('info',
+                null===$setting_status_email_template ? $this->flash_message('info',
                                                   $this->sR->trans('default_email_template').'=>'.
                                                   $this->sR->trans('not_set')) : '';
 
-                empty($template_helper->select_pdf_quote_template()) ? $this->flash('info',
+                empty($template_helper->select_pdf_quote_template()) ? $this->flash_message('info',
                                                   $this->sR->trans('default_pdf_template').'=>'.
                                                   $this->sR->trans('not_set')) : '';
                 $parameters = [
@@ -854,17 +865,21 @@ final class QuoteController
         return $this->web_service->getRedirectResponse('quote/index');
     }
     
+    /**
+     * @param EmailTemplate $email_template
+     * @return array
+     */
     public function get_inject_email_template_array(EmailTemplate $email_template) : array {
-        $email_template_array = [
-                'body' => Json::htmlEncode($email_template->getEmail_template_body()),
-                'subject'=> $email_template->getEmail_template_subject() ?? '',
-                'from_name'=> $email_template->getEmail_template_from_name() ?? '',
-                'from_email'=> $email_template->getEmail_template_from_email() ?? '',
-                'cc'=> $email_template->getEmail_template_cc() ?? '',
-                'bcc'=> $email_template->getEmail_template_bcc() ?? '',
-                'pdf_template'=> null!==$email_template->getEmail_template_pdf_template()? $email_template->getEmail_template_pdf_template(): '',
-        ];
-        return $email_template_array;  
+      $email_template_array = [
+        'body' => Json::htmlEncode($email_template->getEmail_template_body()),
+        'subject'=> $email_template->getEmail_template_subject() ?? '',
+        'from_name'=> $email_template->getEmail_template_from_name() ?? '',
+        'from_email'=> $email_template->getEmail_template_from_email() ?? '',
+        'cc'=> $email_template->getEmail_template_cc() ?? '',
+        'bcc'=> $email_template->getEmail_template_bcc() ?? '',
+        'pdf_template'=> null!==$email_template->getEmail_template_pdf_template()? $email_template->getEmail_template_pdf_template(): '',
+      ];
+      return $email_template_array;  
     }
     
     /**
@@ -1013,7 +1028,7 @@ final class QuoteController
             if (is_array($body)) {
                 $body['btn_cancel'] = 0; 
                 if (!$mailer_helper->mailer_configured()) {
-                    $this->flash('warning', $this->sR->trans('email_not_configured'));
+                    $this->flash_message('warning', $this->sR->trans('email_not_configured'));
                     return $this->web_service->getRedirectResponse('quote/index');
                 }
                 
@@ -1084,17 +1099,6 @@ final class QuoteController
                     ['heading'=>'','message'=>$this->sR->trans('email_not_sent'),
                      'url'=>'quote/view','id'=>$quote_id]));
     } 
-    
-    /**
-     * @param string $level
-     * @param string $message
-     * @return Flash
-     */
-    private function flash(string $level, string $message): Flash{
-        $flash = new Flash($this->session);
-        $flash->set($level, $message); 
-        return $flash;
-    }
     
     /**
      * @param string $quote_id
@@ -1344,7 +1348,7 @@ final class QuoteController
     ): Response
     {        
         $parameters = [
-            'title' => 'Create',
+            'title' => $settingRepo->trans('add'),
             'action' => ['quote/modalcreate'],
             'errors' => [],
             'body' => $request->getParsedBody(),
@@ -1690,7 +1694,7 @@ final class QuoteController
                 /**
                  * @psalm-suppress PossiblyNullArgument
                  */
-                $this->inv_service->addInv($this->user_service->getUser(),$inv, $form, $this->sR);
+                $this->inv_service->bothInv($this->user_service->getUser(),$inv, $form, $this->sR, $gR);
                 $inv_id = $inv->getId();
                 if (null!==$inv_id) {
                     // Transfer each quote_item to inv_item and the corresponding quote_item_amount to inv_item_amount for each item
@@ -1703,7 +1707,7 @@ final class QuoteController
                     $qR->save($quote);
                     $parameters = ['success'=>1];
                     //return response to quote.js to reload page at location
-                    $this->flash('info',$this->translator->translate('invoice.quote.copied.to.invoice'));
+                    $this->flash_message('info',$this->translator->translate('invoice.quote.copied.to.invoice'));
                     return $this->factory->createResponse(Json::encode($parameters));          
                 }    
             } else {
@@ -1717,6 +1721,25 @@ final class QuoteController
         return $this->web_service->getNotFoundResponse();
     }
     
+    /**
+     * 
+     * @param Request $request
+     * @param ValidatorInterface $validator
+     * @param CFR $cfR
+     * @param GR $gR
+     * @param soIAS $soiaS
+     * @param PR $pR
+     * @param QAR $qaR
+     * @param soAR $soaR
+     * @param QCR $qcR
+     * @param soIAR $soiaR
+     * @param QIR $qiR
+     * @param QR $qR
+     * @param QTRR $qtrR
+     * @param TRR $trR
+     * @param UNR $unR
+     * @return \Yiisoft\DataResponse\DataResponse|Response
+     */
     public function quote_to_so_confirm(Request $request, ValidatorInterface $validator, CFR $cfR, 
                                            GR $gR, soIAS $soiaS, PR $pR, QAR $qaR, soAR $soaR, QCR $qcR,
                                            soIAR $soiaR, QIR $qiR, QR $qR, QTRR $qtrR, TRR $trR, UNR $unR) : \Yiisoft\DataResponse\DataResponse|Response
@@ -2051,16 +2074,16 @@ final class QuoteController
         if ($original) {
             $group_id = $original->getGroup_id();
             $ajax_body = [
-                    'inv_id'=>null,
-                    'client_id'=>$data_quote_js['client_id'],
-                    'group_id'=>$group_id,
-                    'status_id'=>1,
-                    'number'=>$gR->generate_number((int)$group_id),  
-                    'discount_amount'=>floatval($original->getDiscount_amount()),
-                    'discount_percent'=>floatval($original->getDiscount_percent()),
-                    'url_key'=>'',
-                    'password'=>'',              
-                    'notes'=>'',
+              'inv_id'=>null,
+              'client_id'=>$data_quote_js['client_id'],
+              'group_id'=>$group_id,
+              'status_id'=>1,
+              'number'=>$gR->generate_number((int)$group_id),  
+              'discount_amount'=>floatval($original->getDiscount_amount()),
+              'discount_percent'=>floatval($original->getDiscount_percent()),
+              'url_key'=>'',
+              'password'=>'',              
+              'notes'=>'',
             ];
             $form = new QuoteForm();
             $copy = new Quote();
@@ -2398,7 +2421,7 @@ final class QuoteController
                                             // Get all the quote tax rates that have been setup for this quote
                                             'quote_tax_rates' => $quote_tax_rates,
                                             'quote_url_key' => $url_key,
-                                            'flash_message' => $this->flash('info', ''),
+                                            'flash_message' => $this->flash_message('info', ''),
                                             //'attachments' => $attachments,
                                             'custom_fields' => $custom_fields,
                                             'clienthelper' => new ClientHelper($this->sR),

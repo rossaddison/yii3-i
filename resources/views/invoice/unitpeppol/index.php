@@ -3,8 +3,6 @@
 declare(strict_types=1);
 
 use Yiisoft\Html\Html;
-use Yiisoft\Yii\Bootstrap5\Alert;
-use Yiisoft\Yii\Bootstrap5\Modal;
 use Yiisoft\Data\Paginator\OffsetPaginator;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\View\WebView;
@@ -28,9 +26,10 @@ use Yiisoft\Router\CurrentRoute;
  * @var OffsetPaginator $paginator
  * @var \Yiisoft\Router\UrlGeneratorInterface $urlGenerator 
  * @var TranslatorInterface $translator
- * @var \Yiisoft\Session\Flash\FlashInterface $flash_interface 
  * @var WebView $this
  */ 
+
+ echo $alert; 
 ?>
 <?php
     $header = Div::tag()
@@ -62,9 +61,6 @@ use Yiisoft\Router\CurrentRoute;
     </div>
 </div>
 <br>
-<div>
-    <?= $alert; ?>
-</div>    
     <?= GridView::widget()
         ->columns(
             DataColumn::create()

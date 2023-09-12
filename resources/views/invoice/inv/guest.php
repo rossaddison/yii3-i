@@ -16,6 +16,8 @@ use Yiisoft\Yii\DataView\Column\DataColumn;
 use Yiisoft\Yii\DataView\GridView;
 use Yiisoft\Yii\DataView\OffsetPagination;
 
+echo $alert;
+
 /**
  * @var \App\Invoice\Entity\Inv $inv 
  * @var string $csrf
@@ -74,10 +76,6 @@ $toolbar = Div::tag();
                 </a>
             </div>
     </div>
-</div>
-<div>
-<br>
-<?= $alert; ?>    
 </div>
 <?= GridView::widget()
         ->columns(

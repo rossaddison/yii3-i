@@ -17,7 +17,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 use Yiisoft\Http\Method;
 use Yiisoft\Router\CurrentRoute;
-use Yiisoft\Session\SessionInterface;
+use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\Validator\ValidatorInterface;
@@ -25,6 +25,8 @@ use Yiisoft\Yii\View\ViewRenderer;
 
 final class MerchantController
 {
+    private Session $session;
+    private Flash $flash;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     private UserService $userService;
@@ -32,6 +34,7 @@ final class MerchantController
     private TranslatorInterface $translator;
     
     public function __construct(
+        Session $session,
         ViewRenderer $viewRenderer,
         WebControllerService $webService,
         UserService $userService,
@@ -39,6 +42,8 @@ final class MerchantController
         TranslatorInterface $translator
     )    
     {
+        $this->session = $session;
+        $this->flash = new Flash($session);
         $this->viewRenderer = $viewRenderer->withControllerName('invoice/merchant')
                                            ->withLayout('@views/layout/invoice.php');
         $this->webService = $webService;
@@ -48,21 +53,19 @@ final class MerchantController
     }
     
     /**
-     * @param SessionInterface $session
      * @param MerchantRepository $merchantRepository
      * @param SettingRepository $settingRepository
      * @param Request $request
      * @param MerchantService $service
      */
-    public function index(SessionInterface $session, MerchantRepository $merchantRepository, SettingRepository $settingRepository, Request $request, MerchantService $service): \Yiisoft\DataResponse\DataResponse
+    public function index(MerchantRepository $merchantRepository, SettingRepository $settingRepository, Request $request, MerchantService $service): \Yiisoft\DataResponse\DataResponse
     {
-         $canEdit = $this->rbac($session);
-         $flash = $this->flash($session, '','');
+         $canEdit = $this->rbac();
          $parameters = [      
           's'=>$settingRepository,
           'canEdit' => $canEdit,
           'merchants' => $this->merchants($merchantRepository),
-          'flash'=> $flash
+          'alert'=> $this->alert()
          ];      
         return $this->viewRenderer->render('index', $parameters);
     }
@@ -125,7 +128,7 @@ final class MerchantController
         $merchant = $this->merchant($currentRoute, $merchantRepository);
         if ($merchant) {
             $parameters = [
-                'title' => 'Edit',
+                'title' => $settingRepository->trans('edit'),
                 'action' => ['merchant/edit', ['id' => $merchant->getId()]],
                 'errors' => [],
                 'body' => $this->body($merchant),
@@ -176,7 +179,7 @@ final class MerchantController
         if ($merchant) {
             $parameters = [
                 'title' => $settingRepository->trans('view'),
-                'action' => ['merchant/edit', ['id' =>$merchant->getId()]],
+                'action' => ['merchant/view', ['id' =>$merchant->getId()]],
                 'errors' => [],
                 'body' => $this->body($merchant),
                 's'=>$settingRepository,             
@@ -202,11 +205,11 @@ final class MerchantController
     /**
      * @return Response|true
      */
-    private function rbac(SessionInterface $session): bool|Response 
+    private function rbac(): bool|Response 
     {
         $canEdit = $this->userService->hasPermission('editInv');
         if (!$canEdit){
-            $this->flash($session,'warning', $this->translator->translate('invoice.permission'));
+            $this->flash_message('warning', $this->translator->translate('invoice.permission'));
             return $this->webService->getRedirectResponse('merchant/index');
         }
         return $canEdit;
@@ -256,15 +259,23 @@ final class MerchantController
     }
     
     /**
-     * 
-     * @param SessionInterface $session
+   * @return string
+   */
+   private function alert(): string {
+     return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+     [ 
+       'flash' => $this->flash,
+       'errors' => [],
+     ]);
+   }
+
+    /**
      * @param string $level
      * @param string $message
      * @return Flash
      */
-    private function flash(SessionInterface $session, string $level, string $message): Flash{
-        $flash = new Flash($session);
-        $flash->set($level, $message); 
-        return $flash;
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
 }

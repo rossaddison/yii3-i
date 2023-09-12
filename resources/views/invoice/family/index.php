@@ -11,6 +11,8 @@ use App\Widget\OffsetPagination;
  * @var App\Invoice\Setting\SettingRepository $s
  * @var Yiisoft\Yii\View\Csrf $csrf
  */
+
+echo $alert;
 ?>
 
 
@@ -29,16 +31,13 @@ use App\Widget\OffsetPagination;
       ->urlGenerator(fn ($page) => $urlGenerator->generate('family/index', ['page' => $page]));
     ?>
     <?php 
-            if ($pagination->isRequired()) {
-               echo $pagination;
-            }
+      if ($pagination->isRequired()) {
+         echo $pagination;
+      }
     ?> 
-
 </div>
 
 <div id="content" class="table-content">
-
-    <?= $alert; ?>
 
     <div class="table-responsive">
         <table class="table table-hover table-striped">

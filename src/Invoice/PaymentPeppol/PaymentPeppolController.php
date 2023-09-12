@@ -28,6 +28,7 @@ use \Exception;
 
 final class PaymentPeppolController
 {
+    private Flash $flash;
     private SessionInterface $session;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
@@ -45,6 +46,7 @@ final class PaymentPeppolController
     )    
     {
         $this->session = $session;
+        $this->flash = new Flash($session);
         $this->viewRenderer = $viewRenderer->withControllerName('invoice/paymentpeppol')
                                            // The Controller layout dir is now redundant: replaced with an alias 
                                            ->withLayout('@views/layout/invoice.php');
@@ -54,6 +56,14 @@ final class PaymentPeppolController
         $this->translator = $translator;
     }
     
+    /**
+     * 
+     * @param ViewRenderer $head
+     * @param Request $request
+     * @param ValidatorInterface $validator
+     * @param SettingRepository $settingRepository
+     * @return Response
+     */
     public function add(ViewRenderer $head, Request $request, 
                         ValidatorInterface $validator,
                         SettingRepository $settingRepository,                        
@@ -81,15 +91,25 @@ final class PaymentPeppolController
         return $this->viewRenderer->render('_form', $parameters);
     }
     
+  /**
+   * @return string
+   */
+   private function alert(): string {
+     return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+     [ 
+       'flash' => $this->flash,
+       'errors' => [],
+     ]);
+   }
+
     /**
-     * @return string
-     */    
-    private function alert() : string {
-        return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
-        [
-            'flash'=>$this->flash('', ''),
-            'errors' => [],
-        ]);
+     * @param string $level
+     * @param string $message
+     * @return Flash
+     */
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
     
     /**
@@ -105,6 +125,12 @@ final class PaymentPeppolController
         return $body;
     }
     
+    /**
+     * @param CurrentRoute $currentRoute
+     * @param PaymentPeppolRepository $paymentpeppolRepository
+     * @param SettingRepository $settingRepository
+     * @return Response
+     */
     public function index(CurrentRoute $currentRoute, PaymentPeppolRepository $paymentpeppolRepository, SettingRepository $settingRepository): Response
     {      
       $page = (int) $currentRoute->getArgument('page', '1');
@@ -116,29 +142,14 @@ final class PaymentPeppolController
       $parameters = [
       'paymentpeppols' => $this->paymentpeppols($paymentpeppolRepository),
       'paginator' => $paginator,
-      'alerts' => $this->alert(),
+      'alert' => $this->alert(),
       'max' => (int) $settingRepository->get_setting('default_list_limit'),
       'grid_summary' => $settingRepository->grid_summary($paginator, $this->translator, (int) $settingRepository->get_setting('default_list_limit'), $this->translator->translate('invoice.paymentpeppol.reference.plural'), ''),
     ];
     return $this->viewRenderer->render('/invoice/paymentpeppol/index', $parameters);
     }
-    
-    public function index_adv_paginator(SessionInterface $session, PaymentPeppolRepository $paymentpeppolRepository, SettingRepository $settingRepository, CurrentRoute $currentRoute, PaymentPeppolService $service): Response
-    {
-                  
-        $flash = $this->flash('' , '');
-        $parameters = [        
-              's'=>$settingRepository,
-              'paymentpeppols' => $this->paymentpeppols($paymentpeppolRepository),
-        'flash'=> $flash
-      ];      
-            
-        return $this->viewRenderer->render('index', $parameters);
-  
-    }
-    
+        
     /**
-     * 
      * @param SettingRepository $settingRepository
      * @param CurrentRoute $currentRoute
      * @param PaymentPeppolRepository $paymentpeppolRepository
@@ -150,16 +161,26 @@ final class PaymentPeppolController
             $paymentpeppol = $this->paymentpeppol($currentRoute, $paymentpeppolRepository);
             if ($paymentpeppol) {
                 $this->paymentpeppolService->deletePaymentPeppol($paymentpeppol);               
-                $this->flash('info', $settingRepository->trans('record_successfully_deleted'));
+                $this->flash_message('info', $settingRepository->trans('record_successfully_deleted'));
                 return $this->webService->getRedirectResponse('paymentpeppol/index'); 
             }
             return $this->webService->getRedirectResponse('paymentpeppol/index'); 
 	} catch (Exception $e) {
-            $this->flash('danger', $e->getMessage());
+            $this->flash_message('danger', $e->getMessage());
             return $this->webService->getRedirectResponse('paymentpeppol/index'); 
         }
     }
-        
+    
+    /**
+     * 
+     * @param ViewRenderer $head
+     * @param Request $request
+     * @param CurrentRoute $currentRoute
+     * @param ValidatorInterface $validator
+     * @param PaymentPeppolRepository $paymentpeppolRepository
+     * @param SettingRepository $settingRepository
+     * @return Response
+     */    
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute, 
                         ValidatorInterface $validator,
                         PaymentPeppolRepository $paymentpeppolRepository, 
@@ -190,17 +211,6 @@ final class PaymentPeppolController
             return $this->viewRenderer->render('_form', $parameters);
         }
         return $this->webService->getRedirectResponse('paymentpeppol/index');
-    }
-    
-    /**
-     * @param string $level
-     * @param string $message
-     * @return Flash
-     */
-    private function flash(string $level, string $message): Flash{
-        $flash = new Flash($this->session);
-        $flash->set($level, $message); 
-        return $flash;
     }
     
     //For rbac refer to AccessChecker    

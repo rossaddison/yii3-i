@@ -8,7 +8,7 @@ use App\Invoice\Entity\Contract;
 use App\Invoice\Contract\ContractService;
 use App\Invoice\Contract\ContractRepository as contractR;
 use App\Invoice\Client\ClientRepository as cR;
-
+use App\Invoice\Inv\InvRepository as iR;
 use App\Invoice\Setting\SettingRepository as sR;
 use App\User\UserService;
 use App\Service\WebControllerService;
@@ -32,6 +32,7 @@ use Yiisoft\Data\Paginator\OffsetPaginator;
 final class ContractController
 {
     private SessionInterface $session;
+    private Flash $flash;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     private UserService $userService;
@@ -49,6 +50,7 @@ final class ContractController
     )    
     {
         $this->session = $session;
+        $this->flash = new Flash($session);
         $this->viewRenderer = $viewRenderer->withControllerName('invoice/contract')
                                            // The Controller layout dir is now redundant: replaced with an alias 
                                            ->withLayout('@views/layout/invoice.php');
@@ -64,10 +66,11 @@ final class ContractController
      * @param contractR $contractR
      * @param Request $request
      * @param cR $cR
+     * @param iR $iR
      * @param sR $sR
      * @return \Yiisoft\DataResponse\DataResponse
      */
-    public function index(CurrentRoute $currentRoute, contractR $contractR, Request $request, cR $cR, sR $sR): \Yiisoft\DataResponse\DataResponse
+    public function index(CurrentRoute $currentRoute, contractR $contractR, Request $request, cR $cR, iR $iR, sR $sR): \Yiisoft\DataResponse\DataResponse
     {
         $canEdit = $this->rbac(); 
         $query_params = $request->getQueryParams();
@@ -79,6 +82,7 @@ final class ContractController
                     // Show the latest quotes first => -id
                     ->withOrderString($query_params['sort'] ?? '-id');
         $contracts = $this->contracts_with_sort($contractR, $sort); 
+        $this->flash_message('info',$this->translator->translate('invoice.invoice.contract.create'));
         $paginator = (new OffsetPaginator($contracts))
         ->withPageSize((int)$sR->get_setting('default_list_limit'))
         ->withCurrentPage($page)
@@ -88,6 +92,12 @@ final class ContractController
             'paginator'=>$paginator,
             'canEdit' => $canEdit,
             'cR' => $cR,
+            // Use the invoice Repository to retrieve all invoices associated with this contract
+            'iR' => $iR,
+            'grid_summary'=> $sR->grid_summary($paginator, 
+                                               $this->translator, 
+                                               (int)$sR->get_setting('default_list_limit'), 
+                                               $this->translator->translate('invoice.invoice.contracts'), ''),
             'contracts' => $this->contracts($contractR),
         ]; 
         return $this->viewRenderer->render('index', $parameters);
@@ -174,7 +184,7 @@ final class ContractController
     private function rbac(): bool|Response {
         $canEdit = $this->userService->hasPermission('editInv');
         if (!$canEdit){
-            $this->flash('warning', $this->translator->translate('invoice.permission'));
+            $this->flash_message('warning', $this->translator->translate('invoice.permission'));
             return $this->webService->getRedirectResponse('contract/index');
         }
         return $canEdit;
@@ -193,12 +203,12 @@ final class ContractController
             $contract = $this->contract($currentRoute, $contractRepository);
             if ($contract) {
                 $this->contractService->deleteContract($contract);               
-                $this->flash('info', $settingRepository->trans('record_successfully_deleted'));
+                $this->flash_message('info', $settingRepository->trans('record_successfully_deleted'));
                 return $this->webService->getRedirectResponse('contract/index'); 
             }
             return $this->webService->getRedirectResponse('contract/index'); 
 	} catch (Exception $e) {
-            $this->flash('danger', $e->getMessage());
+            $this->flash_message('danger', $e->getMessage());
             return $this->webService->getRedirectResponse('contract/index'); 
         }
     }
@@ -284,27 +294,25 @@ final class ContractController
         return $body;
     }
     
+ /**
+  * @return string
+  */
+   private function alert(): string {
+     return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+     [ 
+       'flash' => $this->flash,
+       'errors' => [],
+     ]);
+   }
+
     /**
      * @param string $level
      * @param string $message
      * @return Flash
      */
-            
-    private function flash(string $level, string $message): Flash{
-        $flash = new Flash($this->session);
-        $flash->set($level, $message); 
-        return $flash;
-    }
-    
-    /**
-     * @return string
-     */    
-    private function alert() : string {
-        return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
-        [
-            'flash'=>$this->flash('', ''),
-            'errors' => [],
-        ]);
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
 }
 

@@ -36,17 +36,18 @@ use Yiisoft\Json\Json;
 use Yiisoft\Http\Method;
 use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Router\FastRoute\UrlGenerator;
-use Yiisoft\Session\SessionInterface;
+use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Yii\View\ViewRenderer;
 
 final class PaymentInformationController
 {
     private Crypt $crypt;    
-    private DataResponseFactoryInterface $factory;    
+    private DataResponseFactoryInterface $factory;
+    private Flash $flash;    
     private MerchantService $merchantService;
     private PaymentService $paymentService;
-    private SessionInterface $session;
+    private Session $session;
     private iaR $iaR;
     private iR $iR;
     private sR $sR;
@@ -59,7 +60,7 @@ final class PaymentInformationController
         DataResponseFactoryInterface $factory,
         MerchantService $merchantService,        
         PaymentService $paymentService,        
-        SessionInterface $session,
+        Session $session,
         iaR $iaR,
         iR $iR,
         sR $sR,    
@@ -73,6 +74,7 @@ final class PaymentInformationController
         $this->merchantService = $merchantService;
         $this->paymentService = $paymentService;
         $this->session = $session;
+        $this->flash = new Flash($session);
         $this->iaR = $iaR;
         $this->iR = $iR;
         $this->sR = $sR;
@@ -97,15 +99,25 @@ final class PaymentInformationController
     // Unchecked means that the gateway has to follow PCI compliance testing which is more rigid
     // in terms of credit card detail collection. This ensures that NO credit card details will touch your server.
         
+  /**
+   * @return string
+   */
+   private function alert(): string {
+     return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+     [ 
+       'flash' => $this->flash,
+       'errors' => [],
+     ]);
+   }
+
     /**
-     * @return string
-     */    
-    private function alert() : string {
-        return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
-        [
-            'flash'=>$this->flash('', ''),
-            'errors' => [],
-        ]);
+     * @param string $level
+     * @param string $message
+     * @return Flash
+     */
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
     
     // https://developer.amazon.com/docs/amazon-pay-api-v2/checkout-session.html#create-checkout-session
@@ -282,18 +294,7 @@ final class PaymentInformationController
         }
         return $region_value;
     }
-    
-    /**
-     * @param string $level
-     * @param string $message
-     * @return Flash
-     */            
-    private function flash(string $level, string $message): Flash{
-        $flash = new Flash($this->session);
-        $flash->set($level, $message); 
-        return $flash;
-    }
-    
+           
     /**
      * @param Request $request
      * @param CurrentRoute $currentRoute
@@ -350,7 +351,7 @@ final class PaymentInformationController
                     ];
                     // Check if the invoice is payable
                     if ($balance == 0.00) {
-                        $this->flash('warning', $this->sR->trans('invoice_already_paid'));
+                        $this->flash_message('warning', $this->sR->trans('invoice_already_paid'));
                         $disable_form = true;
                     }
                     // Get additional invoice information
@@ -362,15 +363,15 @@ final class PaymentInformationController
                                 // Setup Stripe omnipay if enabled
                                 if ($this->sR->get_setting('gateway_stripe_enabled') === '1' && ($this->stripe_setApiKey() == false) && ($d=='stripe'))
                                 {
-                                    $this->flash('warning','Stripe Payment Gateway Secret Key / Api Key needs to be setup.'); 
+                                    $this->flash_message('warning','Stripe Payment Gateway Secret Key / Api Key needs to be setup.'); 
                                 }
                                 if ($this->sR->get_setting('gateway_amazon_pay_enabled') === '1' && ($d=='amazon_pay'))
                                 {
-                                    $this->flash('warning','There currrently is no Amazon Pay Omnipay Version. Uncheck Omnipay Version to use the PCI compliant version under Settings View'); 
+                                    $this->flash_message('warning','There currrently is no Amazon Pay Omnipay Version. Uncheck Omnipay Version to use the PCI compliant version under Settings View'); 
                                 }
                                 if ($this->sR->get_setting('gateway_braintree_enabled') === '1' && ($d=='braintree'))
                                 {
-                                    $this->flash('warning','There currrently is no Braintree Omnipay Version compatible with Braintree Version 6.9.1. Uncheck Omnipay Version to use the PCI compliant version under Settings View'); 
+                                    $this->flash_message('warning','There currrently is no Braintree Omnipay Version compatible with Braintree Version 6.9.1. Uncheck Omnipay Version to use the PCI compliant version under Settings View'); 
                                 }
 
                                 // Return the view
@@ -404,7 +405,7 @@ final class PaymentInformationController
                             // Return the view
                             $aliases = $this->sR->get_amazon_pem_file_folder_aliases();
                             if (!file_exists($aliases->get('@pem_file_unique_folder').'/private.pem')){
-                                $this->flash('warning','Amazon_Pay private.pem File Not Downloaded from Amazon and saved in Pem_unique_folder as private.pem'); 
+                                $this->flash_message('warning','Amazon_Pay private.pem File Not Downloaded from Amazon and saved in Pem_unique_folder as private.pem'); 
                                 return $this->viewRenderer->render('/invoice/setting/payment_message', ['heading' => '',
                                         'message' => 'Amazon_Pay private.pem File Not Downloaded from Amazon and saved in Pem_unique_folder as private.pem',  
                                         'url' =>'inv/url_key',
@@ -414,7 +415,7 @@ final class PaymentInformationController
                             }
                             if ($this->sR->get_setting('gateway_stripe_enabled') === '1' && ($this->stripe_setApiKey() == false))
                             {
-                                $this->flash('warning','Stripe Payment Gateway Secret Key/Api Key needs to be setup.'); 
+                                $this->flash_message('warning','Stripe Payment Gateway Secret Key/Api Key needs to be setup.'); 
                                 return $this->webService->getNotFoundResponse();    
                             }
                             $client_language = $invoice->getClient()?->getClient_language();
@@ -472,7 +473,7 @@ final class PaymentInformationController
                             // Return the view
                             if ($this->sR->get_setting('gateway_stripe_enabled') === '1' && ($this->stripe_setApiKey() == false))
                             {
-                                $this->flash('warning','Stripe Payment Gateway Secret Key/Api Key needs to be setup.'); 
+                                $this->flash_message('warning','Stripe Payment Gateway Secret Key/Api Key needs to be setup.'); 
                                 return $this->webService->getNotFoundResponse();    
                             }                
                             $stripe_pci_view_data = [
@@ -602,7 +603,7 @@ final class PaymentInformationController
                         return $this->viewRenderer->render('payment_information_braintree_pci', $braintree_pci_view_data);    
                         }
                     } //null!==$payment_method_for_this_invoice
-                    $this->flash('info','Payment gateway not found');
+                    $this->flash_message('info','Payment gateway not found');
                     return $this->webService->getNotFoundResponse();
                     } //null!==$invoice_amount_record
                 } //!$invoice else line 319   
@@ -873,7 +874,7 @@ private function omnipay(string $driver,
                 $credit_card->validate();
             } catch (\Exception $e) {
                 // Redirect the user and display failure message
-                $this->flash('error',
+                $this->flash_message('error',
                     $this->sR->trans('online_payment_card_invalid') . '<br/>' . $e->getMessage());
                 return $this->factory
                     ->createResponse($this->viewRenderer
@@ -943,17 +944,17 @@ private function omnipay(string $driver,
  * @return Response
  */
 private function record_online_payments_and_merchant_for_omnipay(
-                                                     string $reference,
-                                                     string $invoice_id,
-                                                     float $balance,
-                                                     int $invoice_payment_method,
-                                                     string $invoice_number,
-                                                     string $driver,
-                                                     string $d,
-                                                     string $invoice_url_key,
-                                                     mixed $response,
-                                                     array $sandbox_url_array
-                                                     ) : Response {
+      string $reference,
+      string $invoice_id,
+      float $balance,
+      int $invoice_payment_method,
+      string $invoice_number,
+      string $driver,
+      string $d,
+      string $invoice_url_key,
+      mixed $response,
+      array $sandbox_url_array
+      ) : Response {
     /** @var \Omnipay\Common\Message\RedirectResponseInterface $response */
     if ($response->isSuccessful()) {
         $payment_note = $this->sR->trans('transaction_reference') . ': ' . $reference . "\n";
@@ -990,7 +991,7 @@ private function record_online_payments_and_merchant_for_omnipay(
                                                 $successful_merchant_response_array);
 
         // Redirect user and display the success message
-        $this->flash('success', $payment_success_msg);
+        $this->flash_message('success', $payment_success_msg);
         return $this->factory->createResponse(
                $this->viewRenderer->renderPartialAsString(
                '/invoice/setting/payment_message', [
@@ -1025,7 +1026,7 @@ private function record_online_payments_and_merchant_for_omnipay(
                                                 $unsuccessful_merchant_response_array);
 
         // Redirect user and display the success message
-        $this->flash('warning', $payment_failure_msg);
+        $this->flash_message('warning', $payment_failure_msg);
         return $this->factory->createResponse(
                $this->viewRenderer->renderPartialAsString(
                '/invoice/setting/payment_message', [
@@ -1055,17 +1056,17 @@ private function record_online_payments_and_merchant_for_omnipay(
  * @return \Yiisoft\DataResponse\DataResponse
  */
 private function record_online_payments_and_merchant_for_non_omnipay(
-                                                     string $reference,
-                                                     string $invoice_id,
-                                                     float $balance,
-                                                     int $invoice_payment_method,
-                                                     string $invoice_number,
-                                                     string $driver,
-                                                     string $d,
-                                                     string $invoice_url_key,
-                                                     bool $response,
-                                                     array $sandbox_url_array
-                                                     ) : \Yiisoft\DataResponse\DataResponse {
+  string $reference,
+  string $invoice_id,
+  float $balance,
+  int $invoice_payment_method,
+  string $invoice_number,
+  string $driver,
+  string $d,
+  string $invoice_url_key,
+  bool $response,
+  array $sandbox_url_array
+  ) : \Yiisoft\DataResponse\DataResponse {
     if ($response) {
         $payment_note = $this->sR->trans('transaction_reference') . ': ' . $reference . "\n";
         $payment_note .= $this->sR->trans('payment_provider') . ': ' . ucwords(str_replace('_', ' ', $d));
@@ -1099,7 +1100,7 @@ private function record_online_payments_and_merchant_for_non_omnipay(
              ->saveMerchant_via_payment_handler($merchant_response, $successful_merchant_response_array);
 
         // Redirect user and display the success message
-        $this->flash('success', $payment_success_msg);
+        $this->flash_message('success', $payment_success_msg);
         return $this->factory->createResponse(
                $this->viewRenderer->renderPartialAsString(
                '/invoice/setting/payment_message', [
@@ -1130,7 +1131,7 @@ private function record_online_payments_and_merchant_for_non_omnipay(
                                                 $unsuccessful_merchant_response_array);
 
         // Redirect user and display the success message
-        $this->flash('warning', $payment_failure_msg);
+        $this->flash_message('warning', $payment_failure_msg);
         return $this->factory->createResponse(
                $this->viewRenderer->renderPartialAsString(
                '/invoice/setting/payment_message', [
@@ -1241,12 +1242,12 @@ public function omnipay_payment_return(string $invoice_url_key, string $driver) 
                 $payment_msg = sprintf($this->sR->trans('online_payment_payment_successful'), $invoice->getNumber() ?: '');     
 
                 // Set the success flash message
-                $this->flash('success', $payment_msg);
+                $this->flash_message('success', $payment_msg);
             } // invoice_amount_record    
         } else {
             $payment_msg = sprintf($this->sR->trans('online_payment_payment_failed'), $invoice->getNumber() ?: '');     
             // Set the failure flash message
-            $this->flash('error', $this->sR->trans('online_payment_payment_failed'));
+            $this->flash_message('error', $this->sR->trans('online_payment_payment_failed'));
        }
        // Redirect to guest invoice view with flash message
        return $this->factory->createResponse(
@@ -1333,7 +1334,7 @@ public function omnipay_payment_cancel(string $invoice_url_key, string $driver):
    $this->omnipay_payment_validate($invoice_url_key, $driver, true);
     
    // Set the cancel flash message
-   $this->flash('info', $this->sR->trans('online_payment_payment_cancelled'));
+   $this->flash_message('info', $this->sR->trans('online_payment_payment_cancelled'));
    
    $d = strtolower($driver);
    $sandbox_url_array = $this->sR->sandbox_url_array();

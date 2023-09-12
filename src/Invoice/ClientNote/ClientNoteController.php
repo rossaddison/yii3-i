@@ -28,6 +28,8 @@ final class ClientNoteController
     private WebControllerService $webService;
     private UserService $userService;
     private ClientNoteService $clientnoteService;
+    private SessionInterface $session;
+    private Flash $flash;
     private TranslatorInterface $translator;
     
     public function __construct(
@@ -35,6 +37,7 @@ final class ClientNoteController
         WebControllerService $webService,
         UserService $userService,
         ClientNoteService $clientnoteService,
+        SessionInterface $session,      
         TranslatorInterface $translator
     )    
     {
@@ -43,24 +46,42 @@ final class ClientNoteController
         $this->webService = $webService;
         $this->userService = $userService;
         $this->clientnoteService = $clientnoteService;
+        $this->session = $session;
+        $this->flash = new Flash($session);
         $this->translator = $translator;
     }
     
-    public function index(SessionInterface $session, ClientNoteRepository $clientnoteRepository, DateHelper $dateHelper, SettingRepository $settingRepository, Request $request, ClientNoteService $service): \Yiisoft\DataResponse\DataResponse
+    /**
+     * @param ClientNoteRepository $clientnoteRepository
+     * @param DateHelper $dateHelper
+     * @param SettingRepository $settingRepository
+     * @param Request $request
+     * @param ClientNoteService $service
+     * @return \Yiisoft\DataResponse\DataResponse
+     */
+    public function index(ClientNoteRepository $clientnoteRepository, DateHelper $dateHelper, SettingRepository $settingRepository, Request $request, ClientNoteService $service): \Yiisoft\DataResponse\DataResponse
     {
-         $canEdit = $this->rbac($session);
-         $flash = $this->flash($session, '','');
+         $canEdit = $this->rbac($this->session);
          $parameters = [
           'd'=>$dateHelper,
           's'=>$settingRepository,
           'canEdit' => $canEdit,
           'clientnotes' => $this->clientnotes($clientnoteRepository),
-          'flash'=> $flash
+          'alert' => $this->alert() 
          ];
         
         return $this->viewRenderer->render('index', $parameters);
     }
     
+    /**
+     * @param ViewRenderer $head
+     * @param Request $request
+     * @param ValidatorInterface $validator
+     * @param DateHelper $dateHelper
+     * @param SettingRepository $settingRepository
+     * @param ClientRepository $clientRepository
+     * @return Response
+     */
     public function add(ViewRenderer $head, Request $request, 
                         ValidatorInterface $validator,
                         DateHelper $dateHelper, 
@@ -91,6 +112,18 @@ final class ClientNoteController
         return $this->viewRenderer->render('_form', $parameters);
     }
     
+    /**
+     * 
+     * @param ViewRenderer $head
+     * @param Request $request
+     * @param ValidatorInterface $validator
+     * @param ClientNoteRepository $clientnoteRepository
+     * @param SettingRepository $settingRepository
+     * @param ClientRepository $clientRepository
+     * @param DateHelper $dateHelper
+     * @param CurrentRoute $currentRoute
+     * @return Response
+     */
     public function edit(ViewRenderer $head, Request $request, 
                         ValidatorInterface $validator,
                         ClientNoteRepository $clientnoteRepository, 
@@ -126,6 +159,12 @@ final class ClientNoteController
         return $this->webService->getRedirectResponse('clientnote/index');   
     }
     
+    /**
+     * 
+     * @param ClientNoteRepository $clientnoteRepository
+     * @param CurrentRoute $currentRoute
+     * @return Response
+     */
     public function delete(ClientNoteRepository $clientnoteRepository, CurrentRoute $currentRoute
     ): Response {
         $client_note = $this->clientnote($currentRoute, $clientnoteRepository);
@@ -136,6 +175,14 @@ final class ClientNoteController
         return $this->webService->getRedirectResponse('clientnote/index');
     }
     
+    /**
+     * 
+     * @param CurrentRoute $currentRoute
+     * @param ClientNoteRepository $clientnoteRepository
+     * @param DateHelper $dateHelper
+     * @param SettingRepository $settingRepository
+     * @return Response
+     */
     public function view(CurrentRoute $currentRoute, ClientNoteRepository $clientnoteRepository, DateHelper $dateHelper,
         SettingRepository $settingRepository
         ): Response {
@@ -163,7 +210,7 @@ final class ClientNoteController
     {
         $canEdit = $this->userService->hasPermission('editInv');
         if (!$canEdit){
-            $this->flash($session,'warning', $this->translator->translate('invoice.permission'));
+            $this->flash_message('warning', $this->translator->translate('invoice.permission'));
             return $this->webService->getRedirectResponse('clientnote/index');
         }
         return $canEdit;
@@ -209,10 +256,25 @@ final class ClientNoteController
         ];
         return $body;
     }
+      
+   /**
+     * @return string
+     */
+    private function alert(): string {
+      return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+      [ 
+        'flash' => $this->flash,
+        'errors' => [],
+      ]);
+    }
     
-    private function flash(SessionInterface $session, string $level, string $message): Flash{
-        $flash = new Flash($session);
-        $flash->set($level, $message); 
-        return $flash;
+    /**
+     * @param string $level
+     * @param string $message
+     * @return Flash
+     */
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
 }

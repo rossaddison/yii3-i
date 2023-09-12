@@ -17,7 +17,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 use Yiisoft\Http\Method;
 use Yiisoft\Router\CurrentRoute;
-use Yiisoft\Session\SessionInterface;
+use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\Validator\ValidatorInterface;
@@ -25,6 +25,8 @@ use Yiisoft\Yii\View\ViewRenderer;
 
 final class ProfileController
 {
+    private Flash $flash;
+    private Session $session;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     private UserService $userService;
@@ -32,6 +34,7 @@ final class ProfileController
     private TranslatorInterface $translator;
         
     public function __construct(
+        Session $session,
         ViewRenderer $viewRenderer,
         WebControllerService $webService,
         UserService $userService,
@@ -39,6 +42,8 @@ final class ProfileController
         TranslatorInterface $translator
     )    
     {
+        $this->session = $session;
+        $this->flash = new Flash($session);
         $this->viewRenderer = $viewRenderer->withControllerName('invoice/profile')
                                            ->withLayout('@views/layout/invoice.php');
         $this->webService = $webService;
@@ -48,20 +53,18 @@ final class ProfileController
     }
     
     /**
-     * @param SessionInterface $session
      * @param ProfileRepository $profileRepository
      * @param SettingRepository $settingRepository
      */
-    public function index(SessionInterface $session, ProfileRepository $profileRepository, SettingRepository $settingRepository): \Yiisoft\DataResponse\DataResponse
+    public function index(ProfileRepository $profileRepository, SettingRepository $settingRepository): \Yiisoft\DataResponse\DataResponse
     {      
-         $canEdit = $this->rbac($session);
-         $flash = $this->flash($session, 'info' , 'Create a profile with a new email address, or mobile number, make it active, '.
-                 'and select the company details you wish to link it to. This information will automatically appear on the documentation eg. quotes and invoices.');
+         $canEdit = $this->rbac();
+         $this->flash_message('info', $this->translator->translate('invoice.profile.new'));
          $parameters = [
           's'=>$settingRepository,
           'canEdit' => $canEdit,
           'profiles' => $this->profiles($profileRepository),
-          'flash'=> $flash
+          'alert'=> $this->alert()
          ];
         
         return $this->viewRenderer->render('index', $parameters);
@@ -104,6 +107,17 @@ final class ProfileController
     }
     
     /**
+     * @return string
+     */
+    private function alert(): string {
+      return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+      [ 
+         'flash' => $this->flash,
+         'errors' => [],
+      ]);
+    }
+    
+    /**
      * @param ViewRenderer $head
      * @param Request $request
      * @param CurrentRoute $currentRoute
@@ -122,7 +136,7 @@ final class ProfileController
         $profile = $this->profile($currentRoute, $profileRepository);
         if ($profile) {
         $parameters = [
-            'title' => 'Edit',
+            'title' => $settingRepository->trans('edit'),
             'action' => ['profile/edit', ['id' => $profile->getId()]],
             'errors' => [],
             'body' => $this->body($profile),
@@ -146,26 +160,25 @@ final class ProfileController
 }
     
     /**
-     * @param SessionInterface $session
      * @param CurrentRoute $currentRoute
      * @param ProfileRepository $profileRepository
      * @return Response
      */
-    public function delete(SessionInterface $session, CurrentRoute $currentRoute, ProfileRepository $profileRepository 
+    public function delete(CurrentRoute $currentRoute, ProfileRepository $profileRepository 
     ): Response {
         try {
             $profile = $this->profile($currentRoute, $profileRepository);
             if ($profile) {
                 if ($this->profileService->deleteProfile($profile)) {               
-                    $this->flash($session, 'info', 'Deleted.');
+                    $this->flash_message('info', $this->translator->translate('invoice.profile.deleted'));
                 } else {
-                    $this->flash($session, 'info', 'Profile has not been deleted.');
+                    $this->flash_message('info', $this->translator->translate('invoice.profile.not.deleted'));
                 }    
             }
             return $this->webService->getRedirectResponse('profile/index');
 	} catch (\Exception $e) {
             unset($e);
-            $this->flash($session, 'danger', 'Cannot delete. Profile history exists.');
+            $this->flash_message('danger', $this->translator->translate('invoice.profile.history'));
             return $this->webService->getRedirectResponse('profile/index'); 
         }
     }
@@ -196,11 +209,11 @@ final class ProfileController
     /**
      * @return Response|true
      */
-    private function rbac(SessionInterface $session): bool|Response 
+    private function rbac(): bool|Response 
     {
         $canEdit = $this->userService->hasPermission('editInv');
         if (!$canEdit){
-            $this->flash($session,'warning', $this->translator->translate('invoice.permission'));
+            $this->flash_message('warning', $this->translator->translate('invoice.permission'));
             return $this->webService->getRedirectResponse('profile/index');
         }
         return $canEdit;
@@ -252,15 +265,12 @@ final class ProfileController
     }
     
     /**
-     * 
-     * @param SessionInterface $session
      * @param string $level
      * @param string $message
      * @return Flash
      */
-    private function flash(SessionInterface $session, string $level, string $message): Flash{
-        $flash = new Flash($session);
-        $flash->set($level, $message); 
-        return $flash;
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
 }

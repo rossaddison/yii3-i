@@ -22,10 +22,11 @@ use Yiisoft\Router\CurrentRoute;
  * @var CurrentRoute $currentRoute 
  * @var OffsetPaginator $paginator
  * @var \Yiisoft\Router\UrlGeneratorInterface $urlGenerator 
- * @var TranslatorInterface $translator
- * @var \Yiisoft\Session\Flash\FlashInterface $flash_interface 
+ * @var TranslatorInterface $translator 
  * @var WebView $this
  */ 
+ 
+ echo $alert;
 ?>
 <?php
     $header = Div::tag()
@@ -63,9 +64,6 @@ use Yiisoft\Router\CurrentRoute;
 <br>
 <div>
 
-</div>
-<div>
-    <?= $alert; ?>
 </div>
 <div>
     <?= GridView::widget()

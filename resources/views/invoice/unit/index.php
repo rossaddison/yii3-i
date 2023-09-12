@@ -11,6 +11,9 @@ use App\Widget\OffsetPagination;
  * @var App\Invoice\Setting\SettingRepository $s
  * @var Yiisoft\Yii\View\Csrf $csrf
  */
+
+echo $alert;
+
 ?>
 
 <div id="headerbar">
@@ -35,8 +38,6 @@ use App\Widget\OffsetPagination;
 </div>
 
 <div id="content" class="table-content">
-
-    <?= $alert; ?>
 
     <div class="table-responsive">
         <table class="table table-hover table-striped">

@@ -29,13 +29,15 @@ use Yiisoft\Json\Json;
 use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Router\FastRoute\UrlGenerator;
 use Yiisoft\Session\Flash\Flash;
-use Yiisoft\Session\SessionInterface;
+use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\Validator\ValidatorInterface;
 use Yiisoft\Yii\View\ViewRenderer;
 
 final class QuoteItemController
 {
+    private Flash $flash;
+    private Session $session;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     private UserService $userService;
@@ -45,6 +47,7 @@ final class QuoteItemController
     private TranslatorInterface $translator;
     
     public function __construct(
+        Session $session,
         ViewRenderer $viewRenderer,
         WebControllerService $webService,
         UserService $userService,
@@ -54,6 +57,8 @@ final class QuoteItemController
         TranslatorInterface $translator,
     )    
     {
+        $this->session = $session;
+        $this->flash = new Flash($session);
         $this->viewRenderer = $viewRenderer->withControllerName('invoice/quoteitem')
                                            ->withLayout('@views/layout/invoice.php');                                                
         $this->webService = $webService;
@@ -65,20 +70,18 @@ final class QuoteItemController
     }
     
     /**
-     * @param SessionInterface $session
      * @param QIR $qiR
      * @param SR $sR
      */
-    public function index(SessionInterface $session, QIR $qiR, SR $sR): \Yiisoft\DataResponse\DataResponse
+    public function index(QIR $qiR, SR $sR): \Yiisoft\DataResponse\DataResponse
     {       
-         $canEdit = $this->rbac($session);
-         $flash = $this->flash($session, '','');
+         $canEdit = $this->rbac();
          $parameters = [      
           's'=>$sR,
-          'quote_id'=>$session->get('quote_id'),
+          'quote_id'=>$this->session->get('quote_id'),
           'canEdit' => $canEdit,
           'quoteitems' => $this->quoteitems($qiR),
-          'flash'=> $flash
+          'alert' => $this->alert() 
          ];
         
         return $this->viewRenderer->render('index', $parameters);
@@ -89,7 +92,6 @@ final class QuoteItemController
     
     /**
      * @param ViewRenderer $head
-     * @param SessionInterface $session
      * @param Request $request
      * @param ValidatorInterface $validator
      * @param SR $sR
@@ -98,7 +100,7 @@ final class QuoteItemController
      * @param TRR $trR
      * @param QIAR $qiar
      */
-    public function add(ViewRenderer $head,SessionInterface $session, Request $request,  
+    public function add(ViewRenderer $head, Request $request,  
                         ValidatorInterface $validator,
                         SR $sR,
                         PR $pR,
@@ -108,7 +110,7 @@ final class QuoteItemController
     ) : \Yiisoft\DataResponse\DataResponse
     {
         // This function is used 
-        $quote_id = (string)$session->get('quote_id');
+        $quote_id = (string)$this->session->get('quote_id');
         $parameters = [
             'title' => $this->translator->translate('invoice.add'),
             'action' => ['quoteitem/add'],
@@ -136,8 +138,28 @@ final class QuoteItemController
     }
     
     /**
+   * @return string
+   */
+   private function alert(): string {
+     return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+     [ 
+       'flash' => $this->flash,
+       'errors' => [],
+     ]);
+   }
+
+    /**
+     * @param string $level
+     * @param string $message
+     * @return Flash
+     */
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
+    }
+    
+    /**
      * @param ViewRenderer $head
-     * @param SessionInterface $session
      * @param CurrentRoute $currentRoute
      * @param Request $request
      * @param ValidatorInterface $validator
@@ -150,9 +172,9 @@ final class QuoteItemController
      * @param QIAS $qias
      * @param QIAR $qiar
      */
-    public function edit(ViewRenderer $head, SessionInterface $session, CurrentRoute $currentRoute, Request $request, ValidatorInterface $validator,
+    public function edit(ViewRenderer $head, CurrentRoute $currentRoute, Request $request, ValidatorInterface $validator,
                         QIR $qiR, SR $sR, TRR $trR, PR $pR, UR $uR, QR $qR, QIAS $qias, QIAR $qiar): \Yiisoft\DataResponse\DataResponse|Response {
-        $quote_id = (string)$session->get('quote_id');
+        $quote_id = (string)$this->session->get('quote_id');
         $quote_item = $this->quoteitem($currentRoute, $qiR);
         $parameters = [
                 'title' => $this->translator->translate('invoice.edit'),
@@ -195,6 +217,12 @@ final class QuoteItemController
             //quote_item
     }
     
+    /**
+     * 
+     * @param int $id
+     * @param TRR $trr
+     * @return float|null
+     */
     public function taxrate_percentage(int $id, TRR $trr): float|null
     {
         $taxrate = $trr->repoTaxRatequery((string)$id);
@@ -311,12 +339,12 @@ final class QuoteItemController
     /**
      * @return Response|true
      */
-    private function rbac(SessionInterface $session): bool|Response 
+    private function rbac(): bool|Response 
     {
         $canEdit = $this->userService->hasPermission('editInv');
         if (!$canEdit){
-            $this->flash($session,'warning', $this->translator->translate('invoice.permission'));
-            return $this->webService->getRedirectResponse('quoteitem/index');
+            $this->flash_message('warning', $this->translator->translate('invoice.permission'));
+            return $this->webService->getRedirectResponse('quote/index');
         }
         return $canEdit;
     }
@@ -350,38 +378,24 @@ final class QuoteItemController
     }
     
     /**
-     * 
      * @param QuoteItem $quoteitem
      * @return array
      */
     private function body(QuoteItem $quoteitem): array {
-        $body = [
-          'id'=>$quoteitem->getId(),
-          'quote_id'=>$quoteitem->getQuote_id(),
-          'tax_rate_id'=>$quoteitem->getTax_rate_id(),
-          'product_id'=>$quoteitem->getProduct_id(),
-          'name'=>$quoteitem->getName(),
-          'description'=>$quoteitem->getDescription(),
-          'quantity'=>$quoteitem->getQuantity(),
-          'price'=>$quoteitem->getPrice(),
-          'discount_amount'=>$quoteitem->getDiscount_amount(),
-          'order'=>$quoteitem->getOrder(),
-          'product_unit'=>$quoteitem->getProduct_unit(),
-          'product_unit_id'=>$quoteitem->getProduct_unit_id()
-        ];
-        return $body;
-    }    
-    
-    /**
-     * 
-     * @param SessionInterface $session
-     * @param string $level
-     * @param string $message
-     * @return Flash
-     */
-    private function flash(SessionInterface $session, string $level, string $message): Flash{
-        $flash = new Flash($session);
-        $flash->set($level, $message); 
-        return $flash;
+      $body = [
+        'id'=>$quoteitem->getId(),
+        'quote_id'=>$quoteitem->getQuote_id(),
+        'tax_rate_id'=>$quoteitem->getTax_rate_id(),
+        'product_id'=>$quoteitem->getProduct_id(),
+        'name'=>$quoteitem->getName(),
+        'description'=>$quoteitem->getDescription(),
+        'quantity'=>$quoteitem->getQuantity(),
+        'price'=>$quoteitem->getPrice(),
+        'discount_amount'=>$quoteitem->getDiscount_amount(),
+        'order'=>$quoteitem->getOrder(),
+        'product_unit'=>$quoteitem->getProduct_unit(),
+        'product_unit_id'=>$quoteitem->getProduct_unit_id()
+      ];
+      return $body;
     }
 }

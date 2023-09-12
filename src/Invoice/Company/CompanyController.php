@@ -22,6 +22,8 @@ use Yiisoft\Yii\View\ViewRenderer;
 
 final class CompanyController
 {
+    private SessionInterface $session;
+    private Flash $flash;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     private UserService $userService;
@@ -29,6 +31,7 @@ final class CompanyController
     private TranslatorInterface $translator;
         
     public function __construct(
+        SessionInterface $session,
         ViewRenderer $viewRenderer,
         WebControllerService $webService,
         UserService $userService,
@@ -36,6 +39,8 @@ final class CompanyController
         TranslatorInterface $translator
     )    
     {
+        $this->session = $session;
+        $this->flash = new Flash($session);
         $this->viewRenderer = $viewRenderer->withControllerName('invoice/company')
                                            ->withLayout('@views/layout/invoice.php');
         $this->webService = $webService;
@@ -44,20 +49,34 @@ final class CompanyController
         $this->translator = $translator;
     }
     
-    public function index(SessionInterface $session, CompanyRepository $companyRepository, SettingRepository $settingRepository, Request $request, CompanyService $service): \Yiisoft\DataResponse\DataResponse
+    /**
+     * @param CompanyRepository $companyRepository
+     * @param SettingRepository $settingRepository
+     * @param Request $request
+     * @param CompanyService $service
+     * @return \Yiisoft\DataResponse\DataResponse
+     */
+    public function index(CompanyRepository $companyRepository, SettingRepository $settingRepository, Request $request, CompanyService $service): \Yiisoft\DataResponse\DataResponse
     {      
-         $canEdit = $this->rbac($session);
-         $flash = $this->flash($session, '','');
+         $canEdit = $this->rbac();
          $parameters = [
           's'=>$settingRepository,
           'canEdit' => $canEdit,
           'companies' => $this->companies($companyRepository),
           'company_public'=>$this->translator->translate('invoice.company.public'),   
-          'flash'=> $flash
+          'alert'=> $this->alert()
          ];
         return $this->viewRenderer->render('index', $parameters);
     }
     
+    /**
+     * 
+     * @param ViewRenderer $head
+     * @param Request $request
+     * @param ValidatorInterface $validator
+     * @param SettingRepository $settingRepository
+     * @return Response
+     */
     public function add(ViewRenderer $head, Request $request, 
                         ValidatorInterface $validator,
                         SettingRepository $settingRepository,                   
@@ -85,6 +104,16 @@ final class CompanyController
         return $this->viewRenderer->render('_form', $parameters);
     }
     
+    /**
+     * 
+     * @param ViewRenderer $head
+     * @param Request $request
+     * @param ValidatorInterface $validator
+     * @param CompanyRepository $companyRepository
+     * @param SettingRepository $settingRepository
+     * @param CurrentRoute $currentRoute
+     * @return Response
+     */
     public function edit(ViewRenderer $head, Request $request, 
                         ValidatorInterface $validator,
                         CompanyRepository $companyRepository, 
@@ -95,14 +124,13 @@ final class CompanyController
         $company = $this->company($currentRoute, $companyRepository);
         if ($company) {
             $parameters = [
-                'title' => 'Edit',
+                'title' => $settingRepository->trans('edit'),
                 'action' => ['company/edit', ['id' => $company->getId()]],
                 'errors' => [],
                 'body' => $this->body($company),
                 'head'=>$head,
                 'company_public'=>$this->translator->translate('invoice.company.public'),
                 's'=>$settingRepository,
-
             ];
             if ($request->getMethod() === Method::POST) {
                 $form = new CompanyForm();
@@ -119,19 +147,31 @@ final class CompanyController
         return $this->webService->getRedirectResponse('company/index');
     }
     
-    public function delete(SessionInterface $session,CurrentRoute $currentRoute, CompanyRepository $companyRepository 
+    /**
+     * @param CurrentRoute $currentRoute
+     * @param CompanyRepository $companyRepository
+     * @return Response
+     */
+    public function delete(CurrentRoute $currentRoute, CompanyRepository $companyRepository 
     ): Response {
         $company = $this->company($currentRoute, $companyRepository);
         if ($company) {
             if ($this->companyService->deleteCompany($company)) {               
-                $this->flash($session, 'info', 'Deleted.'); 
+                $this->flash_message('info', $this->translator->translate('invoice.company.deleted')); 
             } else {
-                $this->flash($session, 'warning', 'Not deleted because you have a profile attached.');
+                $this->flash_message('warning', $this->translator->translate('invoice.company.not.deleted'));
             } 
         }
         return $this->webService->getRedirectResponse('company/index');
     }
     
+    /**
+     * 
+     * @param CurrentRoute $currentRoute
+     * @param CompanyRepository $companyRepository
+     * @param SettingRepository $settingRepository
+     * @return Response
+     */
     public function view(CurrentRoute $currentRoute, CompanyRepository $companyRepository,
         SettingRepository $settingRepository,
         ): Response {
@@ -154,11 +194,11 @@ final class CompanyController
     /**
      * @return Response|true
      */
-    private function rbac(SessionInterface $session): bool|Response 
+    private function rbac(): bool|Response 
     {
         $canEdit = $this->userService->hasPermission('editInv');
         if (!$canEdit){
-            $this->flash($session,'warning', $this->translator->translate('invoice.permission')); 
+            $this->flash_message('warning', $this->translator->translate('invoice.permission')); 
             return $this->webService->getRedirectResponse('company/index');
         }
         return $canEdit;
@@ -218,10 +258,25 @@ final class CompanyController
         return $body;
     }
     
-    private function flash(SessionInterface $session, string $level, string $message): Flash{
-        $flash = new Flash($session);
-        $flash->set($level, $message); 
-        return $flash;
+  /**
+  * @return string
+  */
+   private function alert(): string {
+     return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+     [ 
+       'flash' => $this->flash,
+       'errors' => [],
+     ]);
+   }
+
+    /**
+     * @param string $level
+     * @param string $message
+     * @return Flash
+     */
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
 }
 

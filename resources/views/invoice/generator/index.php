@@ -3,62 +3,16 @@
 declare(strict_types=1);
 
 use Yiisoft\Html\Html;
-use Yiisoft\Yii\Bootstrap5\Alert;
-use Yiisoft\Yii\Bootstrap5\Modal;
 /**
  * @var \App\Invoice\Entity\Gentor $generators
  * @var \Yiisoft\Router\UrlGeneratorInterface $urlGenerator
  * @var bool $canEdit
- * @var string $id 
- * @var \Yiisoft\Session\Flash\Flash $flash
+ * @var string $id
  */
 
+echo $alert;
 ?>
-    <h1><?= Html::encode('Generator'); ?></h1>
-    <?php
-      if (!empty($flash)) {
-        $danger = $flash->get('danger');
-        if ($danger !== null) {
-            $alert =  Alert::widget()
-                ->body($danger)
-                ->options([
-                    'class' => ['alert-danger shadow'],
-                ])
-            ->render();
-            echo $alert;
-        }
-        $info = $flash->get('info');
-        if ($info !== null) {
-            $alert =  Alert::widget()
-                ->body($info)
-                ->options([
-                    'class' => ['alert-info shadow'],
-                ])
-            ->render();
-            echo $alert;
-        }
-        $warning = $flash->get('warning');
-        if ($warning !== null) {
-            $alert =  Alert::widget()
-                ->body($warning)
-                ->options([
-                    'class' => ['alert-warning shadow'],
-                ])
-            ->render();
-            echo $alert;
-        }
-        $success = $flash->get('success');
-        if ($success !== null) {
-            $alert =  Alert::widget()
-                ->body($success)
-                ->options([
-                    'class' => ['alert-success shadow'],
-                ])
-            ->render();
-            echo $alert;
-        }
-      }
-    ?>
+    <h1><?= Html::encode($translator->translate('invoice.generator')); ?></h1>
     <div>        
         <?php
         if ($canEdit) {
@@ -126,15 +80,7 @@ use Yiisoft\Yii\Bootstrap5\Modal;
                 $urlGenerator->generate('generator/service',['id' => $generator->getGentor_id()]),
                 ['class' => 'btn btn-secondary btn-sm ms-2']
                 );
-                echo Html::a($generator->getCamelcase_capital_name().'Mapper',
-                $urlGenerator->generate('generator/mapper',['id' => $generator->getGentor_id()]),
-                ['class' => 'btn btn-secondary btn-sm ms-2']
-                );
                 
-                echo Html::a($generator->getCamelcase_capital_name().'Scope',
-                $urlGenerator->generate('generator/scope',['id' => $generator->getGentor_id()]),
-                ['class' => 'btn btn-secondary btn-sm ms-2']
-                );
                 echo Html::a($generator->getCamelcase_capital_name().'Controller',
                 $urlGenerator->generate('generator/controller',['id' => $generator->getGentor_id()]),
                 ['class' => 'btn btn-secondary btn-sm ms-2']

@@ -25,6 +25,8 @@ use Yiisoft\Yii\View\ViewRenderer;
 
 final class TaxRateController
 {
+    private Flash $flash;
+    private Session $session;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     private TaxRateService $taxrateService;       
@@ -32,12 +34,15 @@ final class TaxRateController
     private Translator $translator;
 
     public function __construct(
+        Session $session,
         ViewRenderer $viewRenderer,
         WebControllerService $webService,
         TaxRateService $taxrateService,
         UserService $userService,
         Translator $translator,
     ) {
+        $this->session = $session;
+        $this->flash = new Flash($session);
         $this->viewRenderer = $viewRenderer->withControllerName('invoice/taxrate')
                                            ->withLayout('@views/layout/invoice.php');
         $this->webService = $webService;
@@ -47,26 +52,24 @@ final class TaxRateController
     }
     
     /**
-     * @param Session $session
      * @param TaxRateRepository $taxrateRepository
      * @param SettingRepository $settingRepository
      * @param Request $request
      */
-    public function index(Session $session, TaxRateRepository $taxrateRepository, SettingRepository $settingRepository, Request $request): \Yiisoft\DataResponse\DataResponse
+    public function index(TaxRateRepository $taxrateRepository, SettingRepository $settingRepository, Request $request): \Yiisoft\DataResponse\DataResponse
     {      
         $pageNum = (int)$request->getAttribute('page', '1');
         $paginator = (new OffsetPaginator($this->taxrates($taxrateRepository)))
         ->withPageSize((int)$settingRepository->get_setting('default_list_limit'))
         ->withCurrentPage($pageNum);
       
-        $canEdit = $this->rbac($session);
-        $flash = $this->flash($session, '','');
+        $canEdit = $this->rbac();
         $parameters = [
               'paginator' => $paginator,  
               's'=>$settingRepository,
               'canEdit' => $canEdit,
               'taxrates' => $this->taxrates($taxrateRepository),
-              'flash'=> $flash
+              'alert'=> $this->alert()
         ];
         return $this->viewRenderer->render('index', $parameters);
     }
@@ -74,13 +77,12 @@ final class TaxRateController
     /**
      * 
      * @param ViewRenderer $head
-     * @param Session $session
      * @param Request $request
      * @param SettingRepository $settingRepository
      * @param ValidatorInterface $validator
      * @return Response
      */
-    public function add(ViewRenderer $head, Session $session, Request $request,SettingRepository $settingRepository,ValidatorInterface $validator): Response
+    public function add(ViewRenderer $head, Request $request,SettingRepository $settingRepository,ValidatorInterface $validator): Response
     {
         $peppol_arrays = new PeppolArrays();
         $parameters = [
@@ -97,7 +99,7 @@ final class TaxRateController
             $form = new TaxRateForm();
             if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
                 $this->taxrateService->saveTaxRate(new TaxRate(), $form);
-                $this->flash($session, 'success',$settingRepository->trans('record_successfully_created'));
+                $this->flash_message('success', $settingRepository->trans('record_successfully_created'));
                 return $this->webService->getRedirectResponse('taxrate/index');
             }
             $parameters['errors'] = $form->getFormErrors();
@@ -144,7 +146,7 @@ final class TaxRateController
                 $body = $request->getParsedBody();
                 if ($form->load($body) && $validator->validate($form)->isValid()) {
                     $this->taxrateService->saveTaxRate($taxrate, $form);                
-                    $this->flash($session, 'success', $settingRepository->trans('record_successfully_updated'));
+                    $this->flash_message('success', $settingRepository->trans('record_successfully_updated'));
                     return $this->webService->getRedirectResponse('taxrate/index');
                 }
                 $parameters['body'] = $body;
@@ -156,13 +158,11 @@ final class TaxRateController
     }    
     
     /**
-     * 
-     * @param Session $session
      * @param CurrentRoute $currentRoute
      * @param TaxRateRepository $taxrateRepository
      * @return Response
      */
-    public function delete(Session $session, CurrentRoute $currentRoute, TaxRateRepository $taxrateRepository): Response 
+    public function delete(CurrentRoute $currentRoute, TaxRateRepository $taxrateRepository): Response 
     {
         try {
             $taxrate = $this->taxrate($currentRoute, $taxrateRepository);
@@ -172,7 +172,7 @@ final class TaxRateController
             return $this->webService->getRedirectResponse('taxrate/index'); 
 	} catch (\Exception $e) {
             unset($e);
-            $this->flash($session, 'danger', $this->translator->translate('invoice.tax.rate.history.exists'));
+            $this->flash_message('danger', $this->translator->translate('invoice.tax.rate.history.exists'));
             return $this->webService->getRedirectResponse('taxrate/index');
         } 
     }
@@ -211,10 +211,10 @@ final class TaxRateController
     /**
      * @return Response|true
      */
-    private function rbac(Session $session): bool|Response {
+    private function rbac(): bool|Response {
         $canEdit = $this->userService->hasPermission('editInv');
         if (!$canEdit){
-            $this->flash($session,'warning', $this->translator->translate('invoice.permission'));
+            $this->flash_message('warning', $this->translator->translate('invoice.permission'));
             return $this->webService->getRedirectResponse('taxrate/index');
         }
         return $canEdit;
@@ -248,15 +248,23 @@ final class TaxRateController
     }
     
     /**
-     * 
-     * @param Session $session
+     * @return string
+     */
+    private function alert(): string {
+      return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+      [ 
+        'flash' => $this->flash,
+        'errors' => [],
+      ]);
+    }
+
+    /**
      * @param string $level
      * @param string $message
      * @return Flash
      */
-    private function flash(Session $session, string $level, string $message): Flash{
-        $flash = new Flash($session);
-        $flash->set($level, $message); 
-        return $flash;
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
 }

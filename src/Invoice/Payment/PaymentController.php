@@ -45,7 +45,7 @@ use Yiisoft\DataResponse\DataResponseFactoryInterface;
 use Yiisoft\Http\Method;
 use Yiisoft\Json\Json;
 use Yiisoft\Router\CurrentRoute;
-use Yiisoft\Session\SessionInterface;
+use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\Validator\ValidatorInterface;
@@ -53,6 +53,8 @@ use Yiisoft\Yii\View\ViewRenderer;
 
 final class PaymentController
 {
+    private Session $session;
+    private Flash $flash;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     private UserService $userService;
@@ -62,6 +64,7 @@ final class PaymentController
     private DataResponseFactoryInterface $factory;
     
     public function __construct(
+        Session $session,
         ViewRenderer $viewRenderer,
         WebControllerService $webService,
         UserService $userService,
@@ -71,6 +74,8 @@ final class PaymentController
         DataResponseFactoryInterface $factory
     )    
     {
+        $this->session = $session;
+        $this->flash = new Flash($session);
         $this->webService = $webService;
         $this->userService = $userService;
         $this->paymentService = $paymentService;
@@ -93,7 +98,6 @@ final class PaymentController
     /**
      * 
      * @param ViewRenderer $head
-     * @param SessionInterface $session
      * @param Request $request
      * @param ValidatorInterface $validator
      * @param ACIR $aciR
@@ -111,7 +115,7 @@ final class PaymentController
      * @param ITRR $itrR
      * @return Response
      */
-    public function add(ViewRenderer $head, SessionInterface $session, Request $request, 
+    public function add(ViewRenderer $head, Request $request, 
                         ValidatorInterface $validator,
                         ACIR $aciR,
                         SettingRepository $settingRepository,                        
@@ -130,7 +134,7 @@ final class PaymentController
     {
         $open = $invRepository->open();
         $datehelper = new DateHelper($settingRepository);
-        $invRepository->open_count() == 0 ? $this->flash($session,'danger', 'No invoices have been sent by us or viewed by the customer.') : '';
+        $invRepository->open_count() == 0 ? $this->flash_message('danger', $this->translator->translate('invoice.payment.no.invoice.sent')) : '';
         $amounts = [];
         $invoice_payment_methods = [];
         /** @var Inv $open_invoice */
@@ -147,7 +151,7 @@ final class PaymentController
         $number_helper = new NumberHelper($settingRepository);
         $parameters = [
             'action' => ['payment/add'],            
-            'alert'=>$this->alert($session),
+            'alert'=>$this->alert(),
             'body' => $request->getParsedBody(),
             'datehelper'=> $datehelper,
             'numberhelper'=> $number_helper,
@@ -219,7 +223,7 @@ final class PaymentController
                     
                     // Recalculate the invoice
                     $number_helper->calculate_inv((string)$inv_id, $aciR, $iiR, $iiaR, $itrR, $iaR, $invRepository, $pmtR);
-                    $this->flash($session, 'info', $settingRepository->trans('record_successfully_created')); 
+                    $this->flash_message('info', $settingRepository->trans('record_successfully_created')); 
                                         
                     // Retrieve the custom array
                     /** @var array $custom */
@@ -252,7 +256,7 @@ final class PaymentController
                                        $message = 'Unknown error.';
                                        break;
                                 }   
-                                $this->flash($session, 'danger', $message . ' ' . $e->getCode());
+                                $this->flash_message('danger', $message . ' ' . $e->getCode());
                                 unset($e);   
                             }
                         }
@@ -280,16 +284,24 @@ final class PaymentController
     }
     
     /**
-     * 
-     * @param SessionInterface $session
      * @return string
      */
-    private function alert(SessionInterface $session) : string {
-        return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
-        [
-            'flash'=>$this->flash($session, '', ''),
-            'errors' => [],
-        ]);
+    private function alert(): string {
+      return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+      [ 
+        'flash' => $this->flash,
+        'errors' => [],
+      ]);
+    }
+
+    /**
+     * @param string $level
+     * @param string $message
+     * @return Flash
+     */
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
     
     /**
@@ -368,8 +380,6 @@ final class PaymentController
     
     
     /**
-     * 
-     * @param SessionInterface $session
      * @param CurrentRoute $currentRoute
      * @param SettingRepository $settingRepository
      * @param InvRepository $invRepository
@@ -381,7 +391,7 @@ final class PaymentController
      * @param ITRR $itrR
      * @return Response
      */
-    public function delete(SessionInterface $session, CurrentRoute $currentRoute, 
+    public function delete(CurrentRoute $currentRoute, 
                            SettingRepository $settingRepository,                        
                            InvRepository $invRepository,
                            InvAmountRepository $iaR,
@@ -401,13 +411,13 @@ final class PaymentController
                 // config/route payment/delete has both GET and POST METHOD.
                 $this->paymentService->deletePayment($payment);
                 $number_helper->calculate_inv((string)$inv_id, $aciR, $iiR, $iiaR, $itrR, $iaR, $invRepository, $pmtR);
-                $this->flash($session, 'danger', 'Deleted.');
+                $this->flash_message('danger', $this->translator->translate('invoice.payment.deleted'));
                 return $this->webService->getRedirectResponse('payment/index');
             }
             return $this->webService->getRedirectResponse('payment/index');
         } catch (\Exception $e) {
             unset($e);
-            $this->flash($session, 'danger', 'Cannot delete.');
+            $this->flash_message('danger', $this->translator->translate('invoice.payment.cannot.delete'));
             return $this->webService->getRedirectResponse('payment/index');
         }
     }
@@ -415,7 +425,6 @@ final class PaymentController
     /**
      * 
      * @param ViewRenderer $head
-     * @param SessionInterface $session
      * @param Request $request
      * @param CurrentRoute $currentRoute
      * @param ValidatorInterface $validator
@@ -433,7 +442,7 @@ final class PaymentController
      * @param ITRR $itrR
      * @return Response
      */
-    public function edit(ViewRenderer $head, SessionInterface $session, Request $request, CurrentRoute $currentRoute,
+    public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute,
                         ValidatorInterface $validator,
                         ACIR $aciR,
                         SettingRepository $settingRepository,                          
@@ -458,7 +467,7 @@ final class PaymentController
             $parameters = [
                 'title' => $settingRepository->trans('edit'),
                 'action' => ['payment/edit', ['id' => $payment_id]],
-                'alert'=>$this->alert($session),
+                'alert'=>$this->alert(),
                 'body' => $this->body($payment),
                 'errors'=>[],
                 'datehelper'=> $date_helper,
@@ -490,7 +499,7 @@ final class PaymentController
                     $this->edit_save_form_fields($edited_body, $currentRoute, $validator, $pmtR);
                     // Recalculate the invoice
                     $number_helper->calculate_inv($inv_id, $aciR, $iiR, $iiaR, $itrR, $iaR, $invRepository, $pmtR);
-                    $this->flash($session, 'info', $settingRepository->trans('record_successfully_updated')); 
+                    $this->flash_message('info', $settingRepository->trans('record_successfully_updated')); 
                     return $this->webService->getRedirectResponse('payment/index');
                 }    
            }
@@ -537,25 +546,11 @@ final class PaymentController
         }
     }
     
-    /**
-     * 
-     * @param SessionInterface $session
-     * @param string $level
-     * @param string $message
-     * @return Flash
-     */
-    private function flash(SessionInterface $session, string $level, string $message): Flash{
-        $flash = new Flash($session);
-        $flash->set($level, $message); 
-        return $flash;
-    }
-    
     // This function is used in invoice/layout/guest
     
     /**
      * 
      * @param Request $request
-     * @param SessionInterface $session
      * @param CurrentRoute $currentRoute
      * @param PaymentRepository $paymentRepository
      * @param SettingRepository $settingRepository
@@ -565,7 +560,7 @@ final class PaymentController
      * @param UserInvRepository $uiR
      * @return \Yiisoft\DataResponse\DataResponse|Response
      */
-    public function guest(Request $request, SessionInterface $session, 
+    public function guest(Request $request,  
                           CurrentRoute $currentRoute,  
                           PaymentRepository $paymentRepository, 
                           SettingRepository $settingRepository, 
@@ -611,7 +606,7 @@ final class PaymentController
             $canEdit = $this->userService->hasPermission('editPayment');
             $canView = $this->userService->hasPermission('viewPayment');
             $parameters = [
-                'alert'=>$this->alert($session),
+                'alert'=>$this->alert(),
                 'canEdit'=>$canEdit,
                 'canView'=>$canView,
                 'grid_summary' => $settingRepository->grid_summary(
@@ -638,7 +633,6 @@ final class PaymentController
       * 
       * @param Request $request
       * @param CurrentRoute $currentRoute
-      * @param SessionInterface $session
       * @param MerchantRepository $merchantRepository
       * @param SettingRepository $settingRepository
       * @param UserClientRepository $ucR
@@ -646,7 +640,7 @@ final class PaymentController
       * @param DateHelper $dateHelper
       * @return \Yiisoft\DataResponse\DataResponse|Response
       */
-    public function guest_online_log(Request $request, CurrentRoute $currentRoute, SessionInterface $session, 
+    public function guest_online_log(Request $request, CurrentRoute $currentRoute, 
                           MerchantRepository $merchantRepository, 
                           SettingRepository $settingRepository,
                           UserClientRepository $ucR,
@@ -678,7 +672,7 @@ final class PaymentController
             // No need for rbac here since the route accessChecker for payment/online_log
             // includes 'viewPayment' @see config/routes.php
             $parameters = [
-                'alert'=>$this->alert($session),
+                'alert'=>$this->alert(),
                 'page'=>$page,
                 'paginator' => $paginator,
                 'sortOrder' => $query_params['sort'] ?? '', 
@@ -693,14 +687,13 @@ final class PaymentController
     
     /**
      * @param Request $request
-     * @param SessionInterface $session
      * @param CurrentRoute $currentRoute
      * @param PaymentRepository $paymentRepository
      * @param SettingRepository $settingRepository
      * @param DateHelper $dateHelper
      * @param InvAmountRepository $iaR
      */
-    public function index(Request $request, SessionInterface $session, 
+    public function index(Request $request,  
                           CurrentRoute $currentRoute,  
                           PaymentRepository $paymentRepository, 
                           SettingRepository $settingRepository, 
@@ -724,7 +717,7 @@ final class PaymentController
         $canEdit = $this->userService->hasPermission('editPayment');
         $canView = $this->userService->hasPermission('viewPayment');
         $parameters = [
-            'alert'=>$this->alert($session),
+            'alert'=>$this->alert(),
             'canEdit'=>$canEdit,
             'canView'=>$canView,
             'grid_summary'=> $settingRepository->grid_summary($paginator, $this->translator, (int)$settingRepository->get_setting('default_list_limit'), $this->translator->translate('invoice.payments'), ''),
@@ -784,12 +777,11 @@ final class PaymentController
     /**
      * @param Request $request
      * @param CurrentRoute $currentRoute
-     * @param SessionInterface $session
      * @param MerchantRepository $merchantRepository
      * @param SettingRepository $settingRepository
      * @param DateHelper $dateHelper
      */
-    public function online_log(Request $request, CurrentRoute $currentRoute, SessionInterface $session, 
+    public function online_log(Request $request, CurrentRoute $currentRoute,  
                           MerchantRepository $merchantRepository, 
                           SettingRepository $settingRepository, 
                           DateHelper $dateHelper): \Yiisoft\DataResponse\DataResponse
@@ -809,7 +801,7 @@ final class PaymentController
         // No need for rbac here since the route accessChecker for payment/online_log
         // includes 'viewPayment' @see config/routes.php
         $parameters = [
-            'alert'=>$this->alert($session),
+            'alert'=>$this->alert(),
             'page'=>$page,
             'paginator' => $paginator,
             'sortOrder' => $query_params['sort'] ?? '', 
@@ -901,11 +893,11 @@ final class PaymentController
     /**
      * @return Response|true
      */
-    private function rbac(SessionInterface $session): bool|Response 
+    private function rbac(): bool|Response 
     {
         $viewPayment = $this->userService->hasPermission('viewPayment');
         if (!$viewPayment){
-            $this->flash($session,'warning', $this->translator->translate('invoice.permission'));
+            $this->flash_message('warning', $this->translator->translate('invoice.permission'));
             return $this->webService->getRedirectResponse('payment/index');
         }
         return $viewPayment;
@@ -917,9 +909,8 @@ final class PaymentController
      * @param ValidatorInterface $validator
      * @param Request $request
      * @param PaymentCustomRepository $pcR
-     * @param SessionInterface $session
      */
-    public function save_custom(ValidatorInterface $validator, Request $request, PaymentCustomRepository $pcR, SessionInterface $session) : \Yiisoft\DataResponse\DataResponse
+    public function save_custom(ValidatorInterface $validator, Request $request, PaymentCustomRepository $pcR) : \Yiisoft\DataResponse\DataResponse
     {
             $js_data = $request->getQueryParams();
             $payment_id = (string)$js_data['payment_id'];
@@ -932,7 +923,6 @@ final class PaymentController
     
     
     /**
-     * @param SessionInterface $session
      * @param CurrentRoute $currentRoute
      * @param PaymentRepository $paymentRepository
      * @param SettingRepository $settingRepository

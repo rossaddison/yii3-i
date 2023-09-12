@@ -16,6 +16,7 @@ $vat = $s->get_setting('enable_vat_registration');
 <div class="table-striped table-responsive">
         <table id="item_table" class="items table-primary table table-bordered no-margin">
             <thead style="display: none">
+            <tr><i class="fa fa-info-circle" data-bs-toggle="tooltip" title="<?= $s->isDebugMode(7); ?>"></i></tr>    
             <tr>
                 <th></th>
                 <th><?= $s->trans('item'); ?></th>
@@ -307,6 +308,7 @@ $vat = $s->get_setting('enable_vat_registration');
         <div class="col-xs-12 visible-xs visible-sm"><br></div>
         <div class="col-xs-12 col-md-6 col-md-offset-2 col-lg-4 col-lg-offset-4">
             <table class="table table-bordered text-right">
+                <tr><i class="fa fa-info-circle" data-bs-toggle="tooltip" title="<?= $s->isDebugMode(7); ?>"></i></tr>
                 <tr>
                     <td style="width: 40%;"><?= $s->trans('subtotal'); ?></td>
                     <td style="width: 60%;" class="amount" id="amount_subtotal" data-bs-toggle = "tooltip" title="inv_amount->item_subtotal =  inv_item(s)->subtotal - inv_item(s)->discount + inv_item(s)->charge"><?php echo $numberhelper->format_currency($inv_amount->getItem_subtotal() ?? 0.00); ?></td>
@@ -325,7 +327,7 @@ $vat = $s->get_setting('enable_vat_registration');
                                     <input type="hidden" name="_csrf" value="<?= $csrf ?>">
                                     <?php if ($show_buttons === true && $user_can_edit === true) { ?>
                                     <span  class="btn btn-xs btn-link" onclick="return confirm('<?= $s->trans('delete_tax_warning'); ?>');">
-                                        <a href="<?= $urlGenerator->generate('inv/delete_inv_tax_rate',['id'=>$inv_tax_rate->getId()]) ?>"><i class="fa fa-trash"></i></a>
+                                        <a href="<?= $urlGenerator->generate('inv/delete_inv_tax_rate',['_language'=>$currentRoute->getArgument('_language'), 'id'=>$inv_tax_rate->getId()]) ?>"><i class="fa fa-trash"></i></a>
                                     </span>
                                     <?php } ?>
                                     <span class="text-muted">
@@ -334,7 +336,7 @@ $vat = $s->get_setting('enable_vat_registration');
                                     <span class="amount" data-bs-toggle = "tooltip" title="inv_tax_rate->inv_tax_rate_amount">
                                         <?php echo $numberhelper->format_currency($inv_tax_rate->getInv_tax_rate_amount()); ?>
                                     </span>
-                                
+                                    <br>
                             <?php }
                         } else {
                             echo $numberhelper->format_currency('0');
@@ -386,7 +388,7 @@ $vat = $s->get_setting('enable_vat_registration');
                     <span><?= $vat === '1' ? $translator->translate('invoice.invoice.vat.break.down') : $s->trans('item_tax'); ?>
                     </span>    
                     </td>
-                    <td class="amount" data-bs-toggle = "tooltip" id="amount_item_tax_total" title="inv_amount->item_tax_total"><?php echo $numberhelper->format_currency($inv_amount->getItem_tax_total() + $inv_amount->getTax_total()  ?? 0.00); ?></td>
+                    <td class="amount" data-bs-toggle = "tooltip" id="amount_item_tax_total" title="inv_amount->item_tax_total"><?php echo $numberhelper->format_currency($inv_amount->getItem_tax_total()  ?? 0.00); ?></td>
                 </tr>  
                 <tr>
                     <td><b><?= $s->trans('total'); ?></b></td>

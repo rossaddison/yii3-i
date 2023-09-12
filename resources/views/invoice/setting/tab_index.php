@@ -7,6 +7,7 @@ declare(strict_types=1);
  * @var string $csrf
  */
 
+echo $alert;
 ?>
 
 <div id="headerbar">
@@ -66,10 +67,6 @@ declare(strict_types=1);
     <div class="tabbable tabs-below">
 
         <div class="tab-content">
-
-            <div class="">
-                <?= $alert; ?> 
-            </div>
 
             <div id="settings-general" class="tab-pane active">
                 <?= $general; ?>

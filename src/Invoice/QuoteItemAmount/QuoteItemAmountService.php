@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Invoice\QuoteItemAmount;
 
 use App\Invoice\Entity\QuoteItemAmount;
+use App\Invoice\QuoteItemAmount\QuoteItemAmountForm;
 
 final class QuoteItemAmountService
 {

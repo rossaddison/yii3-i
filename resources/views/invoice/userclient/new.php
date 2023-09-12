@@ -1,14 +1,14 @@
 <?php
 declare(strict_types=1);
 
-use Yiisoft\Yii\Bootstrap5\Alert;
 use Yiisoft\Html\Html;
 use App\Invoice\Helpers\ClientHelper;
 
 /**
  * @var Yiisoft\Yii\View\Csrf $csrf 
- * @var \Yiisoft\Session\Flash\FlashInterface $flash
  */
+echo $alert;
+
 $client_helper = new ClientHelper($s);
 ?>
 <form method="post">
@@ -28,9 +28,6 @@ $client_helper = new ClientHelper($s);
 
         <div class="row">
             <div class="col-xs-12 col-md-6 col-md-offset-3">
-                <?php
-                    $alerts;
-                ?>    
                 <input type="hidden" name="user_id" id="user_id"
                        value="<?= $userinv->getUser_id(); ?>">
 

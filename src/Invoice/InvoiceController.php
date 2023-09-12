@@ -48,15 +48,13 @@ use Yiisoft\Security\Random;
 use Yiisoft\Session\SessionInterface;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\User\CurrentUser;
 use Yiisoft\Yii\View\ViewRenderer;
 
 use App\Invoice\Libraries\Crypt;
 
-use Cycle\Database\DatabaseManager;
-
 final class InvoiceController
 {
+    private Flash $flash;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     private UserService $userService; 
@@ -83,6 +81,7 @@ final class InvoiceController
         $this->settingService = $settingService;
         $this->viewRenderer = $viewRenderer;
         $this->session = $session;
+        $this->flash = new Flash($session);
         $this->s = $s;
         $this->crypt = $crypt;
                 
@@ -90,34 +89,34 @@ final class InvoiceController
         if (!$this->userService->hasPermission('viewInv') && !$this->userService->hasPermission('editInv')) {
             $this->viewRenderer = $viewRenderer->withControllerName('invoice')
                                                ->withLayout('@views/layout/guest.php');
-            $this->flash('info' , $this->translator->translate('invoice.permission.unauthorised'));
+            $this->flash_message('info' , $this->translator->translate('invoice.permission.unauthorised'));
         }
         
         // Client: Authenticated and Authorised (Permission: viewInv)
         if ($this->userService->hasPermission('viewInv') && !$this->userService->hasPermission('editInv')) {
             $this->viewRenderer = $viewRenderer->withControllerName('invoice')
                                                ->withLayout('@views/layout/guest.php');
-            $this->flash('info' , $this->translator->translate('invoice.permission.authorised.view'));
+            $this->flash_message('info' , $this->translator->translate('invoice.permission.authorised.view'));
         }
         
         // Administrator: Authenticated and Authorised (Permission: editInv)
         if ($this->userService->hasPermission('editInv')) {
             $this->viewRenderer = $viewRenderer->withControllerName('invoice')
                                                  ->withLayout('@views/layout/invoice.php');
-            $this->flash('info' , $this->translator->translate('invoice.permission.authorised.edit')); 
+            $this->flash_message('info' , $this->translator->translate('invoice.permission.authorised.edit')); 
         }
     }
     
-    /**
-     * @return string
-     */
-    private function alert() : string {
-        return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
-        [
-            'flash'=>$this->flash('', ''),
-            'errors' => [],
-        ]);
-    }
+   /**
+    * @return string
+    */
+     private function alert(): string {
+       return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+       [ 
+         'flash' => $this->flash,
+         'errors' => [],
+       ]);
+     }
     
     /**
      * 
@@ -644,22 +643,6 @@ final class InvoiceController
             }
           }';
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         curl_setopt($site, CURLOPT_POSTFIELDS, $data);
         curl_close($site);
         $message = curl_error($site) ? curl_error($site) : 
@@ -766,15 +749,13 @@ final class InvoiceController
     }
     
     /**
-     * 
      * @param string $level
      * @param string $message
      * @return Flash
      */
-    private function flash(string $level, string $message): Flash{
-        $flash = new Flash($this->session);
-        $flash->set($level, $message); 
-        return $flash;
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
     
     /**
@@ -800,7 +781,7 @@ final class InvoiceController
                           GroupRepository $gR
                          ): \Yiisoft\DataResponse\DataResponse {
         if (($sR->get_setting('debug_mode') == '1') && ($this->userService->hasPermission('editInv'))) {
-            $this->flash('info' , $this->viewRenderer->renderPartialAsString('/invoice/info/invoice'));
+            $this->flash_message('info' , $this->viewRenderer->renderPartialAsString('/invoice/info/invoice'));
         }    
         $gR->repoCountAll() === 0 ? $this->install_default_invoice_and_quote_group($gR) : '';
         $pmR->count() === 0 ? $this->install_default_payment_methods($pmR) : '';
@@ -1259,7 +1240,7 @@ final class InvoiceController
     private function rbac(): bool|Response {
         $canEdit = $this->userService->hasPermission('viewInv');
         if (!$canEdit){
-            $this->flash('warning', $this->translator->translate('invoice.permission'));
+            $this->flash_message('warning', $this->translator->translate('invoice.permission'));
             return $this->webService->getRedirectResponse('invoice/index');
         }
         return $canEdit;
@@ -1293,7 +1274,6 @@ final class InvoiceController
     }
     
     /**
-     * @param SessionInterface $session
      * @param SettingRepository $sR
      * @param UnitRepository $uR
      * @param FamilyRepository $fR
@@ -1302,8 +1282,7 @@ final class InvoiceController
      * @param QuoteRepository $qR
      * @param InvRepository $iR
      */
-    public function test_data_remove(SessionInterface $session,  
-                                    SettingRepository $sR,
+    public function test_data_remove(SettingRepository $sR,
                                     UnitRepository $uR,
                                     FamilyRepository $fR,
                                     ProductRepository $pR,
@@ -1364,7 +1343,7 @@ final class InvoiceController
         } else {
                 $flash = $this->translator->translate('invoice.install.test.data');           
         }
-        $this->flash('info', $flash);
+        $this->flash_message('info', $flash);
         $data = [
             'alerts'=> $this->alert(),          
         ];
@@ -1401,43 +1380,7 @@ final class InvoiceController
         $client_foreign = (null !==$cR->withName('Foreign') ? $cR->withName('Foreign') : null);
         null !==$client_foreign ? $cR->delete($client_foreign) : null;
         // Group data is not deleted because these are defaults
-    }
-    
-    /**
-     * @param SessionInterface $session
-     * @param CurrentUser $currentUser
-     * @param DatabaseManager $dbal
-     * @param SettingRepository $sR
-     * @param TaxRateRepository $trR
-     * @param UnitRepository $uR
-     * @param FamilyRepository $fR
-     * @param ProductRepository $pR
-     * @param ClientRepository $cR
-     * @param GroupRepository $gR
-     */
-    public function ubuntu(SessionInterface $session, CurrentUser $currentUser, DatabaseManager $dbal, 
-                           SettingRepository $sR,
-                           TaxRateRepository $trR,
-                           UnitRepository $uR,
-                           FamilyRepository $fR,
-                           ProductRepository $pR,
-                           ClientRepository $cR,                           
-                           GroupRepository $gR
-                          ): \Yiisoft\DataResponse\DataResponse {
-        $canEdit = $this->rbac();
-        $flash = $this->flash('info' , $this->viewRenderer->renderPartialAsString('/invoice/info/ubuntu'));        
-        $gR->repoCountAll() === 0 ? $this->install_default_invoice_and_quote_group($gR) : '';
-        $sR->repoCount('default_settings_exist') === 0 ? $this->install_default_settings_on_first_run($session, $sR) : ''; 
-        $sR->repoCount('install_test_data') === 1 && $sR->get_setting('install_test_data') === '1' ? $this->install_test_data($trR, $uR, $fR, $pR, $cR, $sR) : '';
-        $sR->repoCount('cldr') === 1 && $sR->get_setting('cldr') !== (string)$session->get('_language') ? $this->cldr((string)$session->get('_language') ?: 'en',$sR) : '';
-        $data = [
-            'isGuest' => $currentUser->isGuest(),
-            'canEdit' => $canEdit,
-            'tables'=> $dbal->database('default')->getTables(),
-            'flash'=> $flash,           
-        ];
-        return $this->viewRenderer->render('index', $data);
-    }
+    }    
 }
 
 

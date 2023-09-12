@@ -20,7 +20,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Yiisoft\DataResponse\DataResponseFactoryInterface;
 use Yiisoft\Http\Method;
 use Yiisoft\Router\CurrentRoute;
-use Yiisoft\Session\SessionInterface;
+use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\Validator\ValidatorInterface;
@@ -28,6 +28,8 @@ use Yiisoft\Yii\View\ViewRenderer;
 
 final class UserClientController
 {
+    private Session $session;
+    private Flash $flash;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     private UserService $userService;
@@ -36,6 +38,7 @@ final class UserClientController
     private TranslatorInterface $translator;
         
     public function __construct(
+        Session $session,
         ViewRenderer $viewRenderer,
         WebControllerService $webService,
         UserService $userService,
@@ -44,6 +47,8 @@ final class UserClientController
         TranslatorInterface $translator,
     )    
     {
+        $this->session = $session;
+        $this->flash = new Flash($session);
         $this->viewRenderer = $viewRenderer->withControllerName('invoice/userclient')
                                            ->withLayout('@views/layout/invoice.php');
         $this->webService = $webService;
@@ -54,21 +59,18 @@ final class UserClientController
     }
     
     /**
-     * @param SessionInterface $session
      * @param UserClientRepository $userclientRepository
      * @param SettingRepository $settingRepository
      * @param Request $request
      * @param UserClientService $service
      */
-    public function index(SessionInterface $session, UserClientRepository $userclientRepository, SettingRepository $settingRepository, Request $request, UserClientService $service): \Yiisoft\DataResponse\DataResponse
+    public function index(UserClientRepository $userclientRepository, SettingRepository $settingRepository, Request $request, UserClientService $service): \Yiisoft\DataResponse\DataResponse
     {      
-        $canEdit = $this->rbac($session);
-        $flash = $this->flash($session, '' , '');
-        $parameters = [
+        $canEdit = $this->rbac();$parameters = [
           's'=>$settingRepository,
           'canEdit' => $canEdit,
           'userclients' => $this->userclients($userclientRepository),
-          'flash'=> $flash,
+          'alert'=> $this->alert(),
         ];
         return $this->viewRenderer->render('index', $parameters);
     }
@@ -108,7 +110,6 @@ final class UserClientController
     }
     
     /**
-     * 
      * @param CurrentRoute $currentRoute
      * @param SettingRepository $sR
      * @param UserClientRepository $userclientRepository
@@ -151,7 +152,7 @@ final class UserClientController
     $user_client = $this->userclient($currentRoute, $userclientRepository);
     if ($user_client) {    
             $parameters = [
-                'title' => 'Edit',
+                'title' => $settingRepository->trans('edit'),
                 'action' => ['userclient/edit', ['id' => $user_client->getId()]],
                 'errors' => [],
                 'body' => $this->body($user_client),
@@ -179,8 +180,6 @@ final class UserClientController
     // Retrieves userclient/new.php which offers an 'all client option' and an individual client option
     
     /**
-     * 
-     * @param SessionInterface $session
      * @param Request $request
      * @param ValidatorInterface $validator
      * @param ViewRenderer $head
@@ -192,7 +191,7 @@ final class UserClientController
      * @param UIR $uiR
      * @return Response
      */
-    public function new(SessionInterface $session, Request $request, ValidatorInterface $validator, ViewRenderer $head, CurrentRoute $currentRoute, 
+    public function new(Request $request, ValidatorInterface $validator, ViewRenderer $head, CurrentRoute $currentRoute, 
                         ClientRepository $cR, SettingRepository $sR, UserClientRepository $ucR, UserClientService $ucS, UIR $uiR): Response {
         
         $user_id = $currentRoute->getArgument('user_id');
@@ -205,7 +204,7 @@ final class UserClientController
                 'userinv'=>$this->user($currentRoute, $uiR),
                 // Only provide clients NOT already included ie. available
                 'clients'=>!empty($available_client_id_list) ? $cR->repoUserClient($available_client_id_list) : [],
-                'flash'=>$this->flash($session,'',''),
+                'alert'=>$this->alert(),
                 // Initialize the checkbox to zero so that both 'all_clients' and dropdownbox is presented on userclient/new.php
                 'user_all_clients'=>'0',            
                 'body'=>$request->getParsedBody()
@@ -234,11 +233,11 @@ final class UserClientController
                                 // Check that the user client does not exist    
                                                          && !$ucR->repoUserClientqueryCount($user_id, $value) > 0){
                                 $this->userclientService->saveUserClient(new UserClient(),$form);
-                                $this->flash($session, 'info' , $sR->trans('record_successfully_updated'));
+                                $this->flash_message('info' , $sR->trans('record_successfully_updated'));
                                 return $this->webService->getRedirectResponse('userinv/index');
                             }
                             if ($ucR->repoUserClientqueryCount($user_id, $value) > 0) {
-                                $this->flash($session, 'info' , $sR->trans('client_already_exists'));
+                                $this->flash_message('info' , $sR->trans('client_already_exists'));
                                 return $this->webService->getRedirectResponse('userinv/index');
                             }
                         }
@@ -276,11 +275,11 @@ final class UserClientController
     /**
      * @return Response|true
      */
-    private function rbac(SessionInterface $session): bool|Response 
+    private function rbac(): bool|Response 
     {
         $canEdit = $this->userService->hasPermission('editInv');
         if (!$canEdit){
-            $this->flash($session,'warning', $this->translator->translate('invoice.permission'));
+            $this->flash_message('warning', $this->translator->translate('invoice.permission'));
             return $this->webService->getRedirectResponse('userclient/index');
         }
         return $canEdit;
@@ -329,7 +328,6 @@ final class UserClientController
     }
     
     /**
-     * 
      * @param UserClient $userclient
      * @return array
      */
@@ -343,16 +341,24 @@ final class UserClientController
     }
     
     /**
-     * 
-     * @param SessionInterface $session
+     * @return string
+     */
+    private function alert(): string {
+      return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+      [ 
+        'flash' => $this->flash,
+        'errors' => [],
+      ]);
+    }
+
+    /**
      * @param string $level
      * @param string $message
      * @return Flash
      */
-    private function flash(SessionInterface $session, string $level, string $message): Flash{
-        $flash = new Flash($session);
-        $flash->set($level, $message); 
-        return $flash;
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
 }
 

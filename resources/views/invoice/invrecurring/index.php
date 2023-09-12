@@ -7,10 +7,9 @@ use App\Widget\OffsetPagination;
 /**
  * @var \App\Invoice\Entity\InvRecurring $invrecurring
  * @var \Yiisoft\Router\UrlGeneratorInterface $urlGenerator
- * @var \Yiisoft\Session\Flash\FlashInterface $flash 
  */
  
- $alert;
+ echo $alert;
 ?>
 <div>
  <h1 class="headerbar-title"><?= $s->trans('recurring_invoices'); ?></h1>
@@ -96,11 +95,11 @@ $pagination = OffsetPagination::widget()
     $pageSize = $paginator->getCurrentPageSize();
     if ($pageSize > 0) {
       echo Html::p(
-        sprintf('Showing %s out of %s invrecurrings', $pageSize, $paginator->getTotalItems()),
+        sprintf($translator->translate('invoice.index.footer.showing').' invrecurrings', $pageSize, $paginator->getTotalItems()),
         ['class' => 'text-muted']
     );
     } else {
-      echo Html::p('No records');
+      echo Html::p($translator->translate('invoice.records.no'));
     }
 ?>
 </div>

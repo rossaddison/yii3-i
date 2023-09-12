@@ -32,6 +32,7 @@ use \Exception;
 final class InvItemAllowanceChargeController
 {
     private SessionInterface $session;
+    private Flash $flash;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     private UserService $userService;
@@ -48,6 +49,7 @@ final class InvItemAllowanceChargeController
     )    
     {
         $this->session = $session;
+        $this->flash = new Flash($session);
         $this->viewRenderer = $viewRenderer;
         $this->webService = $webService;
         $this->userService = $userService;
@@ -63,6 +65,19 @@ final class InvItemAllowanceChargeController
         $this->translator = $translator;
     }
     
+    /**
+     * 
+     * @param CurrentRoute $currentRoute
+     * @param ViewRenderer $head
+     * @param Request $request
+     * @param ValidatorInterface $validator
+     * @param AllowanceChargeRepository $acR
+     * @param InvItemAllowanceChargeRepository $aciiR
+     * @param InvItemRepository $iiR
+     * @param InvItemAmountRepository $iiaR
+     * @param SettingRepository $settingRepository
+     * @return Response
+     */
     public function add(CurrentRoute $currentRoute, ViewRenderer $head, Request $request, 
                         ValidatorInterface $validator,
                         AllowanceChargeRepository $acR,
@@ -150,15 +165,25 @@ final class InvItemAllowanceChargeController
         return $this->webService->getNotFoundResponse();
     }    
     
+  /**
+   * @return string
+   */
+   private function alert(): string {
+     return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+     [ 
+       'flash' => $this->flash,
+       'errors' => [],
+     ]);
+   }
+
     /**
-     * @return string
-     */    
-    private function alert() : string {
-        return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
-        [
-            'flash'=>$this->flash('', ''),
-            'errors' => [],
-        ]);
+     * @param string $level
+     * @param string $message
+     * @return Flash
+     */
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
     
     /**
@@ -186,7 +211,6 @@ final class InvItemAllowanceChargeController
      */
     public function index(Request $request, InvItemAllowanceChargeRepository $iiacR, SettingRepository $settingRepository): Response
     {      
-      $flash = $this->flash('', '');
       $params = $request->getQueryParams();
       /** @var string $params['inv_item_id'] */
       $inv_item_id = $params['inv_item_id'] ?? '';
@@ -195,7 +219,7 @@ final class InvItemAllowanceChargeController
       $invoice_item_allowances_or_charges = $iiacR->repoInvItemquery($inv_item_id);
       $paginator = (new OffsetPaginator($invoice_item_allowances_or_charges));
       $parameters = [
-          'flash'=> $flash,
+          'alert'=> $this->alert(),
           'inv_item_id'=>$inv_item_id,
           'paginator' => $paginator,
           'grid_summary' => $settingRepository->grid_summary($paginator, $this->translator, (int)$settingRepository->get_setting('default_list_limit'), $this->translator->translate('invoice.invoice.allowance.or.charge.item'), ''),    
@@ -218,10 +242,10 @@ final class InvItemAllowanceChargeController
             $inv_item_id = $acii->getInv_item_id();
             try {
                 $this->aciiService->deleteInvItemAllowanceCharge($acii, $iiaR);               
-                $this->flash('info', $settingRepository->trans('record_successfully_deleted'));
+                $this->flash_message('info', $settingRepository->trans('record_successfully_deleted'));
                 return $this->webService->getRedirectResponse('acii/index',['inv_item_id'=>$inv_item_id]); 
             } catch (Exception $e) {
-                $this->flash('danger', $e->getMessage());
+                $this->flash_message('danger', $e->getMessage());
                 return $this->webService->getRedirectResponse('acii/index',['inv_item_id'=>$inv_item_id]); 
             }
         }
@@ -313,16 +337,6 @@ final class InvItemAllowanceChargeController
             return $this->viewRenderer->render('/invoice/invitemallowancecharge/_form_edit', $parameters);
         } // if acii
         return $this->webService->getRedirectResponse('acii/index');
-    }
-    /**
-     * @param string $level
-     * @param string $message
-     * @return Flash
-     */
-    private function flash(string $level, string $message): Flash{
-        $flash = new Flash($this->session);
-        $flash->set($level, $message); 
-        return $flash;
     }
     
     //For rbac refer to AccessChecker    

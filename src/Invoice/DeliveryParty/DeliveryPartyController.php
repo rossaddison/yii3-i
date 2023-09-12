@@ -28,6 +28,7 @@ use \Exception;
 final class DeliveryPartyController
 {
     private SessionInterface $session;
+    private Flash $flash;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     private UserService $userService;
@@ -44,6 +45,7 @@ final class DeliveryPartyController
     )    
     {
         $this->session = $session;
+        $this->flash = new Flash($session);
         $this->viewRenderer = $viewRenderer->withControllerName('invoice/deliveryparty')
                                            // The Controller layout dir is now redundant: replaced with an alias 
                                            ->withLayout('@views/layout/invoice.php');
@@ -53,6 +55,14 @@ final class DeliveryPartyController
         $this->translator = $translator;
     }
     
+    /**
+     * 
+     * @param ViewRenderer $head
+     * @param Request $request
+     * @param ValidatorInterface $validator
+     * @param SettingRepository $settingRepository
+     * @return Response
+     */
     public function add(ViewRenderer $head, Request $request, 
                         ValidatorInterface $validator,
                         SettingRepository $settingRepository,                        
@@ -79,18 +89,7 @@ final class DeliveryPartyController
         }
         return $this->viewRenderer->render('_form', $parameters);
     }
-    
-    /**
-     * @return string
-     */    
-    private function alert() : string {
-        return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
-        [
-            'flash'=>$this->flash('', ''),
-            'errors' => [],
-        ]);
-    }
-    
+        
     /**
      * @param DeliveryParty $deliveryparty
      * @return array
@@ -103,33 +102,24 @@ final class DeliveryPartyController
         return $body;
     }
     
+    /**
+     * 
+     * @param DeliveryPartyRepository $deliverypartyRepository
+     * @param SettingRepository $settingRepository
+     * @param Request $request
+     * @param DeliveryPartyService $service
+     * @return Response
+     */
     public function index(DeliveryPartyRepository $deliverypartyRepository, SettingRepository $settingRepository, Request $request, DeliveryPartyService $service): Response
     {      
-      $flash = $this->flash('' , '');
         $parameters = [
           'deliveryparties' => $this->deliveryparties($deliverypartyRepository),
-          'flash'=> $flash
+          'alert'=> $this->alert()
         ];
-
-        
         return $this->viewRenderer->render('index', $parameters);
     }
     
-    public function index_adv_paginator(DeliveryPartyRepository $deliverypartyRepository, SettingRepository $settingRepository, CurrentRoute $currentRoute, DeliveryPartyService $service): Response
-    {
-                  
-        $flash = $this->flash('' , '');
-        $parameters = [        
-              's'=>$settingRepository,
-              'deliveryparties' => $this->deliveryparties($deliverypartyRepository),
-              'flash'=> $flash
-      ];
-      return $this->viewRenderer->render('index', $parameters);
-  
-    }
-    
     /**
-     * 
      * @param SettingRepository $settingRepository
      * @param CurrentRoute $currentRoute
      * @param DeliveryPartyRepository $deliverypartyRepository
@@ -141,16 +131,25 @@ final class DeliveryPartyController
             $deliveryparty = $this->deliveryparty($currentRoute, $deliverypartyRepository);
             if ($deliveryparty) {
                 $this->deliverypartyService->deleteDeliveryParty($deliveryparty);               
-                $this->flash('info', $settingRepository->trans('record_successfully_deleted'));
+                $this->flash_message('info', $settingRepository->trans('record_successfully_deleted'));
                 return $this->webService->getRedirectResponse('deliveryparty/index'); 
             }
             return $this->webService->getRedirectResponse('deliveryparty/index'); 
 	} catch (Exception $e) {
-            $this->flash('danger', $e->getMessage());
+            $this->flash_message('danger', $e->getMessage());
             return $this->webService->getRedirectResponse('deliveryparty/index'); 
         }
     }
-        
+    
+    /**
+     * @param ViewRenderer $head
+     * @param Request $request
+     * @param CurrentRoute $currentRoute
+     * @param ValidatorInterface $validator
+     * @param DeliveryPartyRepository $deliverypartyRepository
+     * @param SettingRepository $settingRepository
+     * @return Response
+     */    
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute, 
                         ValidatorInterface $validator,
                         DeliveryPartyRepository $deliverypartyRepository, 
@@ -166,7 +165,6 @@ final class DeliveryPartyController
                 'body' => $this->body($deliveryparty),
                 'head'=>$head,
                 's'=>$settingRepository,
-                
             ];
             if ($request->getMethod() === Method::POST) {
                 $form = new DeliveryPartyForm();
@@ -184,14 +182,24 @@ final class DeliveryPartyController
     }
     
     /**
+  * @return string
+  */
+   private function alert(): string {
+     return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+     [ 
+       'flash' => $this->flash,
+       'errors' => [],
+     ]);
+   }
+
+    /**
      * @param string $level
      * @param string $message
      * @return Flash
      */
-    private function flash(string $level, string $message): Flash{
-        $flash = new Flash($this->session);
-        $flash->set($level, $message); 
-        return $flash;
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
     
     //For rbac refer to AccessChecker    

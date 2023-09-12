@@ -29,6 +29,7 @@ use \Exception;
 
 final class ProductPropertyController
 {
+    private Flash $flash;
     private SessionInterface $session;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
@@ -46,6 +47,7 @@ final class ProductPropertyController
     )    
     {
         $this->session = $session;
+        $this->flash = new Flash($session);
         $this->viewRenderer = $viewRenderer->withControllerName('invoice/productproperty')
                                            // The Controller layout dir is now redundant: replaced with an alias 
                                            ->withLayout('@views/layout/invoice.php');
@@ -55,6 +57,16 @@ final class ProductPropertyController
         $this->translator = $translator;
     }
     
+    /**
+     * 
+     * @param CurrentRoute $currentRoute
+     * @param ViewRenderer $head
+     * @param Request $request
+     * @param ValidatorInterface $validator
+     * @param SettingRepository $settingRepository
+     * @param ProductRepository $productRepository
+     * @return Response
+     */
     public function add(CurrentRoute $currentRoute, ViewRenderer $head, Request $request, 
                         ValidatorInterface $validator,
                         SettingRepository $settingRepository,                        
@@ -63,15 +75,14 @@ final class ProductPropertyController
     {
         $product_id = $currentRoute->getArgument('product_id');
         $parameters = [
-            'title' => $this->translator->translate('invoice.add'),
-            'action' => ['productproperty/add',['product_id'=>$product_id]],
-            'errors' => [],
-            'body' => $request->getParsedBody(),
-            's'=>$settingRepository,
-            'product_id'=>$product_id,
-            'head'=>$head,
-            
-            'products'=>$productRepository->findAllPreloaded(),
+          'title' => $this->translator->translate('invoice.add'),
+          'action' => ['productproperty/add',['product_id'=>$product_id]],
+          'errors' => [],
+          'body' => $request->getParsedBody(),
+          's'=>$settingRepository,
+          'product_id'=>$product_id,
+          'head'=>$head,
+          'products'=>$productRepository->findAllPreloaded(),
         ];
         
         if ($request->getMethod() === Method::POST) {
@@ -88,17 +99,18 @@ final class ProductPropertyController
     
     /**
      * @return string
-     */    
-    private function alert() : string {
-        return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
-        [
-            'flash'=>$this->flash('', ''),
-            'errors' => [],
-        ]);
+     */
+    private function alert(): string {
+      return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+      [ 
+        'flash' => $this->flash,
+        'errors' => [],
+      ]);
     }
     
     /**
-     * @param ProductProperty $productproperty     * @return array
+     * @param ProductProperty $productproperty     
+     * @return array
      */
     private function body(ProductProperty $productproperty) : array {
         $body = [
@@ -109,7 +121,13 @@ final class ProductPropertyController
         ];
         return $body;
     }
-        
+    
+    /**
+     * @param CurrentRoute $currentRoute
+     * @param ProductPropertyRepository $productpropertyRepository
+     * @param SettingRepository $settingRepository
+     * @return Response
+     */    
     public function index(CurrentRoute $currentRoute, ProductPropertyRepository $productpropertyRepository, SettingRepository $settingRepository): Response
     {      
       $page = (int) $currentRoute->getArgument('page', '1');
@@ -119,11 +137,11 @@ final class ProductPropertyController
       ->withCurrentPage($page)
       ->withNextPageToken((string) $page);
       $parameters = [
-      'productpropertys' => $this->productpropertys($productpropertyRepository),
-      'paginator' => $paginator,
-      'alerts' => $this->alert(),
-      'max' => (int) $settingRepository->get_setting('default_list_limit'),
-      'grid_summary' => $settingRepository->grid_summary($paginator, $this->translator, (int) $settingRepository->get_setting('default_list_limit'), $this->translator->translate('plural'), ''),
+        'productpropertys' => $this->productpropertys($productpropertyRepository),
+        'paginator' => $paginator,
+        'alert' => $this->alert(),
+        'max' => (int) $settingRepository->get_setting('default_list_limit'),
+        'grid_summary' => $settingRepository->grid_summary($paginator, $this->translator, (int) $settingRepository->get_setting('default_list_limit'), $this->translator->translate('plural'), ''),
     ];
     return $this->viewRenderer->render('/invoice/productproperty/index', $parameters);
     }
@@ -141,16 +159,26 @@ final class ProductPropertyController
             $productproperty = $this->productproperty($currentRoute, $productpropertyRepository);
             if ($productproperty) {
                 $this->productpropertyService->deleteProductProperty($productproperty);               
-                $this->flash('info', $settingRepository->trans('record_successfully_deleted'));
+                $this->flash_message('info', $settingRepository->trans('record_successfully_deleted'));
                 return $this->webService->getRedirectResponse('productproperty/index'); 
             }
             return $this->webService->getRedirectResponse('productproperty/index'); 
 	} catch (Exception $e) {
-            $this->flash('danger', $e->getMessage());
+            $this->flash_message('danger', $e->getMessage());
             return $this->webService->getRedirectResponse('productproperty/index'); 
         }
     }
-        
+    
+    /**
+     * @param ViewRenderer $head
+     * @param Request $request
+     * @param CurrentRoute $currentRoute
+     * @param ValidatorInterface $validator
+     * @param ProductPropertyRepository $productpropertyRepository
+     * @param SettingRepository $settingRepository
+     * @param ProductRepository $productRepository
+     * @return Response
+     */    
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute, 
                         ValidatorInterface $validator,
                         ProductPropertyRepository $productpropertyRepository, 
@@ -160,13 +188,13 @@ final class ProductPropertyController
         $productproperty = $this->productproperty($currentRoute, $productpropertyRepository);
         if ($productproperty){
             $parameters = [
-                'title' => $settingRepository->trans('edit'),
-                'action' => ['productproperty/edit', ['id' => $productproperty->getProperty_id()]],
-                'errors' => [],
-                'body' => $this->body($productproperty),
-                'head'=>$head,
-                's'=>$settingRepository,
-                'products'=>$productRepository->findAllPreloaded()
+              'title' => $settingRepository->trans('edit'),
+              'action' => ['productproperty/edit', ['id' => $productproperty->getProperty_id()]],
+              'errors' => [],
+              'body' => $this->body($productproperty),
+              'head'=>$head,
+              's'=>$settingRepository,
+              'products'=>$productRepository->findAllPreloaded()
             ];
             if ($request->getMethod() === Method::POST) {
                 $form = new ProductPropertyForm();
@@ -188,10 +216,9 @@ final class ProductPropertyController
      * @param string $message
      * @return Flash
      */
-    private function flash(string $level, string $message): Flash{
-        $flash = new Flash($this->session);
-        $flash->set($level, $message); 
-        return $flash;
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
     
     //For rbac refer to AccessChecker    

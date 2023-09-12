@@ -18,7 +18,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Yiisoft\Data\Paginator\OffsetPaginator;
 use Yiisoft\Http\Method;
 use Yiisoft\Router\CurrentRoute;
-use Yiisoft\Session\SessionInterface;
+use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\Validator\ValidatorInterface;
@@ -28,7 +28,8 @@ use \Exception;
 
 final class InvAllowanceChargeController
 {
-    private SessionInterface $session;
+    private Flash $flash;
+    private Session $session;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     private UserService $userService;
@@ -36,7 +37,7 @@ final class InvAllowanceChargeController
     private TranslatorInterface $translator;
     
     public function __construct(
-        SessionInterface $session,
+        Session $session,
         ViewRenderer $viewRenderer,
         WebControllerService $webService,
         UserService $userService,
@@ -44,7 +45,8 @@ final class InvAllowanceChargeController
         TranslatorInterface $translator
     )    
     {
-        $this->session = $session;        
+        $this->session = $session;
+        $this->flash = new Flash($session);
         $this->viewRenderer = $viewRenderer;
         $this->userService = $userService;
         if ($this->userService->hasPermission('viewInv') && !$this->userService->hasPermission('editInv')) {
@@ -59,7 +61,16 @@ final class InvAllowanceChargeController
         $this->invallowancechargeService = $invallowancechargeService;
         $this->translator = $translator;
     }
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
+    
+    /**
+     * 
+     * @param ViewRenderer $head
+     * @param Request $request
+     * @param ValidatorInterface $validator
+     * @param SettingRepository $settingRepository
+     * @param AllowanceChargeRepository $allowance_chargeRepository
+     * @return Response
+     */
     public function add(ViewRenderer $head, Request $request, 
                         ValidatorInterface $validator,
                         SettingRepository $settingRepository,                        
@@ -89,15 +100,25 @@ final class InvAllowanceChargeController
         return $this->viewRenderer->render('_form', $parameters);
     }
     
+  /**
+   * @return string
+   */
+   private function alert(): string {
+     return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+     [ 
+       'flash' => $this->flash,
+       'errors' => [],
+     ]);
+   }
+
     /**
-     * @return string
-     */    
-    private function alert() : string {
-        return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
-        [
-            'flash'=>$this->flash('', ''),
-            'errors' => [],
-        ]);
+     * @param string $level
+     * @param string $message
+     * @return Flash
+     */
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
     
     /**
@@ -116,15 +137,19 @@ final class InvAllowanceChargeController
         return $body;
     }
     
+    /**
+     * @param InvAllowanceChargeRepository $invallowancechargeRepository
+     * @param SettingRepository $settingRepository
+     * @return Response
+     */
     public function index(InvAllowanceChargeRepository $invallowancechargeRepository, SettingRepository $settingRepository): Response
     {      
-      $flash = $this->flash('' , '');
       $invallowancecharges = $this->invallowancecharges($invallowancechargeRepository);
       $paginator = (new OffsetPaginator($invallowancecharges));
        $parameters = [
          'paginator' => $paginator,
          'grid_summary'=> $settingRepository->grid_summary($paginator, $this->translator, (int)$settingRepository->get_setting('default_list_limit'), $this->translator->translate('invoice.invoice.allowance.or.charge'), ''),    
-         'flash'=> $flash
+         'alert'=> $this->alert()
         ];
         return $this->viewRenderer->render('index', $parameters);
     }
@@ -141,16 +166,27 @@ final class InvAllowanceChargeController
             $invallowancecharge = $this->invallowancecharge($currentRoute, $invallowancechargeRepository);
             if ($invallowancecharge) {
                 $this->invallowancechargeService->deleteInvAllowanceCharge($invallowancecharge);               
-                $this->flash('info', $settingRepository->trans('record_successfully_deleted'));
+                $this->flash_message('info', $settingRepository->trans('record_successfully_deleted'));
                 return $this->webService->getRedirectResponse('invallowancecharge/index'); 
             }
             return $this->webService->getRedirectResponse('invallowancecharge/index'); 
 	} catch (Exception $e) {
-            $this->flash('danger', $e->getMessage());
+            $this->flash_message('danger', $e->getMessage());
             return $this->webService->getRedirectResponse('invallowancecharge/index'); 
         }
     }
-        
+    
+    /**
+     * 
+     * @param ViewRenderer $head
+     * @param Request $request
+     * @param CurrentRoute $currentRoute
+     * @param ValidatorInterface $validator
+     * @param InvAllowanceChargeRepository $invallowancechargeRepository
+     * @param SettingRepository $settingRepository
+     * @param AllowanceChargeRepository $allowance_chargeRepository
+     * @return Response
+     */    
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute, 
                         ValidatorInterface $validator,
                         InvAllowanceChargeRepository $invallowancechargeRepository, 
@@ -183,18 +219,7 @@ final class InvAllowanceChargeController
         }
         return $this->webService->getRedirectResponse('invallowancecharge/index');
     }
-    
-    /**
-     * @param string $level
-     * @param string $message
-     * @return Flash
-     */
-    private function flash(string $level, string $message): Flash{
-        $flash = new Flash($this->session);
-        $flash->set($level, $message); 
-        return $flash;
-    }
-    
+        
     //For rbac refer to AccessChecker    
     
     /**
@@ -234,13 +259,13 @@ final class InvAllowanceChargeController
         ): \Yiisoft\DataResponse\DataResponse|Response {
         $invallowancecharge = $this->invallowancecharge($currentRoute, $invallowancechargeRepository); 
         if ($invallowancecharge) {
-            $parameters = [
-                'title' => $settingRepository->trans('view'),
-                'action' => ['invallowancecharge/view', ['id' => $invallowancecharge->getId()]],
-                'errors' => [],
-                'body' => $this->body($invallowancecharge),
-                'invallowancecharge'=>$invallowancecharge,
-            ];        
+          $parameters = [
+              'title' => $settingRepository->trans('view'),
+              'action' => ['invallowancecharge/view', ['id' => $invallowancecharge->getId()]],
+              'errors' => [],
+              'body' => $this->body($invallowancecharge),
+              'invallowancecharge'=>$invallowancecharge,
+          ];        
         return $this->viewRenderer->render('_view', $parameters);
         }
         return $this->webService->getRedirectResponse('invallowancecharge/index');

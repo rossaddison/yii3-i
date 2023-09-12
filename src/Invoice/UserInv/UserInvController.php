@@ -24,7 +24,7 @@ use Yiisoft\Data\Reader\Sort;
 use Yiisoft\DataResponse\DataResponseFactoryInterface;
 use Yiisoft\Http\Method;
 use Yiisoft\Router\CurrentRoute;
-use Yiisoft\Session\SessionInterface;
+use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\Validator\ValidatorInterface;
@@ -32,13 +32,14 @@ use Yiisoft\Yii\View\ViewRenderer;
 
 final class UserInvController
 {
+    private Flash $flash;
     private DataResponseFactoryInterface $factory;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     private UserService $userService;
     private UserInvService $userinvService;
     private TranslatorInterface $translator;
-    private SessionInterface $session;
+    private Session $session;
         
     public function __construct(
         DataResponseFactoryInterface $factory,
@@ -47,7 +48,7 @@ final class UserInvController
         UserService $userService,
         UserInvService $userinvService,
         TranslatorInterface $translator,
-        SessionInterface $session,    
+        Session $session,    
     )    
     {
         $this->factory = $factory;
@@ -66,6 +67,7 @@ final class UserInvController
         }
         $this->translator = $translator;
         $this->session = $session;
+        $this->flash = new Flash($session);
     }
 
     // UserInv  is the extension Table of User
@@ -74,14 +76,15 @@ final class UserInvController
     // using Setting...User Account
     
     /**
+     * 
      * @param Request $request
      * @param CurrentRoute $currentRoute
-     * @param SessionInterface $session
      * @param UserInvRepository $uiR
      * @param SettingRepository $sR
      * @param TranslatorInterface $translator
+     * @return \Yiisoft\DataResponse\DataResponse
      */
-    public function index(Request $request, CurrentRoute $currentRoute, SessionInterface $session,
+    public function index(Request $request, CurrentRoute $currentRoute, 
                           UserInvRepository $uiR, SettingRepository $sR, TranslatorInterface $translator): \Yiisoft\DataResponse\DataResponse
     {      
         $canEdit = $this->rbac();
@@ -108,7 +111,7 @@ final class UserInvController
           'canEdit' => $canEdit,
           'grid_summary'=> $sR->grid_summary($paginator, $this->translator, (int)$sR->get_setting('default_list_limit'), $this->translator->translate('invoice.payments'), ''),
           'userinvs' => $repo,
-          'locale'=>$session->get('_language'),
+          'locale'=>$this->session->get('_language'),
           'alert'=>$this->alert(),
           // Parameters for GridView->requestArguments
           'page'=> $page,
@@ -117,6 +120,16 @@ final class UserInvController
         return $this->viewRenderer->render('index', $parameters);        
     }
     
+    /**
+     * 
+     * @param ViewRenderer $head
+     * @param Request $request
+     * @param ValidatorInterface $validator
+     * @param UserInvRepository $userinvRepository
+     * @param SettingRepository $settingRepository
+     * @param uR $uR
+     * @return Response
+     */
     public function guest(ViewRenderer $head, Request $request, 
                         ValidatorInterface $validator,
                         UserInvRepository $userinvRepository, 
@@ -162,17 +175,25 @@ final class UserInvController
     }
     
     /**
-     * 
      * @return string
      */
-    private function alert() : string {
-        return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
-        [
-            'flash'=>$this->flash('', ''),
-            'errors' => [],
-        ]);
+    private function alert(): string {
+      return $this->viewRenderer->renderPartialAsString('/invoice/layout/alert',
+      [ 
+        'flash' => $this->flash,
+        'errors' => [],
+      ]);
     }
-    
+
+    /**
+     * @param string $level
+     * @param string $message
+     * @return Flash
+     */
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
+    }   
     
     /**
      * 
@@ -241,7 +262,7 @@ final class UserInvController
         $user_inv = $this->userinv($currentRoute, $userinvRepository);
         if ($user_inv) {
             $parameters = [
-                'title' => 'Edit',
+                'title' => $settingRepository->trans('edit'),
                 'action' => ['userinv/edit', ['id' => $user_inv->getId()]],
                 'errors' => [],
                 'body' => $this->body($user_inv),
@@ -249,7 +270,6 @@ final class UserInvController
                 'aliases'=>$aliases,
                 'users'=>$uR->findAllUsers(),
                 's'=>$settingRepository,
-
             ];
             if ($request->getMethod() === Method::POST) {
                 $form = new UserInvForm();
@@ -286,7 +306,7 @@ final class UserInvController
                     'head'=>$head,
                     's'=>$sR,
                     'cR'=>$cR,
-                    'flash'=> $this->flash('', ''),
+                    'alert'=>$this->alert(),
                     // Get all clients that this user will deal with
                     'user_clients'=>$ucR->repoClientquery($user_id),
                     'userinv'=>$uiR->repoUserInvUserIdquery($user_id),
@@ -300,7 +320,6 @@ final class UserInvController
     }
     
     /**
-     * 
      * @param TranslatorInterface $translator
      * @param CurrentRoute $currentRoute
      * @param UserInvRepository $userinvRepository
@@ -311,7 +330,7 @@ final class UserInvController
         $user_inv = $this->userinv($currentRoute,$userinvRepository); 
         if ($user_inv) {
             $this->userinvService->deleteUserInv($user_inv);               
-            $this->flash('info', $translator->translate('invoice.deleted'));
+            $this->flash_message('info', $translator->translate('invoice.deleted'));
             return $this->webService->getRedirectResponse('userinv/index'); 	
         }
         return $this->webService->getRedirectResponse('userinv/index');
@@ -347,7 +366,7 @@ final class UserInvController
     {
         $canEdit = $this->userService->hasPermission('editInv');
         if (!$canEdit){
-            $this->flash('warning', $this->translator->translate('invoice.permission'));
+            $this->flash_message('warning', $this->translator->translate('invoice.permission'));
             return $this->webService->getRedirectResponse('userinv/index');
         }
         return $canEdit;
@@ -441,18 +460,6 @@ final class UserInvController
           'rcc'=>$userinv->getRcc()
                 ];
         return $body;
-    }
-    
-    /**
-     * 
-     * @param string $level
-     * @param string $message
-     * @return Flash
-     */
-    private function flash(string $level, string $message): Flash{
-        $flash = new Flash($this->session);
-        $flash->set($level, $message); 
-        return $flash;
     }
 }
 
