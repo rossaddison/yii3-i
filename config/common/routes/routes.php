@@ -1062,11 +1062,6 @@ return [
       ->middleware(fn(AccessChecker $checker) => $checker->withPermission('editInv'))
       ->middleware(Authentication::class)
       ->action([InvCustomController::class, 'view']),
-      Route::get('/invitem')
-      ->middleware(fn(AccessChecker $checker) => $checker->withPermission('viewInv'))
-      ->middleware(Authentication::class)
-      ->action([InvItemController::class, 'index'])
-      ->name('invitem/index'),
       Route::methods([Method::POST], '/invitem/add_product')
       ->middleware(fn(AccessChecker $checker) => $checker->withPermission('editInv'))
       ->middleware(Authentication::class)
@@ -1434,6 +1429,11 @@ return [
       ->middleware(Authentication::class)
       ->action([SettingController::class, 'add'])
       ->name('setting/add'),
+      Route::methods([Method::GET, Method::POST], '/setting/draft/{setting_id}')
+      ->name('setting/draft')
+      ->middleware(fn(AccessChecker $checker) => $checker->withPermission('editInv'))
+      ->middleware(Authentication::class)
+      ->action([SettingController::class, 'inv_draft_has_number_switch']),
       Route::methods([Method::GET, Method::POST], '/setting/edit/{setting_id}')
       ->name('setting/edit')
       ->middleware(fn(AccessChecker $checker) => $checker->withPermission('editInv'))
