@@ -40,6 +40,7 @@ use Yiisoft\Yii\DataView\Column\DataColumn;
                         )->render();
                     }),
                     DataColumn::create()
+                    ->visible($invEdit)
                     ->label($s->trans('edit'))
                     ->value(static function ($model) use ($urlGenerator): string {
                         return Html::a(Html::tag('button',
@@ -53,6 +54,7 @@ use Yiisoft\Yii\DataView\Column\DataColumn;
                         )->render();
                     }),
                     DataColumn::create()
+                    ->visible($invEdit)
                     ->label($s->trans('delete'))
                     ->value(static function ($model) use ($s, $urlGenerator): string {
                         return Html::a(Html::tag('button',

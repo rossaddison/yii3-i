@@ -38,6 +38,7 @@ use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Router\FastRoute\UrlGenerator;
 use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
+use Yiisoft\Translator\TranslatorInterface as Translator;
 use Yiisoft\Yii\View\ViewRenderer;
 
 final class PaymentInformationController
@@ -53,6 +54,7 @@ final class PaymentInformationController
     private sR $sR;
     private UrlGenerator $urlGenerator;        
     private UserService $userService;
+    private Translator $translator;
     private ViewRenderer $viewRenderer;
     private WebControllerService $webService;
     
@@ -66,6 +68,7 @@ final class PaymentInformationController
         sR $sR,    
         UrlGenerator $urlGenerator,
         UserService $userService,
+        Translator $translator,
         ViewRenderer $viewRenderer,
         WebControllerService $webService,
     )    
@@ -80,6 +83,7 @@ final class PaymentInformationController
         $this->sR = $sR;
         $this->urlGenerator = $urlGenerator;
         $this->userService = $userService;
+        $this->translator = $translator;
         $this->viewRenderer = $viewRenderer;
         if ($this->userService->hasPermission('viewInv') && !$this->userService->hasPermission('editInv')) {
             $this->viewRenderer = $viewRenderer->withControllerName('invoice/paymentinformation')
@@ -322,6 +326,7 @@ final class PaymentInformationController
                 if (null==$invoice) {
                     return $this->webService->getNotFoundResponse();
                     } else {
+                    $this->flash_message('info',$this->translator->translate('invoice.flash.messages.appear.here'));  
                     $invoice_id = $invoice->getId();
                     // Json encode items
                     /** @psalm-suppress PossiblyNullArgument $invoice_id */

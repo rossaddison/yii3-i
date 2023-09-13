@@ -425,7 +425,7 @@ final class InvController {
     // Data fed from inv.js->$(document).on('click', '#inv_create_confirm', function () {
     // inv.js => ...src\Invoice\Asset\rebuild-1.13\js\inv.js
 
-    public function create_confirm(Request $request, ValidatorInterface $validator, GR $gR, TRR $trR, SumexR $sumexR): \Yiisoft\DataResponse\DataResponse {
+    public function create_confirm(Request $request, ValidatorInterface $validator, GR $gR, TRR $trR, SumexR $sumexR, UR $uR, UCR $ucR, UIR $uiR): \Yiisoft\DataResponse\DataResponse {
         $body = $request->getQueryParams();
         $ajax_body = [
             'quote_id' => 0,
@@ -448,19 +448,43 @@ final class InvController {
         $inv = new Inv();
         $invamount = new InvAmount();
         if ($ajax_content->load($ajax_body) && $validator->validate($ajax_content)->isValid()) {
-            /** @psalm-suppress PossiblyNullArgument $this->user_service->getUser() */
-            $saved_model = $this->inv_service->bothInv($this->user_service->getUser(), $inv, $ajax_content, $this->sR, $gR);
-            /** @psalm-suppress PossiblyNullArgument $saved_model->getId() */
-            $this->inv_amount_service->initializeInvAmount($invamount, $saved_model->getId());
-            $this->default_taxes($inv, $trR, $validator);
-            // if Settings...Views...Invoices...Sumex...Yes => Generate sumex patient details extension table
-            // This table can be filled in via Invoice...View...Options...Edit...Sumex
-            $this->sumex_add_record($sumexR, (int) $saved_model->getId());
-            $parameters = ['success' => 1];
-            // Inform the user of generated invoice number for draft setting
-            $this->flash_message('info', $this->sR->get_setting('generate_invoice_number_for_draft') === '1' ? $this->sR->trans('generate_invoice_number_for_draft') . '=>' . $this->sR->trans('yes') : $this->sR->trans('generate_invoice_number_for_draft') . '=>' . $this->sR->trans('no') );
-            //return response to inv.js to reload page at location
-            return $this->factory->createResponse(Json::encode($parameters));
+            // Only clients that were assigned to user accounts were made available in dropdown 
+            // therefore use the 'user client' user id
+            /**
+             * @var string $ajax_body['client_id']
+             */
+            $client_id = $ajax_body['client_id'];
+            $user_client = $ucR->repoUserquery($client_id);
+            if (null!==$user_client) {
+              // Only one user account per client
+              $user_id = $user_client->getUser_id();
+              $user = $uR->findById($user_id);
+              if (null!==$user) {
+                $user_inv = $uiR->repoUserInvUserIdquery($user_id);
+                if (null!==$user_inv && $user_inv->getActive()) {
+                    // the client will access their record on their user account therefore  
+                    $saved_model = $this->inv_service->bothInv($user, $inv, $ajax_content, $this->sR, $gR);
+                    $model_id = $saved_model->getId();
+                    if ($model_id) {
+                      $this->inv_amount_service->initializeInvAmount($invamount, $model_id);
+                      $this->default_taxes($inv, $trR, $validator);
+                      // if Settings...Views...Invoices...Sumex...Yes => Generate sumex patient details extension table
+                      // This table can be filled in via Invoice...View...Options...Edit...Sumex
+                      $this->sumex_add_record($sumexR, (int) $saved_model->getId());
+                      $parameters = ['success' => 1];
+                      // Inform the user of generated invoice number for draft setting
+                      $this->flash_message('info', $this->sR->get_setting('generate_invoice_number_for_draft') === '1' ? $this->sR->trans('generate_invoice_number_for_draft') . '=>' . $this->sR->trans('yes') : $this->sR->trans('generate_invoice_number_for_draft') . '=>' . $this->sR->trans('no') );
+                      //return response to inv.js to reload page at location
+                      return $this->factory->createResponse(Json::encode($parameters));
+                    } //$model_id  
+                    return $this->factory->createResponse(Json::encode(['success' => 0])); 
+                } //null!==$user_inv && $user_inv->getActive
+                $this->flash_message('warning','invoice.user.inv.active.not');
+                return $this->factory->createResponse(Json::encode(['success' => 0]));
+              } //null!==$user
+              return $this->factory->createResponse(Json::encode(['success' => 0]));
+            } // null!== $user_client
+            return $this->factory->createResponse(Json::encode(['success' => 0]));
         } else {
             $parameters = [
                 'success' => 0,
@@ -1389,10 +1413,11 @@ final class InvController {
      * @param QR $qR
      * @param SOR $soR
      * @param DLR $dlR
+     * @param UCR $ucR
      * @param CurrentRoute $currentRoute
      * @return \Yiisoft\DataResponse\DataResponse
      */
-    public function index(Request $request, IAR $iaR, IR $invRepo, IRR $irR, CR $clientRepo, GR $groupRepo, QR $qR, SOR $soR, DLR $dlR, CurrentRoute $currentRoute): \Yiisoft\DataResponse\DataResponse {
+    public function index(Request $request, IAR $iaR, IR $invRepo, IRR $irR, CR $clientRepo, GR $groupRepo, QR $qR, SOR $soR, DLR $dlR, UCR $ucR, CurrentRoute $currentRoute): \Yiisoft\DataResponse\DataResponse {
         // If the language dropdown changes
         $this->session->set('_language', $currentRoute->getArgument('_language'));
         $query_params = $request->getQueryParams();
@@ -1439,6 +1464,8 @@ final class InvController {
             'max' => (int) $this->sR->get_setting('default_list_limit'),
             'modal_create_inv' => $this->view_renderer->renderPartialAsString('/invoice/inv/modal_create_inv', [
                 'clients' => $clientRepo->findAllPreloaded(),
+                // Only make available clients that have linked user accounts => use user_client repository
+                'ucR' => $ucR,
                 'invoice_groups' => $groupRepo->findAllPreloaded(),
                 'datehelper' => $this->date_helper,
             ])
@@ -2413,6 +2440,16 @@ final class InvController {
     }
     
     /**
+     * @param array $enabled_gateways
+     * @return void
+     */
+    private function flash_no_enabled_gateways(array $enabled_gateways, string $message) : void {
+      if (empty(array_filter($enabled_gateways))) {
+        $this->flash_message('warning', $message);
+      }
+    }
+    
+    /**
      * Purpose: Generate OpenPeppol Ubl Invoice 3.0.15 XML file to 1. screen or 2. file
      * @param CurrentRoute $currentRoute
      * @param CurrentUser $currentUser
@@ -2716,6 +2753,8 @@ final class InvController {
             TRR $trR, FR $fR, UNR $uR, ACR $acR, ACIR $aciR, ACIIR $aciiR, CR $cR, GR $gR, ICR $icR, PYMR $pymR, TASKR $taskR, PRJCTR $prjctR, UIR $uiR, UPR $upR, SOR $soR, SumexR $sumexR, DLR $dlR)
     : \Yiisoft\DataResponse\DataResponse|Response {
         $inv = $this->inv($currentRoute, $iR, false);
+        $enabled_gateways = $this->sR->payment_gateways_enabled_DriverList();
+        $this->flash_no_enabled_gateways($enabled_gateways, $this->translator->translate('invoice.payment.gateway.no'));
         if ($inv) {
             $sales_order_number = '';
             if ($inv->getSo_id()) {
@@ -2750,7 +2789,7 @@ final class InvController {
                     // Determine if a 'viewInv' user has 'viewPayment' permission
                     // This permission is necessary for a guest viewing a read-only view to go to the Pay now section
                     'paymentView' => $this->user_service->hasPermission('viewPayment') ? true : false,
-                    'enabled_gateways' => $this->sR->payment_gateways_enabled_DriverList(),
+                    'enabled_gateways' => $enabled_gateways,
                     'iaR' => $iaR,
                     'is_recurring' => $is_recurring,
                     'payment_methods' => $pmR->findAllPreloaded(),
@@ -2963,14 +3002,15 @@ final class InvController {
         $invEdit = $this->user_service->hasPermission('editPayment');
         $invView = $this->user_service->hasPermission('viewPayment');
         return $this->view_renderer->renderPartialAsString('/invoice/inv/partial_inv_attachments', [
-                    'form' => new InvAttachmentsForm(),
-                    'invEdit' => $invEdit,
-                    'invView' => $invView,
-                    'partial_inv_attachments_list' => $this->view_renderer->renderPartialAsString('/invoice/inv/partial_inv_attachments_list', [
-                      'grid_summary' => $this->sR->grid_summary($paginator, $this->translator, (int) $this->sR->get_setting('default_list_limit'), $this->translator->translate('invoice.invoice.attachment.list'), ''),
-                      'paginator' => $paginator
-                    ]),
-                    'action' => ['inv/attachment', ['id' => $this->session->get('inv_id'), '_language' => $currentRoute->getArgument('_language')]]
+          'form' => new InvAttachmentsForm(),
+          'invEdit' => $invEdit,
+          'invView' => $invView,
+          'partial_inv_attachments_list' => $this->view_renderer->renderPartialAsString('/invoice/inv/partial_inv_attachments_list', [
+            'grid_summary' => $this->sR->grid_summary($paginator, $this->translator, (int) $this->sR->get_setting('default_list_limit'), $this->translator->translate('invoice.invoice.attachment.list'), ''),
+            'paginator' => $paginator,
+            'invEdit' => $invEdit
+          ]),
+          'action' => ['inv/attachment', ['id' => $this->session->get('inv_id'), '_language' => $currentRoute->getArgument('_language')]]
         ]);
     }
     

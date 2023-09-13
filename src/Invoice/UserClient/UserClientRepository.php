@@ -25,7 +25,7 @@ use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
  */
 final class UserClientRepository extends Select\Repository
 {
-private EntityWriter $entityWriter;
+    private EntityWriter $entityWriter;
     /**
      * @param Select<TEntity> $select 
      * @param EntityWriter $entityWriter
@@ -103,6 +103,17 @@ private EntityWriter $entityWriter;
                       ->where(['id' => $id]);
         return  $query->fetchOne() ?: null;        
     }
+    
+    /**
+     * 
+     * @param string $client_id
+     * @return UserClient|null
+     */
+    public function repoUserquery(string $client_id): UserClient|null {
+        $query = $this->select()
+                      ->where(['client_id' => $client_id]);
+        return $query->fetchOne() ?: null;
+    }
         
      /**
      * Get clients  with filter user_id
@@ -128,6 +139,23 @@ private EntityWriter $entityWriter;
                       ->andWhere(['client_id'=>$client_id]);
         return $query->count();     
     }
+    
+    /**
+     * Get a list of clients that have user accounts associated with their client_id
+     */
+    public function getClients_with_user_accounts() : array {
+        $client_ids = [];
+        /**
+         * @var UserClient $user_client
+         */
+        foreach ($this->findAllPreloaded() as $user_client) {
+          $client_id = $user_client->getClient_id();
+          if (!in_array($client_id, $client_ids)) {
+            array_push($client_ids, $client_id);
+          }
+        }  
+        return $client_ids;
+    } 
     
     /**
      * @param string $user_id

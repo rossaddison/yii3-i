@@ -5,7 +5,6 @@ use Yiisoft\Html\Html;
 use App\Invoice\Helpers\ClientHelper;
 use App\Invoice\Helpers\CountryHelper;
 use App\Invoice\Helpers\DateHelper;
-use Yiisoft\VarDumper\VarDumper;
 
 /**
  * @var \Yiisoft\View\WebView $this
@@ -13,9 +12,11 @@ use Yiisoft\VarDumper\VarDumper;
  * @var array $body
  * @var string $csrf
  * @var string $title
- * @var \Yiisoft\Session\Flash\FlashInterface $flash_interface
  */
+
 $vat = $s->get_setting('enable_vat_registration');
+
+echo $alert;
 ?>
 <div class="panel panel-default">
     <div class="panel-heading">
@@ -344,7 +345,6 @@ if (($invEdit && $inv->getStatus_id() === 1 || ($s->get_setting('enable_invoice_
     </div>
 
     <div id="content">
-<?= $alert; ?>
         <div id="inv_form">
             <div class="inv">
                 <div class="row">

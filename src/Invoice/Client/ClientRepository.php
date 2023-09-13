@@ -171,7 +171,7 @@ private EntityWriter $entityWriter;
         $query = $this->select()->where(['client_active' => $client_active]);
         return $this->prepareDataReader($query);
     }
-    
+        
     /**
      * @return Client|null
      *
