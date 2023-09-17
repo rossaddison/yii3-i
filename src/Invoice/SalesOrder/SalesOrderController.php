@@ -49,6 +49,7 @@ use App\Invoice\TaxRate\TaxRateRepository as TRR;
 use App\Invoice\UserClient\UserClientRepository as UCR;
 use App\Invoice\UserInv\UserInvRepository as UIR;
 use App\Invoice\Unit\UnitRepository as UNR;
+use App\User\UserRepository as UR;
 
 use App\Invoice\Inv\InvService;
 use App\Invoice\InvAmount\InvAmountService;
@@ -705,11 +706,14 @@ final class SalesOrderController
      * @param TRR $trR
      * @param UNR $unR
      * @param SettingRepository $sR
+     * @param UR $uR
+     * @param UCR $ucR
+     * @param UIR $uiR
      * @return \Yiisoft\DataResponse\DataResponse|Response
      */
     public function so_to_invoice_confirm(Request $request, ValidatorInterface $validator, CFR $cfR, 
                                              GR $gR, IIAR $iiaR, IIAS $iiaS, PR $pR, SOAR $soaR, SOCR $socR,
-                                             SOIR $soiR, SOR $soR, SOTRR $sotrR, TRR $trR, UNR $unR, SettingRepository $sR) : \Yiisoft\DataResponse\DataResponse|Response
+                                             SOIR $soiR, SOR $soR, SOTRR $sotrR, TRR $trR, UNR $unR, SettingRepository $sR, UR $uR, UCR $ucR, UIR $uiR) : \Yiisoft\DataResponse\DataResponse|Response
     {
         $body = $request->getQueryParams();
         $so_id = (string)$body['so_id'];
@@ -733,31 +737,44 @@ final class SalesOrderController
             $form = new InvForm();
             $inv = new Inv();
             if (($form->load($inv_body) && $validator->validate($form)->isValid()) &&
-                    // Salesorder has not been copied before:  inv_id = 0
-                    (($so->getInv_id()===(string)0))
-                ) {
-                /**
-                 * @psalm-suppress PossiblyNullArgument
-                 */
-                $this->invService->bothInv($this->userService->getUser(), $inv, $form, $sR, $gR);
-                $inv_id = $inv->getId();
-                if (null!==$inv_id) {
-                    // Transfer each so_item to inv_item and the corresponding so_item_amount to inv_item_amount for each item
-                    $this->so_to_invoice_so_items($so_id,$inv_id,$iiaR,$iiaS,$pR,$soiR,$trR,$validator, $sR, $unR);
-                    $this->so_to_invoice_so_tax_rates($so_id,$inv_id,$sotrR,$validator);
-                    $this->so_to_invoice_so_custom($so_id,$inv_id,$socR,$cfR,$validator);
-                    $this->so_to_invoice_so_amount($so_id,$inv_id,$soaR,$validator);
-                    // Update the sos inv_id.
-                    $so->setInv_id($inv_id);
-                    // Set salesorder's status to invoice generated
-                    $so->setStatus_id(8);
-                    $this->flash_message('info', $this->translator->translate('invoice.salesorder.invoice.generated'));
-                    $soR->save($so);
-                    $parameters = ['success'=>1];
-                    //return response to salesorder.js to reload page at location
-                    $this->flash_message('info',$this->translator->translate('invoice.salesorder.copied.to.invoice'));
-                    return $this->factory->createResponse(Json::encode($parameters));          
-                }    
+                  // Salesorder has not been copied before:  inv_id = 0
+                  (($so->getInv_id()===(string)0))
+              ) {
+              /**
+               * @var string $inv_body['client_id']
+               */
+              $client_id = $inv_body['client_id'];
+              $user_client = $ucR->repoUserquery($client_id);
+              $user_client_count = $ucR->repoUserquerycount($client_id);
+              if (null!==$user_client && $user_client_count==1) {
+                // Only one user account per client
+                $user_id = $user_client->getUser_id();
+                $user = $uR->findById($user_id);
+                if (null!==$user) {
+                  $user_inv = $uiR->repoUserInvUserIdquery($user_id);
+                  if (null!==$user_inv && $user_inv->getActive()) { 
+                    $this->invService->bothInv($user, $inv, $form, $sR, $gR);
+                    $inv_id = $inv->getId();
+                    if (null!==$inv_id) {
+                      // Transfer each so_item to inv_item and the corresponding so_item_amount to inv_item_amount for each item
+                      $this->so_to_invoice_so_items($so_id,$inv_id,$iiaR,$iiaS,$pR,$soiR,$trR,$validator, $sR, $unR);
+                      $this->so_to_invoice_so_tax_rates($so_id,$inv_id,$sotrR,$validator);
+                      $this->so_to_invoice_so_custom($so_id,$inv_id,$socR,$cfR,$validator);
+                      $this->so_to_invoice_so_amount($so_id,$inv_id,$soaR,$validator);
+                      // Update the sos inv_id.
+                      $so->setInv_id($inv_id);
+                      // Set salesorder's status to invoice generated
+                      $so->setStatus_id(8);
+                      $this->flash_message('info', $this->translator->translate('invoice.salesorder.invoice.generated'));
+                      $soR->save($so);
+                      $parameters = ['success'=>1];
+                      //return response to salesorder.js to reload page at location
+                      $this->flash_message('info',$this->translator->translate('invoice.salesorder.copied.to.invoice'));
+                      return $this->factory->createResponse(Json::encode($parameters));          
+                    } // null!==$inv_id
+                  } // null!==$user_inv && $user_inv->getActive()
+                } // null!==$user
+              }  
             } else {
                 $parameters = [
                    'success'=>0,

@@ -149,17 +149,16 @@ final class ProductForm extends FormModel
     }
     
     /**
-     * @return Required[][]
-     *
-     * @psalm-return array{family_id: list{Required}, product_name: list{Required}, tax_rate_id: list{Required}, unit_id: list{Required}}
+     * 
+     * @return array
      */
     public function getRules(): array
     {
         return [
-            'family_id' => [new Required()],
-            'product_name' => [new Required()],
-            'tax_rate_id' => [new Required()],
-            'unit_id'=>[new Required()],
+          'family_id' => [new Required()],
+          'product_name' => [new Required()],
+          'tax_rate_id' => [new Required()],
+          'unit_id' => [new Required()]
         ];
     }
 }

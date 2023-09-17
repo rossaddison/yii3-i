@@ -83,6 +83,16 @@ use Yiisoft\Html\Html;
         <?= $product->getUnit()->getUnit_name();?>
     </div>
     <div class="row mb-3 form-group">
+        <label for="unit_peppol_id" class="text-bg col-sm-8 col-form-label" style="background:lightblue"><?= $translator->translate('invoice.peppol.unit'); ?></label>
+        <?php $unit_peppol = $upR->repoUnitPeppolLoadedquery($product->getUnit_peppol_id()); ?>
+        <?= 
+            null!==$unit_peppol ? 
+            ((string)$unit_peppol->getCode() . ' -- '. 
+            (string)$unit_peppol->getName() . ' -- '.
+            (string)$unit_peppol->getDescription()) : ''; 
+        ?>
+    </div>  
+    <div class="row mb-3 form-group">
         <label for="family_id" class="text-bg col-sm-8 col-form-label" style="background:lightblue"><?= $s->trans('family'); ?></label>
         <?= $product->getFamily()->getFamily_name();?>
     </div>        

@@ -293,7 +293,7 @@ class ProductController
             'item_classification_code_listids'=>$peppolarrays->getUncl7143(),
             'families'=>$fR->findAllPreloaded(),
             'units'=>$uR->findAllPreloaded(),
-            'unitpeppols'=>$upR->findAllPreloaded(),
+            'unit_peppols'=>$upR->findAllPreloaded(),
             'tax_rates'=>$trR->findAllPreloaded(),
             'custom_fields'=>$cfR->repoTablequery('product_custom'),
             'custom_values'=>$cvR->attach_hard_coded_custom_field_values_to_custom_field($cfR->repoTablequery('product_custom')),
@@ -687,9 +687,10 @@ class ProductController
      * @param pR $pR
      * @param ppR $ppR
      * @param sR $sR
+     * @param upR $upR
      * @param CurrentRoute $currentRoute
      */
-    public function view(pR $pR, ppR $ppR, sR $sR, CurrentRoute $currentRoute
+    public function view(pR $pR, ppR $ppR, sR $sR, upR $upR, CurrentRoute $currentRoute
     ): \Yiisoft\DataResponse\DataResponse|Response {
         $product = $this->product($currentRoute,$pR);
         if ($product) {
@@ -699,6 +700,7 @@ class ProductController
             'errors' => [],
             'body' => $this->body($product),
             's'=>$sR,
+            'upR'=>$upR,
             //load Entity\Product BelongTo relations ie. $family, $tax_rate, $unit by means of repoProductQuery             
             'product'=>$pR->repoProductquery($product->getProduct_id()),
             'productpropertys'=>$this->viewRenderer->renderPartialAsString('property_index.php',

@@ -155,9 +155,6 @@ Class MpdfHelper
             'tabSpaces' => 4,
         ];
         
-        // The mpdf->Output command currently has no return type therefore
-        // psalm-suppress MissingReturnType
-        
         /**
          * @param string $html
          * @param string $filename
@@ -169,7 +166,7 @@ Class MpdfHelper
          * @param bool $zugferd_invoice
          * @param array $associated_files
          * @param null|object $quote_or_invoice
-         * @psalm-suppress MissingReturnType
+         * @return string
          */
         public function pdf_create(string $html,
                                    string $filename, 
@@ -184,7 +181,7 @@ Class MpdfHelper
                                    bool $isInvoice = false, 
                                    bool $zugferd_invoice = false,
                                    array $associated_files = [],
-                                   null|object $quote_or_invoice = null) 
+                                   null|object $quote_or_invoice = null) : string
         
         {
             $sR->load_settings();
@@ -200,18 +197,16 @@ Class MpdfHelper
             if ($sR->get_setting('pdf_stream_inv') == '1')
             {
                 // send the file inline to the browser. The plug-in is used if available.
-                return $mpdf->Output($filename . '.pdf', self::DEST_BROWSER);
+                return (string)$mpdf->Output($filename . '.pdf', self::DEST_BROWSER);
             } else
             {    // save to a local file with the name given by $filename (may include a path).
                 if ($sR->get_setting('pdf_archive_inv') === '1') {
-                    $mpdf->Output($aliases->get('@uploads').$sR::getUploadsArchiveholderRelativeUrl() .'/Invoice/'. date('Y-m-d') . '_' . $filename . '.pdf', self::DEST_FILE);
+                    (string)$mpdf->Output($aliases->get('@uploads').$sR::getUploadsArchiveholderRelativeUrl() .'/Invoice/'. date('Y-m-d') . '_' . $filename . '.pdf', self::DEST_FILE);
                     return $aliases->get('@uploads').$sR::getUploadsArchiveholderRelativeUrl() .'/Invoice/'. date('Y-m-d') . '_' . $filename . '.pdf';
                 }    
             }
+            return '';
         }
-        
-        // The mpdf->Output command currently has no return type therefore
-        // psalm-suppress MissingReturnType
         
         /**
          * 
@@ -219,9 +214,9 @@ Class MpdfHelper
          * @param \Mpdf\Mpdf $mpdf
          * @param Aliases $aliases
          * @param SR $sR
-         * @psalm-suppress MissingReturnType
+         * @return string
          */
-        private function isInvoice(string $filename, \Mpdf\Mpdf $mpdf, Aliases $aliases, SR $sR)
+        private function isInvoice(string $filename, \Mpdf\Mpdf $mpdf, Aliases $aliases, SR $sR) : string
         {
             // Archive the file if it is an invoice
             if ($sR->get_setting('pdf_archive_inv') === '1') {
@@ -233,6 +228,7 @@ Class MpdfHelper
                 $mpdf->Output($archived_file, self::DEST_FILE);
                 return $archived_file;
             }
+            return '';
         }
         
         private function ensure_uploads_folder_exists(SR $sR): Aliases {
@@ -260,7 +256,7 @@ Class MpdfHelper
         * @param array $associated_files
         * @return \Mpdf\Mpdf
         */
-        
+                
         private function initialize_pdf(string|null $password, SR $sR, string $title, object|null $quote_or_invoice, IIAR|null $iiaR, InvAmount|null $inv_amount, Aliases $aliases, bool $zugferd_invoice, array $associated_files = []): \Mpdf\Mpdf{
             $mpdf = new \Mpdf\Mpdf($this->options);
             // mPDF configuration

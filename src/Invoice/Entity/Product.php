@@ -90,8 +90,6 @@ class Product
     #[Column(type: 'integer(11)', nullable: true)]
     private ?int $unit_id = null;
     
-    #[BelongsTo(target:UnitPeppol::class, nullable: true, fkAction: "NO ACTION")]
-    private ?UnitPeppol $unit_peppol = null;    
     #[Column(type: 'integer(11)', nullable: true)]
     private ?int $unit_peppol_id = null;
     
@@ -178,18 +176,6 @@ class Product
     public function setUnit(?Unit $unit): void
     {
         $this->unit = $unit;
-    }
-    
-    //relation $unit_peppol
-    public function getUnitPeppol(): ?UnitPeppol
-    {
-        return $this->unit_peppol;
-    }
-
-    //set relation $unit_peppol
-    public function setUnitPeppol(?UnitPeppol $unit_peppol): void
-    {
-        $this->unit_peppol = $unit_peppol;
     }
     
     public function getProduct_id(): string
@@ -434,18 +420,14 @@ class Product
      * @param int $tax_rate_id
      * @param int $unit_id
      * @param int $family_id
-     * @param int $unit_peppol_id
      * @return void
      */
-    public function nullifyRelationOnChange(int $tax_rate_id, int $unit_id, int $unit_peppol_id, int $family_id) : void {
+    public function nullifyRelationOnChange(int $tax_rate_id, int $unit_id, int $family_id) : void {
         if ($this->tax_rate_id <> $tax_rate_id) {
            $this->tax_rate = null;
         }        
         if ($this->unit_id <> $unit_id) {
            $this->unit = null; 
-        }
-        if ($this->unit_peppol_id <> $unit_peppol_id) {
-           $this->unit_peppol = null; 
         }
         if ($this->family_id <> $family_id) {
            $this->family = null;

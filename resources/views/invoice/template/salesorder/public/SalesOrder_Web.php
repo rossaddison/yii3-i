@@ -22,7 +22,7 @@ $vat = $s->get_setting('enable_vat_registration');
 
     <title>
         <?= $s->get_setting('custom_title', 'yii-invoice', true); ?>
-        - <?= $translator->translate('invoice.salesorder'); ?> <?= $so->getNumber(); ?>
+        - <?= $translator->translate('invoice.salesorder'); ?> <?= $salesorder->getNumber(); ?>
     </title>
 
     <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -47,25 +47,25 @@ $vat = $s->get_setting('enable_vat_registration');
                     // 2=>Terms Agreement Required
                     // 3=>Client Agreed to Terms
                     // 8=>Rejected
-                    if (in_array($so->getStatus_id(), array(2, 8)) && $so->getQuote_id() !== '0' && $so->getInv_id() === '0') : ?>
+                    if (in_array($salesorder->getStatus_id(), array(2, 8)) && $salesorder->getQuote_id() !== '0' && $salesorder->getInv_id() === '0') : ?>
                     <a href="<?= $urlGenerator->generate('salesorder/agree_to_terms', ['url_key'=>$salesorder_url_key]); ?>"
                        class="btn btn-success" data-bs-toggle = "tooltip" title="Goods and Services will now be assembled/packaged/prepared">
                         <i class="fa fa-check"></i><?= $translator->translate('invoice.salesorder.agree.to.terms'); ?>
                     </a>
                 <?php endif; ?>                
-                <?php if (in_array($so->getStatus_id(), array(2)) && $so->getQuote_id() !== '0' && $so->getInv_id() === '0') :  ?>
+                <?php if (in_array($salesorder->getStatus_id(), array(2)) && $salesorder->getQuote_id() !== '0' && $salesorder->getInv_id() === '0') :  ?>
                     <a href="<?= $urlGenerator->generate('salesorder/reject', ['url_key'=>$salesorder_url_key]); ?>"
                        class="btn btn-danger">
                         <i class="fa fa-times-circle"></i><?= $translator->translate('invoice.salesorder.reject'); ?>
                     </a>
                 <?php endif; ?>
-                <?php if (in_array($so->getStatus_id(), array(3)) && $so->getQuote_id() !== '0' && $so->getInv_id() === '0') :  ?>
+                <?php if (in_array($salesorder->getStatus_id(), array(3)) && $salesorder->getQuote_id() !== '0' && $salesorder->getInv_id() === '0') :  ?>
                     <label class="btn btn-success"><?= $translator->translate('invoice.salesorder.client.confirmed.terms'); ?></label>
                 <?php endif; ?>
             </div>
             <br>
             <br>
-            <h2><?= $translator->translate('invoice.salesorder'); ?>&nbsp;<?= $so->getNumber(); ?></h2>
+            <h2><?= $translator->translate('invoice.salesorder'); ?>&nbsp;<?= $salesorder->getNumber(); ?></h2>
         </div>
         <hr>
 
@@ -141,7 +141,7 @@ $vat = $s->get_setting('enable_vat_registration');
                         <tbody>
                         <tr>
                             <td><?= $vat == '1' ? $translator->translate('invoice.invoice.date.issued') : $s->trans('quote_date'); ?></td>
-                            <td style="text-align:right;"><?= $datehelper->date_from_mysql($so->getDate_created()); ?></td>
+                            <td style="text-align:right;"><?= $datehelper->date_from_mysql($salesorder->getDate_created()); ?></td>
                         </tr>
                         </tbody>
                     </table>
@@ -233,10 +233,10 @@ $vat = $s->get_setting('enable_vat_registration');
             <hr>
 
             <div class="row">
-                <?php if ($so->getNotes()) { ?>
+                <?php if ($salesorder->getNotes()) { ?>
                     <div class="col-xs-12 col-md-6">
                         <h4><?= $s->trans('notes'); ?></h4>
-                        <p><?= nl2br(Html::encode($so->getNotes())); ?></p>
+                        <p><?= nl2br(Html::encode($salesorder->getNotes())); ?></p>
                     </div>
                 <?php } ?>
             </div>

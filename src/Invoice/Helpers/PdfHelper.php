@@ -88,7 +88,7 @@ Class PdfHelper
      * @param \App\Invoice\QuoteTaxRate\QuoteTaxRateRepository $qtrR
      * @param \App\Invoice\UserInv\UserInvRepository $uiR
      * @param \Yiisoft\Yii\View\ViewRenderer $viewrenderer
-     * @psalm-suppress MissingReturnType
+     * @return string 
      */
     public function generate_quote_pdf(string|null $quote_id, string $user_id, bool $stream, bool $custom, object|null $quote_amount, array $quote_custom_values,\App\Invoice\Client\ClientRepository $cR, \App\Invoice\CustomValue\CustomValueRepository $cvR, \App\Invoice\CustomField\CustomFieldRepository $cfR, \App\Invoice\QuoteItem\QuoteItemRepository $qiR, \App\Invoice\QuoteItemAmount\QuoteItemAmountRepository $qiaR, \App\Invoice\Quote\QuoteRepository $qR, \App\Invoice\QuoteTaxRate\QuoteTaxRateRepository $qtrR, \App\Invoice\UserInv\UserInvRepository $uiR,
                                 \Yiisoft\Yii\View\ViewRenderer $viewrenderer)
@@ -179,6 +179,7 @@ Class PdfHelper
                 return $mpdfhelper->pdf_create($html, $filename, $stream, $quote->getPassword(), $this->s, null, null,  false, false, [], $quote);
             }    
         } 
+        return '';
     }   //generate_quote_pdf
     
     /**
@@ -199,12 +200,12 @@ Class PdfHelper
      * @param \App\Invoice\UserInv\UserInvRepository $uiR
      * @param \Yiisoft\Yii\View\ViewRenderer $viewrenderer
      * @param Translator $translator
-     * @psalm-suppress MissingReturnType
+     * @return string
      */
     public function generate_salesorder_pdf(string|null $so_id, string $user_id, bool $stream, bool $custom, object|null $so_amount, array $so_custom_values,\App\Invoice\Client\ClientRepository $cR, \App\Invoice\CustomValue\CustomValueRepository $cvR, \App\Invoice\CustomField\CustomFieldRepository $cfR, \App\Invoice\SalesOrderItem\SalesOrderItemRepository $soiR, \App\Invoice\SalesOrderItemAmount\SalesOrderItemAmountRepository $soiaR, \App\Invoice\SalesOrder\SalesOrderRepository $soR, \App\Invoice\SalesOrderTaxRate\SalesOrderTaxRateRepository $sotrR, \App\Invoice\UserInv\UserInvRepository $uiR,
-                                \Yiisoft\Yii\View\ViewRenderer $viewrenderer, Translator $translator)
+                                \Yiisoft\Yii\View\ViewRenderer $viewrenderer, Translator $translator) : string
     {       
-            if ($so_id) {
+          if ($so_id) {
             
             $so = $soR->repoCount($so_id) > 0 ? $soR->repoSalesOrderLoadedquery($so_id) : null;
             
@@ -289,6 +290,7 @@ Class PdfHelper
                 return $mpdfhelper->pdf_create($html, $filename, $stream, $so->getPassword(), $this->s, null, null,  false, false, [], $so);
             }    
         } 
+        return '';
     }   //generate_quote_pdf
     
     /**
@@ -409,10 +411,10 @@ Class PdfHelper
      * @param \App\Invoice\InvTaxRate\InvTaxRateRepository $itrR
      * @param \App\Invoice\UserInv\UserInvRepository $uiR
      * @param \Yiisoft\Yii\View\ViewRenderer $viewrenderer
-     * @psalm-suppress MissingReturnType
+     * @return string
      */
     public function generate_inv_pdf(string|null $inv_id, string $user_id, bool $stream, bool $custom, SalesOrder|null $so, InvAmount|null $inv_amount, array $inv_custom_values,\App\Invoice\Client\ClientRepository $cR, \App\Invoice\CustomValue\CustomValueRepository $cvR, \App\Invoice\CustomField\CustomFieldRepository $cfR, \App\Invoice\InvItem\InvItemRepository $iiR, \App\Invoice\InvItemAmount\InvItemAmountRepository $iiaR, \App\Invoice\Inv\InvRepository $iR, \App\Invoice\InvTaxRate\InvTaxRateRepository $itrR, \App\Invoice\UserInv\UserInvRepository $uiR, SumexRepository $sumexR,
-                                \Yiisoft\Yii\View\ViewRenderer $viewrenderer)
+                                \Yiisoft\Yii\View\ViewRenderer $viewrenderer) : string
     {       
        if ($inv_id) { 
             $inv = $iR->repoCount($inv_id) > 0 ? $iR->repoInvLoadedquery($inv_id) : null;
@@ -444,6 +446,7 @@ Class PdfHelper
                 return $mpdfhelper->pdf_create($html, $filename, $stream, $inv->getPassword(), $this->s, $iiaR, $inv_amount, true, $include_zugferd, $associatedFiles, $inv);
             } // if $inv
        }
+       return '';
     } //generate_inv_pdf
     
     /**

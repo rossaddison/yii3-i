@@ -210,13 +210,21 @@ $(function () {
             cache: false,
             dataType: 'json',
             success: function (data) {
-                        var response =  parsedata(data);
-                        if (response.success === 1) {
-                            // The validation was successful and inv was created
-                            btn.html('<h2 class="text-center"><i class="fa fa-check"></i></h2>');                        
-                            window.location = absolute_url;
-                            window.location.reload();
-                        }
+                var response =  parsedata(data);
+                if (response.success === 1) {
+                    // The validation was successful and inv was created
+                    btn.html('<h2 class="text-center"><i class="fa fa-check"></i></h2>');                        
+                    window.location = absolute_url;
+                    window.location.reload();
+                }
+                message = response.message;
+                if (response.success === 0) {
+                    // The validation was unsuccessful and inv was not created
+                    btn.html('<h6 class="text-center"><i class="fa fa-check"></i></h6>');                        
+                    window.location = absolute_url;
+                    window.location.reload();
+                    alert(message);
+                }     
             },
             error: function(xhr, status, error) {                         
                 console.warn(xhr.responseText);
@@ -248,19 +256,25 @@ $(function () {
             cache: false,
             dataType: 'json',
             success: function (data) {
-                        var response =  parsedata(data);
-                        if (response.success === 1) {
-                            // The validation was successful and inv was created
-                            btn.html('<h2 class="text-center"><i class="fa fa-check"></i></h2>');                        
-                            window.location = absolute_url;
-                            window.location.reload();
-                        }
+                var response =  parsedata(data);
+                if (response.success === 1) {
+                    // The validation was successful and inv was created
+                    btn.html('<h2 class="text-center"><i class="fa fa-check"></i></h2>');                        
+                    window.location = absolute_url;
+                    window.location.reload();
+                }
+                if (response.success === 0) {
+                    btn.html('<h2 class="text-center"><i class="fa fa-check"></i></h2>');                        
+                    window.location = absolute_url;
+                    window.location.reload();
+                    // Display the 'unsuccessful' message
+                    alert(response.message);
+                }    
             },
             error: function(xhr, status, error) {                         
                 console.warn(xhr.responseText);
                 alert('Status: ' + status + ' An error: ' + error.toString());
             }
-            
         });
     });  
 

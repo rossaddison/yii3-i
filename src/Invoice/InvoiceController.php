@@ -855,6 +855,8 @@ final class InvoiceController
             'currency_symbol_placement' => 'before',
             // default payment gateway currency code
             'currency_code' => 'GBP',
+            'currency_code_from' => 'GBP',
+            'currency_code_to' => 'GBP',
             'custom_title' => 'Yii-invoice',
             'date_format' => 'd/m/Y', 
             'decimal_point' => '.',

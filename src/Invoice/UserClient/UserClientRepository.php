@@ -114,8 +114,8 @@ final class UserClientRepository extends Select\Repository
                       ->where(['client_id' => $client_id]);
         return $query->fetchOne() ?: null;
     }
-        
-     /**
+    
+    /**
      * Get clients  with filter user_id
      *
      * @psalm-return EntityReader
@@ -138,6 +138,12 @@ final class UserClientRepository extends Select\Repository
                       ->where(['user_id' => $user_id])
                       ->andWhere(['client_id'=>$client_id]);
         return $query->count();     
+    }
+    
+    public function repoUserqueryCount(string $client_id) : int {
+        $query = $this->select()
+                      ->where(['client_id' => $client_id]);
+        return $query->count();
     }
     
     /**
@@ -195,7 +201,12 @@ final class UserClientRepository extends Select\Repository
         /** @var Client $client */
         foreach ($all_clients as $client) {
             $client_id = $client->getClient_id();
-            $every_client_ids[] = $client_id;
+            // Exclude clients, that already have user accounts, from the dropdown box
+            // if the client id does not appear in the user client table as a client
+            // => this client has not been already assigned therefore it can be made available
+            if (!$this->repoUserquerycount((string)$client_id) > 0) {
+               $every_client_ids[] = $client_id;
+            }   
         }
         
         // Create unassigned client list for dropdown

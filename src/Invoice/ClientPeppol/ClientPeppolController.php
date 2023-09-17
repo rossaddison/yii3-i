@@ -181,6 +181,10 @@ final class ClientPeppolController {
         'eg' => 'Share Capital',
         'url' => 'cac-AccountingSupplierParty/cac-Party/cac-PartyLegalEntity/cbc-CompanyLegalForm/'
       ],
+      'financial_institution_branchid' => [
+        'eg' => '9999',
+        'url' => 'cac-PaymentMeans/cac-PayeeFinancialAccount/cac-FinancialInstitutionBranch/'
+      ],
       'accounting_cost' => [
         'eg' => '4217:2323:2323',
         'url' => 'cbc-AccountingCost/'

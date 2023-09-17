@@ -65,6 +65,7 @@ $pagination = OffsetPagination::widget()
         <tr>
         <th><?= $s->trans('active'); ?></th>
         <th>Peppol</th>
+        <th><?= $translator->translate('invoice.client.has.user.account'); ?></th>
         <th><?= $s->trans('client_name'); ?></th>
          <th><?= $s->trans('birthdate'); ?></th>
         <th><?= $s->trans('email_address'); ?></th>
@@ -76,18 +77,34 @@ $pagination = OffsetPagination::widget()
         <tbody>
             <?php foreach ($paginator->read() as $client) { ?>
             <tr>
-		<td>
-		    <?= ($client->getClient_active()) ? '<span class="label active">' . $s->trans('yes') . '</span>' : '<span class="label inactive">' . $s->trans('no') . '</span>'; ?>
-		</td>
-                <td>
+            <td>
+                <?= ($client->getClient_active()) ? '<span class="label active">' . $s->trans('yes') . '</span>' : '<span class="label inactive">' . $s->trans('no') . '</span>'; ?>
+            </td>
+            <td>
 		    <?= ($cpR->repoClientCount((string)$client->getClient_id()) !== 0 ) ? '<span class="label active">' . $s->trans('yes') . '</span>' : '<span class="label inactive">' . $s->trans('no') . '</span>'; ?>
-		</td>
-                <td><?= Html::a($client->getClient_name()." ".$client->getClient_surname(),$urlGenerator->generate('client/view',['id' => $client->getClient_id()]),['class' => 'btn btn-warning ms-2']);?></td>
-                <td><?= Html::encode(($client->getClient_birthdate())->format($datehelper->style())); ?></td>
-                <td><?= Html::encode($client->getClient_email()); ?></td>
-                <td><?= Html::encode($client->getClient_phone() ? $client->getClient_phone() : ($client->getClient_mobile() ? $client->getClient_mobile() : '')); ?></td>
-                <td class="amount"><?= $s->format_currency($iR->with_total($client->getClient_id(), $iaR)); ?></td>
-                <td>
+            </td>
+            <td>
+            <?= ($ucR->repoUserqueryCount((string)$client->getClient_id()) !== 0 
+                 && $canEdit) 
+             ? '<span class="label active">' . 
+                  $s->trans('yes') . 
+               '</span>' 
+             : '<span class="label inactive">' .  
+                  Html::a('', $urlGenerator->generate('userinv/add'),
+                  ['class'=>'fa fa-plus',
+                   'style'=>'text-decoration:none',
+                   'tooltip'=>'data-bs-toggle',
+                   'title'=>$translator->translate('invoice.client.has.not.user.account') 
+                  ]).
+               '</span>'; 
+            ?>  
+            </td>    
+            <td><?= Html::a($client->getClient_name()." ".$client->getClient_surname(),$urlGenerator->generate('client/view',['id' => $client->getClient_id()]),['class' => 'btn btn-warning ms-2']);?></td>
+            <td><?= Html::encode(($client->getClient_birthdate())->format($datehelper->style())); ?></td>
+            <td><?= Html::encode($client->getClient_email()); ?></td>
+            <td><?= Html::encode($client->getClient_phone() ? $client->getClient_phone() : ($client->getClient_mobile() ? $client->getClient_mobile() : '')); ?></td>
+            <td class="amount"><?= $s->format_currency($iR->with_total($client->getClient_id(), $iaR)); ?></td>
+              <td>
                     <div class="options btn-group">
                         <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#" style="text-decoration:none">
                             <i class="fa fa-cog"></i> <?= $s->trans('options'); ?>

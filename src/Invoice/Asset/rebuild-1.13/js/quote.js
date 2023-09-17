@@ -150,7 +150,7 @@ $(function () {
                        if (response.success === 1) {                                   
                           window.location = absolute_url;
                           window.location.reload();                                                
-                       }
+                       } 
             },
             error: function() {
                 alert('Incomplete fields: You must include a tax rate. Tip: Include a zero tax rate.');
@@ -182,6 +182,14 @@ $(function () {
                             window.location = absolute_url;
                             window.location.reload();
                         }
+                        message = response.message;
+                        if (response.success === 0) {
+                            // The validation was unsuccessful and inv was not created
+                            btn.html('<h6 class="text-center"><i class="fa fa-check"></i></h6>');                        
+                            window.location = absolute_url;
+                            window.location.reload();
+                            alert(message);
+                       }  
             },
             error: function(xhr, status, error) {                         
                 console.warn(xhr.responseText);

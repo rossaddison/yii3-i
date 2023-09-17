@@ -26,9 +26,12 @@ use Yiisoft\Html\Html;
             <label for="create_so_client_id"><?= $s->trans('client'); ?></label>
             <select name="create_so_client_id" id="create_so_client_id" class="form-control">
                 <?php foreach ($clients as $client) { ?>
+                  <!-- Ensure that only clients with user accounts are selected -->
+                  <?php if (in_array($client->getClient_id(), $ucR->getClients_with_user_accounts())) { ?> )
                     <option value="<?= $client->getClient_id(); ?>">
                         <?= Html::encode($client->getClient_name()); ?>
                     </option>
+                  <?php } ?>  
                 <?php } ?>
             </select>
         </div>

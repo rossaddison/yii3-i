@@ -5,7 +5,6 @@ namespace App\Invoice\Client;
 // Entity's
 use App\Invoice\Entity\Client;
 use App\Invoice\Entity\ClientNote;
-use App\Invoice\Entity\UserClient;
 use App\Invoice\Entity\ClientCustom;
 use App\Invoice\Entity\CustomField;
 // Services
@@ -17,7 +16,6 @@ use App\Invoice\ClientCustom\ClientCustomForm;
 use App\Invoice\ClientNote\ClientNoteService as cnS;
 use App\Invoice\ClientNote\ClientNoteForm;
 use App\Invoice\UserClient\UserClientService;
-use App\Invoice\UserClient\UserClientForm;
 use App\User\UserService;
 // Repositories
 use App\Invoice\Client\ClientRepository as cR;
@@ -238,15 +236,6 @@ final class ClientController
             $newclient = new Client();
             $this->clientService->saveClient($newclient, $ajax_content, $sR);
                 $client_id = $newclient->getClient_id();
-                if ($this->currentUser->getId() === '1') {
-                    $user_client = [
-                        'user_id'=>1,
-                        'client_id'=>$newclient->getClient_id()
-                    ];
-                    $form = new UserClientForm();
-                    ($form->load($user_client) && $validator->validate($form)->isValid()) ? 
-                        $this->userclientService->saveUserClient(new UserClient(), $form) : null;                    
-                }
                 // Get the custom fields that are mandatory for a client and initialise the first client with an empty value for each custom field
                 $custom_fields = $cfR->repoTablequery('client_custom');
                 /** @var CustomField $custom_field */
@@ -470,7 +459,7 @@ final class ClientController
     }
     
     
-     public function index(CurrentRoute $currentRoute, cR $cR, iaR $iaR, iR $iR, sR $sR, cpR $cpR): 
+     public function index(CurrentRoute $currentRoute, cR $cR, iaR $iaR, iR $iR, sR $sR, cpR $cpR, ucR $ucR): 
         \Yiisoft\DataResponse\DataResponse
     {
         $canEdit = $this->rbac();
@@ -488,6 +477,7 @@ final class ClientController
             'active'=>$active,
             'pageNum'=>$pageNum,
             'cpR'=>$cpR,
+            'ucR'=>$ucR,
             'modal_create_client'=>$this->viewRenderer->renderPartialAsString('modal_create_client',[
                 'datehelper'=> new DateHelper($sR)
             ])
@@ -747,9 +737,10 @@ final class ClientController
      * @param pymtR $pymtR
      * @param qaR $qaR
      * @param sR $sR
+     * @param ucR $ucR
      * @return Response
      */    
-    public function view(SessionInterface $session, CurrentRoute $currentRoute, cR $cR, cfR $cfR, cnR $cnR, cpR $cpR, cvR $cvR, ccR $ccR, delR $delR, gR $gR, iR $iR, iaR $iaR, irR $irR, qR $qR, pymtR $pymtR, qaR $qaR, sR $sR   
+    public function view(SessionInterface $session, CurrentRoute $currentRoute, cR $cR, cfR $cfR, cnR $cnR, cpR $cpR, cvR $cvR, ccR $ccR, delR $delR, gR $gR, iR $iR, iaR $iaR, irR $irR, qR $qR, pymtR $pymtR, qaR $qaR, sR $sR, ucR $ucR   
     ): Response {
       $client = $this->client($currentRoute, $cR);      
       if ($client instanceof Client) {
@@ -773,11 +764,13 @@ final class ClientController
                       'countryhelper'=> new CountryHelper(),
                   ]),
                   'modal_create_quote'=>$this->viewRenderer->renderPartialAsString('/invoice/quote/modal_create_quote',[
+                      'ucR' => $ucR,
                       'clients'=>$cR->findAllPreloaded(),
                       'invoice_groups'=>$gR->findAllPreloaded(),
                       'datehelper'=> new DateHelper($sR)
                   ]),
                   'modal_create_inv'=>$this->viewRenderer->renderPartialAsString('/invoice/inv/modal_create_inv',[
+                      'ucR' => $ucR,
                       'clients'=>$cR->findAllPreloaded(),
                       'invoice_groups'=>$gR->findAllPreloaded(),
                       'datehelper'=> new DateHelper($sR)

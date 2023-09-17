@@ -88,12 +88,12 @@ if (!empty($errors)) {
                             <span>
                                 <a href="<?= $urlGenerator->generate('unitpeppol/index'); ?>"><i class="fa fa-pencil fa-fw"></i></a>
                             </span> 
-                            <select name="unit_peppol_id" id="unit_peppol_id" class="form-control" required>
+                            <select name="unit_peppol_id" id="unit_peppol_id" class="form-control">
                                 <option value=""><?= $s->trans('select_unit'); ?></option>
-                                <?php foreach ($unitpeppols as $unit_peppol) { ?>
+                                <?php foreach ($unit_peppols as $unit_peppol) { ?>
                                     <option value="<?= $unit_peppol->getId(); ?>"
                                         <?php $s->check_select(($body['unit_peppol_id'] ?? $unit_peppol->getId()), $unit_peppol->getId()); ?>
-                                    ><?= $unit_peppol->getCode(); ?></option>
+                                    ><?= $unit_peppol->getCode() . ' --- '. $unit_peppol->getName(). ' --- ' .$unit_peppol->getDescription(); ?></option>
                                 <?php } ?>
                             </select>
                                    
@@ -219,7 +219,7 @@ if (!empty($errors)) {
                             <label for="product_additional_item_property_name">
                                 <?= $translator->translate('invoice.product.additional.item.property.name'); ?>
                             </label>
-                            <input type="text" name="product_additional_item_property_name" id="product_additional_item_property_name" class="form-control" required
+                            <input type="text" name="product_additional_item_property_name" id="product_additional_item_property_name" class="form-control" 
                                    value="<?= Html::encode($body['product_additional_item_property_name'] ?? ''); ?>">
                         </div>
                         
@@ -227,7 +227,7 @@ if (!empty($errors)) {
                             <label for="product_additional_item_property_value">
                                 <?= $translator->translate('invoice.product.additional.item.property.value'); ?>
                             </label>
-                            <input type="text" name="product_additional_item_property_value" id="product_additional_item_property_value" class="form-control" required
+                            <input type="text" name="product_additional_item_property_value" id="product_additional_item_property_value" class="form-control" 
                                    value="<?= Html::encode($body['product_additional_item_property_value'] ?? ''); ?>">
                         </div>
 
