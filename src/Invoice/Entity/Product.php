@@ -8,7 +8,6 @@ use Cycle\Annotated\Annotation\Entity;
 use App\Invoice\Entity\Family;
 use App\Invoice\Entity\TaxRate;
 use App\Invoice\Entity\Unit;
-use App\Invoice\Entity\UnitPeppol;
 use Cycle\Annotated\Annotation\Relation\BelongsTo;
 
 #[Entity(repository: \App\Invoice\Product\ProductRepository::class)]
@@ -52,6 +51,10 @@ class Product
     
     #[Column(type: 'text', nullable: true)]
     private ?string $product_name = '';
+    
+    //product images are stored in public/products
+    #[Column(type: 'text', nullable: true)]
+    private ?string $image_prefix = '';
     
     #[Column(type: 'longText', nullable: false)]
     private ?string $product_description = '';
@@ -105,6 +108,7 @@ class Product
         string $product_icc_id = '',    
         string $product_country_of_origin_code = '',
         string $product_name = '',
+        string $image_prefix = '',
         string $product_description = '',
         float $product_price = 0.00,
         float $purchase_price = 0.00,
@@ -127,6 +131,7 @@ class Product
         $this->product_icc_id = $product_icc_id;
         $this->product_country_of_origin_code = $product_country_of_origin_code;
         $this->product_name = $product_name;
+        $this->image_prefix = $image_prefix;
         $this->product_description = $product_description;
         $this->product_price = $product_price;
         // how many items the selling price includes eg. 1 crate has 10 bags of cement
@@ -294,6 +299,16 @@ class Product
     {
         $this->product_name = $product_name;
     }
+    
+    public function getImage_prefix(): string|null
+    {
+        return $this->image_prefix;
+    }
+    
+    public function setImage_prefix(string $image_prefix): void
+    {
+        $this->image_prefix = $image_prefix;
+    }  
     
     public function getProduct_description(): string|null
     {

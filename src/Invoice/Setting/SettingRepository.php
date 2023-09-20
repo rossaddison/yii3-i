@@ -760,6 +760,12 @@ final class SettingRepository extends Select\Repository
     }
     
     // Append to uploads folder
+    public static function getUploadsProductImagesRelativeUrl(): string
+    {
+        return DIRECTORY_SEPARATOR.'ProductImages';
+    }
+    
+    // Append to uploads folder
     public static function getAttachmentsCustomerFilesRelativeUrl(): string
     {
         return 'src'.DIRECTORY_SEPARATOR.'Invoice'.DIRECTORY_SEPARATOR.'Uploads'.DIRECTORY_SEPARATOR.'Customer_files'.DIRECTORY_SEPARATOR;
@@ -915,6 +921,18 @@ final class SettingRepository extends Select\Repository
     public function get_google_translate_json_file_aliases(): Aliases {
         $aliases = new Aliases(['@base' => dirname(dirname(dirname(__DIR__))), 
                                 '@google_translate_json_file_folder' => '@base/src/Invoice'.$this->getGoogleTranslateJsonFileFolder()
+        ]);
+        return $aliases;
+    }
+    
+    /**
+     * @return Aliases
+     */
+    public function get_productimages_files_folder_aliases(): Aliases {
+        $aliases = new Aliases(['@base' => dirname(dirname(dirname(__DIR__))), 
+                                '@productimages_files' => '@base/src/Invoice/Uploads'.$this->getUploadsProductImagesRelativeUrl(),
+                                '@public' => '@base/public',
+                                '@public_product_images' => '@public/product_images'
         ]);
         return $aliases;
     }
@@ -1879,7 +1897,11 @@ final class SettingRepository extends Select\Repository
                   //6
                   $common.'inv/partial_inv_delivery_location',
                   //7
-                  $common.'inv/partial_item_table' 
+                  $common.'inv/partial_item_table',
+                  //8
+                  $common.'product/views/partial_product_image',
+                  //9
+                  $common.'product/views/partial_product_gallery'
         ];
         return $array[$key];
     }

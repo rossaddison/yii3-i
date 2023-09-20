@@ -53,6 +53,7 @@ use App\Invoice\PaymentMethod\PaymentMethodController;
 use App\Invoice\PaymentTerm\PaymentTermController;
 use App\Invoice\PostalAddress\PostalAddressController;
 use App\Invoice\Product\ProductController;
+use App\Invoice\ProductImage\ProductImageController;
 use App\Invoice\ProductProperty\ProductPropertyController;
 use App\Invoice\Project\ProjectController;
 use App\Invoice\Profile\ProfileController;
@@ -1273,6 +1274,41 @@ return [
       ->middleware(fn(AccessChecker $checker) => $checker->withPermission('editInv'))
       ->middleware(Authentication::class)
       ->action([ProductController::class, 'view']),
+      Route::methods([Method::GET, Method::POST], '/image/{product_image_id}')
+      ->middleware(fn(AccessChecker $checker) => $checker->withPermission('editInv'))
+      ->middleware(Authentication::class)
+      ->action([ProductController::class, 'download_image_file'])
+      ->name('product/download_image_file'),
+      Route::methods([Method::GET, Method::POST], '/image_attachment/{id}')
+      ->middleware(fn(AccessChecker $checker) => $checker->withPermission('editInv'))
+      ->middleware(Authentication::class)
+      ->action([ProductController::class, 'image_attachment'])
+      ->name('product/image_attachment'),
+      Route::get('/productimage')
+      ->middleware(fn(AccessChecker $checker) => $checker->withPermission('editInv'))
+      ->middleware(Authentication::class)
+      ->action([ProductImageController::class, 'index'])
+      ->name('productimage/index'),
+      Route::methods([Method::GET, Method::POST], '/image/add')
+      ->middleware(Authentication::class)
+      ->middleware(fn(AccessChecker $checker) => $checker->withPermission('editInv'))
+      ->action([ProductImageController::class, 'add'])
+      ->name('productimage/add'),
+      Route::methods([Method::GET, Method::POST], '/image/edit/{id}')
+      ->name('productimage/edit')
+      ->middleware(fn(AccessChecker $checker) => $checker->withPermission('editInv'))
+      ->middleware(Authentication::class)
+      ->action([ProductImageController::class, 'edit']),
+      Route::methods([Method::GET, Method::POST], '/image/delete/{id}')
+      ->name('productimage/delete')
+      ->middleware(fn(AccessChecker $checker) => $checker->withPermission('editInv'))
+      ->middleware(Authentication::class)
+      ->action([ProductImageController::class, 'delete']),
+      Route::methods([Method::GET, Method::POST], '/image/view/{id}')
+      ->name('productimage/view')
+      ->middleware(fn(AccessChecker $checker) => $checker->withPermission('editInv'))
+      ->middleware(Authentication::class)
+      ->action([ProductImageController::class, 'view']),
       // ProductProperty
       Route::get('/productproperty')
       ->middleware(Authentication::class)

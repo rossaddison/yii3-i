@@ -560,7 +560,4 @@ echo Html::script($js1)->type('module');
 ?>
 <?php
 $this->endPage(true);
-//use Yiisoft\VarDumper\VarDumper;
-//echo VarDumper::dump($currentRoute->getArguments(), 3);
-//echo "Uri ". $currentRoute->getUri()->getPath();
 ?>

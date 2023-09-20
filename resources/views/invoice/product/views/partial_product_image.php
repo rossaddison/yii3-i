@@ -20,7 +20,7 @@ use Yiisoft\View\WebView;
 
 <div class="panel panel-default no-margin">
     <div class="panel-heading">
-        <i tooltip="data-bs-toggle" title="<?= $s->isDebugMode(5);?>"><?= $s->trans('attachments'); ?></i>
+        <i tooltip="data-bs-toggle" title="<?= $s->isDebugMode(8);?>"><?= $translator->translate('invoice.productimage.upload'); ?></i>
     </div>
     <div class="panel-body clearfix">
         <div class="container">
@@ -35,7 +35,7 @@ use Yiisoft\View\WebView;
                             ->post($urlGenerator->generate(...$action))
                             ->enctypeMultipartFormData()
                             ->csrf($csrf)
-                            ->id('InvAttachmentsForm')
+                            ->id('ImageAttachForm')
                             ->open()
                         ?>
                         <?= Field::file($form, 'attachFile')
@@ -66,7 +66,7 @@ use Yiisoft\View\WebView;
             <?php } ?>
             <?php if ($invView) { ?>
             <div class="row">
-                <?= $partial_inv_attachments_list; ?>
+                <?= $partial_product_image_list; ?>
             </div>
             <?php } ?>
         </div>

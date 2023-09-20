@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 use Yiisoft\Html\Html;
 use Yiisoft\Yii\Bootstrap5\Alert;
+use Yiisoft\Form\Field;
 
 /**
  * @var \Yiisoft\View\View $this
@@ -51,8 +52,22 @@ if (!empty($errors)) {
                         <?php endif; ?>
 
                     </div>
+                    
                     <div class="panel-body">
-                            
+                        <?= Field::file($form, 'attachFile')
+                            ->containerClass('mb-3')
+                            ->hideLabel()
+                        ?>
+                        <?= Html::label($translator->translate('invoice.product.image'),'productFile'); ?> 
+                        <?= Html::input('text', 'image_prefix', $body['image_prefix'] ?? '',
+                               ['class' => 'form-control', 'id' => 'productFile']);
+                        ?> 
+                        <?= $image_prefix = $body['image_prefix'] ?? ''; ?>
+                        <?= Html::img()
+                            ->src('/products/'. $image_prefix)
+                            ->height($image_prefix ? '300' : '0')
+                            ->width($image_prefix ? '500' : '0'); 
+                        ?>
                         <div class="form-group">
                             <label for="family_id">
                                 <?= $s->trans('family'); ?>

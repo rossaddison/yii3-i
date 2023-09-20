@@ -10,7 +10,6 @@ use Yiisoft\Validator\Rule\Required;
 
 final class MailerInvForm extends FormModel
 {
-    
     private string $to_email = '';
     private string $email_template = '';
     private string $from_name = '';

@@ -5,6 +5,7 @@ namespace App\Invoice\Product;
 
 use App\Invoice\Entity\Product;
 use App\Invoice\Entity\ProductCustom;
+use App\Invoice\Entity\ProductImage;
 use App\Invoice\Entity\QuoteItem;
 use App\Invoice\Entity\InvItem;
 use App\Invoice\Family\FamilyRepository as fR;
@@ -20,6 +21,8 @@ use App\Invoice\Product\ProductRepository as pR;
 use App\Invoice\ProductCustom\ProductCustomRepository as pcR;
 use App\Invoice\ProductCustom\ProductCustomService;
 use App\Invoice\ProductCustom\ProductCustomForm;
+use App\Invoice\ProductImage\ProductImageRepository as piR;
+use App\Invoice\Product\ImageAttachForm;
 // Quote
 use App\Invoice\QuoteItem\QuoteItemForm;
 use App\Invoice\QuoteItem\QuoteItemService;
@@ -86,16 +89,16 @@ class ProductController
     private string $rtc = self::RESET_TRUE;
     
     public function __construct(
-            ViewRenderer $viewRenderer,
-            WebControllerService $webService,
-            ProductService $productService,
-            ProductCustomService $productCustomService,
-            QuoteItemService $quoteitemService,
-            InvItemService $invitemService,
-            UserService $userService,
-            DataResponseFactoryInterface $responseFactory,
-            SessionInterface $session,
-            TranslatorInterface $translator
+      ViewRenderer $viewRenderer,
+      WebControllerService $webService,
+      ProductService $productService,
+      ProductCustomService $productCustomService,
+      QuoteItemService $quoteitemService,
+      InvItemService $invitemService,
+      UserService $userService,
+      DataResponseFactoryInterface $responseFactory,
+      SessionInterface $session,
+      TranslatorInterface $translator
     )
     {
         $this->viewRenderer = $viewRenderer->withControllerName('invoice/product')
@@ -147,7 +150,7 @@ class ProductController
             'custom_fields'=> $cfR->repoTablequery('product_custom'),
             'custom_values'=> $cvR->attach_hard_coded_custom_field_values_to_custom_field($cfR->repoTablequery('product_custom')),
             'cvH'=> new CVH($sR),
-            'product_custom_values'=> [],  
+            'product_custom_values'=> [],
         ];
         
         if ($request->getMethod() === Method::POST) {            
@@ -398,6 +401,7 @@ class ProductController
     public function index(pR $pR, sR $sR, CurrentRoute $currentRoute, Request $request): \Yiisoft\DataResponse\DataResponse
     {
         $canEdit = $this->rbac();
+        $this->flash_message('info', $this->translator->translate('invoice.productimage.view'));
         $query_params = $request->getQueryParams();
         /** @var string $query_params['sort'] */
         $page = (int)$currentRoute->getArgument('page', '1');
@@ -675,42 +679,236 @@ class ProductController
      * @return Response|true
      */
     private function rbac(): bool|Response {
-        $canEdit = $this->userService->hasPermission('editInv');
-        if (!$canEdit){
-            $this->flash_message('warning', $this->translator->translate('invoice.permission'));
-            return $this->webService->getRedirectResponse('product/index');
-        }
-        return $canEdit;
+      $canEdit = $this->userService->hasPermission('editInv');
+      if (!$canEdit){
+          $this->flash_message('warning', $this->translator->translate('invoice.permission'));
+          return $this->webService->getRedirectResponse('product/index');
+      }
+      return $canEdit;
     }
     
     /**
      * @param pR $pR
      * @param ppR $ppR
      * @param sR $sR
+     * @param piR $piR
      * @param upR $upR
      * @param CurrentRoute $currentRoute
      */
-    public function view(pR $pR, ppR $ppR, sR $sR, upR $upR, CurrentRoute $currentRoute
+    public function view(pR $pR, ppR $ppR, sR $sR, piR $piR, upR $upR, CurrentRoute $currentRoute
     ): \Yiisoft\DataResponse\DataResponse|Response {
-        $product = $this->product($currentRoute,$pR);
+        $product = $this->product($currentRoute, $pR);
+        $language = (string)$this->session->get('_language');
         if ($product) {
-        $parameters = [
+          $product_id = $product->getProduct_id();
+          $parameters = [
+            'alert' => $this->alert(),
             'title' => $sR->trans('view'),
-            'action' => ['product/view', ['id' =>$product->getProduct_id()]],
-            'errors' => [],
+            'action' => ['product/view', ['id' => $product_id]],
+            'partial_product_details' => $this->viewRenderer->renderPartialAsString('/invoice/product/views/partial_product_details',[
             'body' => $this->body($product),
-            's'=>$sR,
-            'upR'=>$upR,
-            //load Entity\Product BelongTo relations ie. $family, $tax_rate, $unit by means of repoProductQuery             
-            'product'=>$pR->repoProductquery($product->getProduct_id()),
-            'productpropertys'=>$this->viewRenderer->renderPartialAsString('property_index.php',
+              'upR' => $upR,
+              //load Entity\Product BelongTo relations ie. $family, $tax_rate, $unit by means of repoProductQuery             
+              'product'=>$pR->repoProductquery($product_id),
+            ]),
+            'partial_product_properties' => $this->viewRenderer->renderPartialAsString('/invoice/product/views/partial_product_properties',
               [
-                 'all' => $ppR->findAllProduct($product->getProduct_id())
+                'product'=>$pR->repoProductquery($product_id),
+                'language'=>$language,
+                'productpropertys' => $this->viewRenderer->renderPartialAsString('/invoice/product/views/property_index', [
+                  'all' => $ppR->findAllProduct($product_id),
+                  'language' => $language
+                ]) 
               ]
-            )
-        ];        
-        return $this->viewRenderer->render('_view', $parameters);
+            ),
+            'partial_product_images' => $this->view_partial_product_image($currentRoute, (int) $product_id, $piR, $sR),
+            'partial_product_gallery' => $this->viewRenderer->renderPartialAsString('/invoice/product/views/partial_product_gallery', [
+              'product' => $product,
+              'invEdit' => $this->userService->hasPermission('editInv'),
+              'invView' => $this->userService->hasPermission('viewInv')
+            ])
+          ];        
+          return $this->viewRenderer->render('_view', $parameters);
         }
         return $this->webService->getRedirectResponse('product/index');
+    }
+    
+    /**
+     * @param string $tmp
+     * @param string $target
+     * @param int $product_id
+     * @param string $fileName
+     * @param piR $piR
+     * @param sR $sR
+     * @return bool
+     */
+    private function image_attachment_move_to(string $tmp, string $target, int $product_id, string $fileName, piR $piR, sR $sR
+    ): bool {
+        $file_exists = file_exists($target);
+        // The file does not exist yet in the target path but it exists in the tmp folder on the server
+        if (!$file_exists) {
+            if (is_uploaded_file($tmp) && move_uploaded_file($tmp, $target)) {
+                $track_file = new ProductImage();
+                $track_file->setProduct_id($product_id);
+                $track_file->setFile_name_original($fileName);
+                $track_file->setFile_name_new($fileName);
+                $track_file->setUploaded_date(new \DateTimeImmutable());
+                $piR->save($track_file);
+                $this->flash_message('info', $this->translator->translate('invoice.productimage.uploaded.to') . $target);
+                return true;
+            } else {
+                $this->flash_message('warning', $this->translator->translate('invoice.productimage.possible.file.upload.attack') . $tmp);
+                return false;
+            }
+        } else {
+            $this->flash_message('warning', $sR->trans('error_duplicate_file'));
+            return false;
+        }
+    }
+    
+    /**
+     * Upload a product image file
+     *
+     * @param CurrentRoute $currentRoute
+     * @param PR $pR
+     * @param PIR $piR
+     * @param sR $sR
+     */
+    public function image_attachment(CurrentRoute $currentRoute, PR $pR, PIR $piR, sR $sR): \Yiisoft\DataResponse\DataResponse|Response {
+        $aliases = $sR->get_productimages_files_folder_aliases();
+        // /src/Invoice/Uploads/ProductImages
+        $targetPath = $aliases->get('@productimages_files');
+        $product_id = $currentRoute->getArgument('id');
+        if (null !== $product_id) {
+            if (!is_writable($targetPath)) {
+                return $this->responseFactory->createResponse($this->image_attachment_not_writable((int) $product_id, $sR));
+            }
+            $product = $pR->repoProductquery($product_id) ?: null;
+            if ($product instanceof Product) {
+                $product_id = $product->getProduct_id();
+                if ($product_id) {
+                    if (!empty($_FILES)) {
+                        // @see https://github.com/vimeo/psalm/issues/5458
+
+                        /** @var array $_FILES['ImageAttachForm'] */
+                        /** @var string $_FILES['ImageAttachForm']['tmp_name']['attachFile'] */
+                        $temporary_file = $_FILES['ImageAttachForm']['tmp_name']['attachFile'];
+                        /** @var string $_FILES['ImageAttachForm']['name']['attachFile'] */
+                        $original_file_name = preg_replace('/\s+/', '_', $_FILES['ImageAttachForm']['name']['attachFile']);
+                        $target_path_with_filename = $targetPath . '/' . $original_file_name;
+                        if ($this->image_attachment_move_to($temporary_file, $target_path_with_filename, (int)$product_id, $original_file_name, $piR, $sR)) {
+                            return $this->responseFactory->createResponse($this->image_attachment_successfully_created((int) $product_id, $sR));
+                        } else {
+                            return $this->responseFactory->createResponse($this->image_attachment_no_file_uploaded((int) $product_id, $sR));
+                        }
+                    } else {
+                        return $this->responseFactory->createResponse($this->image_attachment_no_file_uploaded((int) $product_id, $sR));
+                    }
+                } // $product_id
+            } // $product
+            return $this->webService->getRedirectResponse('product/index');
+        } //null!==$product_id
+        return $this->webService->getRedirectResponse('product/index');
+    }
+    
+    /**
+     *
+     * @param CurrentRoute $currentRoute
+     * @param int $product_id
+     * @param piR $piR
+     * @param sR $sR
+     * @return string
+     */
+    private function view_partial_product_image(CurrentRoute $currentRoute, int $product_id, piR $piR, sR $sR): string {
+        $productimages = $piR->repoProductImageProductquery($product_id);
+        $paginator = new OffsetPaginator($productimages);
+        $invEdit = $this->userService->hasPermission('editInv');
+        $invView = $this->userService->hasPermission('viewInv');
+        return $this->viewRenderer->renderPartialAsString('/invoice/product/views/partial_product_image', [
+          'form' => new ImageAttachForm(),
+          'invEdit' => $invEdit,
+          'invView' => $invView,
+          'partial_product_image_list' => $this->viewRenderer->renderPartialAsString('/invoice/product/views/partial_product_image_list', [
+            'grid_summary' => $sR->grid_summary($paginator, $this->translator, (int) $sR->get_setting('default_list_limit'), $this->translator->translate('invoice.productimage.list'), ''),
+            'paginator' => $paginator,
+            'invEdit' => $invEdit
+          ]),
+          'action' => ['product/image_attachment', ['id' => $product_id, '_language' => $currentRoute->getArgument('_language')]]
+        ]);
+    }
+    
+    /**
+     * @param int product_id
+     * @param sR $sR
+     * @return string
+     */
+    private function image_attachment_not_writable(int $product_id, sR $sR): string {
+        return $this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
+                        ['heading' => $sR->trans('errors'), 'message' => $sR->trans('path') . $sR->trans('is_not_writable'),
+                            'url' => 'product/view', 'id' => $product_id]);
+    }
+
+    /**
+     * @param int $product_id
+     * @param sR $sR
+     * @return string
+     */
+    private function image_attachment_successfully_created(int $product_id, sR $sR): string {
+        return $this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
+                        ['heading' => '', 'message' => $sR->trans('record_successfully_created'),
+                            'url' => 'product/view', 'id' => $product_id]);
+    }
+
+    /**
+     * @param int $product_id
+     * @param sR $sR
+     * @return string
+     */
+    private function image_attachment_no_file_uploaded(int $product_id, sR $sR): string {
+        return $this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
+                        ['heading' => $sR->trans('errors'), 'message' => $this->translator->translate('invoice.productimage.no.file.uploaded'),
+                            'url' => 'product/view', 'id' => $product_id]);
+    }
+    
+    /**
+     * @param CurrentRoute $currentRoute
+     * @param piR $piR
+     * @param sR $sR
+     * @return void
+     */
+    public function download_image_file(CurrentRoute $currentRoute, piR $piR, sR $sR) : void {
+        $product_image_id = $currentRoute->getArgument('product_image_id');
+        if (null !== $product_image_id) {
+            $product_image = $piR->repoProductImagequery($product_image_id);
+            if (null !== $product_image) {
+                $aliases = $sR->get_productimages_files_folder_aliases();
+                $targetPath = $aliases->get('@productimages_files');
+                $original_file_name = $product_image->getFile_name_original();
+                $target_path_with_filename = $targetPath . '/' . $original_file_name;
+                $path_parts = pathinfo($target_path_with_filename);
+                $file_ext = $path_parts['extension'] ?? '';
+                if (file_exists($target_path_with_filename)) {
+                    $file_size = filesize($target_path_with_filename);
+                    $allowed_content_type_array = $piR->getContentTypes();
+                    // Check extension against allowed content file types @see ProductImageRepository getContentTypes
+                    $save_ctype = isset($allowed_content_type_array[$file_ext]);
+                    /** @var string $ctype */
+                    $ctype = $save_ctype ? $allowed_content_type_array[$file_ext] : $piR->getContentTypeDefaultOctetStream();
+                    // https://www.php.net/manual/en/function.header.php
+                    // Remember that header() must be called before any actual output is sent, either by normal HTML tags,
+                    // blank lines in a file, or from PHP.
+                    header("Expires: -1");
+                    header("Cache-Control: public, must-revalidate, post-check=0, pre-check=0");
+                    header("Content-Disposition: attachment; filename=\"$original_file_name\"");
+                    header("Content-Type: " . $ctype);
+                    header("Content-Length: " . $file_size);
+                    echo file_get_contents($target_path_with_filename, true);
+                    exit;
+                } //if file_exists
+                exit;
+            } //null!==product_image
+            exit;
+        } //null!==$product_image_id
+        exit;
     }
 }

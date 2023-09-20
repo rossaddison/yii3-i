@@ -17,6 +17,7 @@ final class ProductForm extends FormModel
     private ?string $product_icc_id = null;
     private ?string $product_country_of_origin_code = null;
     private ?string $product_name = null;
+    private ?string $image_prefix = null;
     private ?string $product_description = null;
     private ?string $product_additional_item_property_name = null;
     private ?string $product_additional_item_property_value = null;
@@ -76,6 +77,11 @@ final class ProductForm extends FormModel
     public function getProduct_name(): string|null
     {
         return $this->product_name;
+    }
+    
+    public function getImage_prefix(): string|null
+    {
+        return $this->image_prefix;
     }
     
     public function getProduct_description(): string|null
