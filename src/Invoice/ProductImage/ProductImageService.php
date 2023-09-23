@@ -48,7 +48,7 @@ final class ProductImageService {
      */
     public function deleteProductImage(ProductImage $model, SettingRepository $sR): void {
       $aliases = $sR->get_productimages_files_folder_aliases();
-      $targetPath = $aliases->get('@productimages_files');
+      $targetPath = $aliases->get('@public_product_images');
       $file_path = $targetPath . '/' . $model->getFile_name_new();
       // see vendor/yiisoft/files/src/FileHelper::unlink will delete the file
       strpos(realpath($targetPath), realpath($file_path)) == 0 ? FileHelper::unlink($file_path) : '';

@@ -1,6 +1,5 @@
 <?php
-  declare(strict_types=1);
-  
+  declare(strict_types=1);  
   use Yiisoft\Html\Html;
 ?>
 <div class="panel panel-default no-margin">
@@ -11,36 +10,28 @@
         <div class="container">
           <div class="row">
               <div class="row mb3 form-group">
-                  <label for="building_number" class="text-bg col-sm-2 col-form-label" style="background:lightblue"><?= $translator->translate('invoice.client.postaladdress.building.number'); ?></label>
-                  <label class="text-bg col-sm-10 col-form-label"><?= Html::encode($building_number ?? ''); ?></label>
+                  <div style="background:lightblue"><span id="building_number"><?= $translator->translate('invoice.client.postaladdress.building.number').' '.Html::encode($building_number ?? ''); ?></span></div>
               </div>
               <div class="row mb3 form-group">
-                  <label for="address_1" class="text-bg col-sm-2 col-form-label" style="background:lightblue"><?= $translator->translate('invoice.client.postaladdress.street.name'); ?></label>
-                  <label class="text-bg col-sm-10 col-form-label"><?= Html::encode($address_1 ?? ''); ?></label>
+                  <div style="background:lightblue"><?= $translator->translate('invoice.client.postaladdress.street.name').':  '. Html::encode($address_1 ?? ''); ?></div>
               </div>
               <div class="row mb3 form-group">
-                  <label for="address_2" class="text-bg col-sm-2 col-form-label" style="background:lightblue"><?= $translator->translate('invoice.client.postaladdress.additional.street.name'); ?></label>
-                  <label class="text-bg col-sm-10 col-form-label"><?= Html::encode($address_2 ?? ''); ?></label>
+                  <div style="background:lightblue"><?= $translator->translate('invoice.client.postaladdress.additional.street.name').':  '. Html::encode($address_2 ?? ''); ?></div>
               </div>
               <div class="row mb3 form-group">
-                  <label for="city" class="text-bg col-sm-2 col-form-label" style="background:lightblue"><?= $translator->translate('invoice.client.postaladdress.city.name'); ?></label>
-                  <label class="text-bg col-sm-10 col-form-label"><?= Html::encode($city ?? ''); ?></label>
+                  <div style="background:lightblue"><?= $translator->translate('invoice.client.postaladdress.city.name').':  '. Html::encode($city ?? ''); ?></div>
               </div>
               <div class="row mb3 form-group">
-                  <label for="state" class="text-bg col-sm-2 col-form-label" style="background:lightblue"><?= $translator->translate('invoice.client.postaladdress.countrysubentity'); ?></label>
-                  <label class="text-bg col-sm-10 col-form-label"><?= Html::encode($state ?? ''); ?></label>
+                  <div style="background:lightblue"><?= $translator->translate('invoice.client.postaladdress.countrysubentity').':  '. Html::encode($state ?? ''); ?></div>
               </div>
               <div class="row mb3 form-group">
-                  <label for="zip" class="text-bg col-sm-2 col-form-label" style="background:lightblue"><?= $translator->translate('invoice.client.postaladdress.postalzone'); ?></label>
-                  <label class="text-bg col-sm-10 col-form-label"><?= Html::encode($zip ?? ''); ?></label>
+                  <div style="background:lightblue"><?= $translator->translate('invoice.client.postaladdress.postalzone').':  '. Html::encode($zip ?? ''); ?></div>
               </div>
               <div class="row mb3 form-group">
-                  <label for="country" class="text-bg col-sm-2 col-form-label" style="background:lightblue"><?= $translator->translate('invoice.client.postaladdress.country'); ?></label>
-                  <label class="text-bg col-sm-10 col-form-label"><?= Html::encode($country ?? ''); ?></label>
+                  <div style="background:lightblue"><?= $translator->translate('invoice.client.postaladdress.country').':  '. Html::encode($country ?? ''); ?></div>
               </div>
               <div class="row mb3 form-group">
-                  <label for="global_location_number" class="text-bg col-sm-2 col-form-label" style="background:lightblue"><?= $translator->translate('invoice.delivery.location.global.location.number'); ?></label>
-                  <label class="text-bg col-sm-10 col-form-label"><?= Html::encode($global_location_number ?? ''); ?></label>
+                  <div style="background:lightblue"><?= $translator->translate('invoice.delivery.location.global.location.number').':  '. Html::encode($global_location_number ?? ''); ?></div>
               </div>
           </div>
         </div>

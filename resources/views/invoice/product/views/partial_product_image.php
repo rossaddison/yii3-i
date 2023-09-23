@@ -25,6 +25,7 @@ use Yiisoft\View\WebView;
     <div class="panel-body clearfix">
         <div class="container">
             <?php if ($invView && $invEdit) { ?> 
+            <?php echo $partial_product_image_info; ?>
             <div class="row">
                 <div>
                     <div>

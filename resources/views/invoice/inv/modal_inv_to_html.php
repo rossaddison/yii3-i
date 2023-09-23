@@ -16,22 +16,22 @@ declare(strict_types=1);
             </div>            
             <input type="hidden" name="inv_id" id="inv_id" value="<?php echo $inv->getId(); ?>">
             <div  class="p-2">
-            <label for="custom_fields_include" class="control-label">
+            <div class="control-label">
                 <?= $s->trans('custom_fields'); ?>?                
-            </label>   
+            </div>   
             </div>    
         </div>
         <div class="modal-footer">
             <div class="btn-group">
                 <button type="button" data-bs-toggle = "tooltip" title="html">
-                <label>
+                <div>
                     <i class="fa fa-code"></i>
                     <?php if ((null!==$s->get_setting('pdf_html_inv')) && ($s->get_setting('pdf_html_inv') === '1')) { ?>
                         <i class="fa fa-check"></i>
                     <?php } else {?>
                         <i class="fa fa-times"></i>
                     <?php } ?>
-                </label>
+                </div>
                 </button>
                 <button class="inv_to_html_confirm_with_custom_fields btn btn-success" id="inv_to_html_confirm_with_custom_fields" type="button">
                     <i class="fa fa-check"></i> <?= $s->trans('yes'); ?>

@@ -11,7 +11,7 @@
         </div>
         <div class="modal-body">
             <div class="form-group">
-                <label><?= $s->trans('any_family'); ?></label>
+                <label for="filter_family_inv"><?= $s->trans('any_family'); ?></label>
                 <div class="form-group">
                     <select name="filter_family_inv" id="filter_family_inv" class="form-control">
                         <option value="0"><?= $s->trans('any_family'); ?></option>
@@ -26,7 +26,7 @@
                     </select>
                 </div>
                 <div class="form-group panel panel-primary">
-                    <label><?= $s->trans('product_name'); ?></label>
+                    <label for="filter_product_inv"><?= $s->trans('product_name'); ?></label>
                     <input type="text" class="form-control" name="filter_product_inv" id="filter_product_inv"
                            placeholder="<?= $s->trans('product_name'); ?>"
                            value="<?= $filter_product ?>">                

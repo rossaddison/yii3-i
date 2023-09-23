@@ -59,6 +59,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\DataResponse\DataResponseFactoryInterface;
 use Yiisoft\Data\Paginator\OffsetPaginator;
+use Yiisoft\Files\FileHelper;
 use Yiisoft\Http\Method;
 use Yiisoft\Json\Json;
 use Yiisoft\Router\CurrentRoute;
@@ -700,7 +701,8 @@ class ProductController
         $product = $this->product($currentRoute, $pR);
         $language = (string)$this->session->get('_language');
         if ($product) {
-          $product_id = $product->getProduct_id();
+          $product_id = $product->getProduct_id();          
+          $product_images = $piR->repoProductImageProductquery((int)$product_id);
           $parameters = [
             'alert' => $this->alert(),
             'title' => $sR->trans('view'),
@@ -724,6 +726,7 @@ class ProductController
             'partial_product_images' => $this->view_partial_product_image($currentRoute, (int) $product_id, $piR, $sR),
             'partial_product_gallery' => $this->viewRenderer->renderPartialAsString('/invoice/product/views/partial_product_gallery', [
               'product' => $product,
+              'product_images' => $product_images,             
               'invEdit' => $this->userService->hasPermission('editInv'),
               'invView' => $this->userService->hasPermission('viewInv')
             ])
@@ -776,8 +779,9 @@ class ProductController
      */
     public function image_attachment(CurrentRoute $currentRoute, PR $pR, PIR $piR, sR $sR): \Yiisoft\DataResponse\DataResponse|Response {
         $aliases = $sR->get_productimages_files_folder_aliases();
-        // /src/Invoice/Uploads/ProductImages
-        $targetPath = $aliases->get('@productimages_files');
+        // https://github.com/yiisoft/yii2/issues/3566
+        // Save the image directly to the web accessible folder - assets/publc/product
+        $targetPath = $aliases->get('@public_product_images');
         $product_id = $currentRoute->getArgument('id');
         if (null !== $product_id) {
             if (!is_writable($targetPath)) {
@@ -828,6 +832,7 @@ class ProductController
           'form' => new ImageAttachForm(),
           'invEdit' => $invEdit,
           'invView' => $invView,
+          'partial_product_image_info' => $this->viewRenderer->renderPartialAsString('/invoice/product/views/partial_product_image_info'),
           'partial_product_image_list' => $this->viewRenderer->renderPartialAsString('/invoice/product/views/partial_product_image_list', [
             'grid_summary' => $sR->grid_summary($paginator, $this->translator, (int) $sR->get_setting('default_list_limit'), $this->translator->translate('invoice.productimage.list'), ''),
             'paginator' => $paginator,

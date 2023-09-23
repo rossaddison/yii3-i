@@ -930,9 +930,12 @@ final class SettingRepository extends Select\Repository
      */
     public function get_productimages_files_folder_aliases(): Aliases {
         $aliases = new Aliases(['@base' => dirname(dirname(dirname(__DIR__))), 
+                                // Internal folder not normally used for storage
                                 '@productimages_files' => '@base/src/Invoice/Uploads'.$this->getUploadsProductImagesRelativeUrl(),
                                 '@public' => '@base/public',
-                                '@public_product_images' => '@public/product_images'
+                                
+                                // Web accessible external folder normally used  
+                                '@public_product_images' => '@public/products'
         ]);
         return $aliases;
     }

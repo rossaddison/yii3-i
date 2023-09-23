@@ -22,7 +22,13 @@ use Yiisoft\View\WebView;
     <div class="container">
         <?php if ($invView && $invEdit) { ?> 
           <div class="row">
-              
+             <?php foreach ($product_images as $productimage) { ?>
+              <div class="row">
+                  <a data-toggle="lightbox" data-gallery="example-gallery" class="col-sm-4">
+                      <img src="<?= '/products/'. $productimage->getFile_name_original(); ?>"   class="img-fluid">
+                  </a>
+              </div>
+             <?php } ?> 
           </div>
         <?php } ?>
     </div>

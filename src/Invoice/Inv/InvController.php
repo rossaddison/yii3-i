@@ -64,6 +64,7 @@ use App\Invoice\Payment\PaymentRepository as PYMR;
 use App\Invoice\PaymentCustom\PaymentCustomRepository as PCR;
 use App\Invoice\PaymentMethod\PaymentMethodRepository as PMR;
 use App\Invoice\PostalAddress\PostalAddressRepository as paR;
+use App\Invoice\ProductImage\ProductImageRepository as PIR;
 use App\Invoice\ProductProperty\ProductPropertyRepository as ppR;
 use App\Invoice\Product\ProductRepository as PR;
 use App\Invoice\Project\ProjectRepository as PRJCTR;
@@ -2850,6 +2851,7 @@ final class InvController {
      * @param CFR $cfR
      * @param CVR $cvR
      * @param PR $pR
+     * @param PIR $piR
      * @param IAR $iaR
      * @param IIAR $iiaR
      * @param IIR $iiR
@@ -2875,7 +2877,7 @@ final class InvController {
      * @return \Yiisoft\DataResponse\DataResponse|Response
      */
     public function view(ViewRenderer $head, CurrentRoute $currentRoute, Request $request,
-            CFR $cfR, CVR $cvR, PR $pR, IAR $iaR, IIAR $iiaR, IIR $iiR, IR $iR, IRR $irR, ITRR $itrR, PMR $pmR,
+            CFR $cfR, CVR $cvR, PR $pR, PIR $piR, IAR $iaR, IIAR $iiaR, IIR $iiR, IR $iR, IRR $irR, ITRR $itrR, PMR $pmR,
             TRR $trR, FR $fR, UNR $uR, ACR $acR, ACIR $aciR, ACIIR $aciiR, CR $cR, GR $gR, ICR $icR, PYMR $pymR, TASKR $taskR, PRJCTR $prjctR, UIR $uiR, UPR $upR, SOR $soR, SumexR $sumexR, DLR $dlR)
     : \Yiisoft\DataResponse\DataResponse|Response {
         $inv = $this->inv($currentRoute, $iR, false);
@@ -2967,28 +2969,28 @@ final class InvController {
                     'inv_custom_values' => $inv_custom_values,
                     'inv_statuses' => $iR->getStatuses($this->sR),
                     'modal_choose_items' => $this->view_renderer->renderPartialAsString('/invoice/product/modal_product_lookups_inv',
-                            [
-                                'families' => $fR->findAllPreloaded(),
-                                'default_item_tax_rate' => $this->sR->get_setting('default_item_tax_rate') !== '' ?: 0,
-                                'filter_product' => '',
-                                'filter_family' => '',
-                                'reset_table' => '',
-                                'products' => $pR->findAllPreloaded(),
-                                'head' => $head,
-                            ]),
+                    [
+                        'families' => $fR->findAllPreloaded(),
+                        'default_item_tax_rate' => $this->sR->get_setting('default_item_tax_rate') !== '' ?: 0,
+                        'filter_product' => '',
+                        'filter_family' => '',
+                        'reset_table' => '',
+                        'products' => $pR->findAllPreloaded(),
+                        'head' => $head,
+                    ]),
                     'modal_choose_tasks' => $this->view_renderer->renderPartialAsString('/invoice/task/modal_task_lookups_inv',
-                            [
-                                'partial_task_table_modal' => $this->view_renderer->renderPartialAsString('/invoice/task/partial_task_table_modal', [
-                                    // Only tasks with complete or status of 3 are made available for selection
-                                    'tasks' => $taskR->repoTaskStatusquery(3),
-                                    'prjct' => $prjctR->findAllPreloaded(),
-                                    'datehelper' => $this->date_helper,
-                                    'numberhelper' => $this->number_helper,
-                                ]),
-                                'default_item_tax_rate' => $this->sR->get_setting('default_item_tax_rate') !== '' ?: 0,
-                                'tasks' => $pR->findAllPreloaded(),
-                                'head' => $head,
-                            ]),
+                    [
+                        'partial_task_table_modal' => $this->view_renderer->renderPartialAsString('/invoice/task/partial_task_table_modal', [
+                            // Only tasks with complete or status of 3 are made available for selection
+                            'tasks' => $taskR->repoTaskStatusquery(3),
+                            'prjct' => $prjctR->findAllPreloaded(),
+                            'datehelper' => $this->date_helper,
+                            'numberhelper' => $this->number_helper,
+                        ]),
+                        'default_item_tax_rate' => $this->sR->get_setting('default_item_tax_rate') !== '' ?: 0,
+                        'tasks' => $pR->findAllPreloaded(),
+                        'head' => $head,
+                    ]),
                     'modal_add_inv_tax' => $this->view_renderer->renderPartialAsString('/invoice/inv/modal_add_inv_tax', ['tax_rates' => $trR->findAllPreloaded()]),
                     'modal_add_allowance_charge' => $this->view_renderer->renderPartialAsString('/invoice/inv/modal_add_allowance_charge', ['allowance_charges' => $acR->findAllPreloaded()]),
                     'modal_copy_inv' => $this->view_renderer->renderPartialAsString('/invoice/inv/modal_copy_inv', [
@@ -2998,7 +3000,7 @@ final class InvController {
                     ]),
                     // Partial item table: Used to build items either products/tasks that make up the invoice
                     // Partial item table: Items and Grand Totals
-                    'partial_item_table' => $this->view_partial_item_table($show_buttons, $currentRoute, $aciR, $aciiR, $pR, $taskR, $iiR, $iiaR, $iR, $trR, $uR,
+                    'partial_item_table' => $this->view_partial_item_table($show_buttons, $currentRoute, $aciR, $aciiR, $pR, $piR, $taskR, $iiR, $iiaR, $iR, $trR, $uR,
                             $itrR, $inv_amount),
                     'modal_delete_inv' => $this->view_modal_delete_inv($currentRoute),
                     'modal_delete_items' => $this->view_modal_delete_items($iiR),
@@ -3174,6 +3176,7 @@ final class InvController {
      * @param ACIR $aciR
      * @param ACIIR $aciiR
      * @param PR $pR
+     * @param PIR $piR
      * @param TaskR $taskR
      * @param IIR $iiR
      * @param IIAR $iiaR
@@ -3185,7 +3188,7 @@ final class InvController {
      * @param bool $so_exists
      * @return string
      */
-    private function view_partial_item_table(bool $show_buttons, CurrentRoute $currentRoute, ACIR $aciR, ACIIR $aciiR, PR $pR, TaskR $taskR, IIR $iiR, IIAR $iiaR, IR $iR, TRR $trR, UNR $uR, ITRR $itrR, InvAmount|null $inv_amount): string {
+    private function view_partial_item_table(bool $show_buttons, CurrentRoute $currentRoute, ACIR $aciR, ACIIR $aciiR, PR $pR, PIR $piR, TaskR $taskR, IIR $iiR, IIAR $iiaR, IR $iR, TRR $trR, UNR $uR, ITRR $itrR, InvAmount|null $inv_amount): string {
         $inv = $this->inv($currentRoute, $iR, false);
         if ($inv) {
             $inv_tax_rates = (($itrR->repoCount((string) $this->session->get('inv_id')) > 0) ? $itrR->repoInvquery((string) $this->session->get('inv_id')) : null);
@@ -3197,6 +3200,7 @@ final class InvController {
             return $this->view_renderer->renderPartialAsString('/invoice/inv/partial_item_table', [
               'dl_acis' => $acis,
               'aciiR' => $aciiR,
+              'piR' => $piR,
               'show_buttons' => $show_buttons,
               'numberhelper' => $this->number_helper,
               'products' => $pR->findAllPreloaded(),

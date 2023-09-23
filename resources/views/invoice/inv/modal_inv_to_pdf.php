@@ -15,16 +15,16 @@ declare(strict_types=1);
             </div>            
             <input type="hidden" name="inv_id" id="inv_id" value="<?php echo $inv->getId(); ?>">
             <div  class="p-2">
-            <label for="custom_fields_include" class="control-label">
+            <div class="control-label">
                 <?= $s->trans('custom_fields'); ?>?                
-            </label>   
+            </div>   
             </div>    
         </div>
         <div class="modal-footer">
             <div class="btn-group">
                 <!-- display Settings...View...Invoices...Pdf Settings...G(ie. stream)...Folder(ie.archive)...</>(ie Html)... -->
                 <button type="button" data-bs-toggle = "tooltip" title="stream/archive/html">
-                <label>
+                <div>
                     <i class="fa fa-google"></i>
                     <?php if ((null!==$s->get_setting('pdf_stream_inv')) && ($s->get_setting('pdf_stream_inv') === '1')) { ?>
                         <i class="fa fa-check"></i>
@@ -37,7 +37,7 @@ declare(strict_types=1);
                     <?php } else {?>
                         <i class="fa fa-times"></i>
                     <?php } ?>
-                </label>
+                </div>
                 </button>
                 <button class="inv_to_pdf_confirm_with_custom_fields btn btn-success" id="inv_to_pdf_confirm_with_custom_fields" type="button">
                     <i class="fa fa-check"></i> <?= $s->trans('yes'); ?>

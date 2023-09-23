@@ -416,7 +416,7 @@ if (($invEdit && $inv->getStatus_id() === 1 || ($s->get_setting('enable_invoice_
 <?= $translator->translate('invoice.invoice.date.issued'); ?>
                                         </label>
                                         <div class="input-group">
-                                            <input id="inv_date_created" disabled
+                                            <input id="date_created" disabled
                                                    class="form-control input-sm datepicker"
 <?php $dc_datehelper = new DateHelper($s); ?>
                                                    value="<?= $dc_datehelper->date_from_mysql($inv->getDate_created()); ?>"/>
@@ -430,7 +430,7 @@ if (($invEdit && $inv->getStatus_id() === 1 || ($s->get_setting('enable_invoice_
 <?= $translator->translate('invoice.invoice.date.supplied'); ?>
                                         </label>
                                         <div class="input-group">
-                                            <input id="inv_date_supplied" disabled
+                                            <input id="date_supplied" disabled
                                                    class="form-control input-sm datepicker"
                                             <?php $ds_datehelper = new DateHelper($s); ?>
                                                    value="<?= $ds_datehelper->date_from_mysql($inv->getDate_supplied()); ?>"/>
@@ -445,7 +445,7 @@ if (($invEdit && $inv->getStatus_id() === 1 || ($s->get_setting('enable_invoice_
     <?= $translator->translate('invoice.invoice.tax.point'); ?>
                                             </label>
                                             <div class="input-group">
-                                                <input id="inv_date_tax_point" disabled
+                                                <input id="date_tax_point" disabled
                                                        class="form-control input-sm datepicker"
                                                 <?php $dtp_datehelper = new DateHelper($s); ?>
                                                        value="<?= $dtp_datehelper->date_from_mysql($inv->getDate_tax_point()); ?>"/>
@@ -495,7 +495,7 @@ if (($invEdit && $inv->getStatus_id() === 1 || ($s->get_setting('enable_invoice_
                                         </select>
                                     </div>
                                     <div class="invoice-properties">
-                                        <label><?= $s->trans('payment_method'); ?></label>
+                                        <label for="payment_method"><?= $s->trans('payment_method'); ?></label>
 <?php if ($inv->getPayment_method() !== 0) { ?>
                                             <select name="payment_method" id="payment_method" class="form-control" disabled="disabled">
                                                 <option value="0"><?= Html::encode($s->trans('select_payment_method')); ?></option>
@@ -544,7 +544,7 @@ if (($invEdit && $inv->getStatus_id() === 1 || ($s->get_setting('enable_invoice_
 <?php } ?>
                                     </div>
             <?php if ($inv->getSo_id() !== '0') { ?>
-                                        <label for="salesorder_to_url"><?= $translator->translate('invoice.salesorder'); ?></label>
+                                        <div><?= $translator->translate('invoice.salesorder'); ?></div>
                                         <div class="input-group">
     <?= Html::a($sales_order_number, $urlGenerator->generate('salesorder/view', ['id' => $inv->getSo_id()]), ['class' => 'btn btn-success']); ?>
                                         </div>

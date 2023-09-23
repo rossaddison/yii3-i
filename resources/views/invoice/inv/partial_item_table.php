@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Yiisoft\Html\Html;
+use Yiisoft\Yii\Bootstrap5\Carousel;
 
 /***
  * @var bool $show_buttons 
@@ -187,11 +188,11 @@ $vat = $s->get_setting('enable_vat_registration');
                         </div>
                     </td>
                     <td class="td-amount">
-                        <div class="input-group">
-                            <span class="input-group-text"><?= $s->trans('price'); ?></span>
-                            <input disabled type="text" name="item_price" class="input-sm form-control amount" data-bs-toggle = "tooltip" title="inv_item->price"
-                                   value="<?= $numberhelper->format_amount($item->getPrice()); ?>">
-                        </div>
+                      <div class="input-group">
+                          <span class="input-group-text"><?= $s->trans('price'); ?></span>
+                          <input disabled type="text" name="item_price" class="input-sm form-control amount" data-bs-toggle = "tooltip" title="inv_item->price"
+                                 value="<?= $numberhelper->format_amount($item->getPrice()); ?>">
+                      </div>
                     </td>
                     <td class="td-amount ">
                         <div class="input-group">
@@ -227,6 +228,26 @@ $vat = $s->get_setting('enable_vat_registration');
                     </td>
                     <td class="td-icon text-right td-vert-middle">                        
                         <?php if ($show_buttons === true && $user_can_edit === true) { ?>
+                            <a class="btn btn-info fa fa-eye" data-toggle="modal" href="#view-product-<?= $item->getId(); ?>" style="text-decoration:none"></a> 
+                            <div id="view-product-<?= $item->getId(); ?>" class="modal modal-lg" tabindex="-1" role="dialog" aria-labelledby="modal_view_product_<?= $item->getId(); ?>" aria-hidden="true">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                      <button type="button" class="close" data-dismiss="modal"><i class="fa fa-times-circle"></i></button>
+                                    </div>    
+                                    <div>
+                                      <?php $product_images = $piR->repoProductImageProductquery((int)$item->getProduct_id()); ?>
+                                      <?php foreach ($product_images as $product_image) { ?>
+                                       <?php if (!empty($product_image->getFile_name_original())) { ?> 
+                                          <a data-toggle="modal" class="col-sm-4">
+                                             <img src="<?= '/products/'. $product_image->getFile_name_original(); ?>"  class="img-fluid">
+                                          </a>
+                                       <?php } ?> 
+                                      <?php } ?>
+                                    </div>
+                                    <div class="modal-footer">
+                                    </div>  
+                                </div> 
+                             </div>
                              <a href="<?= $urlGenerator->generate('acii/index', ['inv_item_id'=> $item->getId(), '_language'=>$currentRoute->getArgument('_language')]) ?>" class="btn btn-primary btn" data-bs-toggle = "tooltip" title="<?= $translator->translate('invoice.invoice.allowance.or.charge.index'); ?>"><i class="<?= $aciiR->repoInvItemCount((string)$item->getId()) > 0 ? 'fa fa-list' : 'fa fa-plus'; ?>"></i></a>
                              <a href="<?= $urlGenerator->generate('inv/delete_inv_item',['id'=>$item->getId(),'_language'=>$currentRoute->getArgument('_language')]) ?>" class="btn btn-danger btn" onclick="return confirm('<?= $s->trans('delete_record_warning'); ?>');"><i class="fa fa-trash"></i></a>
                              <?php if  ($item->getTask_id()) { ?>    

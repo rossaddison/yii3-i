@@ -57,5 +57,8 @@ class InvoiceAsset extends AssetBundle
         'rebuild-1.13/js/modal-task-lookups-inv.js',
         //'rebuild-1.13/js/dropzone-quote-scripts.js', 
         'jquery-ui-1.13.2/jquery-ui.min.js',
+        
+        // bootstrap lightbox
+        '//cdn.jsdelivr.net/npm/bs5-lightbox@1.8.3/dist/index.bundle.min.js',
     ];
 }
