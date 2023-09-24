@@ -13,7 +13,10 @@ use App\Invoice\Entity\Payment;
 use App\Invoice\Client\ClientRepository;
 use App\Invoice\Inv\InvRepository;
 use App\Invoice\InvAmount\InvAmountRepository;
+use App\Invoice\InvItemAmount\InvItemAmountRepository;
 use App\Invoice\Payment\PaymentRepository;
+use App\Invoice\Product\ProductRepository;
+use App\Invoice\Task\TaskRepository;
 use App\Invoice\Setting\SettingRepository;
 
 // Helpers
@@ -463,6 +466,210 @@ class ReportController
                               : 0.00;                
                 array_push($results,$row); 
             } // null!==$client_id;
+        }        
+        return $results;
+    }
+    
+    /*****************
+     * PRODUCT
+     ******************/
+    
+    /**
+     * @param Request $request
+     * @param ViewRenderer $head
+     * @param ProductRepository $pR
+     * @param InvRepository $iR
+     * @param InvItemAmountRepository $iiaR
+     * @param SettingRepository $sR
+     * @return Response|\Mpdf\Mpdf|array|string
+     * @psalm-suppress MixedInferredReturnType
+     */
+    public function sales_by_product_index(
+      Request $request, 
+      ViewRenderer $head, 
+      ProductRepository $pR,
+      InvRepository $iR,
+      InvItemAmountRepository $iiaR,
+      SettingRepository $sR) : Response|\Mpdf\Mpdf|array|string
+    {
+      $this->flash_message('info', $this->translator->translate('invoice.report.sales.by.product.info'));
+      $datehelper = new DateHelper($sR);
+      $parameters = [
+        'head'=> $head,
+        'alert' => $this->alert(),
+        'action' => ['report/sales_by_product_index'],
+        'datehelper'=> $datehelper,
+        'start_tax_year' => $datehelper->tax_year_to_immutable(),
+      ];
+      if ($request->getMethod() === Method::POST) { 
+          $body = $request->getParsedBody();
+          if (is_array($body)) {
+              $from_date = (string)$body['from_date'];
+              $to_date = (string)$body['to_date'];
+              $data = [
+                'from_date' => $from_date,
+                'to_date' => $to_date,
+                'results' => $this->sales_by_product_report($pR, $iR, $datehelper->date_to_mysql($from_date), $datehelper->date_to_mysql($to_date), $iiaR),
+                'numberhelper' => new NumberHelper($sR),
+              ];
+              $mpdfhelper = new MpdfHelper(); 
+              /** @psalm-suppress MixedReturnStatement */
+              return $mpdfhelper->pdf_create(
+                       $this->viewRenderer->renderPartialAsString('/invoice/report/sales_by_product', $data), 
+                       $this->translator->translate('invoice.report.sales.by.product'), true, '', $sR, null, null, false, false, [], null
+              );
+          } // is_array body
+          return $this->webService->getNotFoundResponse();
+      }
+      return $this->viewRenderer->render('sales_by_product_index', $parameters);
+    }
+    
+    /**
+     * @param ProductRepository $pR
+     * @param InvRepository $iR
+     * @param string $from
+     * @param string $to
+     * @param InvItemAmountRepository $iiaR
+     * @return array
+     */
+    private function sales_by_product_report(ProductRepository $pR, 
+                                            InvRepository $iR, 
+                                            string $from, 
+                                            string $to, 
+                                            InvItemAmountRepository $iiaR, 
+                                            ) : array {
+        // Report Heading:  Sales by Product
+        // Report Heading2: From To Date
+        // Horizontal heading: Product Name, Inv Count, Sales Total, Item Tax, Tax, Sales With Tax
+        $results = [];
+        $row = [
+            'product_name' => '',
+            'inv_count'=> 0.00,            
+            'sales_no_tax'=> 0.00,
+            // plus (before/after item tax)
+            'item_tax_total' => 0.00           
+        ];
+        $products = $pR->findAllPreloaded();
+        /**
+         * @var \\App\Invoice\Entity\Product $product
+         */
+        foreach ($products as $product) {
+            $product_id = (int)$product->getProduct_id();
+            if (!empty($product_id)) {
+                // Product name
+                $row['product_name'] = (string) $product->getProduct_name();
+                $row['inv_count'] = $iR->repoCountByProduct($product_id);
+                $row['sales_no_tax'] = $iR->repoCountByProduct($product_id) > 0 
+                              ? $iR->with_item_subtotal_from_to_using_product($product_id, $from, $to, $iiaR) 
+                              : 0.00;
+                // plus
+                $row['item_tax_total'] = $iR->repoCountByProduct($product_id) > 0 
+                              ? $iR->with_item_tax_total_from_to_using_product($product_id, $from, $to, $iiaR) 
+                              : 0.00;                
+                array_push($results,$row); 
+            } // null!==$product_id;
+        }        
+        return $results;
+    }
+
+    /*******************
+     * TASK
+     *******************/
+
+    /**
+     * @param Request $request
+     * @param ViewRenderer $head
+     * @param TaskRepository $taskR
+     * @param InvRepository $iR
+     * @param InvItemAmountRepository $iiaR
+     * @param SettingRepository $sR
+     * @return Response|\Mpdf\Mpdf|array|string
+     * @psalm-suppress MixedInferredReturnType
+     */
+    public function sales_by_task_index(
+      Request $request, 
+      ViewRenderer $head, 
+      TaskRepository $taskR,
+      InvRepository $iR,
+      InvItemAmountRepository $iiaR,
+      SettingRepository $sR) : Response|\Mpdf\Mpdf|array|string
+    {
+      $this->flash_message('info', $this->translator->translate('invoice.report.sales.by.task.info'));
+      $datehelper = new DateHelper($sR);
+      $parameters = [
+        'head'=> $head,
+        'alert' => $this->alert(),
+        'action' => ['report/sales_by_task_index'],
+        'datehelper'=> $datehelper,
+        'start_tax_year' => $datehelper->tax_year_to_immutable(),
+      ];
+      if ($request->getMethod() === Method::POST) { 
+          $body = $request->getParsedBody();
+          if (is_array($body)) {
+              $from_date = (string)$body['from_date'];
+              $to_date = (string)$body['to_date'];
+              $data = [
+                'from_date' => $from_date,
+                'to_date' => $to_date,
+                'results' => $this->sales_by_task_report($taskR, $iR, $datehelper->date_to_mysql($from_date), $datehelper->date_to_mysql($to_date), $iiaR),
+                'numberhelper' => new NumberHelper($sR),
+              ];
+              $mpdfhelper = new MpdfHelper(); 
+              /** @psalm-suppress MixedReturnStatement */
+              return $mpdfhelper->pdf_create(
+                       $this->viewRenderer->renderPartialAsString('/invoice/report/sales_by_task', $data), 
+                       $this->translator->translate('invoice.report.sales.by.task'), true, '', $sR, null, null, false, false, [], null
+              );
+          } // is_array body
+          return $this->webService->getNotFoundResponse();
+      }
+         return $this->viewRenderer->render('sales_by_task_index', $parameters);
+    }
+    
+    /**
+     * @param TaskRepository $taskR
+     * @param InvRepository $iR
+     * @param string $from
+     * @param string $to
+     * @param InvItemAmountRepository $iiaR
+     * @return array
+     */
+    private function sales_by_task_report(TaskRepository $taskR, 
+                                            InvRepository $iR, 
+                                            string $from, 
+                                            string $to, 
+                                            InvItemAmountRepository $iiaR, 
+                                            ) : array {
+        // Report Heading:  Sales by Task
+        // Report Heading2: From To Date
+        // Horizontal heading: Task Name, Inv Count, Sales Total, Item Tax, Tax, Sales With Tax
+        $results = [];
+        $row = [
+            'task_name' => '',
+            'inv_count'=> 0.00,            
+            'sales_no_tax'=> 0.00,
+            // plus (before/after item tax)
+            'item_tax_total' => 0.00           
+        ];
+        $tasks = $taskR->findAllPreloaded();
+        /**
+         * @var \\App\Invoice\Entity\Task $task
+         */
+        foreach ($tasks as $task) {
+            $task_id = (int)$task->getId();
+            if (!empty($task_id)) {
+                // Task name
+                $row['task_name'] = (string)$task->getName();
+                $row['inv_count'] = $iR->repoCountByTask($task_id);
+                $row['sales_no_tax'] = $iR->repoCountByTask($task_id) > 0 
+                              ? $iR->with_item_subtotal_from_to_using_task($task_id, $from, $to, $iiaR) 
+                              : 0.00;
+                // plus
+                $row['item_tax_total'] = $iR->repoCountByTask($task_id) > 0 
+                              ? $iR->with_item_tax_total_from_to_using_task($task_id, $from, $to, $iiaR) 
+                              : 0.00;                
+                array_push($results,$row); 
+            } // null!==$task_id;
         }        
         return $results;
     }

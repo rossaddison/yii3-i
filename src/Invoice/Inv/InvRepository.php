@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Invoice\Inv;
 
 use App\Invoice\Entity\Inv;
+use App\Invoice\Entity\InvItem;
 use App\Invoice\Group\GroupRepository as GR;
 use App\Invoice\Setting\SettingRepository as SR;
 use App\Invoice\InvAmount\InvAmountRepository as IAR;
+use App\Invoice\InvItemAmount\InvItemAmountRepository as IIAR;
 
 use Cycle\ORM\Select;
 use Cycle\Database\Injection\Parameter;
@@ -726,5 +728,259 @@ final class InvRepository extends Select\Repository
         $query = $this->select()
                       ->where(['client_id' => $client_id]); 
         return $this->prepareDataReader($query);
-    }      
+    }
+    
+    /**
+     * @param int|null $product_id
+     * @return int
+     */
+    public function repoCountByProduct(int|null $product_id) : int {
+        $count = $this->select()
+                      ->distinct()
+                      ->with('items')
+                      ->where('items.product_id',$product_id)  
+                      ->count();
+        return $count;
+    }
+    
+       
+    /**
+     * @param int $product_id
+     * @param string $from_date
+     * @param string $to_date
+     * @return EntityReader
+     */
+    public function repoProductWithInvItemsFromToDate(int $product_id, string $from_date, string $to_date) : EntityReader {
+        $query = $this->select()
+                      ->distinct()
+                      ->with('items')  
+                      ->where('items.product_id',$product_id)
+                      ->andWhere('date_created','>=',$from_date)
+                      ->andWhere('date_created','<=',$to_date);
+        return $this->prepareDataReader($query);
+    }
+    
+    /**
+     * @param int $product_id
+     * @param string $from
+     * @param string $to
+     * @param IIAR $iiaR
+     * @return float
+     */
+    public function with_item_subtotal_from_to_using_product(int $product_id, string $from, string $to, IIAR $iiaR): float
+    {
+        $invoices = $this->repoProductWithInvItemsFromToDate($product_id, $from, $to);
+        $sum = 0.00;
+        /**
+         * @var Inv $invoice
+         */
+        foreach ($invoices as $invoice) {
+            $items = $invoice->getItems();
+            /**
+             * @var InvItem $item
+             */
+            foreach ($items as $item) {
+              if ($item->getProduct_id() == (string)$product_id) {
+                $inv_item_amount = $iiaR->repoInvItemAmountquery((string)$item->getId());
+                if (null!==$inv_item_amount) {
+                  $sum += ($inv_item_amount->getSubtotal() ?? 0.00);
+                }  
+              }
+            }
+        }
+        return $sum;
+    }
+    
+    // First tax: Item tax total 
+    /**
+     * @param int $product_id
+     * @param string $from
+     * @param string $to
+     * @param IIAR $iiaR
+     * @return float
+     */
+    public function with_item_tax_total_from_to_using_product(int $product_id, string $from, string $to, IIAR $iiaR): float
+    {
+        $invoices = $this->repoProductWithInvItemsFromToDate($product_id, $from, $to);
+        $sum = 0.00;
+        /**
+         * @var Inv $invoice
+         */
+        foreach ($invoices as $invoice) {
+            $items = $invoice->getItems();
+            /**
+             * @var InvItem $item
+             */
+            foreach ($items as $item) {
+              if ($item->getProduct_id() == (string)$product_id) {
+                $inv_item_amount = $iiaR->repoInvItemAmountquery((string)$item->getId());
+                if (null!==$inv_item_amount) {
+                  $sum += ($inv_item_amount->getTax_total() ?? 0.00);
+                }  
+              }
+            }
+        }
+        return $sum;
+    }
+    
+    /**
+     * Refer to Entity/InvItemAmount
+     * item_subtotal + item_tax_total = item_total
+     * 
+     * @param int $product_id
+     * @param string $from
+     * @param string $to
+     * @param IIAR $iiaR
+     * @return float
+     */
+    public function with_item_total_from_to_using_product(int $product_id, string $from, string $to, IIAR $iiaR): float
+    {
+        $invoices = $this->repoProductWithInvItemsFromToDate($product_id, $from, $to);
+        $sum = 0.00;
+        /**
+         * @var Inv $invoice
+         */
+        foreach ($invoices as $invoice) {
+            $items = $invoice->getItems();
+            /**
+             * @var InvItem $item
+             */
+            foreach ($items as $item) {
+              if ($item->getProduct_id() == (string)$product_id) {
+                $inv_item_amount = $iiaR->repoInvItemAmountquery((string)$item->getId());
+                if (null!==$inv_item_amount) {
+                  $sum += ($inv_item_amount->getTotal() ?? 0.00);
+                }  
+              }
+            }
+        }
+        return $sum;
+    }
+    
+    /**
+     * @param int|null $task_id
+     * @return int
+     */
+    public function repoCountByTask(int|null $task_id) : int {
+        $count = $this->select()
+                      ->distinct()
+                      ->with('items')
+                      ->where('items.task_id',$task_id)  
+                      ->count();
+        return $count;
+    }
+    
+       
+    /**
+     * @param int $task_id
+     * @param string $from_date
+     * @param string $to_date
+     * @return EntityReader
+     */
+    public function repoTaskWithInvItemsFromToDate(int $task_id, string $from_date, string $to_date) : EntityReader {
+        $query = $this->select()
+                      ->distinct()
+                      ->with('items')  
+                      ->where('items.task_id',$task_id)
+                      ->andWhere('date_created','>=',$from_date)
+                      ->andWhere('date_created','<=',$to_date);
+        return $this->prepareDataReader($query);
+    }
+    
+    /**
+     * @param int $task_id
+     * @param string $from
+     * @param string $to
+     * @param IIAR $iiaR
+     * @return float
+     */
+    public function with_item_subtotal_from_to_using_task(int $task_id, string $from, string $to, IIAR $iiaR): float
+    {
+        $invoices = $this->repoTaskWithInvItemsFromToDate($task_id, $from, $to);
+        $sum = 0.00;
+        /**
+         * @var Inv $invoice
+         */
+        foreach ($invoices as $invoice) {
+            $items = $invoice->getItems();
+            /**
+             * @var InvItem $item
+             */
+            foreach ($items as $item) {
+              if ($item->getTask_id() == (string)$task_id) {
+                $inv_item_amount = $iiaR->repoInvItemAmountquery((string)$item->getId());
+                if (null!==$inv_item_amount) {
+                  $sum += ($inv_item_amount->getSubtotal() ?? 0.00);
+                }  
+              }
+            }
+        }
+        return $sum;
+    }
+    
+    // First tax: Item tax total 
+    /**
+     * @param int $task_id
+     * @param string $from
+     * @param string $to
+     * @param IIAR $iiaR
+     * @return float
+     */
+    public function with_item_tax_total_from_to_using_task(int $task_id, string $from, string $to, IIAR $iiaR): float
+    {
+        $invoices = $this->repoTaskWithInvItemsFromToDate($task_id, $from, $to);
+        $sum = 0.00;
+        /**
+         * @var Inv $invoice
+         */
+        foreach ($invoices as $invoice) {
+            $items = $invoice->getItems();
+            /**
+             * @var InvItem $item
+             */
+            foreach ($items as $item) {
+              if ($item->getTask_id() == (string)$task_id) {
+                $inv_item_amount = $iiaR->repoInvItemAmountquery((string)$item->getId());
+                if (null!==$inv_item_amount) {
+                  $sum += ($inv_item_amount->getTax_total() ?? 0.00);
+                }  
+              }
+            }
+        }
+        return $sum;
+    }
+    
+    /**
+     * Refer to Entity/InvItemAmount
+     * item_subtotal + item_tax_total = item_total
+     * 
+     * @param int $task_id
+     * @param string $from
+     * @param string $to
+     * @param IIAR $iiaR
+     * @return float
+     */
+    public function with_item_total_from_to_using_task(int $task_id, string $from, string $to, IIAR $iiaR): float
+    {
+        $invoices = $this->repoTaskWithInvItemsFromToDate($task_id, $from, $to);
+        $sum = 0.00;
+        /**
+         * @var Inv $invoice
+         */
+        foreach ($invoices as $invoice) {
+            $items = $invoice->getItems();
+            /**
+             * @var InvItem $item
+             */
+            foreach ($items as $item) {
+              if ($item->getTask_id() == (string)$task_id) {
+                $inv_item_amount = $iiaR->repoInvItemAmountquery((string)$item->getId());
+                if (null!==$inv_item_amount) {
+                  $sum += ($inv_item_amount->getTotal() ?? 0.00);
+                }  
+              }
+            }
+        }
+        return $sum;
+    }
 }

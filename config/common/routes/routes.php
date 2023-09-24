@@ -2033,6 +2033,16 @@ return [
       ->middleware(Authentication::class)
       ->action([ReportController::class, 'sales_by_client_index'])
       ->name('report/sales_by_client_index'),
+      Route::methods([Method::GET, Method::POST], '/sales_by_product_index')
+      ->middleware(fn(AccessChecker $checker) => $checker->withPermission('editInv'))
+      ->middleware(Authentication::class)
+      ->action([ReportController::class, 'sales_by_product_index'])
+      ->name('report/sales_by_product_index'),
+      Route::methods([Method::GET, Method::POST], '/sales_by_task_index')
+      ->middleware(fn(AccessChecker $checker) => $checker->withPermission('editInv'))
+      ->middleware(Authentication::class)
+      ->action([ReportController::class, 'sales_by_task_index'])
+      ->name('report/sales_by_task_index'),
       Route::methods([Method::GET, Method::POST], '/sales_by_year_index')
       ->middleware(fn(AccessChecker $checker) => $checker->withPermission('editInv'))
       ->middleware(Authentication::class)

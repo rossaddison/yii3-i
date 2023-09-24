@@ -117,7 +117,6 @@ final class InvItemAllowanceChargeController
                     $amount = (float)$body['amount'];
                     $percent = $allowance_charge->getTaxRate()?->getTax_rate_percent() ?? 0.00;
                     $vat = $amount * $percent / 100; 
-                    echo $vat;
                     if ($form->load($body) && $validator->validate($form)->isValid()) {
                         $this->aciiService->saveInvItemAllowanceCharge(new InvItemAllowanceCharge(), $form, $vat);
                         $all_charges = 0.00;
@@ -214,7 +213,7 @@ final class InvItemAllowanceChargeController
       $params = $request->getQueryParams();
       /** @var string $params['inv_item_id'] */
       $inv_item_id = $params['inv_item_id'] ?? '';
-      
+      $this->flash_message('info', $this->translator->translate('invoice.peppol.allowance.or.charge.inherit'));
       // retrieve all the allowances or charges associated with the inv_item_id
       $invoice_item_allowances_or_charges = $iiacR->repoInvItemquery($inv_item_id);
       $paginator = (new OffsetPaginator($invoice_item_allowances_or_charges));
@@ -263,7 +262,7 @@ final class InvItemAllowanceChargeController
      * @param InvItemAmountRepository $iiaR
      * @param SettingRepository $settingRepository
      * @return Response
-     */    
+     */ 
     public function edit(CurrentRoute $currentRoute, ViewRenderer $head, Request $request, 
                         ValidatorInterface $validator,
                         AllowanceChargeRepository $acR,
@@ -300,12 +299,13 @@ final class InvItemAllowanceChargeController
                     $allowance_charge = $acR->repoAllowanceChargequery($allowance_charge_id);            
                     if ($allowance_charge && null!==$body) {
                         $percent = $allowance_charge->getTaxRate()?->getTax_rate_percent() ?? 0.00;
-                        $vat = $amount * $percent; 
-                        echo $vat;
+                        $vat = $amount * $percent/100;
                         if ($form->load($body) && $validator->validate($form)->isValid()) {
                             $this->aciiService->saveInvItemAllowanceCharge($acii, $form, $vat);
                             $all_charges = 0.00;
                             $all_allowances = 0.00;
+                            $all_allowances_vat = 0.00;
+                            $all_charges_vat = 0.00;
                             $aciis = $aciiR->repoInvItemquery($inv_item_id);                        
                             $inv_item_amount = $iiaR->repoInvItemAmountquery($inv_item_id);
                             if (null!==$inv_item_amount) {
@@ -314,14 +314,30 @@ final class InvItemAllowanceChargeController
                                     // charge add
                                     if ($acii->getAllowanceCharge()?->getIdentifier() === true) {
                                         $all_charges += (float)$acii->getAmount();
+                                        $all_charges_vat += (float)$acii->getVat();
                                     } else {
                                         // allowance subtract
                                         $all_allowances += (float)$acii->getAmount();
+                                        $all_allowances_vat += (float)$acii->getVat();
                                     }
                                 }
                                 // Record the charges and allowances in the InvItemAmount Entity
                                 $inv_item_amount->setCharge($all_charges);
                                 $inv_item_amount->setAllowance($all_allowances);
+                                $all_vat = $all_charges_vat - $all_allowances_vat;
+                                $current_item_quantity = $inv_item_amount->getInvItem()?->getQuantity() ?: 0.00;
+                                $current_item_price = $inv_item_amount->getInvItem()?->getPrice() ?: 0.00;
+                                $current_subtotal = $current_item_quantity * $current_item_price;
+                                $vat_percent = $inv_item_amount->getInvItem()?->getTaxRate()?->getTax_rate_percent();
+                                $current_tax_total = $current_subtotal * ($vat_percent ?: 0.00) / 100;
+                                $new_tax_total = $current_tax_total + $all_vat;
+                                $inv_item_amount->setTax_total($new_tax_total);
+                                $overall_total = ($inv_item_amount->getSubtotal() ?: 0.00)
+                                                 // This discount relates to the edit...form...discount value
+                                                 // and is unrelated to peppol allowances and charges 
+                                               - ($inv_item_amount->getDiscount() ?: 0.00)  
+                                               + $new_tax_total + $all_charges - $all_allowances; 
+                                $inv_item_amount->setTotal($overall_total);
                                 $iiaR->save($inv_item_amount);
                                 return $this->webService->getRedirectResponse('inv/view',['id'=>$inv_id]);
                             } //null !==$inv_item_amount

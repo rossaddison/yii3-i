@@ -241,6 +241,8 @@ $this->beginPage();
               ['label' => $s->trans('reports'),
                 'items' => [
                   ['options' => ['class' => 'nav fs-4'], 'label' => $s->trans('sales_by_client'), 'url' => $urlGenerator->generate('report/sales_by_client_index')],
+                  ['options' => ['class' => 'nav fs-4'], 'label' => $translator->translate('invoice.report.sales.by.product'), 'url' => $urlGenerator->generate('report/sales_by_product_index')],
+                  ['options' => ['class' => 'nav fs-4'], 'label' => $translator->translate('invoice.report.sales.by.task'), 'url' => $urlGenerator->generate('report/sales_by_task_index')],
                   ['options' => ['class' => 'nav fs-4'], 'label' => $s->trans('sales_by_date'), 'url' => $urlGenerator->generate('report/sales_by_year_index')],
                   ['options' => ['class' => 'nav fs-4'], 'label' => $s->trans('payment_history'), 'url' => $urlGenerator->generate('report/payment_history_index')],
                   ['options' => ['class' => 'nav fs-4'], 'label' => $s->trans('invoice_aging'), 'url' => $urlGenerator->generate('report/invoice_aging_index')],

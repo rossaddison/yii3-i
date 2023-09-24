@@ -3191,6 +3191,7 @@ final class InvController {
     private function view_partial_item_table(bool $show_buttons, CurrentRoute $currentRoute, ACIR $aciR, ACIIR $aciiR, PR $pR, PIR $piR, TaskR $taskR, IIR $iiR, IIAR $iiaR, IR $iR, TRR $trR, UNR $uR, ITRR $itrR, InvAmount|null $inv_amount): string {
         $inv = $this->inv($currentRoute, $iR, false);
         if ($inv) {
+            $draft = ($inv->getStatus_id() == '1' ? true : false);
             $inv_tax_rates = (($itrR->repoCount((string) $this->session->get('inv_id')) > 0) ? $itrR->repoInvquery((string) $this->session->get('inv_id')) : null);
             // Allowances or Charges: DOCUMENT Level using $aciR
             $acis = $aciR->repoACIquery((string) $inv->getId());
@@ -3200,6 +3201,8 @@ final class InvController {
             return $this->view_renderer->renderPartialAsString('/invoice/inv/partial_item_table', [
               'dl_acis' => $acis,
               'aciiR' => $aciiR,
+              // Only make buttons available if status is draft
+              'draft' => $draft,
               'piR' => $piR,
               'show_buttons' => $show_buttons,
               'numberhelper' => $this->number_helper,

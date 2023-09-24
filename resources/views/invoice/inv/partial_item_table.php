@@ -227,7 +227,7 @@ $vat = $s->get_setting('enable_vat_registration');
                         </div>
                     </td>
                     <td class="td-icon text-right td-vert-middle">                        
-                        <?php if ($show_buttons === true && $user_can_edit === true) { ?>
+                        <?php if ($show_buttons === true && $user_can_edit === true && $draft === true) { ?>
                             <a class="btn btn-info fa fa-eye" data-toggle="modal" href="#view-product-<?= $item->getId(); ?>" style="text-decoration:none"></a> 
                             <div id="view-product-<?= $item->getId(); ?>" class="modal modal-lg" tabindex="-1" role="dialog" aria-labelledby="modal_view_product_<?= $item->getId(); ?>" aria-hidden="true">
                                 <div class="modal-content">
