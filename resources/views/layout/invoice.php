@@ -159,8 +159,8 @@ $this->beginPage();
         $offcanvas = new Offcanvas();
 
         echo NavBar::widget()
-          // public folder ie. public/yii3_sign
-          ->brandImage('/favicon')
+          // public folder represented by first forward slash ie. root
+          ->brandImage('/site/favicon.ico')
           ->brandImageAttributes(['width' => 40, 'height' => 20])
           ->brandUrl($urlGenerator->generate('invoice/index'))
           ->offCanvas(

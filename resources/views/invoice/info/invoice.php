@@ -13,6 +13,24 @@
 <p><s>7. Improve Generator index template using Yiisoft functions.</s></p>
 <p><s>8. Include Product images</s></p>
 <p>9. Integrate <code>https://github.com/php-finance/double-entry</code></p>
+<p>10. Remove all $s variables passed to views since the variable is definded under config/params.php
+<br>
+<code>
+'yiisoft/view' => [
+    'basePath' => '@views',
+    'parameters' => [
+      'assetManager' => Reference::to(AssetManager::class),
+      'urlGenerator' => Reference::to(UrlGeneratorInterface::class),
+      'currentRoute' => Reference::to(CurrentRoute::class),
+      'translator' => Reference::to(TranslatorInterface::class),
+      // yii-invoice - Below parameters are specifically used in views/layout/invoice
+      's' => Reference::to(SettingRepository::class),
+      'session' => Reference::to(SessionInterface::class),
+      'datehelper' => Reference::to(DateHelper::class),
+    ],
+  ],      
+</code>    
+</p>    
 <p><s>Pdf template construction upon emailing.</s></p>
 <p><s>Work on info issues</s></p>
 <p>Work In Progress - Shorter Term Goals</p>
@@ -25,6 +43,20 @@
 <p>Introducing Paypal.</p>
 <p>Introducing India's PayTm payment gateway's QR code method of payment and comparing this with Stripe's method.</p>
 <p>A General Sales Tax (GST) Tax System will have to be implemented first for this purpose.</p>
+<p><b>25 September 2023</b></p>
+<p>Bugfix $ucR variable undefined. Retain within controller rather than view.</p>
+<p>Testing on yii3i.co.uk</p>
+<p>.htaccess file located at root (yii3i.co.uk/) rebasing to /yii3i (main folder yii3-i-main) directing to public folder</p>
+<p><a href = "https://stackoverflow.com/questions/23635746/htaccess-redirect-from-site-root-to-public-folder-hiding-public-in-url/23638209#23638209">Stackoverflow </a></p>
+<p>
+    <code>
+        RewriteEngine On<br>
+        RewriteBase /yii3i<br>
+        RewriteCond %{THE_REQUEST} /public/([^\s?]*) [NC]<br>
+        RewriteRule ^ %1 [L,NE,R=302]<br>
+        RewriteRule ^((?!public/).*)$ public/$1 [L,NC]<br>
+    </code>
+</p>
 <p><b>24 September 2023</b></p>
 <p>Multiple Product Image Gallery can be created for each product under Product ... Index ... View ... View ... Product Images</p>
 <p>Sales Report by Product/Task</p>
@@ -32,8 +64,8 @@
 <p><b>20 August 2023</b></p>
 <p>Each Product has an additional field called Additional Item Property Name and Value. These product properties can be added from the product view.
 <p>A number of Additional Properties can be added to a product now by means of the Product Property Entity.</p>
-<p><img src="/options" height="300" width="500"></p>
-<p><img src="/ecosio_openpeppol_ubl_invoice_3_15_0" height="300" width="600"></p>
+<p><img src="/site/options.png" height="300" width="500"></p>
+<p><img src="/site/ecosio_openpeppol_ubl_invoice_3_15_0.png" height="300" width="600"></p>
 <p>Introduce Peppol (src\Invoice\Helpers\Peppol\PeppolHelper)</p>
 <p><a href="https://ecosio.com/en/peppol-and-xml-document-validator-button/?pk_abe=EN_Peppol_XML_Validator_Page&pk_abv=With_CTA"> An Ecosio validated 0 error xml e-invoice</a> can be generated. 
 <p>Introduce StoreCove (src\Invoice\Helpers\StoreCove\StoreCoveHelper) </p>
@@ -208,7 +240,7 @@ ie. check that the gateway_lang.php in the English folder corresponds with your 
 <p>6. The omnipay payment gateway with stripe will give the following warning (which is not recommended to accept): </p>
 <p>Payment failed. Please try again. Response: Sending credit card numbers directly to the Stripe API is generally unsafe. We suggest you use test tokens that map to the test card you are using, see https://stripe.com/docs/testing.</p>
 <p>You will have to go into https://dashboard.stripe.com/settings/integration and toggle the following screen.</p>
-<img src="/stripe" height="300" width="600">
+<img src="/site/stripe.png" height="300" width="600">
 <p>7. Github Static Analysis: Psalm Level 7,6,5,4 testing - errors 0</p>
 <p>8. The function src\User\Console\AssignRoleCommand and CreateCommand is functional as the observer role can be assigned to a client with the result ending up as an assignment in ...invoices/resources/rbac</p>
 <p>How to reach Psalm level 4 the following code is needed to suppress Psalm errors on level 4: </p>
@@ -254,9 +286,9 @@ ie. check that the gateway_lang.php in the English folder corresponds with your 
     </code>
 </p>
 <p>13. Stripe version 10 is working for debit/credit cards and for bacs. Login as a user with observer role.</p>
-<img src="/stripe_v_10" height="300" width="450"/>
+<img src="/site/stripe_v_10.png" height="300" width="450"/>
 <p>14. Amazon Pay v2.40 is working if you are signed in to Amazon concurrently. Login as a user with observer role.</p>
-<img src="/amazon_pay_v_2_40" height="300" width="450"/>
+<img src="/site/amazon_pay_v_2_40.png" height="300" width="450"/>
 <p>15. The PaymentController and MerchantController guest related functions adopt the same approach as the InvController:</p>
 <p><code>
         // Get the current user and determine from (@see Settings...User Account) whether they have been given <br>
