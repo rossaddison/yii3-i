@@ -228,6 +228,7 @@ $lang = [
   'invoice.invoice.document.description' => 'Peppol Document Description',
   'invoice.invoice.draft.number.off' => 'New draft Invoices will have no Invoice Number. Mark as sent to get Invoice Number',
   'invoice.invoice.draft.number.on' => 'New draft Invoices will have an Invoice Number',
+  'invoice.invoice.email.not.sent.successfully' => 'The email was NOT sent successfully',
   'invoice.invoice.enable.vat' => 'Enable VAT',
   'invoice.invoice.enable.vat.message' => 'Display VAT reminder message above options button on views',
   'invoice.invoice.enable.vat.warning.line.1' => '1. With VAT enabled, only individual line items on the invoice are taxed with vat. ie. Quote/Invoice Taxes will not appear on the invoice and will be reduced to 0.',

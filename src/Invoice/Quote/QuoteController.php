@@ -868,7 +868,7 @@ final class QuoteController
                                   CCR $ccR, CFR $cfR, CVR $cvR, 
                                   ETR $etR, ICR $icR, 
                                   QR $qR, PCR $pcR, SOCR $socR, QCR $qcR, UIR $uiR) : Response {
-        $mailer_helper = new MailerHelper($this->sR, $this->session, $this->logger, $this->mailer, $ccR, $qcR, $icR, $pcR, $socR, $cfR, $cvR);
+        $mailer_helper = new MailerHelper($this->sR, $this->session, $this->translator,  $this->logger, $this->mailer, $ccR, $qcR, $icR, $pcR, $socR, $cfR, $cvR);
         $template_helper = new TemplateHelper($this->sR, $ccR, $qcR, $icR, $pcR, $socR, $cfR, $cvR);
         if (!$mailer_helper->mailer_configured()) {
             $this->flash_message('warning', $this->sR->trans('email_not_configured'));
@@ -1030,7 +1030,7 @@ final class QuoteController
     {
         // All custom repositories, including icR have to be initialised.
         $template_helper = new TemplateHelper($this->sR, $ccR, $qcR, $icR, $pcR, $socR, $cfR, $cvR);
-        $mailer_helper = new MailerHelper($this->sR, $this->session, $this->logger, $this->mailer, $ccR, $qcR, $icR, $pcR, $socR, $cfR, $cvR);       
+        $mailer_helper = new MailerHelper($this->sR, $this->session, $this->translator,  $this->logger, $this->mailer, $ccR, $qcR, $icR, $pcR, $socR, $cfR, $cvR);       
         if ($quote_id) {
             $quote_amount = (($qaR->repoQuoteAmountCount($quote_id) > 0) ? $qaR->repoQuotequery($quote_id) : null);        
             $quote_custom_values = $this->quote_custom_values($quote_id, $qcR);
@@ -1094,7 +1094,7 @@ final class QuoteController
     {
         $quote_id = $currentRoute->getArgument('id'); 
         if (null!==$quote_id) {
-            $mailer_helper = new MailerHelper($this->sR, $this->session, $this->logger, $this->mailer, $ccR, $qcR, $icR, $pcR, $socR, $cfR, $cvR);
+            $mailer_helper = new MailerHelper($this->sR, $this->session, $this->translator,  $this->logger, $this->mailer, $ccR, $qcR, $icR, $pcR, $socR, $cfR, $cvR);
             $body = $request->getParsedBody() ?? [];
             if (is_array($body)) {
                 $body['btn_cancel'] = 0; 

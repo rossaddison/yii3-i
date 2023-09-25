@@ -1007,7 +1007,7 @@ final class InvController {
             ETR $etR,
             ICR $icR, IR $iR,
             PCR $pcR, SOCR $socR, QCR $qcR, UIR $uiR): Response {
-        $mailer_helper = new MailerHelper($this->sR, $this->session, $this->logger, $this->mailer, $ccR, $qcR, $icR, $pcR, $socR, $cfR, $cvR);
+        $mailer_helper = new MailerHelper($this->sR, $this->session, $this->translator, $this->logger, $this->mailer, $ccR, $qcR, $icR, $pcR, $socR, $cfR, $cvR);
         $template_helper = new TemplateHelper($this->sR, $ccR, $qcR, $icR, $pcR, $socR, $cfR, $cvR);
         if (!$mailer_helper->mailer_configured()) {
             $this->flash_message('warning', $this->sR->trans('email_not_configured'));
@@ -1175,17 +1175,20 @@ final class InvController {
             SumexR $sumexR,
             ViewRenderer $viewrenderer): bool {
         $template_helper = new TemplateHelper($this->sR, $ccR, $qcR, $icR, $pcR, $socR, $cfR, $cvR);
-        $mailer_helper = new MailerHelper($this->sR, $this->session, $this->logger, $this->mailer,
+        $mailer_helper = new MailerHelper($this->sR, $this->session, $this->translator, $this->logger, $this->mailer,
                 $ccR, $qcR, $icR, $pcR, $socR, $cfR, $cvR);
         if ($inv_id) {
             $inv_amount = (($iaR->repoInvAmountCount((int) $inv_id) > 0) ? $iaR->repoInvquery((int) $inv_id) : null);
             $inv_custom_values = $this->inv_custom_values($inv_id, $icR);
             $inv = $iR->repoCount($inv_id) > 0 ? $iR->repoInvUnLoadedquery($inv_id) : null;
             if ($inv) {
-                $stream = false;
+                // The Google sign under Invoices ... Pdf Settings
+                // The initial recommendation for testing email sending is that this be set to off ie. 1 
+                // so that a plain successful message can be output without interferance from a pdf
+                $stream = ($this->sR->get_setting('pdf_stream_inv') == '1' ? true : false);
                 $so = ($inv->getSo_id() ? $soR->repoSalesOrderLoadedquery($inv->getSo_id()) : null);
                 // true => invoice ie. not quote
-                // $stream is false => pdfhelper->generate_inv_pdf => mpdfhelper->pdf_Create => filename returned
+                // If $stream is false => pdfhelper->generate_inv_pdf => mpdfhelper->pdf_Create => filename returned
                 $pdf_template_target_path = $this->pdf_helper->generate_inv_pdf($inv_id, $inv->getUser_id(), $stream, true, $so, $inv_amount, $inv_custom_values, $cR, $cvR, $cfR, $iiR, $iiaR, $iR, $itrR, $uiR, $sumexR, $viewrenderer);
                 if ($pdf_template_target_path) {
                     $mail_message = $template_helper->parse_template($inv_id, true, $email_body, $cR, $cvR, $iR, $iaR, $qR, $qaR, $soR, $uiR);
@@ -1244,7 +1247,7 @@ final class InvController {
             PCR $pcR, SOCR $socR, QR $qR, QAR $qaR, QCR $qcR, SOR $soR, UIR $uiR, SumexR $sumexR): Response {
         $inv_id = $currentRoute->getArgument('id');
         if ($inv_id) {
-            $mailer_helper = new MailerHelper($this->sR, $this->session, $this->logger, $this->mailer, $ccR, $qcR, $icR, $pcR, $socR, $cfR, $cvR);
+            $mailer_helper = new MailerHelper($this->sR, $this->session, $this->translator, $this->logger, $this->mailer, $ccR, $qcR, $icR, $pcR, $socR, $cfR, $cvR);
             $body = $request->getParsedBody() ?? [];
             if (is_array($body)) {
                 $body['btn_cancel'] = 0;
@@ -1298,14 +1301,26 @@ final class InvController {
                     $iaR, $icR, $iiaR, $iiR, $iR, $itrR,
                     $pcR, $socR,
                     $qR, $qaR, $qcR, $soR, $uiR, $sumexR, $this->view_renderer)) {
-                    $this->sR->invoice_mark_sent($inv_id, $iR);
+                    $invoice = $iR->repoInvUnloadedquery($inv_id);
+                    if ($invoice) {
+                      //draft->sent->view->paid
+                      //set the invoice to sent ie. 2                                    
+                      $invoice->setStatus_id(2);
+                      $iR->save($invoice);
+                    }
                     return $this->factory->createResponse($this->view_renderer->renderPartialAsString('/invoice/setting/inv_message',
-                                            ['heading' => '', 'message' => $this->sR->trans('email_successfully_sent'),
-                                                'url' => 'inv/view', 'id' => $inv_id]));
+// EMAIL SENT
+                      ['heading' => '', 
+                       'message' => $this->sR->trans('email_successfully_sent'),
+                       'url' => 'inv/view', 
+                       'id' => $inv_id]));
                 } else {
                     return $this->factory->createResponse($this->view_renderer->renderPartialAsString('/invoice/setting/inv_message',
-                                            ['heading' => '', 'message' => $this->sR->trans('email_not_sent'),
-                                                'url' => 'inv/view', 'id' => $inv_id]));
+// EMAIL ... NOT ... SENT
+                      ['heading' => '', 
+                       'message' => $this->translator->translate('invoice.invoice.email.not.sent.successfully'),
+                       'url' => 'inv/view', 
+                       'id' => $inv_id]));
                 } //$this->email_stage_1
             } //is_array(body)
             return $this->factory->createResponse($this->view_renderer->renderPartialAsString('/invoice/setting/inv_message',

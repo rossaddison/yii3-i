@@ -29,6 +29,7 @@ use Yiisoft\Files\FileHelper;
 use Yiisoft\Router\UrlGeneratorInterface as UrlGenerator;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Session\SessionInterface as Session;
+use Yiisoft\Translator\TranslatorInterface ;
 // Mailer
 use Yiisoft\Mailer\File;
 use Yiisoft\Mailer\MailerInterface;
@@ -38,24 +39,29 @@ Class MailerHelper
 {
         private SRepo $s;
         private Session $session;
+        private TranslatorInterface $translator;
         private PdfHelper $pdfhelper;
         private TemplateHelper $templatehelper;
         private InvoiceHelper $invoicehelper;
+        private Flash $flash;
     
     public function __construct(SRepo $s, 
-        Session $session,        
+        Session $session,
+        TranslatorInterface $translator,
         private LoggerInterface $logger,    
         private MailerInterface $mailer,    
         CCR $ccR, QCR $qcR, ICR $icR, PCR $pcR, SOCR $socR, CFR $cfR, CVR $cvR)
     {
         $this->s = $s;
         $this->session = $session;
+        $this->translator = $translator;
         $this->pdfhelper = new PdfHelper($s, $session);
         $this->templatehelper = new TemplateHelper($s, $ccR, $qcR, $icR, $pcR, $socR, $cfR, $cvR);
         $this->invoicehelper = new InvoiceHelper($s, $session);
         $this->logger = $logger;
         // yii-mailer: Not using yii's contact-email template but ...mail/invoice/invoice.php 
         $this->mailer = $this->mailer->withTemplate(new MessageBodyTemplate(dirname(dirname(dirname(__DIR__))). '/src/Contact/mail/invoice'));    
+        $this->flash = new Flash($session);
     }
     
     public function mailer_configured(): bool
@@ -109,6 +115,20 @@ Class MailerHelper
         return false;
     }
     
+    /**
+     * 
+     * @param string $from_email
+     * @param string $from_name
+     * @param string $to
+     * @param string $subject
+     * @param string $html_body
+     * @param array|string|null $cc
+     * @param array|string|null $bcc
+     * @param array $attachFiles
+     * @param string|null $pdf_template_target_path
+     * @param UIR|null $uiR
+     * @return bool
+     */
     public function yii_mailer_send(
         string $from_email,
         string $from_name,
@@ -205,22 +225,23 @@ Class MailerHelper
         }
         try {
             $this->mailer->send($email_attachments_with_pdf_template);
-            $flashMsg = $this->s->trans('email_successfully_sent');
+            $this->flash_message('info', $this->s->trans('email_successfully_sent'));
             return true;
         } catch (\Exception $e) {
-            $flashMsg = 'Email not successfully sent: ' .$e->getMessage();
-            $this->logger->error($flashMsg);            
+            $this->flash_message('warning', $this->translator->translate('invoice.invoice.email.not.sent.successfully')); 
+            $this->logger->error($e->getMessage());            
         } 
         return false;
     }
     
     /**
-     * @psalm-param 'success'|'warning' $level
+     * @param string $level
+     * @param string $message
+     * @return Flash
      */
-    private function flash(string $level, string $message): Flash{
-        $flash = new Flash($this->session);
-        $flash->set($level, $message); 
-        return $flash;
+    private function flash_message(string $level, string $message): Flash {
+      $this->flash->add($level, $message, true);
+      return $this->flash;
     }
     
 }

@@ -185,6 +185,7 @@ return [
   'invoice.invoice.delivery.location.delete' => 'Delivery Location Delete',
   'invoice.invoice.delivery.location.none' => 'No delivery location has been linked to this invoice',
   'invoice.invoice.delete.sent' => 'Cannot delete - invoice sent',
+  'invoice.invoice.email.not.sent.successfully' => 'The email was NOT sent successfully',
   'invoice.invoice.html.sumex.yes' => 'Html with Sumex',
   'invoice.invoice.html.sumex.no' => 'Html without Sumex',
   'invoice.invoice.item' => 'Invoice Item',

@@ -1511,7 +1511,11 @@ final class SettingRepository extends Select\Repository
         'open_reports_in_new_tab'=>[
           'why'=>'Open reports up in a new tab. Featured in eg. Reports...invoice_aging_index.php',  
           'where'=>' eg. views/invoice/invoice_aging_index.php'
-        ],    
+        ],
+        'pdf_archive_inv'=> [
+            'why'=>'Pdf\'s that are generated can be archived under a folder called Archive situated in the Uploads folder.',
+            'where'=>'pdfHelper pdfCreate function'
+        ],  
         'pdf_watermark'=>[
             'why'=>'eg. If an invoice is paid, a watermark with the word paid will appear across it. The same applies to overdue invoices.',
             'where'=>'src/Invoice/Helpers/MpdfHelper/initialize_pdf function.'
@@ -1527,6 +1531,10 @@ final class SettingRepository extends Select\Repository
         'pdf_invoice_template_overdue'=>[
             'why'=>'Clients can download pdfs online if logged in and given observer status. This represents the overdue template. ie. if an invoice is overdue and is used alongside the normal and paid template.',
             'where'=>'src/Invoice/Helpers/TemplateHelper/select_pdf_invoice_template function.'
+        ],
+        'pdf_stream_inv'=>[
+            'why'=>'To stream is to present in the browser normally as xml, html, or a pdf. Not to stream is to print to a file. Hence the use of the The Google sign located under settings ... Views ... Invoices... ',
+            'where'=>'resources/views/invoice/setting/views/partial_settings_invoices with InvController/email_stage_1 variable $stream ... pdfHelper->generate_inv_pdf ... mpdfHelper->pdfCreate', 
         ],
         'quote_overview_period'=>[
             'why'=>'This setting is used on the dashboard so that the quotes that are shown will either be this-month, last-month, this-quarter, last-quarter, this-year, or last-year',
