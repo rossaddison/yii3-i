@@ -1471,6 +1471,8 @@ final class InvController {
     public function index(Request $request, IAR $iaR, IR $invRepo, IRR $irR, CR $clientRepo, GR $groupRepo, QR $qR, SOR $soR, DLR $dlR, UCR $ucR, CurrentRoute $currentRoute): \Yiisoft\DataResponse\DataResponse {
         // If the language dropdown changes
         $this->session->set('_language', $currentRoute->getArgument('_language'));
+        $active_clients = $ucR->getClients_with_user_accounts();
+        $clients = $clientRepo->repoUserClient($active_clients);
         $query_params = $request->getQueryParams();
         $page = (int) $currentRoute->getArgument('page', '1');
         //status 0 => 'all';
@@ -1515,9 +1517,8 @@ final class InvController {
             'irR' => $irR,
             'max' => (int) $this->sR->get_setting('default_list_limit'),
             'modal_create_inv' => $this->view_renderer->renderPartialAsString('/invoice/inv/modal_create_inv', [
-                'clients' => $clientRepo->findAllPreloaded(),
-                // Only make available clients that have linked user accounts => use user_client repository
-                'ucR' => $ucR,
+                // Only make available clients that have active user accounts => use user_client repository
+                'clients' => $clients,
                 'invoice_groups' => $groupRepo->findAllPreloaded(),
                 'datehelper' => $this->date_helper,
             ])

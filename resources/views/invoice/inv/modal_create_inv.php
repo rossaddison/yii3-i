@@ -26,12 +26,9 @@ use Yiisoft\Html\Html;
             <label for="create_inv_client_id"><?= $s->trans('client'); ?></label>
             <select name="create_inv_client_id" id="create_inv_client_id" class="form-control">
                 <?php foreach ($clients as $client) { ?>
-                  <!-- Ensure that only clients with user accounts are selected -->
-                  <?php if (in_array($client->getClient_id(), $ucR->getClients_with_user_accounts())) { ?> )
                     <option value="<?= $client->getClient_id(); ?>">
                         <?= Html::encode($client->getClient_name()); ?>
                     </option>
-                  <?php } ?>  
                 <?php } ?>
             </select>
         </div>
@@ -41,7 +38,6 @@ use Yiisoft\Html\Html;
                    value="<?php echo $s->get_setting('invoice_pre_password') ? '' : $s->get_setting('invoice_pre_password') ?>"
                    autocomplete="off">
         </div>
-
         <div>
             <label for="inv_group_id"><?= $s->trans('invoice_group'); ?>: </label>
             <select name="inv_group_id" id="inv_group_id"

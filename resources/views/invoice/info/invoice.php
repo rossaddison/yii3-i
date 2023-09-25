@@ -11,7 +11,7 @@
 <p>5. Further validation and exceptions to be included in testing of e-Invoicing using PeppolHelper.</p>
 <p>6. Filters to be introduced on grids</p>
 <p><s>7. Improve Generator index template using Yiisoft functions.</s></p>
-<p>8. Include Product images</p>
+<p><s>8. Include Product images</s></p>
 <p>9. Integrate <code>https://github.com/php-finance/double-entry</code></p>
 <p><s>Pdf template construction upon emailing.</s></p>
 <p><s>Work on info issues</s></p>
@@ -25,6 +25,10 @@
 <p>Introducing Paypal.</p>
 <p>Introducing India's PayTm payment gateway's QR code method of payment and comparing this with Stripe's method.</p>
 <p>A General Sales Tax (GST) Tax System will have to be implemented first for this purpose.</p>
+<p><b>24 September 2023</b></p>
+<p>Multiple Product Image Gallery can be created for each product under Product ... Index ... View ... View ... Product Images</p>
+<p>Sales Report by Product/Task</p>
+<p>Bug Fix InvItemAllowanceCharge Edit.</p>
 <p><b>20 August 2023</b></p>
 <p>Each Product has an additional field called Additional Item Property Name and Value. These product properties can be added from the product view.
 <p>A number of Additional Properties can be added to a product now by means of the Product Property Entity.</p>

@@ -1283,7 +1283,8 @@ final class QuoteController
     {
         // If the language dropdown changes
         $this->session->set('_language', $currentRoute->getArgument('_language'));
-        
+        $active_clients = $ucR->getClients_with_user_accounts();
+        $clients = $clientRepo->repoUserClient($active_clients);
         $query_params = $request->getQueryParams();
         $page = (int)$currentRoute->getArgument('page','1');
         //status 0 => 'all';
@@ -1321,12 +1322,11 @@ final class QuoteController
             'qaR'=>$qaR,
             'soR'=>$soR,
             'modal_create_quote'=>$this->view_renderer->renderPartialAsString('/invoice/quote/modal_create_quote',[
-                  'clients'=>$clientRepo->findAllPreloaded(),
-                  // Only make available clients that have linked user accounts => use user_client repository
-                  'ucR' => $ucR,
-                  's'=>$this->sR,
-                  'invoice_groups'=>$groupRepo->findAllPreloaded(),
-                  'datehelper'=> new DateHelper($this->sR)
+              // Only make available clients that have linked user accounts => use user_client repository
+              'clients'=>$clients,
+              's'=>$this->sR,
+              'invoice_groups'=>$groupRepo->findAllPreloaded(),
+              'datehelper'=> new DateHelper($this->sR)
             ]),           
         ];  
         return $this->view_renderer->render('/invoice/quote/index', $parameters);  
