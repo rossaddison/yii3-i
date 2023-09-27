@@ -10,6 +10,7 @@ use Yiisoft\Html\Tag\I;
 use Yiisoft\Yii\DataView\OffsetPagination;
 use Yiisoft\Yii\DataView\Column\DataColumn;
 use Yiisoft\Yii\DataView\GridView;
+use Yiisoft\VarDumper\VarDumper;
 
 /**
  * @var \App\Invoice\Entity\UserInv $userinv
@@ -116,7 +117,70 @@ echo $alert;
                     1 => $s->trans('guest_read_only'),
                 ];  
                 return $user_types[$model->getType()];
-            }),            
+            }),
+            DataColumn::create()
+            ->attribute('user_id')
+            ->label($translator->translate('invoice.user.inv.role.accountant'))
+            ->value(static function ($model) use ($manager, $translator, $urlGenerator): string {
+              if ($manager->getPermissionsByUserId($model->getUser_id()) 
+                === $manager->getPermissionsByRoleName('accountant')) { 
+                return Html::tag('span', $translator->translate('invoice.general.yes'),['class'=>'label active'])->render(); 
+              } else {
+                return $model->getUser_id() !== '1' ? Html::a(
+                  Html::tag('button',
+                  Html::tag('span', $translator->translate('invoice.general.no'),['class'=>'label inactive'])
+                  ,[
+                     'type'=>'submit', 
+                     'class'=>'dropdown-button',
+                     'onclick'=>"return confirm("."'".$translator->translate('invoice.user.inv.role.warning.role') ."');"
+                  ]),
+                  $urlGenerator->generate('userinv/accountant',['user_id'=>$model->getUser_id()],[]),
+                 )->render() : '';
+              }
+            }),
+            DataColumn::create()
+            ->attribute('user_id')
+            ->label($translator->translate('invoice.user.inv.role.administrator'))
+            ->value(static function ($model) use ($manager, $translator, $urlGenerator): string {
+              if ($manager->getPermissionsByUserId($model->getUser_id()) 
+                === $manager->getPermissionsByRoleName('admin')) { 
+                return  Html::tag('span', $translator->translate('invoice.general.yes'),['class'=>'label active'])->render(); 
+              } else {
+                if (!$model->getUser_id()=='1') {
+                return Html::a(
+                  Html::tag('button',
+                  Html::tag('span', $translator->translate('invoice.general.no'),['class'=>'label inactive'])
+                  ,[
+                     'type'=>'submit', 
+                     'class'=>'dropdown-button',
+                     'onclick'=>"return confirm("."'".$translator->translate('invoice.user.inv.role.warning.role') ."');"
+                  ]),
+                  $urlGenerator->generate('userinv/admin',['user_id'=>$model->getUser_id()],[]),
+                 )->render();
+                } // not id == 1 => use AssignRole console command to assign the admin role
+                return '';
+                } // else
+            }),
+            DataColumn::create()
+            ->attribute('user_id')
+            ->label($translator->translate('invoice.user.inv.role.observer'))
+            ->value(static function ($model) use ($manager, $translator, $urlGenerator): string {
+              if ($manager->getPermissionsByUserId($model->getUser_id()) 
+                === $manager->getPermissionsByRoleName('observer')) { 
+                return  Html::tag('span', $translator->translate('invoice.general.yes'),['class'=>'label active'])->render(); 
+              } else {
+                return $model->getUser_id() !== '1' ? Html::a(
+                    Html::tag('button',
+                    Html::tag('span', $translator->translate('invoice.general.no'),['class'=>'label inactive'])
+                    ,[
+                       'type'=>'submit', 
+                       'class'=>'dropdown-button',
+                       'onclick'=>"return confirm("."'".$translator->translate('invoice.user.inv.role.warning.role') ."');"
+                    ]),
+                    $urlGenerator->generate('userinv/observer',['user_id'=>$model->getUser_id()],[]),
+                   )->render() : '';
+              }
+            }), 
             DataColumn::create()
             ->attribute('email')
             ->value(static function ($model): string {

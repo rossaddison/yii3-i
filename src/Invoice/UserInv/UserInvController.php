@@ -23,6 +23,10 @@ use Yiisoft\Data\Paginator\OffsetPaginator;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\DataResponse\DataResponseFactoryInterface;
 use Yiisoft\Http\Method;
+use Yiisoft\Rbac\AssignmentsStorageInterface as Assignment;
+use Yiisoft\Rbac\ItemsStorageInterface as ItemStorage;
+use Yiisoft\Rbac\Manager as Manager;
+use Yiisoft\Rbac\RuleFactoryInterface as Rule;
 use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
@@ -32,6 +36,11 @@ use Yiisoft\Yii\View\ViewRenderer;
 
 final class UserInvController
 {
+    private Assignment $assignment;
+    private ItemStorage $itemstorage;
+    private Manager $manager;
+    private Rule $rule;
+    
     private Flash $flash;
     private DataResponseFactoryInterface $factory;
     private ViewRenderer $viewRenderer;
@@ -42,6 +51,19 @@ final class UserInvController
     private Session $session;
         
     public function __construct(
+        // Note: yiisoft/rbac-php or file or php based rbac is used
+        //       The assignRole console command is used to assign roles to the first user admin
+        //       and second user observer. Subsequent users are signed up, matched to the client 
+        //       via Settings ... User Account and assigned the role Observer/Accountant via Settings ... User Account
+        // @see config/common/di/rbac.php for data injection via php
+        
+        // load assignments and save assignments to resources/rbac/assignment.php
+        Assignment $assignment,
+        
+        // add, save, remove, clear, children, parents
+        ItemStorage $itemstorage,
+        Rule $rule,
+      
         DataResponseFactoryInterface $factory,
         ViewRenderer $viewRenderer,
         WebControllerService $webService,
@@ -51,6 +73,14 @@ final class UserInvController
         Session $session,    
     )    
     {
+        
+        $this->assignment = $assignment;
+        $this->itemstorage = $itemstorage;
+        
+        // @see yiisoft/rbac-php
+        $this->manager = new Manager($itemstorage, $assignment, $rule);
+        $this->rule = $rule;
+        
         $this->factory = $factory;
         $this->viewRenderer = $viewRenderer; 
         $this->webService = $webService;
@@ -116,6 +146,7 @@ final class UserInvController
           // Parameters for GridView->requestArguments
           'page'=> $page,
           'sortOrder' => $query_params['sort'] ?? '',
+          'manager' => $this->manager
         ];
         return $this->viewRenderer->render('index', $parameters);        
     }
@@ -232,11 +263,45 @@ final class UserInvController
             $userinv = new UserInv();
             if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
                 $this->userinvService->saveUserInv($userinv,$form);
+                // assign the observer role by default to a new user inv
+                $this->manager->assign('observer', $form->getUser_id());
+                $this->flash_message('info', $this->translator->translate('invoice.user.inv.role.all.new'));
                 return $this->webService->getRedirectResponse('userinv/index');
             }
             $parameters['errors'] = $form->getFormErrors();
         }
         return $this->viewRenderer->render('_form', $parameters);
+    }
+    
+    /**
+     * 
+     * @param CurrentRoute $currentRoute
+     * @return Response
+     */
+    public function assignObserverRole(CurrentRoute $currentRoute) : Response {
+      $user_id = $currentRoute->getArgument('user_id');
+      if (null!==$user_id) {
+        $this->manager->revokeAll($user_id);
+        $this->manager->assign('observer', $user_id);
+        $this->flash_message('info', $this->translator->translate('invoice.user.inv.role.observer.assigned'));
+      }
+      return $this->webService->getRedirectResponse('userinv/index');
+    }
+    
+    /**
+     * 
+     * @param CurrentRoute $currentRoute
+     * @return Response
+     */
+    public function assignAccountantRole(CurrentRoute $currentRoute) : Response {
+      $user_id = $currentRoute->getArgument('user_id');
+      if (null!==$user_id) {
+        $this->manager->revokeAll($user_id);
+        $this->manager->assign('accountant', $user_id);
+        $this->flash_message('info', $this->translator->translate('invoice.user.inv.role.accountant.assigned'));
+        $this->flash_message('info', $this->translator->translate('invoice.user.inv.role.accountant.default'));
+      }
+      return $this->webService->getRedirectResponse('userinv/index');
     }
     
     /**
@@ -458,7 +523,7 @@ final class UserInvController
           'iban'=>$userinv->getIban(),
           'gln'=>$userinv->getGln(),
           'rcc'=>$userinv->getRcc()
-                ];
+        ];
         return $body;
     }
 }

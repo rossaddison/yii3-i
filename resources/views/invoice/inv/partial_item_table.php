@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use Yiisoft\Html\Html;
-use Yiisoft\Yii\Bootstrap5\Carousel;
 
 /***
  * @var bool $show_buttons 
@@ -226,9 +225,11 @@ $vat = $s->get_setting('enable_vat_registration');
                             </select>
                         </div>
                     </td>
+<?php // Buttons for line item start here ?>
                     <td class="td-icon text-right td-vert-middle">                        
                         <?php if ($show_buttons === true && $user_can_edit === true && $draft === true) { ?>
-                            <a class="btn btn-info fa fa-eye" data-toggle="modal" href="#view-product-<?= $item->getId(); ?>" style="text-decoration:none"></a> 
+                        <span data-bs-toggle="tooltip" title="<?= $translator->translate('invoice.productimage.gallery'). (null!==$item->getProduct_id() ? $item->getProduct()?->getProduct_name() : $item->getTask()?->getName()); ?>">
+                            <a class="btn btn-info fa fa-eye" data-toggle="modal" href="#view-product-<?= $item->getId(); ?>" style="text-decoration:none"></a></span> 
                             <div id="view-product-<?= $item->getId(); ?>" class="modal modal-lg" tabindex="-1" role="dialog" aria-labelledby="modal_view_product_<?= $item->getId(); ?>" aria-hidden="true">
                                 <div class="modal-content">
                                     <div class="modal-header">
@@ -259,6 +260,7 @@ $vat = $s->get_setting('enable_vat_registration');
                         <?php } ?>
                     </td>
                 </tr>
+<?php // Buttons for line item end here ?>
                 <tr>
                     <td class="td-textarea">
                         <div class="input-group">

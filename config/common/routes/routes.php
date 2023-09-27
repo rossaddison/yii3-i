@@ -2184,5 +2184,20 @@ return [
       ->middleware(fn(AccessChecker $checker) => $checker->withPermission('editInv'))
       ->middleware(Authentication::class)
       ->action([UserInvController::class, 'view']),
+      Route::methods([Method::GET, Method::POST], '/userinv/accountant/{user_id}')
+      ->name('userinv/accountant')
+      ->middleware(fn(AccessChecker $checker) => $checker->withPermission('editInv'))
+      ->middleware(Authentication::class)
+      ->action([UserInvController::class, 'assignAccountantRole']),
+      Route::methods([Method::GET, Method::POST], '/userinv/observer/{user_id}')
+      ->name('userinv/observer')
+      ->middleware(fn(AccessChecker $checker) => $checker->withPermission('editInv'))
+      ->middleware(Authentication::class)
+      ->action([UserInvController::class, 'assignObserverRole']),
+      Route::methods([Method::GET, Method::POST], '/userinv/admin/{user_id}')
+      ->name('userinv/admin')
+      ->middleware(fn(AccessChecker $checker) => $checker->withPermission('editInv'))
+      ->middleware(Authentication::class)
+      ->action([UserInvController::class, 'assignAdminRole']),
     ), //invoice
 ];
