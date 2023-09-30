@@ -129,6 +129,9 @@ final class InvoiceController
             case 'tp':
                 $view = $this->viewRenderer->renderPartialAsString('/invoice/info/taxpoint');
                 break;
+            case 'shared':
+                $view = $this->viewRenderer->renderPartialAsString('/invoice/info/shared_hosting');
+                break;
             default:
                 $view = '';
                 break;

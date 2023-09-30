@@ -10,7 +10,6 @@ use Yiisoft\Html\Tag\I;
 use Yiisoft\Yii\DataView\OffsetPagination;
 use Yiisoft\Yii\DataView\Column\DataColumn;
 use Yiisoft\Yii\DataView\GridView;
-use Yiisoft\VarDumper\VarDumper;
 
 /**
  * @var \App\Invoice\Entity\UserInv $userinv
@@ -80,14 +79,6 @@ echo $alert;
         <?= GridView::widget()
         ->columns(
             DataColumn::create()
-            ->attribute('user_id')
-            ->value(static fn ($model): string => $model->getUser_id()),     
-            // The User id is used for user/assignRole observer {user_id}
-            // Remove column to avoid confusion
-            //DataColumn::create()
-            //->attribute('id')
-            //->value(static fn ($model): int => $model->getId()),
-            DataColumn::create()
             ->attribute('active')
             ->value(static function ($model) use($s): string {
                         return $model->getActive() ? Html::tag('span',$s->trans('yes'),['class'=>'label active'])->render() 
@@ -102,7 +93,9 @@ echo $alert;
             }),
             DataColumn::create()
             ->attribute('user_id')
-            ->value(static fn ($model): string => $model->getUser()?->getLogin()),     
+            ->value(static function ($model) use ($urlGenerator) : string {
+              return (string)Html::a($model->getUser()?->getLogin(),$urlGenerator->generate('user/profile',['login'=>$model->getUser()?->getLogin()]),[]);
+            }),     
             DataColumn::create()
             ->attribute('name')
             ->value(static function ($model): string {

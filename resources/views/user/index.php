@@ -93,6 +93,7 @@ $toolbar = Div::tag();
             ->attribute('login')
             ->label($translator->translate('gridview.login'))
             ->value(static fn (object $data) => $data->getLogin()),
+        
         DataColumn::create()
             ->attribute('create_at')
             ->label($translator->translate('gridview.create.at'))
@@ -104,7 +105,8 @@ $toolbar = Div::tag();
                 static function (object $data) use ($urlGenerator): string {
                     return Html::a(
                         'API User Data',
-                        $urlGenerator->generate('api/user/profile', ['login' => $data->getLogin()]),
+                        $urlGenerator->generate('api/user/profile',
+                        ['login' => $data->getLogin()]),
                         ['target' => '_blank'],
                     )->render();
                 },

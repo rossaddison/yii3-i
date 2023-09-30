@@ -6,11 +6,16 @@ use App\Contact\ContactController;
 use App\Auth\Controller\AuthController;
 use App\Auth\Controller\SignupController;
 use App\Controller\SiteController;
+use App\Controller\Actions\ApiInfo;
 use App\Middleware\AccessChecker;
+use App\Middleware\ApiDataWrapper;
+use App\User\Controller\ApiUserController;
 use App\User\Controller\UserController;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Yiisoft\Auth\Middleware\Authentication;
+use Yiisoft\DataResponse\DataResponseFactoryInterface;
 use Yiisoft\DataResponse\Middleware\FormatDataResponseAsJson;
+use Yiisoft\DataResponse\Middleware\FormatDataResponseAsXml;
 use Yiisoft\Http\Method;
 use Yiisoft\Router\Group;
 use Yiisoft\Router\Route;
@@ -99,8 +104,9 @@ return [
       ) => new LimitRequestsMiddleware(new Counter($storage, 5, 5), $responseFactory))
     ->action([SignupController::class, 'signup'])
     ->name('auth/signup'),
+    
     Group::create('/user')
-    ->routes(
+      ->routes(
       // User
       Route::methods(['GET', 'POST'], '[/{page:\d+}/{pagesize:\d+}]')
       ->name('user/index')
@@ -110,6 +116,31 @@ return [
       ->action([UserController::class, 'profile'])
       ->name('user/profile'),
     ),
+  
+    Group::create('/api')
+      ->middleware(FormatDataResponseAsXml::class)
+      ->middleware(ApiDataWrapper::class)
+      ->routes(
+      Route::get('/info/v1')
+      ->name('api/info/v1')
+      ->action(function (DataResponseFactoryInterface $responseFactory) {
+      return $responseFactory->createResponse(['version' => '1.0', 'author' => 'yiisoft']);
+      }),
+      Route::get('/info/v2')
+      ->name('api/info/v2')
+      ->middleware(FormatDataResponseAsJson::class)
+      ->action(ApiInfo::class),
+      Route::get('/user')
+      ->name('api/user/index')
+      ->middleware(fn(AccessChecker $checker) => $checker->withPermission('editInv'))  
+      ->action([ApiUserController::class, 'index']),
+      Route::get('/user/{login}')
+      ->name('api/user/profile')
+      ->middleware(fn(AccessChecker $checker) => $checker->withPermission('editInv'))  
+      ->middleware(FormatDataResponseAsJson::class)
+      ->action([ApiUserController::class, 'profile'])
+    ),
+        
     Group::create('/invoice')
     ->routes(
       Route::get('')
