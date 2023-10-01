@@ -2561,7 +2561,7 @@ final class QuoteController
                         'quote_amount_total' => $quote_amount->getTotal(), 
                         'sales_order_number' => $sales_order_number,
                         'add_quote_item'=>$this->view_renderer->renderPartialAsString('/invoice/quoteitem/_item_form',[
-                                'action' => ['quoteitem/add'],
+                                'action' => ['quoteitem/add',['_language' => $currentRoute->getArgument('_language')]],
                                 'errors' => [],
                                 'body' => $request->getParsedBody(),
                                 's'=>$this->sR,
@@ -2590,6 +2590,7 @@ final class QuoteController
                             'quote_tax_rates'=>$quote_tax_rates,
                             'quote_amount'=> $quote_amount,
                             'quote'=>$qR->repoQuoteLoadedquery((string)$this->session->get('quote_id')),  
+                            'language'=> $currentRoute->getArgument('_language'),
                             's'=>$this->sR,
                             'tax_rates'=>$trR->findAllPreloaded(),
                             'units'=>$uR->findAllPreloaded(),
@@ -2613,7 +2614,7 @@ final class QuoteController
                             'groups'=>$gR->findAllPreloaded(),
                         ]),
                         'modal_delete_quote'=>$this->view_renderer->renderPartialAsString('/invoice/quote/modal_delete_quote',
-                                ['action'=>['quote/delete', ['id' => $this->session->get('quote_id')]],
+                                ['action'=>['quote/delete', ['_language' => $currentRoute->getArgument('_language'), 'id' => $this->session->get('quote_id')]],
                                  's'=>$this->sR,   
                         ]),            
                         'modal_delete_items'=>$this->view_renderer->renderPartialAsString('/invoice/quote/modal_delete_item',[

@@ -200,8 +200,8 @@ $vat = $s->get_setting('enable_vat_registration');
                     </td>
                     <td class="td-icon text-right td-vert-middle">
                     <?php if ($invEdit) { ?>    
-                        <a href="<?= $urlGenerator->generate('quote/delete_quote_item',['id'=>$item->getId()]) ?>" class="btn btn-md btn-link" onclick="return confirm('<?= $s->trans('delete_record_warning'); ?>');"><i class="fa fa-trash"></i></a>
-                        <a href="<?= $urlGenerator->generate('quoteitem/edit',['id'=>$item->getId()]) ?>" class="btn btn-md btn-link"><i class="fa fa-pencil"></i></a>
+                        <a href="<?= $urlGenerator->generate('quote/delete_quote_item',['_language' => $language, 'id'=>$item->getId()]) ?>" class="btn btn-md btn-link" onclick="return confirm('<?= $s->trans('delete_record_warning'); ?>');"><i class="fa fa-trash"></i></a>
+                        <a href="<?= $urlGenerator->generate('quoteitem/edit',['_language' => $language, 'id'=>$item->getId()]) ?>" class="btn btn-md btn-link"><i class="fa fa-pencil"></i></a>
                     </td>
                     <?php } ?>
                 </tr>
