@@ -108,7 +108,7 @@ $vat = $s->get_setting('enable_vat_registration');
                         <?= $s->trans('download_pdf'); ?>
                     </a>
                 </li>
-                <?php if ($invEdit  && $quote->getStatus_id() !== 1) { ?>
+                <?php if ($invEdit  && $quote->getStatus_id() === 1 && ($quote_amount_total > 0)) { ?>
                 <li>
                     <a href="<?= $urlGenerator->generate('quote/email_stage_0',['id'=> $quote->getId()]); ?>" style="text-decoration:none">
                         <i class="fa fa-send fa-margin"></i>

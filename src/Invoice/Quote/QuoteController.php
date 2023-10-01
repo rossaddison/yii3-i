@@ -2557,6 +2557,8 @@ final class QuoteController
                         'alert'=>$this->alert(),
                          // Hide buttons on the view if a 'viewInv' user does not have 'editInv' permission
                         'invEdit' => $this->user_service->hasPermission('editInv') ? true : false,       
+                        // if the quote amount total is greater than zero show the buttons eg. Send email
+                        'quote_amount_total' => $quote_amount->getTotal(), 
                         'sales_order_number' => $sales_order_number,
                         'add_quote_item'=>$this->view_renderer->renderPartialAsString('/invoice/quoteitem/_item_form',[
                                 'action' => ['quoteitem/add'],
