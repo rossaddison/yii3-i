@@ -50,20 +50,38 @@ if (!empty($errors)) {
         </div>
     </div>
     <div class="mb-3 form-group">
+    <label for="email_template_from_name"><?= $s->trans('from_name'); ?></label>    
                     <input type="text" name="email_template_from_name" id="email_template_from_name"
                            class="form-control taggable" placeholder="<?= $s->trans('from_name'); ?>"
                            value="<?= Html::encode($body['email_template_from_name'] ?? '') ?>" required>
+    </div> 
+    
+    <div class="panel panel-default">
+    <div class="panel-heading">    
+    <fieldset>
+      <h5><?= $translator->translate('invoice.email.template.from.source'); ?></h5>
+      <div>
+        <!-- see  src/Invoice/Asset/rebuild-1.13/js/mailer_ajax_email_addresses -->  
+        <input type="radio" id="adminEmail" name="from_email" value="<?= $admin_email; ?>" />
+        <label for="adminEmail"><?= $translator->translate('invoice.email.template.from.source.admin.email'); ?></label>
+        <?= str_repeat("&nbsp;", 2); ?>
+        <input type="radio" id="senderEmail" name="from_email" value="<?= $sender_email; ?>" />
+        <label for="senderEmail"><?= $translator->translate('invoice.email.template.from.source.sender.email'); ?></label>
+        <?= str_repeat("&nbsp;", 2); ?>
+        <input type="radio" id="fromEmail" name="from_email" value="<?= $from_email; ?>" />
+        <label for="fromEmail"><?= $translator->translate('invoice.email.template.from.source.froms.email'); ?></label>
+      </div>
+    </fieldset>
+      
+    <div id="email_option">
+        <div class="mb-3 form-group">
+            <label for="email_template_from_email"></label>
+            <input class="form-control" type="text" id="option_Email" name="option_Email" value="<?= $body['email_template_from_email']; ?>">
+        </div>
+    </div>    
     </div>
-    <div class="mb-3 form-group">
-                    <input type="text" name="email_template_from_email" id="email_template_from_email"
-                           class="form-control taggable" placeholder="<?= $s->trans('from_email'); ?>" required
-                           value="<?= Html::encode($body['email_template_from_email'] ?? '') ?>">
     </div>
-    <div class="mb-3 form-group">
-                    <input type="text" name="email_template_cc" id="email_template_cc" class="form-control taggable" placeholder="<?= $s->trans('cc'); ?>"
-                           value="<?= Html::encode($body['email_template_cc'] ?? '') ?>">
-    </div>
-
+      
     <div class="mb-3 form-group">
                     <input type="text" name="email_template_bcc" id="email_template_bcc" class="form-control taggable" placeholder="<?= $s->trans('bcc'); ?>"
                            value="<?= Html::encode($body['email_template_bcc'] ?? '') ?>">

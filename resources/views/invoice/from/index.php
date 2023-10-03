@@ -10,30 +10,33 @@ use Yiisoft\Html\Tag\Div;
 use Yiisoft\Html\Tag\Form;
 use Yiisoft\Html\Tag\H5;
 use Yiisoft\Html\Tag\I;
-use Yiisoft\Yii\Bootstrap5\Alert;
 use Yiisoft\Yii\DataView\Column\DataColumn;
 use Yiisoft\Yii\DataView\GridView;
 use Yiisoft\Yii\DataView\OffsetPagination;
 
 /**
- * @var \App\Invoice\Entity\Client $client
+ * @var \App\Invoice\Entity\FromDropDown $from
  * @var \Yiisoft\Router\UrlGeneratorInterface $urlGenerator
  * @var TranslatorInterface $translator
  * @var OffsetPaginator $paginator
  * @var string $id
  */
+ 
+ echo $alert;
 
 ?>
-<h1>Client</h1>
+<h1><?= $translator->translate('invoice.from.email.address'); ?></h1>
+<?= Html::a(Html::tag('i','',['class'=>'btn btn-primary fa fa-plus fa-margin']),$urlGenerator->generate('from/add')); ?>
+<br>
+<br>
 <?php
-    
     $header = Div::tag()
       ->addClass('row')
       ->content(
         H5::tag()
         ->addClass('bg-primary text-white p-3 rounded-top')
         ->content(
-          I::tag()->addClass('bi bi-receipt')->content(' ' . $translator->translate('put.your.translation.here'))
+          I::tag()->addClass('bi bi-receipt')->content(' ' . $translator->translate('invoice.from.email.address'))
         )
       )
       ->render();
@@ -55,15 +58,19 @@ use Yiisoft\Yii\DataView\OffsetPagination;
         ->label($s->trans('id'))
         ->value(static fn($model) => $model->getId()),
         DataColumn::create()
+        ->attribute('default_email')
+        ->label($translator->translate('invoice.email.default'))
+        ->value(static fn($model) => $model->getDefault_email() == 'true' ? $s->trans('yes') : $s->trans('no')),
+        DataColumn::create()
         ->label($s->trans('view'))
         ->value(static function ($model) use ($urlGenerator): string {
-          return Html::a(Html::tag('i', '', ['class' => 'fa fa-eye fa-margin']), $urlGenerator->generate('client/view', ['id' => $model->getId()]), [])->render();
+          return Html::a(Html::tag('i', '', ['class' => 'fa fa-eye fa-margin']), $urlGenerator->generate('from/view', ['id' => $model->getId()]), [])->render();
         }
         ),
         DataColumn::create()
         ->label($s->trans('edit'))
         ->value(static function ($model) use ($urlGenerator): string {
-          return Html::a(Html::tag('i', '', ['class' => 'fa fa-pencil fa-margin']), $urlGenerator->generate('client/edit', ['id' => $model->getId()]), [])->render();
+          return Html::a(Html::tag('i', '', ['class' => 'fa fa-pencil fa-margin']), $urlGenerator->generate('from/edit', ['id' => $model->getId()]), [])->render();
         }
         ),
         DataColumn::create()
@@ -77,14 +84,14 @@ use Yiisoft\Yii\DataView\OffsetPagination;
                 'onclick' => "return confirm(" . "'" . $s->trans('delete_record_warning') . "');"
               ]
             ),
-            $urlGenerator->generate('client/delete', ['id' => $model->getId()]), []
+            $urlGenerator->generate('from/delete', ['id' => $model->getId()]), []
           )->render();
         }
         ),
       )
       ->headerRowAttributes(['class' => 'card-header bg-info text-black'])
       ->filterPosition('header')
-      ->filterModelName('client')
+      ->filterModelName('from')
       ->header($header)
       ->id('w99999999999999999-grid')
       ->paginator($paginator)
@@ -101,9 +108,9 @@ use Yiisoft\Yii\DataView\OffsetPagination;
       ->summary($grid_summary)
       ->emptyTextAttributes(['class' => 'card-header bg-warning text-black'])
       ->emptyText((string) $translator->translate('invoice.invoice.no.records'))
-      ->tableAttributes(['class' => 'table table-striped text-center h-99999999999999999', 'id' => 'table-client'])
+      ->tableAttributes(['class' => 'table table-striped text-center h-99999999999999999', 'id' => 'table-from'])
       ->toolbar(
-        Form::tag()->post($urlGenerator->generate('client/index'))->csrf($csrf)->open() .
+        Form::tag()->post($urlGenerator->generate('from/index'))->csrf($csrf)->open() .
         Div::tag()->addClass('float-end m-3')->content($toolbarReset)->encode(false)->render() .
         Form::tag()->close()
     );

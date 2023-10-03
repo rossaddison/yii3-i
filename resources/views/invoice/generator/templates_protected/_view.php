@@ -6,7 +6,6 @@ declare(strict_types=1);
 
 use Yiisoft\Html\Html;
 use Yiisoft\Yii\Bootstrap5\Alert;
-use App\Invoice\Helpers\DateHelper;
 
 /**
 * @var \Yiisoft\View\View $this
@@ -16,12 +15,6 @@ use App\Invoice\Helpers\DateHelper;
 * @var string $action
 * @var string $title
 */
-
-if (!empty($errors)) {
-foreach ($errors as $field => $error) {
-echo Alert::widget()->options(['class' => 'alert-danger'])->body(Html::encode($field . ':' . $error));
-}
-}
 
 <?php
 echo "?>";

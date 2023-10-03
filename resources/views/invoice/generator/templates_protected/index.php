@@ -32,7 +32,11 @@ use Yiisoft\Yii\DataView\OffsetPagination;
 <?php 
         $inf = new Inflector();
         echo '<h1>'.$inf->toSentence($generator->getPre_entity_table(),'UTF-8').'</h1>'."\n"; 
+        echo "<?= Html::a(Html::tag('"."i','',['class'=>'fa fa-plus btn btn-primary fa-margin']),".'$urlGenerator->generate('."'". $generator->getSmall_singular_name()."/add'),[]); ?>";
+        echo '<br>';  
 ?>
+
+
 <?php   echo "<?php\n"; ?>
     
     $header = Div::tag()

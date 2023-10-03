@@ -266,7 +266,7 @@ final class <?= $generator->getCamelcase_capital_name(); ?>Controller
     {
         $id = $currentRoute->getArgument('id');       
         if (null!==$id) {
-            $<?= $generator->getSmall_singular_name();?> = $<?= $generator->getSmall_singular_name();?>Repository->repo<?= $generator->getCamelcase_capital_name();?>query($id);
+            $<?= $generator->getSmall_singular_name();?> = $<?= $generator->getSmall_singular_name();?>Repository->repo<?= $generator->getCamelcase_capital_name();?>Loadedquery($id);
             return $<?= $generator->getSmall_singular_name();?>;
         }
         return null;

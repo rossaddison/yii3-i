@@ -371,6 +371,45 @@ final class SettingRepository extends Select\Repository
     }
     
     /**
+     * Used in EmailTemplateController add and edit functions which use the form 
+     * to merge with 'froms' FromDropDownController emails
+     *
+     * @return array
+     */
+    public function getConfigMailerEmails() : array {
+      $config = $this->get_config_params();
+      $params = $config->get('params');
+
+      // Currently two adminEmail and senderEmail
+      $mailer_emails_array = (array)$params['mailer'];
+      return $mailer_emails_array;
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getConfigSenderEmail() : string {
+      $mailer_emails = $this->getConfigMailerEmails();
+      /**
+       * @var string $mailer_emails['senderEmail']
+       */
+      return $mailer_emails['senderEmail'];      
+    }
+    
+    /**
+     * 
+     * @return string
+     */
+    public function getConfigAdminEmail() : string {
+      $mailer_emails = $this->getConfigMailerEmails();
+      /**
+       * @var string $mailer_emails['adminEmail']
+       */
+      return $mailer_emails['adminEmail'];      
+    }
+        
+    /**
      * @see config/params.php 
      * @return int
      */

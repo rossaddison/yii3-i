@@ -36,6 +36,7 @@ use App\Invoice\Delivery\DeliveryController;
 use App\Invoice\DeliveryLocation\DeliveryLocationController;
 use App\Invoice\EmailTemplate\EmailTemplateController;
 use App\Invoice\Family\FamilyController;
+use App\Invoice\FromDropDown\FromDropDownController;
 use App\Invoice\Generator\GeneratorController;
 use App\Invoice\GeneratorRelation\GeneratorRelationController;
 use App\Invoice\Group\GroupController;
@@ -630,6 +631,31 @@ return [
       ->middleware(fn(AccessChecker $checker) => $checker->withPermission('editInv'))
       ->middleware(Authentication::class)
       ->action([FamilyController::class, 'view']),
+      Route::get('/from')
+      ->middleware(fn (AccessChecker $checker) => $checker->withPermission('editInv'))
+      ->middleware(Authentication::class)
+      ->action([FromDropDownController::class, 'index'])
+      ->name('from/index'),    
+      Route::methods([Method::GET, Method::POST], '/from/add')
+      ->middleware(Authentication::class)
+      ->middleware(fn (AccessChecker $checker) => $checker->withPermission('editInv'))
+      ->action([FromDropDownController::class, 'add'])
+      ->name('from/add'),
+      Route::methods([Method::GET, Method::POST], '/from/edit/{id}')
+      ->name('from/edit')
+      ->middleware(fn (AccessChecker $checker) => $checker->withPermission('editInv'))
+      ->middleware(Authentication::class)
+      ->action([FromDropDownController::class, 'edit']), 
+      Route::methods([Method::GET, Method::POST], '/from/delete/{id}')
+      ->name('from/delete')
+      ->middleware(fn (AccessChecker $checker) => $checker->withPermission('editInv'))
+      ->middleware(Authentication::class)
+      ->action([FromDropDownController::class, 'delete']),
+      Route::methods([Method::GET, Method::POST], '/from/view/{id}')
+      ->name('from/view')
+      ->middleware(fn (AccessChecker $checker) => $checker->withPermission('editInv'))
+      ->middleware(Authentication::class)
+      ->action([FromDropDownController::class, 'view']),
       Route::get('/generator')
       ->middleware(fn(AccessChecker $checker) => $checker->withPermission('editInv'))
       ->middleware(Authentication::class)

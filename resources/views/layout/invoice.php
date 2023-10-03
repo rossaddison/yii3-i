@@ -253,6 +253,7 @@ $this->beginPage();
                   ['options' => ['class' => 'nav fs-4'], 'label' => $s->trans('add'), 'options' => ['style' => 'background-color: #ffcccb'], 'url' => $urlGenerator->generate('setting/add'), 'visible' => $debug_mode],
                   ['options' => ['class' => 'nav fs-4 ajax-loader'], 'label' => $s->trans('view'), 'url' => $urlGenerator->generate('setting/tab_index')],
                   ['options' => ['class' => 'nav fs-4'], 'label' => $s->trans('email_template'), 'url' => $urlGenerator->generate('emailtemplate/index')],
+                  ['options' => ['class' => 'nav fs-4'], 'label' => $translator->translate('invoice.email.from.dropdown'), 'url' => $urlGenerator->generate('from/index')],
                   ['options' => ['class' => 'nav fs-4'], 'label' => $s->trans('custom_fields'), 'url' => $urlGenerator->generate('customfield/index')],
                   ['options' => ['class' => 'nav fs-4'], 'label' => $s->trans('invoice_group'), 'url' => $urlGenerator->generate('group/index')],
                   ['options' => ['class' => 'nav fs-4'], 'label' => $s->trans('invoice_archive'), 'url' => $urlGenerator->generate('inv/archive')],

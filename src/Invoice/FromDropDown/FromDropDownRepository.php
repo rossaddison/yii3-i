@@ -2,9 +2,9 @@
 
 declare(strict_types=1); 
 
-namespace App\Invoice\Client;
+namespace App\Invoice\FromDropDown;
 
-use App\Invoice\Entity\Client;
+use App\Invoice\Entity\FromDropDown;
 use Cycle\ORM\Select;
 use Throwable;
 use Yiisoft\Data\Reader\Sort;
@@ -12,10 +12,10 @@ use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of Client
+ * @template TEntity of FromDropDown
  * @extends Select\Repository<TEntity>
  */
-final class ClientRepository extends Select\Repository
+final class FromDropDownRepository extends Select\Repository
 {
 private EntityWriter $entityWriter;
     /**
@@ -29,13 +29,14 @@ private EntityWriter $entityWriter;
     }
 
     /**
-     * Get clients  without filter
+     * Get froms  without filter
      *
      * @psalm-return EntityReader
      */
     public function findAllPreloaded(): EntityReader
     {
-        $query = $this->select();        return $this->prepareDataReader($query);
+        $query = $this->select(); 
+        return $this->prepareDataReader($query);
     }
     
     /**
@@ -57,26 +58,26 @@ private EntityWriter $entityWriter;
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|Client|null $client
-     * @psalm-param TEntity $client
+     * @param array|FromDropDown|null $from
+     * @psalm-param TEntity $from
      * @throws Throwable 
      * @return void
      */
-    public function save(array|Client|null $client): void
+    public function save(array|FromDropDown|null $from): void
     {
-        $this->entityWriter->write([$client]);
+        $this->entityWriter->write([$from]);
     }
     
     /**
      * @see Reader/ReadableDataInterface|InvalidArgumentException
-     * @param array|Client|null $client
+     * @param array|FromDropDown|null $from
   
      * @throws Throwable 
      * @return void
      */
-    public function delete(array|Client|null $client): void
+    public function delete(array|FromDropDown|null $from): void
     {
-        $this->entityWriter->delete([$client]);
+        $this->entityWriter->delete([$from]);
     }
     
     /**
@@ -94,11 +95,26 @@ private EntityWriter $entityWriter;
     /**
      * @param string $id
      * @psalm-return TEntity|null
-     * @return Client|null
+     * @return FromDropDown|null
      */
-    public function repoClientLoadedquery(string $id): Client|null
+    public function repoFromDropDownLoadedquery(string $id): FromDropDown|null
     {
-        $query = $this->select()->where(['id' =>$id]);        return  $query->fetchOne() ?: null;        
+        $query = $this->select()
+                      ->where(['id' =>$id]); 
+        return  $query->fetchOne() ?: null;        
+    }
+    
+    /**
+     * Return the first available default
+     * @psalm-return TEntity|null
+     * @return FromDropDown|null
+     */
+    public function getDefault(): FromDropDown|null { 
+        $query = $this->select()
+                      ->where(['default_email' => 1])
+                      ->andWhere(['include' => 1])
+                      ->limit(1);
+        return $query->fetchOne() ?: null;
     }
     
     /**

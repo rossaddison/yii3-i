@@ -6,6 +6,7 @@ namespace App\Invoice\EmailTemplate;
 
 use App\Invoice\Entity\EmailTemplate;
 use App\Invoice\EmailTemplate\EmailTemplateRepository;
+use App\Invoice\FromDropDown\FromDropDownRepository;
 use App\Invoice\CustomField\CustomFieldRepository;
 use App\Invoice\EmailTemplate\EmailTemplateForm;
 use App\Invoice\Setting\SettingRepository;
@@ -87,11 +88,13 @@ final class EmailTemplateController
      * @param ValidatorInterface $validator
      * @param SettingRepository $settingRepository
      * @param CustomFieldRepository $customfieldRepository
+     * @param FromDropDownRepository $fromR
      * @return Response
      */
     public function add(ViewRenderer $tag, Request $request, ValidatorInterface $validator, 
                         SettingRepository $settingRepository, 
-                        CustomFieldRepository $customfieldRepository
+                        CustomFieldRepository $customfieldRepository,
+                        FromDropDownRepository $fromR
                         ): Response
     {
         $parameters = [
@@ -100,24 +103,28 @@ final class EmailTemplateController
             'body' => $request->getParsedBody(),
             's'=>$settingRepository,            
             'email_template_tags' => $this->viewRenderer->renderPartialAsString('/invoice/emailtemplate/template-tags', [
-                    's'=>$settingRepository,
-                    'template_tags_quote'=>$this->viewRenderer->renderPartialAsString('/invoice/emailtemplate/template-tags-quote', [
-                        's'=>$settingRepository,
-                        'custom_fields_quote_custom'=>$customfieldRepository->repoTablequery('quote_custom'),
-                    ]),
-                    'template_tags_inv'=>$this->viewRenderer->renderPartialAsString('/invoice/emailtemplate/template-tags-inv', [
-                        's'=>$settingRepository,
-                        'custom_fields_inv_custom'=>$customfieldRepository->repoTablequery('inv_custom'),
-                    ]), 
-                    'custom_fields' => [                        
-                        'client_custom'=>$customfieldRepository->repoTablequery('client_custom')
-                    ],            
+              's'=>$settingRepository,
+              'template_tags_quote'=>$this->viewRenderer->renderPartialAsString('/invoice/emailtemplate/template-tags-quote', [
+                  's'=>$settingRepository,
+                  'custom_fields_quote_custom'=>$customfieldRepository->repoTablequery('quote_custom'),
+              ]),
+              'template_tags_inv'=>$this->viewRenderer->renderPartialAsString('/invoice/emailtemplate/template-tags-inv', [
+                  's'=>$settingRepository,
+                  'custom_fields_inv_custom'=>$customfieldRepository->repoTablequery('inv_custom'),
+              ]), 
+              'custom_fields' => [                        
+                  'client_custom'=>$customfieldRepository->repoTablequery('client_custom')
+              ],
             ]),
              //Email templates can be built for either a quote or an invoice.
             'invoice_templates'=>$settingRepository->get_invoice_templates('pdf'),
             'quote_templates'=>$settingRepository->get_quote_templates('pdf'),
             'selected_pdf_template'=>'',
-            'tag'=>$tag
+            'tag'=>$tag,
+            // see src\Invoice\Asset\rebuild-1.13\js\mailer_ajax_email_addresses
+            'dollar_suffix_ajax_admin_email'=>$settingRepository->getConfigAdminEmail(),
+            'dollar_suffix_ajax_sender_email'=>$settingRepository->getConfigSenderEmail(),
+            //'froms' => $settingRepository->,
         ];
         
         if ($request->getMethod() === Method::POST) {
@@ -160,6 +167,7 @@ final class EmailTemplateController
      * @param EmailTemplateRepository $emailtemplateRepository
      * @param CustomFieldRepository $customfieldRepository
      * @param SettingRepository $settingRepository
+     * @param FromDropDownRepository $fromR
      * @param ValidatorInterface $validator
      * @return Response
      */
@@ -167,6 +175,7 @@ final class EmailTemplateController
                          EmailTemplateRepository $emailtemplateRepository, 
                          CustomFieldRepository $customfieldRepository,
                          SettingRepository $settingRepository,
+                         FromDropDownRepository $fromR,
                          ValidatorInterface $validator,
     ): Response {
         $email_template = $this->emailtemplate($currentRoute, $emailtemplateRepository);
@@ -196,7 +205,11 @@ final class EmailTemplateController
                 'invoice_templates'=>$settingRepository->get_invoice_templates('pdf'),
                 'quote_templates'=>$settingRepository->get_quote_templates('pdf'),
                 'selected_pdf_template'=>$email_template->getEmail_template_pdf_template(),
-                'tag'=>$tag
+                'tag'=>$tag,
+                // see src\Invoice\Asset\rebuild-1.13\js\mailer_ajax_email_addresses
+                'admin_email'=>$settingRepository->getConfigAdminEmail(),
+                'sender_email'=>$settingRepository->getConfigSenderEmail(),
+                'from_email'=>($fromR->getDefault())?->getEmail() ?: $this->translator->translate('invoice.email.default.none.set'),
             ];
             if ($request->getMethod() === Method::POST) {
                 $form = new EmailTemplateForm();
