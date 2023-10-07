@@ -6,11 +6,12 @@ namespace App\Auth;
 
 use Cycle\ORM\Select;
 use Throwable;
+use App\Auth\Identity;
 use Yiisoft\Auth\IdentityRepositoryInterface;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
 /**
- * @template TEntity of object
+ * @template TEntity of Identity
  * @extends Select\Repository<TEntity>
  */
 final class IdentityRepository extends Select\Repository implements IdentityRepositoryInterface
@@ -26,13 +27,12 @@ final class IdentityRepository extends Select\Repository implements IdentityRepo
     }
     
     /**
-     * @psalm-suppress MoreSpecificReturnType
+     * 
+     * @param string $id
+     * @return Identity|null
      */
     public function findIdentity(string $id): ?Identity
     {
-        /**
-         * @psalm-suppress LessSpecificReturnStatement
-         */
         return $this->findOne(['user_id' => $id]);
     }
 

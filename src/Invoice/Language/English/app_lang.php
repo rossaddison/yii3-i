@@ -617,8 +617,12 @@ $lang = [
   'menu.signup' => 'Signup',
   'menu.swagger' => 'Swagger',
   'menu.users' => 'Users',
+  'reset'=> 'Reset Password',
   'signup' => 'Signup',
   'validator.invalid.login.password' => 'Invalid login or password',
   'validator.password.not.match' => 'Passwords do not match',
-  'validator.user.exist' => 'User with this login already exists',
+  'validator.password.not.match.new' => 'Your new passwords do not match',
+  'validator.password.reset' => 'Your Password has been reset',
+  'validator.user.exist' => 'A User with this login already exists',
+  'valiadator.user.exist.not' => 'A User with this login does not exist'
 ];

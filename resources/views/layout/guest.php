@@ -163,10 +163,15 @@ echo Nav::widget()
          ],
          ['label' => $translator->translate('invoice.setting'), 
           'items' => [
-                     ['options'=>['class'=>'nav fs-4'],'label' => $translator->translate('invoice.view'),
+                     ['options'=>['class'=>'nav fs-4'],
+                      'label' => $translator->translate('invoice.view'),
                       'url'=>$urlGenerator->generate('userinv/guest')],
+                     ['options' => ['class' => 'nav fs-4'], 
+                      'label' => $translator->translate('reset'), 
+                      'url' => $urlGenerator->generate('auth/reset')],
                     ],
-         ],   
+         ],
+                 
     ]       
 );
 

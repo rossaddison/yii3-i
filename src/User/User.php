@@ -43,6 +43,7 @@ class User
         $this->created_at = new DateTimeImmutable();
         $this->updated_at = new DateTimeImmutable();
         $this->setPassword($password);
+        // Generate a new auth key on signup
         $this->identity = new Identity();
     }
 

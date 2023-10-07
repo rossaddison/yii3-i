@@ -34,16 +34,16 @@ final class AuthService
      */
     public function logout(): bool
     {
-        $identity = $this->currentUser->getIdentity();
+      $identity = $this->currentUser->getIdentity();
 
-        if ($identity instanceof Identity) {
-            $identity->regenerateCookieLoginKey();
-            $this->identityRepository->save($identity);
-        }
+      if ($identity instanceof Identity) {
+          $identity->regenerateCookieLoginKey();
+          $this->identityRepository->save($identity);
+      }
 
-        return $this->currentUser->logout();
+      return $this->currentUser->logout();
     }
-
+    
     public function getIdentity(): IdentityInterface
     {
         return $this->currentUser->getIdentity();

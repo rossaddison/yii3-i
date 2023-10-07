@@ -1536,7 +1536,7 @@ final class InvController {
                 'clients' => $clients,
                 'invoice_groups' => $groupRepo->findAllPreloaded(),
                 'datehelper' => $this->date_helper,
-            ])
+            ]),
         ];
         return $this->view_renderer->render('/invoice/inv/index', $parameters);
     }

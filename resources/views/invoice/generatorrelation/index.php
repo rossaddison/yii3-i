@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Yiisoft\Html\Html;
+use Yiisoft\Yii\Bootstrap5\Modal;
 
 /**
  * @var \App\Invoice\Entity\Family $item
@@ -10,6 +11,7 @@ use Yiisoft\Html\Html;
  * @var bool $canEdit
  * @var string $id
  * @var \Yiisoft\Session\Flash\Flash $flash 
+ * 
  */
 
 echo $alert;

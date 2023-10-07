@@ -16,5 +16,5 @@ final class SiteController
     public function index(): \Yiisoft\DataResponse\DataResponse
     {
         return $this->viewRenderer->render('index');
-    }
+    }    
 }

@@ -19,7 +19,6 @@ final class SignupForm extends FormModel implements RulesProviderInterface
 {
     private string $login = '';
     private string $password = '';
-    private string $passwordVerify = '';
 
     public function __construct(
         private ValidatorInterface $validator,
@@ -68,7 +67,7 @@ final class SignupForm extends FormModel implements RulesProviderInterface
         if ($this->validator->validate($this)->isValid()) {
             $user = new User($this->getLogin(), $this->getPassword());
             $this->userRepository->save($user);
-
+            
             return $user;
         }
 
@@ -89,9 +88,8 @@ final class SignupForm extends FormModel implements RulesProviderInterface
                 function (mixed $value): Result {
                     $result = new Result();
                     if ($this->userRepository->findByLogin((string)$value) !== null) {
-                        $result->addError('User with this login already exists.');
+                        $result->addError($this->translator->translate('validator.user.exist'));
                     }
-
                     return $result;
                 },
             ],
