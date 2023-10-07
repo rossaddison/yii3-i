@@ -59,7 +59,6 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\DataResponse\DataResponseFactoryInterface;
 use Yiisoft\Data\Paginator\OffsetPaginator;
-use Yiisoft\Files\FileHelper;
 use Yiisoft\Http\Method;
 use Yiisoft\Json\Json;
 use Yiisoft\Router\CurrentRoute;
@@ -160,15 +159,15 @@ class ProductController
             if (is_array($edited_body)) {
                 $product_id = $this->add_form_fields_return_id($edited_body, $product, $validator, $sR);
                 if ($product_id) {
-                    $count = $cfR->repoTableCountquery('product_custom');
-                    $parameters['body'] = $edited_body;
-                    // Only save custom fields if they exist
-                    if (($count > 0) && !($product_id instanceof Response)) { 
-                      $this->edit_save_custom_fields($edited_body, $validator, $pcR, $product_id); 
-                      return $this->responseFactory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
-                      ['heading'=>'','message'=>$sR->trans('record_successfully_updated'),'url'=>'product/view',
-                      'id'=>$product_id])); 
-                    }  
+                  $count = $cfR->repoTableCountquery('product_custom');
+                  $parameters['body'] = $edited_body;
+                  // Only save custom fields if they exist
+                  if (($count > 0) && !($product_id instanceof Response)) { 
+                    $this->edit_save_custom_fields($edited_body, $validator, $pcR, $product_id); 
+                  }
+                  return $this->responseFactory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
+                  ['heading'=>'','message'=>$this->translator->translate('invoice.product.record.successfully.added'),'url'=>'product/view',
+                  'id'=>$product_id]));                       
                 } else {
                   return $this->webService->getRedirectResponse('product/index');   
                 }

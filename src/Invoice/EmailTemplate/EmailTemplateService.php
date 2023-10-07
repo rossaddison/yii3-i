@@ -37,11 +37,10 @@ final class EmailTemplateService
     }
     
     /**
-     * 
-     * @param array|EmailTemplate|null $model
+     * @param EmailTemplate $model
      * @return void
      */
-    public function deleteEmailTemplate(array|EmailTemplate|null $model): void
+    public function deleteEmailTemplate(EmailTemplate $model): void
     {
         $this->repository->delete($model);
     }

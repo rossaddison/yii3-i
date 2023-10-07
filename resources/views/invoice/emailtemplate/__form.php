@@ -76,7 +76,7 @@ if (!empty($errors)) {
     <div id="email_option">
         <div class="mb-3 form-group">
             <label for="email_template_from_email"></label>
-            <input class="form-control" type="text" id="option_Email" name="option_Email" value="<?= $body['email_template_from_email']; ?>">
+            <input class="form-control" type="text" id="email_template_from_email" name="email_template_from_email" value="<?= $body['email_template_from_email'] ?? ''; ?>">
         </div>
     </div>    
     </div>

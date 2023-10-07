@@ -379,6 +379,7 @@ $lang = [
   'invoice.product.property.name' => 'Name',
   'invoice.product.property.table' => 'Product Property Table',
   'invoice.product.property.value' => 'Value',
+  'invoice.product.record.successfully.added'=> 'Record successfully added',
   'invoice.product.sii.schemeid' => 'Peppol Standard Item Identification schemeid - eg. 0160',
   'invoice.product.sii.id' => 'Peppol Standard Item Identification id associated with the above scheme - eg. 14 digit zero-padded identifier in Global Trade Item Number database (appearing under barcode)',
   'invoice.product.icc.listid' => 'Peppol Item Classificaiton Code List id - eg. SRV',

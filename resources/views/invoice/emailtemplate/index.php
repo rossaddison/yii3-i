@@ -53,14 +53,9 @@
                                 </a>
                             </li>
                             <li>
-                                <form action="<?= $urlGenerator->generate('emailtemplate/delete',['email_template_id'=>$email_template->getEmail_template_id()]); ?>"
-                                      method="POST" style="text-decoration: none">
-                                    <?php $csrf; ?>
-                                    <button type="submit" class="dropdown-button"
-                                            onclick="return confirm('<?= $s->trans('delete_record_warning'); ?>');">
-                                        <i class="fa fa-trash-o fa-margin"></i> <?= $s->trans('delete'); ?>
-                                    </button>
-                                </form>
+                                <a href="<?= $urlGenerator->generate('emailtemplate/delete',['email_template_id'=>$email_template->getEmail_template_id()]); ?>" style="text-decoration: none ">
+                                    <i class="fa fa-trash fa-margin"></i><?= $s->trans('delete'); ?>
+                                </a>
                             </li>
                         </ul>
                     </div>

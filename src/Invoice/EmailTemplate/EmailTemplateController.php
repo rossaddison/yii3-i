@@ -122,9 +122,9 @@ final class EmailTemplateController
             'selected_pdf_template'=>'',
             'tag'=>$tag,
             // see src\Invoice\Asset\rebuild-1.13\js\mailer_ajax_email_addresses
-            'dollar_suffix_ajax_admin_email'=>$settingRepository->getConfigAdminEmail(),
-            'dollar_suffix_ajax_sender_email'=>$settingRepository->getConfigSenderEmail(),
-            //'froms' => $settingRepository->,
+            'admin_email'=>$settingRepository->getConfigAdminEmail(),
+            'sender_email'=>$settingRepository->getConfigSenderEmail(),
+            'from_email'=>($fromR->getDefault())?->getEmail() ?: $this->translator->translate('invoice.email.default.none.set'),
         ];
         
         if ($request->getMethod() === Method::POST) {
@@ -303,8 +303,7 @@ final class EmailTemplateController
         return $canEdit;
     }
     
-    private function emailtemplate(CurrentRoute $currentRoute, 
-                                   EmailTemplateRepository $emailtemplateRepository): EmailTemplate|null {
+    private function emailtemplate(CurrentRoute $currentRoute, EmailTemplateRepository $emailtemplateRepository): EmailTemplate|null {
         $email_template_id = $currentRoute->getArgument('email_template_id');       
         if (null!==$email_template_id) {
             $emailtemplate = $emailtemplateRepository->repoEmailTemplatequery($email_template_id);
@@ -330,15 +329,15 @@ final class EmailTemplateController
      */
     private function body(EmailTemplate $emailtemplate): array {
         $body = [
-                'email_template_title'=>$emailtemplate->getEmail_template_title(),
-                'email_template_type'=>$emailtemplate->getEmail_template_type(),
-                'email_template_body'=>$emailtemplate->getEmail_template_body(),
-                'email_template_subject'=>$emailtemplate->getEmail_template_subject(),
-                'email_template_from_name'=>$emailtemplate->getEmail_template_from_name(),
-                'email_template_from_email'=>$emailtemplate->getEmail_template_from_email(),
-                'email_template_cc'=>$emailtemplate->getEmail_template_cc(),
-                'email_template_bcc'=>$emailtemplate->getEmail_template_bcc(),
-                'email_template_pdf_template'=>$emailtemplate->getEmail_template_pdf_template(),
+          'email_template_title'=>$emailtemplate->getEmail_template_title(),
+          'email_template_type'=>$emailtemplate->getEmail_template_type(),
+          'email_template_body'=>$emailtemplate->getEmail_template_body(),
+          'email_template_subject'=>$emailtemplate->getEmail_template_subject(),
+          'email_template_from_name'=>$emailtemplate->getEmail_template_from_name(),
+          'email_template_from_email'=>$emailtemplate->getEmail_template_from_email(),
+          'email_template_cc'=>$emailtemplate->getEmail_template_cc(),
+          'email_template_bcc'=>$emailtemplate->getEmail_template_bcc(),
+          'email_template_pdf_template'=>$emailtemplate->getEmail_template_pdf_template(),
         ];
         return $body;
     }

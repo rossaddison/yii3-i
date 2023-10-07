@@ -32,7 +32,6 @@ final class ProductService
       null!==$form->getProduct_icc_id() ? $model->setProduct_icc_id($form->getProduct_icc_id()) : '';
       null!==$form->getProduct_country_of_origin_code() ? $model->setProduct_country_of_origin_code($form->getProduct_country_of_origin_code()) : '';
       null!==$form->getProduct_name() ? $model->setProduct_name($form->getProduct_name()): '';
-      null!==$form->getImage_prefix() ? $model->setImage_prefix($form->getImage_prefix()): '';
       null!==$form->getProduct_description() ? $model->setProduct_description($form->getProduct_description()): '';
       null!==$form->getProduct_price() ? $model->setProduct_price($form->getProduct_price()): '';
       $model->setProduct_price_base_quantity($form->getProduct_price_base_quantity());
@@ -61,7 +60,6 @@ final class ProductService
         null!==$form->getProduct_description() ? $model->setProduct_description($form->getProduct_description()) : '';
         null!==$form->getProduct_price() ? $model->setProduct_price($form->getProduct_price()) : '';
         $model->setProduct_price_base_quantity($form->getProduct_price_base_quantity());
-        null!==$form->getImage_prefix() ? $model->setImage_prefix($form->getImage_prefix()) : '';
         null!==$form->getProvider_name() ? $model->setProvider_name($form->getProvider_name()) : '';
         null!==$form->getProvider_name() ? $model->setProvider_name($form->getProvider_name()) : '';
         null!==$form->getProduct_tariff() ? $model->setProduct_tariff($form->getProduct_tariff()) : '';        

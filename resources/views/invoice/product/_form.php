@@ -53,21 +53,7 @@ if (!empty($errors)) {
 
                     </div>
                     
-                    <div class="panel-body">
-                        <?= Field::file($form, 'attachFile')
-                            ->containerClass('mb-3')
-                            ->hideLabel()
-                        ?>
-                        <?= Html::label($translator->translate('invoice.product.image'),'productFile'); ?> 
-                        <?= Html::input('text', 'image_prefix', $body['image_prefix'] ?? '',
-                               ['class' => 'form-control', 'id' => 'productFile']);
-                        ?> 
-                        <?= $image_prefix = $body['image_prefix'] ?? ''; ?>
-                        <?= Html::img()
-                            ->src('/products/'. $image_prefix)
-                            ->height($image_prefix ? '300' : '0')
-                            ->width($image_prefix ? '500' : '0'); 
-                        ?>
+                    <div class="panel-body">                       
                         <div class="form-group">
                             <label for="family_id">
                                 <?= $s->trans('family'); ?>
