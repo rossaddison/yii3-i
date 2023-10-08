@@ -75,8 +75,7 @@ final class EmailTemplateController
             's'=> $settingRepository,
             'alert' => $this->alert(),
             'canEdit' => $canEdit,
-            'email_templates' => $this->emailtemplates($emailtemplateRepository), 
-            'flash'=> $this->flash
+            'email_templates' => $this->emailtemplates($emailtemplateRepository),
         ];    
         return $this->viewRenderer->render('index', $parameters);
     }
@@ -131,6 +130,7 @@ final class EmailTemplateController
             $form = new EmailTemplateForm();
             if (null!==$this->userService->getUser() && $form->load($parameters['body']) && $validator->validate($form)->isValid()) {
                 $this->emailtemplateService->saveEmailTemplate(new EmailTemplate(),$form);
+                $this->flash_message('info', $this->translator->translate('invoice.email.template.successfully.added'));
                 return $this->webService->getRedirectResponse('emailtemplate/index');
             }
             $parameters['errors'] = $form->getFormErrors();
@@ -216,6 +216,7 @@ final class EmailTemplateController
                 $body = $request->getParsedBody();
                 if ($form->load($body) && $validator->validate($form)->isValid()) {
                     $this->emailtemplateService->saveEmailTemplate($email_template, $form);
+                    $this->flash_message('info', $this->translator->translate('invoice.email.template.successfully.edited'));
                     return $this->webService->getRedirectResponse('emailtemplate/index');
                 }
                 $parameters['body'] = $body;
@@ -238,6 +239,7 @@ final class EmailTemplateController
         $email_template = $this->emailtemplate($currentRoute, $emailtemplateRepository);
         if ($email_template) {
             $this->emailtemplateService->deleteEmailTemplate($email_template);               
+            $this->flash_message('info', $this->translator->translate('invoice.email.template.successfully.deleted'));
             return $this->webService->getRedirectResponse('emailtemplate/index');        
         }
         return $this->webService->getRedirectResponse('emailtemplate/index');        
