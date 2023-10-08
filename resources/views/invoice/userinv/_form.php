@@ -153,7 +153,7 @@ if (!empty($errors)) {
  value="<?= Html::encode($body['mobile'] ??  ''); ?>">
  </div>
  <div class="mb3 form-group">
-   <label for="email"><?= $s->trans('email'); ?></label>
+     <label for="email"><?= $s->trans('email') . str_repeat("&nbsp;", 2). $translator->translate('invoice.email.template.user.account.leave.blank'); ?></label>
    <input type="text" name="email" id="email" class="form-control"
  value="<?= Html::encode($body['email'] ??  ''); ?>">
  </div>

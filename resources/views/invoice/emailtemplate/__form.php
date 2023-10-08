@@ -59,7 +59,7 @@ if (!empty($errors)) {
     <div class="panel panel-default">
     <div class="panel-heading">    
     <fieldset>
-      <h5><?= $translator->translate('invoice.email.template.from.source'); ?></h5>
+        <h5><?= $translator->translate('invoice.email.template.from.source'); ?></h5><h6><?= str_repeat("&nbsp;", 5).  $translator->translate('invoice.email.template.from.email.leave.blank'); ?></h6>
       <div>
         <!-- see  src/Invoice/Asset/rebuild-1.13/js/mailer_ajax_email_addresses -->  
         <input type="radio" id="adminEmail" name="from_email" value="<?= $admin_email; ?>" />

@@ -138,10 +138,8 @@ use Yiisoft\Html\Tag\Form;
                     <?= Field::text($form, 'from_name')->addInputAttributes(['class'=>'email-template-from-name form-control']) 
                                                        ->addInputAttributes(['value'=> $auto_template['from_name'] ?? '' ?: (null!==$userinv ? Html::encode($userinv->getName()) : '')])->hideLabel()?>
                     
-                    <?= Html::tag('Label',$s->trans('from_email')) ?>
-                    <?= Field::email($form, 'from_email')->addInputAttributes(['value'=> null!==$userinv 
-                                                                                    ? Html::encode($userinv->getEmail()) 
-                                                                                    : $auto_template['from_email'] ?? ''])->hideLabel()
+                    <?= Html::tag('Label',$s->trans('from_email')). str_repeat("&nbsp;", 2). ($auto_template['from_email'] ? $translator->translate('invoice.email.source.email.template') : $translator->translate('invoice.email.source.user.account')) ?>
+                    <?= Field::email($form, 'from_email')->addInputAttributes(['value'=> $auto_template['from_email'] ?? '' ?: (null!==$userinv ? Html::encode($userinv->getEmail()) : '')  ])->hideLabel()
                                                          ->addInputAttributes(['class'=>'email-template-from-email form-control']) ?>                            
                     
                     <?= Html::tag('Label',$s->trans('cc')) ?>

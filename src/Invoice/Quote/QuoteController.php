@@ -1158,16 +1158,16 @@ final class QuoteController
                     ['heading'=>'','message'=>$this->sR->trans('email_successfully_sent'),'url'=>'quote/view','id'=>$quote_id]));  
                 } else {
                     return $this->factory->createResponse($this->view_renderer->renderPartialAsString('/invoice/setting/inv_message',
-                    ['heading'=>'','message'=>$this->sR->trans('email_not_sent'),
+                    ['heading'=>'','message'=>$this->translator->translate('invoice.invoice.email.not.sent.successfully'),
                      'url'=>'quote/view','id'=>$quote_id]));  
                 }
             } // is_array
             return $this->factory->createResponse($this->view_renderer->renderPartialAsString('/invoice/setting/inv_message',
-                    ['heading'=>'','message'=>$this->sR->trans('email_not_sent'),
+                    ['heading'=>'','message'=>$this->translator->translate('invoice.invoice.email.not.sent.successfully'),
                      'url'=>'quote/view','id'=>$quote_id]));
         } // quote_id   
         return $this->factory->createResponse($this->view_renderer->renderPartialAsString('/invoice/setting/inv_message',
-                    ['heading'=>'','message'=>$this->sR->trans('email_not_sent'),
+                    ['heading'=>'','message'=>$this->translator->translate('invoice.invoice.email.not.sent.successfully'),
                      'url'=>'quote/view','id'=>$quote_id]));
     } 
     

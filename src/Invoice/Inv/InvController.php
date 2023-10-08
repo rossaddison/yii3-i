@@ -1324,8 +1324,8 @@ final class InvController {
                 } //$this->email_stage_1
             } //is_array(body)
             return $this->factory->createResponse($this->view_renderer->renderPartialAsString('/invoice/setting/inv_message',
-                                    ['heading' => '', 'message' => $this->sR->trans('email_not_sent'),
-                                        'url' => 'inv/view', 'id' => $inv_id]));
+                                    ['heading' => '', 'message' => $this->translator->translate('invoice.invoice.email.not.sent.successfully'),
+                                     'url' => 'inv/view', 'id' => $inv_id]));
         }
         return $this->factory->createResponse($this->view_renderer->renderPartialAsString('/invoice/setting/inv_message',
                                 ['heading' => '', 'message' => $this->sR->trans('email_not_sent'),

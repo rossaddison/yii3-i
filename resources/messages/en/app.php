@@ -107,6 +107,8 @@ return [
   'invoice.email.default.none.set' => 'No default has been set',
   'invoice.email.from.dropdown' => 'From Email Dropdown Email Addresses to be included in MailerQuote Form and MailerInv Form',
   'invoice.email.include' => 'Include',
+  'invoice.email.source.email.template' => ' Retrieved from Settings ... Email Template',
+  'invoice.email.source.user.account' => ' Retrieved from Settings ... Invoice User Account',
   'invoice.email.template' => 'Email Template',
   'invoice.email.template.add' => 'Email Template Add',
   'invoice.email.template.from.source' => 'Email Source',
@@ -116,6 +118,12 @@ return [
   'invoice.email.template.successfully.added' => 'Email Template Successfully Added',
   'invoice.email.template.successfully.deleted' => 'Email Template Successfully Deleted',
   'invoice.email.template.successfully.edited' => 'Email Template Successfully Edited',
+  'invoice.email.template.from.email.leave.blank' => ': If you leave this field blank, the User\'s account email address will be'.
+                                                     ' inserted as an editable value on the mailer form. '.
+                                                     ' eg. An accountant\'s server email address.' .
+                                                     ' Preferably use a server related email address here.',
+  'invoice.email.template.user.account.leave.blank' => ': If you leave this field blank, the Email Template\'s From email address will be'.
+                                                     ' inserted as an editable value on the mailer form. ',
   'invoice.enter' => 'Enter',
   'invoice.family' => 'Family',
   'invoice.family.add' => 'Family Add',
