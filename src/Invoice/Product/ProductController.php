@@ -353,7 +353,7 @@ class ProductController
             && $form->isValid() 
             && empty(HtmlFormErrors::getErrorSummaryFirstErrors($form))) {
            $product_id = $this->productService->saveProduct($product, $form);
-           $this->flash_message('info', $this->translator->translate('success','invoice.product.record.successfully.added'));
+           $this->flash_message('info', $this->translator->translate('invoice.product.record.successfully.added'));
         }
         if (!empty(HtmlFormErrors::getErrorSummaryFirstErrors($form))) {
            $this->flash_message('warning', $this->translator->translate('invoice.invoice.form.errors'));
