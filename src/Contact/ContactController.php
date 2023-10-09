@@ -12,7 +12,6 @@ use Yiisoft\Http\Header;
 use Yiisoft\Http\Method;
 use Yiisoft\Http\Status;
 use Yiisoft\Router\UrlGeneratorInterface;
-use Yiisoft\Form\FormHydrator;
 use Yiisoft\Yii\View\ViewRenderer;
 
 final class ContactController
