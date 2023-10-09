@@ -48,7 +48,8 @@ use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 
 final class PaymentController
@@ -99,7 +100,7 @@ final class PaymentController
      * 
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param ACIR $aciR
      * @param SettingRepository $settingRepository
      * @param InvRepository $invRepository
@@ -116,7 +117,7 @@ final class PaymentController
      * @return Response
      */
     public function add(ViewRenderer $head, Request $request, 
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         ACIR $aciR,
                         SettingRepository $settingRepository,                        
                         InvRepository $invRepository,
@@ -240,8 +241,8 @@ final class PaymentController
                             'value'=>$value
                         ];
                         $form = new PaymentCustomForm();
-                        if ($form->load($payment_custom_input) 
-                            && $validator->validate($form)->isValid() 
+                        if ($formHydrator->populate($form, $payment_custom_input) 
+                            && $form->isValid() 
                             && $this->add_custom_field($payment_id, $custom_field_id, $pcR)) {
                             try {
                               $this->paymentCustomService->savePaymentCustom($payment_custom, $form);
@@ -262,7 +263,7 @@ final class PaymentController
                         }
                     }
                     return $this->webService->getRedirectResponse('payment/index');
-                    //$parameters['errors'] = $form->getFormErrors();
+                    //$parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
                 }
             return $this->viewRenderer->render('_form', $parameters); 
             } // is_array body
@@ -322,14 +323,14 @@ final class PaymentController
     }
     
     /**
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param (mixed|string)[] $array     
      * @param string $payment_id
      * @param PaymentCustomRepository $pcR
      * @psalm-param array{custom: ''|mixed} $array
      * @return void
      */
-    public function custom_fields(ValidatorInterface $validator, array $array, string $payment_id, PaymentCustomRepository $pcR) : void
+    public function custom_fields(FormHydrator $formHydrator, array $array, string $payment_id, PaymentCustomRepository $pcR) : void
     {   
         if (!empty($array['custom'])) {
             $db_array = [];
@@ -370,7 +371,7 @@ final class PaymentController
                 $payment_custom['custom_field_id']=$key;
                 $payment_custom['value']=$value; 
                 $model = ($pcR->repoPaymentCustomCount($payment_id,$key) > 0 ? $pcR->repoFormValuequery($payment_id,$key) : new PaymentCustom());
-                if (null!==$model && $from_custom->load($payment_custom) && $validator->validate($from_custom)->isValid()) {  
+                if (null!==$model && $formHydrator->populate($from_custom, $payment_custom) && $from_custom->isValid()) {  
                     $this->paymentCustomService->savePaymentCustom($model, $from_custom);                        
                 } // if null                                   
                } // if value
@@ -427,7 +428,7 @@ final class PaymentController
      * @param ViewRenderer $head
      * @param Request $request
      * @param CurrentRoute $currentRoute
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param SettingRepository $settingRepository
      * @param InvRepository $invRepository
      * @param InvAmountRepository $iaR
@@ -443,7 +444,7 @@ final class PaymentController
      * @return Response
      */
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute,
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         ACIR $aciR,
                         SettingRepository $settingRepository,                          
                         InvRepository $invRepository,
@@ -489,14 +490,14 @@ final class PaymentController
                 'edit'=>true
            ];
            if ($request->getMethod() === Method::POST) {
-                $edited_body = $request->getParsedBody();
-                /** @var array $edited_body['custom'] */
-                if (null!==$edited_body && is_array($edited_body)) {
+                $body = $request->getParsedBody();
+                /** @var array $body['custom'] */
+                if (null!==$body && is_array($body)) {
                     /** @var array $custom */
-                    $custom = $edited_body['custom'];
-                    $inv_id = (string)$edited_body['inv_id'];
-                    $pcR->repoPaymentCount($payment_id) > 0 ? $this->edit_save_custom_fields($custom, $validator, $pcR, $payment_id) : '';
-                    $this->edit_save_form_fields($edited_body, $currentRoute, $validator, $pmtR);
+                    $custom = $body['custom'];
+                    $inv_id = (string)$body['inv_id'];
+                    $pcR->repoPaymentCount($payment_id) > 0 ? $this->edit_save_custom_fields($custom, $formHydrator, $pcR, $payment_id) : '';
+                    $this->edit_save_form_fields($body, $currentRoute, $formHydrator, $pmtR);
                     // Recalculate the invoice
                     $number_helper->calculate_inv($inv_id, $aciR, $iiR, $iiaR, $itrR, $iaR, $invRepository, $pmtR);
                     $this->flash_message('info', $settingRepository->trans('record_successfully_updated')); 
@@ -509,41 +510,40 @@ final class PaymentController
     }
     
     /**
-     * @param array|Payment|null $edited_body
+     * @param array|Payment|null $body
      */
-    public function edit_save_form_fields(array|Payment|null $edited_body, CurrentRoute $currentRoute, ValidatorInterface $validator, PaymentRepository $pmtR) : void {
+    public function edit_save_form_fields(array|Payment|null $body, CurrentRoute $currentRoute, FormHydrator $formHydrator, PaymentRepository $pmtR) : void {
         $form = new PaymentForm();
         $payment = $this->payment($currentRoute, $pmtR);
-        if ($payment && $form->load($edited_body) && $validator->validate($form)->isValid()) {
+        if ($payment && $formHydrator->populate($form, $body) && $form->isValid()) {
             $this->paymentService->editPayment($payment, $form);
         }
     }
     
     /**
-     * 
      * @param array $custom
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param PaymentCustomRepository $pcR
      * @param string $payment_id
      * @return void
      */
-    public function edit_save_custom_fields(array $custom, ValidatorInterface $validator, PaymentCustomRepository $pcR,string $payment_id): void {
-        /** @var string $value */
-        foreach ($custom as $custom_field_id => $value) {
-            $payment_custom = $pcR->repoFormValuequery($payment_id, (string)$custom_field_id);
-            if ($payment_custom) {
-                $payment_custom_input = [
-                    'payment_id'=>(int)$payment_id,
-                    'custom_field_id'=>(int)$custom_field_id,
-                    'value'=>$value
-                ];
-                $form = new PaymentCustomForm();
-                if ($form->load($payment_custom_input) && $validator->validate($form)->isValid())
-                {
-                    $this->paymentCustomService->editPaymentCustom($payment_custom, $form);     
-                }
+    public function edit_save_custom_fields(array $custom, FormHydrator $formHydrator, PaymentCustomRepository $pcR,string $payment_id): void {
+      /** @var string $value */
+      foreach ($custom as $custom_field_id => $value) {
+          $payment_custom = $pcR->repoFormValuequery($payment_id, (string)$custom_field_id);
+          if ($payment_custom) {
+            $payment_custom_input = [
+                'payment_id'=>(int)$payment_id,
+                'custom_field_id'=>(int)$custom_field_id,
+                'value'=>$value
+            ];
+            $form = new PaymentCustomForm();
+            if ($formHydrator->populate($form, $payment_custom_input) && $form->isValid())
+            {
+              $this->paymentCustomService->editPaymentCustom($payment_custom, $form);     
             }
-        }
+          }
+      }
     }
     
     // This function is used in invoice/layout/guest
@@ -906,18 +906,18 @@ final class PaymentController
     // payment/view => '#btn_save_payment_custom_fields' => payment_custom_field.js => /invoice/payment/save_custom";
     
     /**
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param Request $request
      * @param PaymentCustomRepository $pcR
      */
-    public function save_custom(ValidatorInterface $validator, Request $request, PaymentCustomRepository $pcR) : \Yiisoft\DataResponse\DataResponse
+    public function save_custom(FormHydrator $formHydrator, Request $request, PaymentCustomRepository $pcR) : \Yiisoft\DataResponse\DataResponse
     {
             $js_data = $request->getQueryParams();
             $payment_id = (string)$js_data['payment_id'];
             $custom_field_body = [            
                 'custom'=>(array)$js_data['custom'] ?: '',            
             ];
-            $this->custom_fields($validator, $custom_field_body, $payment_id, $pcR);
+            $this->custom_fields($formHydrator, $custom_field_body, $payment_id, $pcR);
             return $this->factory->createResponse(Json::encode(['success'=>1])); 
     }
     

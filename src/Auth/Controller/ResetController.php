@@ -11,6 +11,7 @@ use App\Auth\Form\ResetForm;
 use App\Service\WebControllerService;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Yiisoft\Form\FormHydrator;
 use Yiisoft\Http\Method;
 use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
@@ -41,6 +42,7 @@ final class ResetController
       Identity $identity,
       IdentityRepository $identityRepository,
       ServerRequestInterface $request,
+      FormHydrator $formHydrator,
       ResetForm $resetForm
     ): ResponseInterface {
       // permit an authenticated user, ie. not a guest, only and null!== current user
@@ -54,7 +56,7 @@ final class ResetController
               // Identity and User are in a HasOne relationship so no null value
               $login = $identity->getUser()?->getLogin();
               if ($request->getMethod() === Method::POST
-                && $resetForm->load($request->getParsedBody())
+                && $formHydrator->populate($resetForm, $request->getParsedBody())
                 && $resetForm->reset() 
               ) {
                 // Identity implements CookieLoginIdentityInterface: ensure the regeneration of the cookie auth key by means of $authService->logout();

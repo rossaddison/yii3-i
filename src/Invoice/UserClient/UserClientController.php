@@ -23,7 +23,8 @@ use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 
 final class UserClientController
@@ -79,12 +80,12 @@ final class UserClientController
      * 
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param SettingRepository $settingRepository
      * @return Response
      */
     public function add(ViewRenderer $head, Request $request, 
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         SettingRepository $settingRepository,                        
 
     ) : Response
@@ -100,11 +101,11 @@ final class UserClientController
         if ($request->getMethod() === Method::POST) {
             $form = new UserClientForm();
             $user_client = new UserClient();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                 $this->userclientService->saveUserClient($user_client, $form);
                 return $this->webService->getRedirectResponse('userclient/index');
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('_form', $parameters);
     }
@@ -138,13 +139,13 @@ final class UserClientController
      * @param ViewRenderer $head
      * @param Request $request
      * @param CurrentRoute $currentRoute
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param UserClientRepository $userclientRepository
      * @param SettingRepository $settingRepository
      * @return Response
      */
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute, 
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         UserClientRepository $userclientRepository, 
                         SettingRepository $settingRepository,                        
 
@@ -163,12 +164,12 @@ final class UserClientController
                 $form = new UserClientForm();
                 $body = $request->getParsedBody();
                 $user_client = new UserClient();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     $this->userclientService->saveUserClient($user_client, $form);
                     return $this->webService->getRedirectResponse('userclient/index');
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('_form', $parameters);
         }
@@ -181,7 +182,7 @@ final class UserClientController
     
     /**
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param ViewRenderer $head
      * @param CurrentRoute $currentRoute
      * @param ClientRepository $cR
@@ -191,7 +192,7 @@ final class UserClientController
      * @param UIR $uiR
      * @return Response
      */
-    public function new(Request $request, ValidatorInterface $validator, ViewRenderer $head, CurrentRoute $currentRoute, 
+    public function new(Request $request, FormHydrator $formHydrator, ViewRenderer $head, CurrentRoute $currentRoute, 
                         ClientRepository $cR, SettingRepository $sR, UserClientRepository $ucR, UserClientService $ucS, UIR $uiR): Response {
         
         $user_id = $currentRoute->getArgument('user_id');
@@ -220,7 +221,7 @@ final class UserClientController
                             // Unassign currently assigned clients
                             $ucR->unassign_to_user_client($user_id);
                             // Search for all clients, including new clients and assign them aswell
-                            $ucR->reset_users_all_clients($uiR, $cR, $ucS, $validator);
+                            $ucR->reset_users_all_clients($uiR, $cR, $ucS, $formHydrator);
                             return $this->webService->getRedirectResponse('userinv/index');
                         }
                         if ((((string)$key === 'client_id'))){
@@ -229,7 +230,7 @@ final class UserClientController
                                 'client_id'=>$value
                             ];
                             $form = new UserClientForm();
-                            if ($form->load($form_array) && $validator->validate($form)->isValid()
+                            if ($formHydrator->populate($form, $form_array) && $form->isValid()
                                 // Check that the user client does not exist    
                                                          && !$ucR->repoUserClientqueryCount($user_id, $value) > 0){
                                 $this->userclientService->saveUserClient(new UserClient(),$form);

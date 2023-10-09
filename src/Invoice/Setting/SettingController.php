@@ -34,7 +34,8 @@ use Yiisoft\Security\Random;
 use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface as Translator;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 // Psr
 use Psr\Http\Message\ResponseInterface as Response;
@@ -100,15 +101,15 @@ final class SettingController
         ->withCurrentPage($pageNum);
         $canEdit = $this->rbac(); 
         $parameters = [
-              'paginator' => $paginator,
-              's'=>$this->s,
-              'alert' => $this->alert(),
-              'canEdit' => $canEdit,
-              'settings' => $this->settings($this->s),
-              'session'=>$this->session,
-              'trans'=>$this->translator->translate('invoice.setting.translator.key'),
-              'section'=>$this->translator->translate('invoice.setting.section'),
-              'subsection'=>$this->translator->translate('invoice.setting.subsection'),
+          'paginator' => $paginator,
+          's'=>$this->s,
+          'alert' => $this->alert(),
+          'canEdit' => $canEdit,
+          'settings' => $this->settings($this->s),
+          'session'=>$this->session,
+          'trans'=>$this->translator->translate('invoice.setting.translator.key'),
+          'section'=>$this->translator->translate('invoice.setting.section'),
+          'subsection'=>$this->translator->translate('invoice.setting.subsection'),
         ];
         return $this->viewRenderer->render('debug_index', $parameters);
     }
@@ -118,7 +119,7 @@ final class SettingController
     /**
      * 
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param ViewRenderer $head
      * @param ER $eR
      * @param GR $gR
@@ -128,7 +129,7 @@ final class SettingController
      * @return Response
      */
     public function tab_index(Request $request, 
-                              ValidatorInterface $validator, 
+                              FormHydrator $formHydrator, 
                               ViewRenderer $head, 
                               ER $eR, 
                               GR $gR, 
@@ -284,7 +285,7 @@ final class SettingController
                        // The settings 'decimal_point' and 'thousands_separator' which are derived from number_format array
                        // and were installed on the first run in InvoiceController 
                        // will be derived automatically => their repoCount will be greater than zero and will not cause this to run
-                       $this->tab_index_debug_mode_ensure_all_settings_included(true, $key, $value, $validator);
+                       $this->tab_index_debug_mode_ensure_all_settings_included(true, $key, $value, $formHydrator);
                     }                
                 }
                 $this->flash_message('info', $this->s->trans('settings_successfully_saved'));
@@ -346,10 +347,10 @@ final class SettingController
      * @param bool $bool
      * @param string $key
      * @param string $value
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return void
      */
-    public function tab_index_debug_mode_ensure_all_settings_included(bool $bool, string $key, string $value, ValidatorInterface $validator): void {
+    public function tab_index_debug_mode_ensure_all_settings_included(bool $bool, string $key, string $value, FormHydrator $formHydrator): void {
         // The setting does not exist because repoCount is not greater than 0;
         if ($bool) {
             // Make sure the setting is available to be set in the database if there is no such like setting in the database
@@ -358,7 +359,7 @@ final class SettingController
                 'setting_key'=>$key,
                 'setting_value'=>$value,
             ];
-            if ($form->load($array) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $array) && $form->isValid()) {
                 $this->settingService->saveSetting(new Setting(), $form);
             }
         }
@@ -367,10 +368,10 @@ final class SettingController
     /**
      * 
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return Response
      */
-    public function add(Request $request, ValidatorInterface $validator): Response
+    public function add(Request $request, FormHydrator $formHydrator): Response
     {
         $parameters = [
             'title' => $this->s->trans('add'),
@@ -381,12 +382,12 @@ final class SettingController
         ];
         if ($request->getMethod() === Method::POST) {
             $form = new SettingForm();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                 $this->settingService->saveSetting(new Setting(), $form);
                 $this->flash_message('info', $this->s->trans('record_successfully_updated'));
                 return $this->webService->getRedirectResponse('setting/debug_index');
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('__form', $parameters);
     }
@@ -420,11 +421,11 @@ final class SettingController
      * 
      * @param Request $request
      * @param CurrentRoute $currentRoute
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return Response
      */
     public function edit(Request $request, CurrentRoute $currentRoute, 
-              ValidatorInterface $validator): Response 
+             FormHydrator $formHydrator): Response 
     {
         $setting = $this->setting($currentRoute, $this->s);
         if ($setting) {
@@ -441,13 +442,13 @@ final class SettingController
             if ($request->getMethod() === Method::POST) {
                 $form = new SettingForm();
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     $this->settingService->saveSetting($setting, $form);
                     $this->flash_message('info', $this->s->trans('record_successfully_updated'));
                     return $this->webService->getRedirectResponse('setting/debug_index');
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('__form', $parameters);
         }
@@ -497,11 +498,11 @@ final class SettingController
      * 
      * @param Request $request
      * @param CurrentRoute $currentRoute
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return Response
      */
     public function save_form(Request $request, CurrentRoute $currentRoute, 
-              ValidatorInterface $validator): Response 
+             FormHydrator $formHydrator): Response 
     {
         $setting = $this->setting($currentRoute, $this->s);
         if ($setting) {
@@ -518,12 +519,12 @@ final class SettingController
             if ($request->getMethod() === Method::POST) {
                 $form = new SettingForm();
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     $this->settingService->saveSetting($setting, $form);
                     return $this->webService->getRedirectResponse('setting/index');
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('__form', $parameters);
         }

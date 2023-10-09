@@ -20,7 +20,8 @@ use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 
 final class MerchantController
@@ -74,13 +75,13 @@ final class MerchantController
      * 
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param SettingRepository $settingRepository
      * @param InvRepository $invRepository
      * @return Response
      */
     public function add(ViewRenderer $head, Request $request, 
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         SettingRepository $settingRepository,                        
                         InvRepository $invRepository
     ): Response
@@ -99,11 +100,11 @@ final class MerchantController
         if ($request->getMethod() === Method::POST) {
             
             $form = new MerchantForm();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                 $this->merchantService->saveMerchant(new Merchant(), $form, $settingRepository);
                 return $this->webService->getRedirectResponse('merchant/index');
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('_form', $parameters);
     }
@@ -113,14 +114,14 @@ final class MerchantController
      * @param ViewRenderer $head
      * @param Request $request
      * @param CurrentRoute $currentRoute
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param MerchantRepository $merchantRepository
      * @param SettingRepository $settingRepository
      * @param InvRepository $invRepository
      * @return Response
      */
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute,
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         MerchantRepository $merchantRepository, 
                         SettingRepository $settingRepository,                        
                         InvRepository $invRepository
@@ -139,12 +140,12 @@ final class MerchantController
             if ($request->getMethod() === Method::POST) {
                 $form = new MerchantForm();
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     $this->merchantService->saveMerchant($merchant, $form, $settingRepository);
                     return $this->webService->getRedirectResponse('merchant/index');
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('_form', $parameters);
         }

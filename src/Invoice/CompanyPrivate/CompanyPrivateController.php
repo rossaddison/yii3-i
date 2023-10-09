@@ -20,7 +20,8 @@ use Yiisoft\Security\Random;
 use Yiisoft\Session\SessionInterface;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 
 final class CompanyPrivateController
@@ -74,13 +75,13 @@ final class CompanyPrivateController
      * 
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param SettingRepository $settingRepository
      * @param CompanyRepository $companyRepository
      * @return Response
      */
     public function add(ViewRenderer $head, Request $request, 
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         SettingRepository $settingRepository,                        
                         CompanyRepository $companyRepository
     ): Response
@@ -114,15 +115,15 @@ final class CompanyPrivateController
              */
             $parameters['body']['logo_filename'] = $modified_original_file_name;
             if (!$this->file_uploading_errors($tmp, $target_file_name, $settingRepository)) {
-                if ($form->load($parameters['body']) 
-                    && $validator->validate($form)->isValid()
+                if ($formHydrator->populate($form, $parameters['body']) 
+                    && $form->isValid()
                 ) {
                     $this->companyprivateService->addCompanyPrivate(new CompanyPrivate(), $form, $settingRepository);
                     $this->flash_message('info',$settingRepository->trans('record_successfully_created'));
                     return $this->webService->getRedirectResponse('companyprivate/index');
                 }
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('_form', $parameters);
     }
@@ -176,14 +177,14 @@ final class CompanyPrivateController
      * @param ViewRenderer $head
      * @param Request $request
      * @param CurrentRoute $currentRoute
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param CompanyPrivateRepository $companyprivateRepository
      * @param SettingRepository $settingRepository
      * @param CompanyRepository $companyRepository
      * @return Response
      */
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute,
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         CompanyPrivateRepository $companyprivateRepository, 
                         SettingRepository $settingRepository,                        
                         CompanyRepository $companyRepository
@@ -208,8 +209,8 @@ final class CompanyPrivateController
             }   
             if ($request->getMethod() === Method::POST) {
                 $body = $request->getParsedBody();
-                if ($form->load($body) 
-                    && $validator->validate($form)->isValid()
+                if ($formHydrator->populate($form, $body) 
+                    && $form->isValid()
                 ) {
                     // Replace filename's spaces with underscore and add random string preventing overwrites
                     $modified_original_file_name = Random::string(4).'_'.preg_replace('/\s+/', '_', $_FILES['file']['name']);
@@ -242,7 +243,7 @@ final class CompanyPrivateController
                         return $this->webService->getRedirectResponse('companyprivate/index');
                     } // after  save
                 }
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('_form', $parameters);
         } 

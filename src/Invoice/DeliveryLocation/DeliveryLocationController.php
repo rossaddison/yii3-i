@@ -22,7 +22,8 @@ use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 use \Exception;
 
@@ -95,7 +96,7 @@ final class DeliveryLocationController {
   }
 
   public function add(CurrentRoute $currentRoute, ViewRenderer $head, Request $request,
-    ValidatorInterface $validator,
+    FormHydrator $formHydrator,
     SettingRepository $settingRepository,
   ): Response {
     $client_id = $currentRoute->getArgument('client_id');
@@ -113,12 +114,12 @@ final class DeliveryLocationController {
 
     if ($request->getMethod() === Method::POST) {
       $form = new DeliveryLocationForm();
-      if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+      if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
         $this->delService->saveDeliveryLocation(new DeliveryLocation(), $form);
         return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
               ['heading' => 'Successful', 'message' => $settingRepository->trans('record_successfully_created'), 'url' => 'client/view', 'id' => $client_id]));
       }
-      $parameters['errors'] = $form->getFormErrors();
+      $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
     }
     return $this->viewRenderer->render('/invoice/del/_form', $parameters);
   }
@@ -126,13 +127,13 @@ final class DeliveryLocationController {
   /**
    * @param Request $request
    * @param CurrentRoute $currentRoute
-   * @param ValidatorInterface $validator
+   * @param FormHydrator $formHydrator
    * @param DeliveryLocationRepository $delRepository
    * @param SettingRepository $settingRepository
    * @return Response
    */
   public function edit(Request $request, CurrentRoute $currentRoute,
-    ValidatorInterface $validator,
+    FormHydrator $formHydrator,
     DeliveryLocationRepository $delRepository,
     SettingRepository $settingRepository,
   ): Response {
@@ -150,12 +151,12 @@ final class DeliveryLocationController {
       if ($request->getMethod() === Method::POST) {
         $form = new DeliveryLocationForm();
         $body = $request->getParsedBody();
-        if ($form->load($body) && $validator->validate($form)->isValid()) {
+        if ($formHydrator->populate($form, $body) && $form->isValid()) {
           $this->delService->saveDeliveryLocation($del, $form);
           return $this->webService->getRedirectResponse('del/index');
         }
         $parameters['body'] = $body;
-        $parameters['errors'] = $form->getFormErrors();
+        $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
       }
       return $this->viewRenderer->render('/invoice/del/_form', $parameters);
     }

@@ -21,7 +21,8 @@ use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 
 use \Exception;
@@ -59,7 +60,7 @@ final class FromDropDownController
     
     
     public function add(ViewRenderer $head, Request $request, 
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         SettingRepository $settingRepository,                        
 
     ) : Response
@@ -77,11 +78,11 @@ final class FromDropDownController
         if ($request->getMethod() === Method::POST) {
             
             $form = new FromDropDownForm();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                 $this->fromService->saveFromDropDown(new FromDropDown(),$form);
                 return $this->webService->getRedirectResponse('from/index');
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('_form', $parameters);
     }
@@ -153,7 +154,7 @@ final class FromDropDownController
     }
         
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute, 
-                        ValidatorInterface $validator,
+                       FormHydrator $formHydrator,
                         FromDropDownRepository $fromRepository, 
                         SettingRepository $settingRepository,                        
 
@@ -172,12 +173,12 @@ final class FromDropDownController
             if ($request->getMethod() === Method::POST) {
                 $form = new FromDropDownForm();
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     $this->fromService->saveFromDropDown($from,$form);
                     return $this->webService->getRedirectResponse('from/index');
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('_form', $parameters);
         }

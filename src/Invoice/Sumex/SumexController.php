@@ -21,7 +21,8 @@ use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\Yii\View\ViewRenderer;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 
 final class SumexController
 {
@@ -62,22 +63,22 @@ final class SumexController
         }
     }
     
-    /**
-     * @param SumexRepository $sumexRepository
-     * @param SettingRepository $settingRepository
-     */
+  /**
+   * @param SumexRepository $sumexRepository
+   * @param SettingRepository $settingRepository
+   */
     public function index(SumexRepository $sumexRepository, 
                           SettingRepository $settingRepository): \Yiisoft\DataResponse\DataResponse
     {
-         $canEdit = $this->rbac();
-         $parameters = [
-          's'=>$settingRepository,
-          'canEdit' => $canEdit,
-          'sumexs' => $this->sumexs($sumexRepository),
-          'alert'=> $this->alert()
-         ];
+      $canEdit = $this->rbac();
+      $parameters = [
+       's'=>$settingRepository,
+       'canEdit' => $canEdit,
+       'sumexs' => $this->sumexs($sumexRepository),
+       'alert'=> $this->alert()
+      ];
         
-        return $this->viewRenderer->render('index', $parameters);
+      return $this->viewRenderer->render('index', $parameters);
     }
     
   /**
@@ -104,13 +105,13 @@ final class SumexController
     /**
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param SettingRepository $settingRepository
      * @return Response
      */    
     public function add(ViewRenderer $head, 
                         Request $request, 
-                        ValidatorInterface $validator,
+                       FormHydrator $formHydrator,
                         SettingRepository $settingRepository
     ): Response
     {
@@ -126,11 +127,11 @@ final class SumexController
         if ($request->getMethod() === Method::POST) {
             $form = new SumexForm();
             $model = new Sumex();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                 $this->sumexService->saveSumex($model, $form, $settingRepository);
                 return $this->webService->getRedirectResponse('sumex/index');
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('_form', $parameters);
     }
@@ -140,13 +141,13 @@ final class SumexController
      * @param ViewRenderer $head
      * @param Request $request
      * @param CurrentRoute $currentRoute
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param SumexRepository $sumexRepository
      * @param SettingRepository $settingRepository
      * @return Response
      */
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute,
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         SumexRepository $sumexRepository, 
                         SettingRepository $settingRepository
     ): Response {
@@ -164,7 +165,7 @@ final class SumexController
             if ($request->getMethod() === Method::POST) {
                 $form = new SumexForm();
                 $body = $request->getParsedBody();
-                if (is_array($body) && $form->load($body) && $validator->validate($form)->isValid()) {
+                if (is_array($body) && $formHydrator->populate($form, $body) && $form->isValid()) {
                 $this->sumexService->saveSumex($sumex, $form, $settingRepository);
                 return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
                     ['heading' => '','message'=>
@@ -175,7 +176,7 @@ final class SumexController
                     'url'=>'inv/view','id'=>$body['invoice']]));
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('_form', $parameters);
         }

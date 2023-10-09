@@ -18,7 +18,8 @@ use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 
 final class CustomValueController
@@ -111,13 +112,13 @@ final class CustomValueController
      * @param Request $request
      * @param SessionInterface $session
      * @param CurrentRoute $currentRoute
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param SettingRepository $settingRepository
      * @param CustomFieldRepository $custom_fieldRepository
      * @return Response
      */
     public function new(ViewRenderer $head, Request $request, SessionInterface $session, CurrentRoute $currentRoute, 
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         SettingRepository $settingRepository,                        
                         CustomFieldRepository $custom_fieldRepository
     ): Response
@@ -142,11 +143,11 @@ final class CustomValueController
 
                 if ($request->getMethod() === Method::POST) {            
                     $form = new CustomValueForm();
-                    if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+                    if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                         $this->customvalueService->saveCustomValue(new CustomValue(),$form);
                         return $this->webService->getRedirectResponse('customvalue/index');
                     }
-                    $parameters['errors'] = $form->getFormErrors();
+                    $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
                 }
                 return $this->viewRenderer->render('new', $parameters);
             }            
@@ -160,14 +161,14 @@ final class CustomValueController
      * @param SessionInterface $session
      * @param Request $request
      * @param CurrentRoute $currentRoute
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param CustomValueRepository $customvalueRepository
      * @param SettingRepository $settingRepository
      * @param CustomFieldRepository $custom_fieldRepository
      * @return Response
      */
     public function edit(ViewRenderer $head, SessionInterface $session, Request $request, CurrentRoute $currentRoute, 
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         CustomValueRepository $customvalueRepository, 
                         SettingRepository $settingRepository,                        
                         CustomFieldRepository $custom_fieldRepository
@@ -191,12 +192,12 @@ final class CustomValueController
             if ($request->getMethod() === Method::POST) {
                 $form = new CustomValueForm();
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     $this->customvalueService->saveCustomValue($custom_value, $form);
                     return $this->webService->getRedirectResponse('customvalue/index');                 
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('edit', $parameters);
         }

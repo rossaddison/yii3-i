@@ -22,7 +22,8 @@ use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 
 use \Exception;
@@ -62,13 +63,13 @@ final class ProductPropertyController
      * @param CurrentRoute $currentRoute
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param SettingRepository $settingRepository
      * @param ProductRepository $productRepository
      * @return Response
      */
     public function add(CurrentRoute $currentRoute, ViewRenderer $head, Request $request, 
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         SettingRepository $settingRepository,                        
                         ProductRepository $productRepository
     ) : Response
@@ -86,13 +87,12 @@ final class ProductPropertyController
         ];
         
         if ($request->getMethod() === Method::POST) {
-            
             $form = new ProductPropertyForm();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                 $this->productpropertyService->saveProductProperty(new ProductProperty(),$form);
                 return $this->webService->getRedirectResponse('productproperty/index');
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('_form', $parameters);
     }
@@ -173,14 +173,14 @@ final class ProductPropertyController
      * @param ViewRenderer $head
      * @param Request $request
      * @param CurrentRoute $currentRoute
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param ProductPropertyRepository $productpropertyRepository
      * @param SettingRepository $settingRepository
      * @param ProductRepository $productRepository
      * @return Response
      */    
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute, 
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         ProductPropertyRepository $productpropertyRepository, 
                         SettingRepository $settingRepository,                        
                         ProductRepository $productRepository
@@ -199,12 +199,12 @@ final class ProductPropertyController
             if ($request->getMethod() === Method::POST) {
                 $form = new ProductPropertyForm();
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     $this->productpropertyService->saveProductProperty($productproperty,$form);
                     return $this->webService->getRedirectResponse('productproperty/index');
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('_form', $parameters);
         }

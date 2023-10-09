@@ -31,7 +31,8 @@ use Yiisoft\Router\FastRoute\UrlGenerator;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 
 final class QuoteItemController
@@ -93,7 +94,7 @@ final class QuoteItemController
     /**
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param SR $sR
      * @param PR $pR
      * @param UR $uR
@@ -101,12 +102,12 @@ final class QuoteItemController
      * @param QIAR $qiar
      */
     public function add(ViewRenderer $head, Request $request,  
-                        ValidatorInterface $validator,
-                        SR $sR,
-                        PR $pR,
-                        UR $uR,                                                
-                        TRR $trR,
-                        QIAR $qiar,
+      FormHydrator $formHydrator,
+      SR $sR,
+      PR $pR,
+      UR $uR,                                                
+      TRR $trR,
+      QIAR $qiar,
     ) : \Yiisoft\DataResponse\DataResponse
     {
         // This function is used 
@@ -127,17 +128,17 @@ final class QuoteItemController
         
         if ($request->getMethod() === Method::POST) {            
            $form = new QuoteItemForm();
-           if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+           if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                $this->quoteitemService->addQuoteItem(new QuoteItem(), $form, $quote_id, $pR, $qiar, new QIAS($qiar),$uR, $trR);
-                return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/quote_successful',
+               return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/quote_successful',
                        ['heading'=>'Successful','message'=>$sR->trans('record_successfully_created'),'url'=>'quote/view','id'=>$quote_id]));  
            }    
-           $parameters['errors'] = $form->getFormErrors();
+           $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('_item_form', $parameters);
     }
     
-    /**
+  /**
    * @return string
    */
    private function alert(): string {
@@ -162,7 +163,7 @@ final class QuoteItemController
      * @param ViewRenderer $head
      * @param CurrentRoute $currentRoute
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param QIR $qiR
      * @param SR $sR
      * @param TRR $trR
@@ -172,49 +173,49 @@ final class QuoteItemController
      * @param QIAS $qias
      * @param QIAR $qiar
      */
-    public function edit(ViewRenderer $head, CurrentRoute $currentRoute, Request $request, ValidatorInterface $validator,
+    public function edit(ViewRenderer $head, CurrentRoute $currentRoute, Request $request, FormHydrator $formHydrator,
                         QIR $qiR, SR $sR, TRR $trR, PR $pR, UR $uR, QR $qR, QIAS $qias, QIAR $qiar): \Yiisoft\DataResponse\DataResponse|Response {
-        $quote_id = (string)$this->session->get('quote_id');
-        $quote_item = $this->quoteitem($currentRoute, $qiR);
-        $parameters = [
-                'title' => $this->translator->translate('invoice.edit'),
-                'action' => ['quoteitem/edit', ['id' => $currentRoute->getArgument('id')]],
-                'errors' => [],
-                'body' => $this->body($quote_item ?: new QuoteItem()),
-                'quote_id'=>$quote_id,
-                'head'=>$head,
-                's'=>$sR,
-                'tax_rates'=>$trR->findAllPreloaded(),
-                'products'=>$pR->findAllPreloaded(),
-                'quotes'=>$qR->findAllPreloaded(),            
-                'units'=>$uR->findAllPreloaded(),
-                'numberhelper'=>new NumberHelper($sR)
-            ];
-            if ($request->getMethod() === Method::POST) {
-                $form = new QuoteItemForm();            
-                $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
-                    $quantity = $form->getQuantity() ?? 0.00;
-                    $price = $form->getPrice() ?? 0.00;
-                    $discount = $form->getDiscount_amount() ?? 0.00;
-                    $tax_rate_id = $this->quoteitemService->saveQuoteItem($quote_item ?: new QuoteItem(), $form, $quote_id, $pR, $uR) ?: 1;
-                    $tax_rate_percentage = $this->taxrate_percentage($tax_rate_id, $trR);
-                    if (null!==$tax_rate_percentage) {
-                        /**
-                         * @psalm-suppress PossiblyNullReference getId
-                         */
-                        $request_quote_item = (int)$this->quoteitem($currentRoute, $qiR)->getId();
-                        $this->saveQuoteItemAmount($request_quote_item, 
-                                                   $quantity, $price, $discount, $tax_rate_percentage, $qias, $qiar, $sR);    
-                        return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/quote_successful',
-                        ['heading'=>'Successful', 'message'=>$sR->trans('record_successfully_updated'),'url'=>'quote/view','id'=>$quote_id])); 
-                    }
+      $quote_id = (string)$this->session->get('quote_id');
+      $quote_item = $this->quoteitem($currentRoute, $qiR);
+      $parameters = [
+              'title' => $this->translator->translate('invoice.edit'),
+              'action' => ['quoteitem/edit', ['id' => $currentRoute->getArgument('id')]],
+              'errors' => [],
+              'body' => $this->body($quote_item ?: new QuoteItem()),
+              'quote_id'=>$quote_id,
+              'head'=>$head,
+              's'=>$sR,
+              'tax_rates'=>$trR->findAllPreloaded(),
+              'products'=>$pR->findAllPreloaded(),
+              'quotes'=>$qR->findAllPreloaded(),            
+              'units'=>$uR->findAllPreloaded(),
+              'numberhelper'=>new NumberHelper($sR)
+          ];
+          if ($request->getMethod() === Method::POST) {
+              $form = new QuoteItemForm();            
+              $body = $request->getParsedBody();
+              if ($formHydrator->populate($form, $body) && $form->isValid()) {
+                $quantity = $form->getQuantity() ?? 0.00;
+                $price = $form->getPrice() ?? 0.00;
+                $discount = $form->getDiscount_amount() ?? 0.00;
+                $tax_rate_id = $this->quoteitemService->saveQuoteItem($quote_item ?: new QuoteItem(), $form, $quote_id, $pR, $uR) ?: 1;
+                $tax_rate_percentage = $this->taxrate_percentage($tax_rate_id, $trR);
+                if (null!==$tax_rate_percentage) {
+                    /**
+                     * @psalm-suppress PossiblyNullReference getId
+                     */
+                    $request_quote_item = (int)$this->quoteitem($currentRoute, $qiR)->getId();
+                    $this->saveQuoteItemAmount($request_quote_item, 
+                                               $quantity, $price, $discount, $tax_rate_percentage, $qias, $qiar, $sR);    
+                    return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/quote_successful',
+                    ['heading'=>'Successful', 'message'=>$sR->trans('record_successfully_updated'),'url'=>'quote/view','id'=>$quote_id])); 
                 }
-                $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
-            } 
-            return $this->viewRenderer->render('_item_edit_form', $parameters);
-            //quote_item
+              }
+              $parameters['body'] = $body;
+              $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
+          } 
+          return $this->viewRenderer->render('_item_edit_form', $parameters);
+          //quote_item
     }
     
     /**
@@ -234,7 +235,6 @@ final class QuoteItemController
     }
     
     /**
-     * 
      * @param int $quote_item_id
      * @param float $quantity
      * @param float $price
@@ -249,33 +249,33 @@ final class QuoteItemController
     {  
        $qias_array = [];
        if ($quote_item_id) {
-            $qias_array['quote_item_id'] = $quote_item_id;
-            $sub_total = $quantity * $price;
-            $discount_total = ($quantity*$discount);
-            $tax_total = 0.00;
-            // NO VAT
-            if ($sR->get_setting('enable_vat_registration') === '0') { 
-             $tax_total = (($sub_total * ($tax_rate_percentage/100)));
-            }
-            // VAT
-            if ($sR->get_setting('enable_vat_registration') === '1') { 
-             // EARLY SETTLEMENT CASH DISCOUNT MUST BE REMOVED BEFORE VAT DETERMINED
-             // @see https://informi.co.uk/finance/how-vat-affected-discounts
-             $tax_total = ((($sub_total-$discount_total) * ($tax_rate_percentage/100)));
-            }
-            $qias_array['discount'] = $discount_total;
-            $qias_array['subtotal'] = $sub_total;
-            $qias_array['taxtotal'] = $tax_total;
-            $qias_array['total'] = $sub_total - $discount_total + $tax_total;       
-            if ($qiar->repoCount((string)$quote_item_id) === 0) {
-              $qias->saveQuoteItemAmountNoForm(new QuoteItemAmount() , $qias_array);
-            } else {
-                $quote_item_amount = $qiar->repoQuoteItemAmountquery((string)$quote_item_id);
-                if ($quote_item_amount) {
-                    $qias->saveQuoteItemAmountNoForm($quote_item_amount , $qias_array);  
-                }    
-            }
-        } // $quote_item_id    
+        $qias_array['quote_item_id'] = $quote_item_id;
+        $sub_total = $quantity * $price;
+        $discount_total = ($quantity*$discount);
+        $tax_total = 0.00;
+        // NO VAT
+        if ($sR->get_setting('enable_vat_registration') === '0') { 
+         $tax_total = (($sub_total * ($tax_rate_percentage/100)));
+        }
+        // VAT
+        if ($sR->get_setting('enable_vat_registration') === '1') { 
+         // EARLY SETTLEMENT CASH DISCOUNT MUST BE REMOVED BEFORE VAT DETERMINED
+         // @see https://informi.co.uk/finance/how-vat-affected-discounts
+         $tax_total = ((($sub_total-$discount_total) * ($tax_rate_percentage/100)));
+        }
+        $qias_array['discount'] = $discount_total;
+        $qias_array['subtotal'] = $sub_total;
+        $qias_array['taxtotal'] = $tax_total;
+        $qias_array['total'] = $sub_total - $discount_total + $tax_total;       
+        if ($qiar->repoCount((string)$quote_item_id) === 0) {
+          $qias->saveQuoteItemAmountNoForm(new QuoteItemAmount() , $qias_array);
+        } else {
+            $quote_item_amount = $qiar->repoQuoteItemAmountquery((string)$quote_item_id);
+            if ($quote_item_amount) {
+                $qias->saveQuoteItemAmountNoForm($quote_item_amount , $qias_array);  
+            }    
+        }
+      } // $quote_item_id    
     } 
     
     /**
@@ -298,19 +298,19 @@ final class QuoteItemController
      * @param QIR $qiR
      */
     public function multiple(Request $request, QIR $qiR): \Yiisoft\DataResponse\DataResponse {
-        //jQuery parameters from quote.js function delete-items-confirm-quote 'item_ids' and 'quote_id'
-        $select_items = $request->getQueryParams();
-        $result = false;
-        /** @var array $item_ids */
-        $item_ids = ($select_items['item_ids'] ?: []);
-        $items = $qiR->findinQuoteItems($item_ids);
-        // If one item is deleted, the result is positive
-        /** @var QuoteItem $item */
-        foreach ($items as $item){
-            ($this->quoteitemService->deleteQuoteItem($item));
-            $result = true;
-        }
-        return $this->factory->createResponse(Json::encode(($result ? ['success'=>1]:['success'=>0])));  
+      //jQuery parameters from quote.js function delete-items-confirm-quote 'item_ids' and 'quote_id'
+      $select_items = $request->getQueryParams();
+      $result = false;
+      /** @var array $item_ids */
+      $item_ids = ($select_items['item_ids'] ?: []);
+      $items = $qiR->findinQuoteItems($item_ids);
+      // If one item is deleted, the result is positive
+      /** @var QuoteItem $item */
+      foreach ($items as $item){
+          ($this->quoteitemService->deleteQuoteItem($item));
+          $result = true;
+      }
+      return $this->factory->createResponse(Json::encode(($result ? ['success'=>1]:['success'=>0])));  
     }
     
     /**
@@ -319,21 +319,21 @@ final class QuoteItemController
      * @param SR $sR
      */
     public function view(CurrentRoute $currentRoute, QIR $qiR,
-        SR $sR 
-        ): \Yiisoft\DataResponse\DataResponse|Response {
-        $quote_item = $this->quoteitem($currentRoute, $qiR);
-        if ($quote_item) {
-            $parameters = [
-                'title' => $sR->trans('view'),
-                'action' => ['quoteitem/edit', ['id' => $quote_item->getId()]],
-                'errors' => [],
-                'body' => $this->body($quote_item),
-                's'=>$sR,             
-                'quoteitem'=>$qiR->repoQuoteItemquery($quote_item->getId()),
-            ];
-            return $this->viewRenderer->render('_view', $parameters);
-        }
-        return $this->webService->getNotFoundResponse();
+      SR $sR 
+      ): \Yiisoft\DataResponse\DataResponse|Response {
+      $quote_item = $this->quoteitem($currentRoute, $qiR);
+      if ($quote_item) {
+          $parameters = [
+              'title' => $sR->trans('view'),
+              'action' => ['quoteitem/edit', ['id' => $quote_item->getId()]],
+              'errors' => [],
+              'body' => $this->body($quote_item),
+              's'=>$sR,             
+              'quoteitem'=>$qiR->repoQuoteItemquery($quote_item->getId()),
+          ];
+          return $this->viewRenderer->render('_view', $parameters);
+      }
+      return $this->webService->getNotFoundResponse();
     }
     
     /**
@@ -341,12 +341,12 @@ final class QuoteItemController
      */
     private function rbac(): bool|Response 
     {
-        $canEdit = $this->userService->hasPermission('editInv');
-        if (!$canEdit){
-            $this->flash_message('warning', $this->translator->translate('invoice.permission'));
-            return $this->webService->getRedirectResponse('quote/index');
-        }
-        return $canEdit;
+      $canEdit = $this->userService->hasPermission('editInv');
+      if (!$canEdit){
+          $this->flash_message('warning', $this->translator->translate('invoice.permission'));
+          return $this->webService->getRedirectResponse('quote/index');
+      }
+      return $canEdit;
     }
     
     /**
@@ -356,14 +356,14 @@ final class QuoteItemController
      */
     private function quoteitem(CurrentRoute $currentRoute, QIR $qiR): QuoteItem|null
     {
-        $id = $currentRoute->getArgument('id'); 
-        if (null!==$id) {
-            $quoteitem = $qiR->repoQuoteItemquery($id);
-            if ($quoteitem) {
-              return $quoteitem;
-            }  
-        }
-        return null;
+      $id = $currentRoute->getArgument('id'); 
+      if (null!==$id) {
+          $quoteitem = $qiR->repoQuoteItemquery($id);
+          if ($quoteitem) {
+            return $quoteitem;
+          }  
+      }
+      return null;
     }
     
     /**
@@ -373,8 +373,8 @@ final class QuoteItemController
      */
     private function quoteitems(QIR $qiR): \Yiisoft\Yii\Cycle\Data\Reader\EntityReader
     {
-        $quoteitems = $qiR->findAllPreloaded();        
-        return $quoteitems;
+      $quoteitems = $qiR->findAllPreloaded();        
+      return $quoteitems;
     }
     
     /**

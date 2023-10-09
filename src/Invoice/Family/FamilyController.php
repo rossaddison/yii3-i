@@ -20,7 +20,8 @@ use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 
 final class FamilyController
@@ -77,10 +78,10 @@ final class FamilyController
     /**
      * @param Request $request
      * @param SettingRepository $settingRepository
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return Response
      */
-    public function add(Request $request, SettingRepository $settingRepository, ValidatorInterface $validator): Response
+    public function add(Request $request, SettingRepository $settingRepository, FormHydrator $formHydrator): Response
     {
         $parameters = [
             'title' => 'Add Family',
@@ -91,11 +92,11 @@ final class FamilyController
         ];        
         if ($request->getMethod() === Method::POST) {
             $form = new FamilyForm();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                 $this->familyService->saveFamily(new Family(), $form);
                 return $this->webService->getRedirectResponse('family/index');  
             } 
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('__form', $parameters);
     }
@@ -106,10 +107,10 @@ final class FamilyController
      * @param Request $request
      * @param SettingRepository $settingRepository
      * @param FamilyRepository $familyRepository
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return Response
      */
-    public function edit(CurrentRoute $currentRoute, Request $request, SettingRepository $settingRepository, FamilyRepository $familyRepository, ValidatorInterface $validator): Response 
+    public function edit(CurrentRoute $currentRoute, Request $request, SettingRepository $settingRepository, FamilyRepository $familyRepository, FormHydrator $formHydrator): Response 
     {
         $family = $this->family($currentRoute, $familyRepository);
         if ($family) {
@@ -125,12 +126,12 @@ final class FamilyController
             if ($request->getMethod() === Method::POST) {
                 $form = new FamilyForm();
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     $this->familyService->saveFamily($family, $form);
                     return $this->webService->getRedirectResponse('family/index');
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('__form', $parameters);
         } else {

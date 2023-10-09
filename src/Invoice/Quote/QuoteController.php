@@ -114,7 +114,8 @@ use Yiisoft\Router\FastRoute\UrlGenerator;
 use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 use Yiisoft\Translator\TranslatorInterface as Translator;
 use Yiisoft\User\CurrentUser;
@@ -298,7 +299,7 @@ final class QuoteController
     /**
      * Client approves quote WITH purchase order number(if needed by the client ie. can be empty). Sales Order generated recording client's purchase order number
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param CFR $cfR
      * @param GR $gR
      * @param soIAS $soiaS
@@ -318,7 +319,7 @@ final class QuoteController
      * 
      * @return \Yiisoft\DataResponse\DataResponse|Response
      */
-    public function approve(Request $request, ValidatorInterface $validator, CFR $cfR, 
+    public function approve(Request $request, FormHydrator $formHydrator, CFR $cfR, 
                                            GR $gR, soIAS $soiaS, PR $pR, QAR $qaR, soAR $soaR, QCR $qcR,
                                            soIAR $soiaR, QIR $qiR, QR $qR, QTRR $qtrR, TRR $trR, UR $uR, UCR $ucR, UIR $uiR, UNR $unR) : \Yiisoft\DataResponse\DataResponse|Response {
         $body = $request->getQueryParams();
@@ -349,8 +350,8 @@ final class QuoteController
               $this->flash_message('info', $this->translator->translate('invoice.salesorder.agree.to.terms'));  
               $form = new SoForm();
               $new_so = new SoEntity();
-              if (($form->load($so_body) 
-                && $validator->validate($form)->isValid()) 
+              if (($formHydrator->populate($form, $so_body) 
+                && $form->isValid()) 
                 && ($quote->getSo_id()===(string)0))
               {   
                 $quote_id = $so_body['quote_id']; 
@@ -362,9 +363,9 @@ final class QuoteController
                   $new_so_id = $new_so->getId();
                   // Transfer each quote_item to so_item and the corresponding so_item_amount to so_item_amount for each item
                   if (null!==$new_so_id && $quote_id) {
-                      $this->quote_to_so_quote_items($quote_id, $new_so_id, $soiaR, $soiaS, $pR, $qiR, $trR, $unR, $validator);
-                      $this->quote_to_so_quote_tax_rates($quote_id,$new_so_id,$qtrR, $validator);
-                      $this->quote_to_so_quote_custom($quote_id,$new_so_id, $qcR, $cfR, $validator);
+                      $this->quote_to_so_quote_items($quote_id, $new_so_id, $soiaR, $soiaS, $pR, $qiR, $trR, $unR, $formHydrator);
+                      $this->quote_to_so_quote_tax_rates($quote_id,$new_so_id,$qtrR, $formHydrator);
+                      $this->quote_to_so_quote_custom($quote_id,$new_so_id, $qcR, $cfR, $formHydrator);
                       $this->quote_to_so_quote_amount($quote_id,$new_so_id, $qaR, $soaR);            
                       // Set the quote's sales order id so that it cannot be copied in the future
                       $quote->setSo_id($new_so_id);
@@ -451,7 +452,7 @@ final class QuoteController
     /**
      * Data fed from quote.js->$(document).on('click', '#quote_create_confirm', function () {
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param GR $gR
      * @param TRR $trR
      * @param UR $uR
@@ -459,7 +460,7 @@ final class QuoteController
      * @param UIR $uiR
      * @return \Yiisoft\DataResponse\DataResponse
      */
-    public function create_confirm(Request $request, ValidatorInterface $validator, GR $gR, TRR $trR, UR $uR, UCR $ucR, UIR $uiR) : \Yiisoft\DataResponse\DataResponse
+    public function create_confirm(Request $request, FormHydrator $formHydrator, GR $gR, TRR $trR, UR $uR, UCR $ucR, UIR $uiR) : \Yiisoft\DataResponse\DataResponse
     {
         $body = $request->getQueryParams();
         $ajax_body = [
@@ -481,7 +482,7 @@ final class QuoteController
         $unsuccessful = $this->translator->translate('invoice.quote.creation.unsuccessful');
         $ajax_content = new QuoteForm();
         $quote = new Quote();
-        if ($ajax_content->load($ajax_body) && $validator->validate($ajax_content)->isValid()) {    
+        if ($formHydrator->populate($ajax_content, $ajax_body) && $ajax_content->isValid()) {    
             $client_id = $ajax_body['client_id'];
             $user_client = $ucR->repoUserquery((string)$client_id);
             // Ensure that the client has only one (paying) user account otherwise reject this invoice
@@ -501,7 +502,7 @@ final class QuoteController
                   $model_id = $saved_model->getId();
                   if ($model_id) {
                     $this->quote_amount_service->initializeQuoteAmount(new QuoteAmount(), (int)$model_id);
-                    $this->default_taxes($quote, $trR, $validator);            
+                    $this->default_taxes($quote, $trR, $formHydrator);            
                     $parameters = ['success'=>1];
                     // Inform the user of generated invoice number for drat setting
                     $this->flash_message('info', 
@@ -532,14 +533,13 @@ final class QuoteController
     }
     
     /**
-     * 
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param array $array
      * @param int $quote_id
      * @param QCR $qcR
      * @return void
      */
-    public function custom_fields(ValidatorInterface $validator, array $array, int $quote_id, QCR $qcR) : void
+    public function custom_fields(FormHydrator $formHydrator, array $array, int $quote_id, QCR $qcR) : void
     {   
         if (!empty($array['custom'])) {
             $db_array = [];
@@ -579,7 +579,7 @@ final class QuoteController
                     } else {
                        $model = new QuoteCustom(); 
                     }
-                    if (null!==$model && $ajax_custom->load($quote_custom) && $validator->validate($ajax_custom)->isValid()) {
+                    if (null!==$model && $formHydrator->populate($ajax_custom, $quote_custom) && $ajax_custom->isValid()) {
                         $this->quote_custom_service->saveQuoteCustom($model, $ajax_custom);
                     }
                 }             
@@ -591,15 +591,15 @@ final class QuoteController
      * 
      * @param Quote $quote
      * @param TRR $trR
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return void
      */
-    public function default_taxes(Quote $quote, TRR $trR, ValidatorInterface $validator): void{
+    public function default_taxes(Quote $quote, TRR $trR, FormHydrator $formHydrator): void{
         if ($trR->repoCountAll() > 0) {
             $taxrates = $trR->findAllPreloaded();
             /** @var TaxRate $taxrate */
             foreach ($taxrates as $taxrate) {
-                $taxrate->getTax_rate_default()  == 1 ? $this->default_tax_quote($taxrate, $quote, $validator) : '';
+                $taxrate->getTax_rate_default()  == 1 ? $this->default_tax_quote($taxrate, $quote, $formHydrator) : '';
             }
         }
     }
@@ -607,10 +607,10 @@ final class QuoteController
     /**
      * @param TaxRate|null $taxrate
      * @param Quote $quote
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return void
      */
-    public function default_tax_quote(TaxRate|null $taxrate, Quote $quote, ValidatorInterface $validator) : void {
+    public function default_tax_quote(TaxRate|null $taxrate, Quote $quote, FormHydrator $formHydrator) : void {
         $quote_tax_rate_form = new QuoteTaxRateForm();
         $quote_tax_rate = [];
         $quote_tax_rate['quote_id'] = $quote->getId();
@@ -621,8 +621,8 @@ final class QuoteController
         }    
         $quote_tax_rate['include_item_tax'] = 0;
         $quote_tax_rate['quote_tax_rate_amount'] = 0;
-        if ($quote_tax_rate_form->load($quote_tax_rate) && $validator->validate($quote_tax_rate_form)->isValid()) { 
-            $this->quote_tax_rate_service->saveQuoteTaxRate(new QuoteTaxRate(), $quote_tax_rate_form);
+        if ($formHydrator->populate($quote_tax_rate_form, $quote_tax_rate) && $quote_tax_rate_form->isValid()) { 
+          $this->quote_tax_rate_service->saveQuoteTaxRate(new QuoteTaxRate(), $quote_tax_rate_form);
         }        
     }
     
@@ -697,7 +697,7 @@ final class QuoteController
      * @param ViewRenderer $head
      * @param Request $request
      * @param CurrentRoute $currentRoute
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param QR $quoteRepo
      * @param IR $invRepo
      * @param CR $clientRepo
@@ -711,7 +711,7 @@ final class QuoteController
      * @param UIR $uiR
      */
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute,
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         QR $quoteRepo,                        
                         IR $invRepo,
                         CR $clientRepo,
@@ -754,11 +754,11 @@ final class QuoteController
                 'alert'=>$this->alert(),
             ];
             if ($request->getMethod() === Method::POST) {   
-                $edited_body = (array)$request->getParsedBody();
-                $returned_form = $this->edit_save_form_fields($edited_body, $currentRoute, $validator, $quoteRepo, $groupRepo, $uR, $ucR, $uiR);
-                $parameters['body'] = $edited_body;
-                $parameters['errors']=$returned_form->getFormErrors();
-                $this->edit_save_custom_fields($edited_body, $validator, $qcR, $quote_id);            
+                $body = (array)$request->getParsedBody();
+                $returned_form = $this->edit_save_form_fields($body, $currentRoute, $formHydrator, $quoteRepo, $groupRepo, $uR, $ucR, $uiR);
+                $parameters['body'] = $body;
+                $parameters['errors']=$returned_form->getValidationResult();
+                $this->edit_save_custom_fields($body, $formHydrator, $qcR, $quote_id);            
                 return $this->factory->createResponse($this->view_renderer->renderPartialAsString('/invoice/setting/quote_successful',
                 ['heading'=>'','message'=>
                     $this->sR->trans('record_successfully_updated'),
@@ -770,9 +770,9 @@ final class QuoteController
     }
     
     /**
-     * @param array $edited_body
+     * @param array $body
      * @param CurrentRoute $currentRoute
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param QR $quoteRepo
      * @param GR $gR
      * @param UR $uR
@@ -780,11 +780,11 @@ final class QuoteController
      * @param UIR $uiR
      * @return QuoteForm
      */
-    public function edit_save_form_fields(array $edited_body, CurrentRoute $currentRoute, ValidatorInterface $validator, QR $quoteRepo, GR $gR, UR $uR, UCR $ucR, UIR $uiR) : QuoteForm {
+    public function edit_save_form_fields(array $body, CurrentRoute $currentRoute, FormHydrator $formHydrator, QR $quoteRepo, GR $gR, UR $uR, UCR $ucR, UIR $uiR) : QuoteForm {
       $form = new QuoteForm();
       // false => use Loaded query to engage relations
       $quote = $this->quote($currentRoute, $quoteRepo, false);
-      if ($quote && $form->load($edited_body) && $validator->validate($form)->isValid()) {
+      if ($quote && $formHydrator->populate($form, $body) && $form->isValid()) {
         $client_id = $quote->getClient_id();
         $user = $this->active_user($client_id, $uR, $ucR, $uiR);
         if (null!==$user) {
@@ -798,7 +798,7 @@ final class QuoteController
      * @param array|null|object $parse
      * @param null|string $quote_id
      */
-    public function edit_save_custom_fields(array|object|null $parse, ValidatorInterface $validator, QCR $qcR, string|null $quote_id): void {
+    public function edit_save_custom_fields(array|object|null $parse, FormHydrator $formHydrator, QCR $qcR, string|null $quote_id): void {
         /** 
          * @var array $custom
          */
@@ -817,7 +817,7 @@ final class QuoteController
                     'value'=>$value
                 ];
                 $form = new QuoteCustomForm();
-                if ($form->load($quote_custom_input) && $validator->validate($form)->isValid())
+                if ($formHydrator->populate($form, $quote_custom_input) && $form->isValid())
                 {
                     $this->quote_custom_service->saveQuoteCustom($quote_custom, $form);     
                 }
@@ -830,7 +830,7 @@ final class QuoteController
                         'value'=>$value
                     ];
                     $form = new QuoteCustomForm();
-                    if ($form->load($quote_custom_input) && $validator->validate($form)->isValid())
+                    if ($formHydrator->populate($form, $quote_custom_input) && $form->isValid())
                     {
                         $this->quote_custom_service->saveQuoteCustom($quote_custom, $form);     
                     }
@@ -1335,7 +1335,7 @@ final class QuoteController
     /**
      * 
      * @param string $items
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param string $quote_id
      * @param int $order
      * @param PR $pR
@@ -1346,7 +1346,7 @@ final class QuoteController
      * @return void
      */
     
-    public function  items(string $items, ValidatorInterface $validator, string $quote_id, int $order ,
+    public function  items(string $items, FormHydrator $formHydrator, string $quote_id, int $order ,
                                      PR $pR, QIR $qir, QIAR $qiar, TRR $trr, UNR $unR) 
                                      : void { 
         /** @var array $item */
@@ -1367,7 +1367,7 @@ final class QuoteController
                 $quoteitem['product_unit']=$unR->singular_or_plural_name((string)$item['item_product_unit_id'],(int)$item['item_quantity']);
                 $quoteitem['product_unit_id']= (string)($item['item_product_unit_id'] ?: null);                
                 unset($item['item_id']);
-                ($ajax_content->load($quoteitem) && $validator->validate($ajax_content)->isValid()) ? 
+                ($formHydrator->populate($ajax_content, $quoteitem) && $ajax_content->isValid()) ? 
                 $this->quote_item_service->addQuoteItem(new QuoteItem(), $ajax_content, $quote_id, $pR, $qiar, new QIAS($qiar),$unR, $trr) : false;                 
                 $order++;      
             }
@@ -1390,7 +1390,7 @@ final class QuoteController
                     $quoteitem['product_unit']=$unR->singular_or_plural_name((string)$item['item_product_unit_id'],(int)$item['item_quantity']);
                     $quoteitem['product_unit_id']= (int)($item['item_product_unit_id'] ? $item['item_product_unit_id'] : null);                
                     unset($item['item_id']);
-                    ($ajax_content->load($quoteitem) && $validator->validate($ajax_content)->isValid()) ? 
+                    ($formHydrator->populate($ajax_content, $quoteitem) && $ajax_content->isValid()) ? 
                     $this->quote_item_service->saveQuoteItem($unedited, $ajax_content, $quote_id, $pR, $unR) : false;             
                 } //unedited    
             } // if item      
@@ -1668,7 +1668,7 @@ final class QuoteController
     /**
      * 
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param CFR $cfR
      * @param GR $gR
      * @param IIAR $iiaR
@@ -1687,7 +1687,7 @@ final class QuoteController
      * 
      * @return \Yiisoft\DataResponse\DataResponse|Response
      */
-    public function quote_to_invoice_confirm(Request $request, ValidatorInterface $validator, CFR $cfR, 
+    public function quote_to_invoice_confirm(Request $request, FormHydrator $formHydrator, CFR $cfR, 
                                              GR $gR, IIAR $iiaR, InvItemAmountservice $iiaS, PR $pR, QAR $qaR, QCR $qcR,
                                              QIR $qiR,QR $qR, QTRR $qtrR, TRR $trR, UNR $unR, UR $uR, UCR $ucR, UIR $uiR) : \Yiisoft\DataResponse\DataResponse|Response
     {
@@ -1712,7 +1712,7 @@ final class QuoteController
             ];
             $form = new InvForm();
             $inv = new Inv();
-            if (($form->load($ajax_body) && $validator->validate($form)->isValid()) &&
+            if (($formHydrator->populate($form, $ajax_body) && $form->isValid()) &&
                     // Quote has not been copied before:  inv_id = 0
                     (($quote->getInv_id()===(string)0))
                 ) {
@@ -1733,10 +1733,10 @@ final class QuoteController
                       $inv_id = $inv->getId();
                       if (null!==$inv_id) {
                           // Transfer each quote_item to inv_item and the corresponding quote_item_amount to inv_item_amount for each item
-                          $this->quote_to_invoice_quote_items($quote_id,$inv_id,$iiaR,$iiaS,$pR,$qiR,$trR,$validator, $this->sR, $unR);
-                          $this->quote_to_invoice_quote_tax_rates($quote_id,$inv_id,$qtrR,$validator);
-                          $this->quote_to_invoice_quote_custom($quote_id,$inv_id,$qcR,$cfR,$validator);
-                          $this->quote_to_invoice_quote_amount($quote_id,$inv_id,$qaR,$validator);
+                          $this->quote_to_invoice_quote_items($quote_id,$inv_id,$iiaR,$iiaS,$pR,$qiR,$trR, $formHydrator, $this->sR, $unR);
+                          $this->quote_to_invoice_quote_tax_rates($quote_id,$inv_id,$qtrR,$formHydrator);
+                          $this->quote_to_invoice_quote_custom($quote_id,$inv_id,$qcR,$cfR,$formHydrator);
+                          $this->quote_to_invoice_quote_amount($quote_id,$inv_id,$qaR,$formHydrator);
                           // Update the quotes inv_id.
                           $quote->setInv_id($inv_id);
                           $qR->save($quote);
@@ -1762,7 +1762,7 @@ final class QuoteController
     /**
      * 
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param CFR $cfR
      * @param GR $gR
      * @param soIAS $soiaS
@@ -1780,7 +1780,7 @@ final class QuoteController
      * @param UR $uR
      * @return \Yiisoft\DataResponse\DataResponse|Response
      */
-    public function quote_to_so_confirm(Request $request, ValidatorInterface $validator, CFR $cfR, 
+    public function quote_to_so_confirm(Request $request, FormHydrator $formHydrator, CFR $cfR, 
                                            GR $gR, soIAS $soiaS, PR $pR, QAR $qaR, soAR $soaR, QCR $qcR,
                                            soIAR $soiaR, QIR $qiR, QR $qR, QTRR $qtrR, TRR $trR, UNR $unR, UCR $ucR, UR $uR) : \Yiisoft\DataResponse\DataResponse|Response
     {
@@ -1810,8 +1810,8 @@ final class QuoteController
             ];
             $form = new SoForm();
             $new_so = new SoEntity();
-            if (($form->load($so_body) 
-                && $validator->validate($form)->isValid()) 
+            if (($formHydrator->populate($form, $so_body) 
+                && $form->isValid()) 
                 && ($quote->getSo_id()===(string)0))
             {
             /**
@@ -1830,9 +1830,9 @@ final class QuoteController
                 $new_so_id = $new_so->getId();
                 // Transfer each quote_item to so_item and the corresponding so_item_amount to so_item_amount for each item
                 if (null!==$new_so_id) {
-                    $this->quote_to_so_quote_items($quote_id, $new_so_id, $soiaR, $soiaS, $pR, $qiR, $trR, $unR, $validator);
-                    $this->quote_to_so_quote_tax_rates($quote_id,$new_so_id, $qtrR, $validator);
-                    $this->quote_to_so_quote_custom($quote_id, $new_so_id, $qcR, $cfR, $validator);
+                    $this->quote_to_so_quote_items($quote_id, $new_so_id, $soiaR, $soiaS, $pR, $qiR, $trR, $unR, $formHydrator);
+                    $this->quote_to_so_quote_tax_rates($quote_id,$new_so_id, $qtrR, $formHydrator);
+                    $this->quote_to_so_quote_custom($quote_id, $new_so_id, $qcR, $cfR, $formHydrator);
                     $this->quote_to_so_quote_amount($quote_id, $new_so_id, $qaR, $soaR);            
                     // Set the quote's sales order id so that it cannot be copied in the future
                     $quote->setSo_id($new_so_id);
@@ -1863,11 +1863,11 @@ final class QuoteController
      * @param PR $pR
      * @param QIR $qiR
      * @param TRR $trR
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param UNR $unR
      * @return void
      */
-    private function quote_to_invoice_quote_items(string $quote_id, string $inv_id, IIAR $iiaR, InvItemAmountService $iiaS, PR $pR, QIR $qiR, TRR $trR, ValidatorInterface $validator, SR $sR, UNR $unR): void {
+    private function quote_to_invoice_quote_items(string $quote_id, string $inv_id, IIAR $iiaR, InvItemAmountService $iiaS, PR $pR, QIR $qiR, TRR $trR, FormHydrator $formHydrator, SR $sR, UNR $unR): void {
         // Get all items that belong to the quote
         $items = $qiR->repoQuoteItemIdquery($quote_id);
         /** @var QuoteItem $quote_item */
@@ -1892,21 +1892,20 @@ final class QuoteController
             // Create an equivalent invoice item for the quote item
             $invitem = new InvItem();
             $form = new InvItemForm();
-            if ($form->load($inv_item) && $validator->validate($form)->isValid()) {
-                $this->inv_item_service->addInvItem_product($invitem, $form, $inv_id, $pR, $trR , $iiaS, $iiaR, $sR, $unR);
+            if ($formHydrator->populate($form, $inv_item) && $form->isValid()) {
+              $this->inv_item_service->addInvItem_product($invitem, $form, $inv_id, $pR, $trR , $iiaS, $iiaR, $sR, $unR);
             }
         } // items
     }
     
     /**
-     * 
      * @param string $quote_id
      * @param string|null $inv_id
      * @param QTRR $qtrR
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return void
      */
-    private function quote_to_invoice_quote_tax_rates(string $quote_id, string|null $inv_id, QTRR $qtrR, ValidatorInterface $validator): void {
+    private function quote_to_invoice_quote_tax_rates(string $quote_id, string|null $inv_id, QTRR $qtrR, FormHydrator $formHydrator): void {
         // Get all tax rates that have been setup for the quote
         $quote_tax_rates = $qtrR->repoQuotequery($quote_id);        
         /** @var QuoteTaxRate $quote_tax_rate */
@@ -1919,7 +1918,7 @@ final class QuoteController
             ];
             $entity = new InvTaxRate();
             $form = new InvTaxRateForm();
-            if ($form->load($inv_tax_rate) && $validator->validate($form)->isValid()
+            if ($formHydrator->populate($form, $inv_tax_rate) && $form->isValid()
             ) {    
                $this->inv_tax_rate_service->saveInvTaxRate($entity,$form);
             }
@@ -1931,10 +1930,10 @@ final class QuoteController
      * @param string $quote_id
      * @param string|null $so_id
      * @param QTRR $qtrR
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return void
      */
-    private function quote_to_so_quote_tax_rates(string $quote_id, string|null $so_id, QTRR $qtrR, ValidatorInterface $validator): void {
+    private function quote_to_so_quote_tax_rates(string $quote_id, string|null $so_id, QTRR $qtrR, FormHydrator $formHydrator): void {
         // Get all tax rates that have been setup for the quote
         $quote_tax_rates = $qtrR->repoQuotequery($quote_id);        
         /** @var QuoteTaxRate $quote_tax_rate */
@@ -1947,9 +1946,9 @@ final class QuoteController
             ];
             $entity = new SoTaxRate();
             $form = new SoTaxRateForm();
-            if ($form->load($so_tax_rate) && $validator->validate($form)->isValid()
+            if ($formHydrator->populate($form, $so_tax_rate) && $form->isValid()
             ) {    
-               $this->so_tax_rate_service->saveSoTaxRate($entity,$form);
+              $this->so_tax_rate_service->saveSoTaxRate($entity, $form);
             }
         } // foreach        
     }
@@ -1960,13 +1959,13 @@ final class QuoteController
      * @param string|null $inv_id
      * @param QCR $qcR
      * @param CFR $cfR
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return void
      */
     private function quote_to_invoice_quote_custom(string $quote_id, string|null $inv_id, 
                                                    QCR $qcR,                                                     
                                                    CFR $cfR, 
-                                                   ValidatorInterface $validator) : void {
+                                                   FormHydrator $formHydrator) : void {
         $quote_customs = $qcR->repoFields($quote_id);
         // For each quote custom field, build a new custom field for 'inv_custom' using the custom_field_id to find details
         /** @var QuoteCustom $quote_custom */
@@ -1992,8 +1991,8 @@ final class QuoteController
                 ];
                 $entity = new InvCustom();
                 $form = new InvCustomForm();
-                if ($form->load($inv_custom) && $validator->validate($form)->isValid()) {    
-                    $this->inv_custom_service->saveInvCustom($entity,$form);            
+                if ($formHydrator->populate($form, $inv_custom) && $form->isValid()) {    
+                  $this->inv_custom_service->saveInvCustom($entity, $form);            
                 }
             } // existing_custom_field    
         } // foreach        
@@ -2005,13 +2004,13 @@ final class QuoteController
      * @param string|null $so_id
      * @param QCR $qcR
      * @param CFR $cfR
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return void
      */
     private function quote_to_so_quote_custom(string $quote_id, string|null $so_id, 
                                                    QCR $qcR,                                                     
                                                    CFR $cfR, 
-                                                   ValidatorInterface $validator) : void {
+                                                  FormHydrator $formHydrator) : void {
         $quote_customs = $qcR->repoFields($quote_id);
         // For each quote custom field, build a new custom field for 'inv_custom' using the custom_field_id to find details
         /** @var QuoteCustom $quote_custom */
@@ -2037,8 +2036,8 @@ final class QuoteController
                 ];
                 $entity = new SoCustom();
                 $form = new SoCustomForm();
-                if ($form->load($so_custom) && $validator->validate($form)->isValid()) {    
-                    $this->so_custom_service->saveSoCustom($entity, $form);            
+                if ($formHydrator->populate($form, $so_custom) && $form->isValid()) {    
+                  $this->so_custom_service->saveSoCustom($entity, $form);            
                 }
             }   // existing_custom_field    
         } // foreach        
@@ -2049,10 +2048,10 @@ final class QuoteController
      * @param string $quote_id
      * @param string|null $inv_id
      * @param QAR $qaR
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return void
      */
-    private function quote_to_invoice_quote_amount(string $quote_id,string|null $inv_id, QAR $qaR, ValidatorInterface $validator) : void {
+    private function quote_to_invoice_quote_amount(string $quote_id,string|null $inv_id, QAR $qaR, FormHydrator $formHydrator) : void {
         $quote_amount = $qaR->repoQuotequery($quote_id);
         $inv_amount = [];
         if ($quote_amount) {
@@ -2069,8 +2068,8 @@ final class QuoteController
         }    
         $entity = new InvAmount();
         $form = new InvAmountForm();
-        if ($form->load($inv_amount) && $validator->validate($form)->isValid()) {    
-                $this->inv_amount_service->saveInvAmount($entity,$form);            
+        if ($formHydrator->populate($form, $inv_amount) && $form->isValid()) {    
+          $this->inv_amount_service->saveInvAmount($entity, $form);            
         }
     }
     
@@ -2100,7 +2099,7 @@ final class QuoteController
     
     /**
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param GR $gR
      * @param QIAS $qiaS
      * @param PR $pR
@@ -2116,7 +2115,7 @@ final class QuoteController
      * @param UIR $uiR
      * @param UNR $unR
      */
-    public function quote_to_quote_confirm(Request $request, ValidatorInterface $validator, 
+    public function quote_to_quote_confirm(Request $request, FormHydrator $formHydrator, 
                                            GR $gR, QIAS $qiaS, PR $pR, QAR $qaR, QCR $qcR,
                                            QIAR $qiaR, QIR $qiR, QR $qR, QTRR $qtrR, TRR $trR, UR $uR, UCR $ucR, UIR $uiR, UNR $unR) : \Yiisoft\DataResponse\DataResponse|Response
     {
@@ -2139,7 +2138,7 @@ final class QuoteController
         ];
         $form = new QuoteForm();
         $copy = new Quote();
-        if (($form->load($ajax_body) && $validator->validate($form)->isValid())) {    
+        if (($formHydrator->populate($form, $ajax_body) && $form->isValid())) {    
           /**
            * @var string $ajax_body['client_id']
            */
@@ -2157,9 +2156,9 @@ final class QuoteController
                 // Transfer each quote_item to quote_item and the corresponding quote_item_amount to quote_item_amount for each item
                 $copy_id =$copy->getId();
                 if (null!==$copy_id) {
-                    $this->quote_to_quote_quote_items($quote_id,$copy_id, $qiaR, $qiaS, $pR,$qiR, $trR, $unR, $validator);
-                    $this->quote_to_quote_quote_tax_rates($quote_id,$copy_id,$qtrR, $validator);
-                    $this->quote_to_quote_quote_custom($quote_id,$copy_id,$qcR, $validator);
+                    $this->quote_to_quote_quote_items($quote_id,$copy_id, $qiaR, $qiaS, $pR,$qiR, $trR, $unR, $formHydrator);
+                    $this->quote_to_quote_quote_tax_rates($quote_id,$copy_id,$qtrR, $formHydrator);
+                    $this->quote_to_quote_quote_custom($quote_id,$copy_id,$qcR, $formHydrator);
                     $this->quote_to_quote_quote_amount($quote_id,$copy_id);            
                     $qR->save($copy);
                     $parameters = ['success'=>1];
@@ -2169,7 +2168,7 @@ final class QuoteController
               } // null!==$user_inv && $user_inv->getActive()
             } // null!== $user 
           } // null!==$user_client && $user_client_count==1
-        } // $form->load($ajax_body) && $validator->validate($form)->isValid())
+        } // $formHydrator->populate($form, $body) && $form->isValid())
       } else {
               $parameters = [
                  'success'=>0,
@@ -2185,10 +2184,10 @@ final class QuoteController
      * @param string $quote_id
      * @param string|null $copy_id
      * @param QCR $qcR
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return void
      */
-    private function quote_to_quote_quote_custom(string $quote_id, string|null $copy_id, QCR $qcR, ValidatorInterface $validator): void {
+    private function quote_to_quote_quote_custom(string $quote_id, string|null $copy_id, QCR $qcR, FormHydrator $formHydrator): void {
         $quote_customs = $qcR->repoFields($quote_id);
         /** @var QuoteCustom $quote_custom */
         foreach ($quote_customs as $quote_custom) {
@@ -2199,8 +2198,8 @@ final class QuoteController
             ];
             $entity = new QuoteCustom();
             $form = new QuoteCustomForm();
-            if ($form->load($copy_custom) && $validator->validate($form)->isValid()) {    
-                $this->quote_custom_service->saveQuoteCustom($entity,$form);            
+            if ($formHydrator->populate($form, $copy_custom) && $form->isValid()) {    
+              $this->quote_custom_service->saveQuoteCustom($entity, $form);            
             }
         }        
     }
@@ -2215,10 +2214,10 @@ final class QuoteController
      * @param QIR $qiR
      * @param TRR $trR
      * @param UNR $unR
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return void
      */
-    private function quote_to_quote_quote_items(string $quote_id, string $copy_id, QIAR $qiaR, QIAS $qiaS, PR $pR, QIR $qiR, TRR $trR, UNR $unR, ValidatorInterface $validator): void {
+    private function quote_to_quote_quote_items(string $quote_id, string $copy_id, QIAR $qiaR, QIAS $qiaS, PR $pR, QIR $qiR, TRR $trR, UNR $unR, FormHydrator $formHydrator): void {
         // Get all items that belong to the original quote
         $items = $qiR->repoQuoteItemIdquery($quote_id);
         /** @var QuoteItem $quote_item */
@@ -2243,13 +2242,13 @@ final class QuoteController
             // Create an equivalent invoice item for the quote item
             $copyitem = new QuoteItem();
             $form = new QuoteItemForm();
-            if ($form->load($copy_item) && $validator->validate($form)->isValid()) {
-                $this->quote_item_service->addQuoteItem($copyitem, $form, $copy_id, $pR, $qiaR, $qiaS, $unR, $trR);
+            if ($formHydrator->populate($form, $copy_item) && $form->isValid()) {
+              $this->quote_item_service->addQuoteItem($copyitem, $form, $copy_id, $pR, $qiaR, $qiaS, $unR, $trR);
             }
         } // items as quote_item
     }
     
-    private function quote_to_so_quote_items(string $quote_id, string $so_id, soIAR $soiaR, soIAS $soiaS, PR $pR, QIR $qiR, TRR $trR, UNR $unR, ValidatorInterface $validator): void {
+    private function quote_to_so_quote_items(string $quote_id, string $so_id, soIAR $soiaR, soIAS $soiaS, PR $pR, QIR $qiR, TRR $trR, UNR $unR, FormHydrator $formHydrator): void {
         // Note: The $soiaR variable will be used to see if there are pre-existing amounts later towards the end of this function
         // Get all items that belong to the original quote
         $items = $qiR->repoQuoteItemIdquery($quote_id);
@@ -2277,8 +2276,8 @@ final class QuoteController
             // Create an equivalent purchase order item for the quote item
             $soitem = new SoItem();
             $form = new SoItemForm();
-            if ($form->load($so_item) && $validator->validate($form)->isValid()) {
-                $this->so_item_service->addSoItem($soitem, $form, $so_id, $pR, $soiaR, $soiaS, $unR, $trR);
+            if ($formHydrator->populate($form, $so_item) && $form->isValid()) {
+              $this->so_item_service->addSoItem($soitem, $form, $so_id, $pR, $soiaR, $soiaS, $unR, $trR);
             }
         } // items as quote_item
     }
@@ -2288,25 +2287,25 @@ final class QuoteController
      * @param string $quote_id
      * @param string|null $copy_id
      * @param QTRR $qtrR
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return void
      */
-    private function quote_to_quote_quote_tax_rates(string $quote_id, string|null $copy_id, QTRR $qtrR, ValidatorInterface $validator): void {
+    private function quote_to_quote_quote_tax_rates(string $quote_id, string|null $copy_id, QTRR $qtrR, FormHydrator $formHydrator): void {
         // Get all tax rates that have been setup for the quote
         $quote_tax_rates = $qtrR->repoQuotequery($quote_id);  
         /** @var QuoteTaxRate $quote_tax_rate */
         foreach ($quote_tax_rates as $quote_tax_rate){
-            $copy_tax_rate = [
-                'quote_id'=>$copy_id,
-                'tax_rate_id'=>$quote_tax_rate->getTax_rate_id(),
-                'include_item_tax'=>$quote_tax_rate->getInclude_item_tax(),
-                'amount'=>$quote_tax_rate->getQuote_tax_rate_amount(),
-            ];
-            $entity = new QuoteTaxRate();
-            $form = new QuoteTaxRateForm();
-            if ($form->load($copy_tax_rate) && $validator->validate($form)->isValid()) {    
-                $this->quote_tax_rate_service->saveQuoteTaxRate($entity,$form);
-            }
+          $copy_tax_rate = [
+              'quote_id'=>$copy_id,
+              'tax_rate_id'=>$quote_tax_rate->getTax_rate_id(),
+              'include_item_tax'=>$quote_tax_rate->getInclude_item_tax(),
+              'amount'=>$quote_tax_rate->getQuote_tax_rate_amount(),
+          ];
+          $entity = new QuoteTaxRate();
+          $form = new QuoteTaxRateForm();
+          if ($formHydrator->populate($form, $copy_tax_rate) && $form->isValid()) {    
+            $this->quote_tax_rate_service->saveQuoteTaxRate($entity, $form);
+          }
         }        
     }
     
@@ -2348,11 +2347,11 @@ final class QuoteController
     // quote/view => '#btn_save_quote_custom_fields' => quote_custom_field.js => /invoice/quote/save_custom";
     
     /**
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param Request $request
      * @param QCR $qcR
      */
-    public function save_custom(ValidatorInterface $validator, Request $request, QCR $qcR) : \Yiisoft\DataResponse\DataResponse
+    public function save_custom(FormHydrator $formHydrator, Request $request, QCR $qcR) : \Yiisoft\DataResponse\DataResponse
     {
             $parameters = [
                 'success'=>0
@@ -2362,7 +2361,7 @@ final class QuoteController
             $custom_field_body = [            
                 'custom'=>$js_data['custom'] ?: '',            
             ];
-            $this->custom_fields($validator, $custom_field_body,$quote_id, $qcR);
+            $this->custom_fields($formHydrator, $custom_field_body,$quote_id, $qcR);
             $parameters['success'] = 1;            
             return $this->factory->createResponse(Json::encode($parameters)); 
     }
@@ -2371,9 +2370,9 @@ final class QuoteController
     
     /**
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      */
-    public function save_quote_tax_rate(Request $request, ValidatorInterface $validator)
+    public function save_quote_tax_rate(Request $request, FormHydrator $formHydrator)
                                         : \Yiisoft\DataResponse\DataResponse {       
         $body = $request->getQueryParams();
         $ajax_body = [
@@ -2383,7 +2382,7 @@ final class QuoteController
             'quote_tax_rate_amount'=>floatval(0.00),
         ];
         $ajax_content = new QuoteTaxRateForm();
-        if ($ajax_content->load($ajax_body) && $validator->validate($ajax_content)->isValid()) {    
+        if ($formHydrator->populate($ajax_content, $ajax_body) && $ajax_content->isValid()) {    
             $this->quote_tax_rate_service->saveQuoteTaxRate(new QuoteTaxRate(), $ajax_content);
             $parameters = [
                 'success'=>1

@@ -26,7 +26,8 @@ use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 
 final class EmailTemplateController
@@ -84,13 +85,13 @@ final class EmailTemplateController
      * 
      * @param ViewRenderer $tag
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param SettingRepository $settingRepository
      * @param CustomFieldRepository $customfieldRepository
      * @param FromDropDownRepository $fromR
      * @return Response
      */
-    public function add(ViewRenderer $tag, Request $request, ValidatorInterface $validator, 
+    public function add(ViewRenderer $tag, Request $request, FormHydrator $formHydrator, 
                         SettingRepository $settingRepository, 
                         CustomFieldRepository $customfieldRepository,
                         FromDropDownRepository $fromR
@@ -128,12 +129,12 @@ final class EmailTemplateController
         
         if ($request->getMethod() === Method::POST) {
             $form = new EmailTemplateForm();
-            if (null!==$this->userService->getUser() && $form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+            if (null!==$this->userService->getUser() && $formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                 $this->emailtemplateService->saveEmailTemplate(new EmailTemplate(),$form);
                 $this->flash_message('info', $this->translator->translate('invoice.email.template.successfully.added'));
                 return $this->webService->getRedirectResponse('emailtemplate/index');
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('__form', $parameters, );
     }
@@ -168,7 +169,7 @@ final class EmailTemplateController
      * @param CustomFieldRepository $customfieldRepository
      * @param SettingRepository $settingRepository
      * @param FromDropDownRepository $fromR
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return Response
      */
     public function edit(ViewRenderer $tag, CurrentRoute $currentRoute, Request $request, 
@@ -176,7 +177,7 @@ final class EmailTemplateController
                          CustomFieldRepository $customfieldRepository,
                          SettingRepository $settingRepository,
                          FromDropDownRepository $fromR,
-                         ValidatorInterface $validator,
+                         FormHydrator $formHydrator,
     ): Response {
         $email_template = $this->emailtemplate($currentRoute, $emailtemplateRepository);
         if ($email_template) { 
@@ -214,13 +215,13 @@ final class EmailTemplateController
             if ($request->getMethod() === Method::POST) {
                 $form = new EmailTemplateForm();
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     $this->emailtemplateService->saveEmailTemplate($email_template, $form);
                     $this->flash_message('info', $this->translator->translate('invoice.email.template.successfully.edited'));
                     return $this->webService->getRedirectResponse('emailtemplate/index');
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('__form', $parameters);
         }

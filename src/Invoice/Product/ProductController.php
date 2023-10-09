@@ -59,13 +59,14 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Yiisoft\Data\Reader\Sort;
 use Yiisoft\DataResponse\DataResponseFactoryInterface;
 use Yiisoft\Data\Paginator\OffsetPaginator;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Http\Method;
 use Yiisoft\Json\Json;
 use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
 use Yiisoft\Yii\View\ViewRenderer;
 
 class ProductController
@@ -118,7 +119,7 @@ class ProductController
     /**
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param sR $sR
      * @param fR $fR
      * @param uR $uR
@@ -129,7 +130,7 @@ class ProductController
      * @param upR $upR
      * @return Response
      */
-    public function add(ViewRenderer $head, Request $request, ValidatorInterface $validator, sR $sR, fR $fR, uR $uR, trR $trR, cvR $cvR, cfR $cfR, pcR $pcR, upR $upR): Response
+    public function add(ViewRenderer $head, Request $request, FormHydrator $formHydrator, sR $sR, fR $fR, uR $uR, trR $trR, cvR $cvR, cfR $cfR, pcR $pcR, upR $upR): Response
     {
         $countries = new CountryHelper();
         $peppolarrays = new PeppolArrays();
@@ -154,16 +155,16 @@ class ProductController
         ];
         
         if ($request->getMethod() === Method::POST) {            
-            $edited_body = $request->getParsedBody();
+            $body = $request->getParsedBody();
             $product = new Product();
-            if (is_array($edited_body)) {
-                $product_id = $this->add_form_fields_return_id($edited_body, $product, $validator, $sR);
+            if (is_array($body)) {
+                $product_id = $this->add_form_fields_return_id($body, $product, $formHydrator);
                 if ($product_id) {
                   $count = $cfR->repoTableCountquery('product_custom');
-                  $parameters['body'] = $edited_body;
+                  $parameters['body'] = $body;
                   // Only save custom fields if they exist
                   if (($count > 0) && !($product_id instanceof Response)) { 
-                    $this->edit_save_custom_fields($edited_body, $validator, $pcR, $product_id); 
+                    $this->edit_save_custom_fields($body, $formHydrator, $pcR, $product_id); 
                   }
                   return $this->responseFactory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
                   ['heading'=>'','message'=>$this->translator->translate('invoice.product.record.successfully.added'),'url'=>'product/view',
@@ -194,42 +195,41 @@ class ProductController
      */
     private function body(Product $product): array {
         $body = [
-            'id'=>$product->getProduct_id(),
-            'product_sku'=>$product->getProduct_sku(),
-            
-            // Standard Item Identification ID's Scheme Identifier eg. 0160
-            'product_sii_schemeid'=>$product->getProduct_sii_schemeid(),
-            // Standard Item Identification ID eg. 10986700 
-            'product_sii_id'=>$product->getProduct_sii_id(),
-            
-            // Item Classification Code List ID eg. STI => uncl7143
-            'product_icc_listid'=>$product->getProduct_icc_listid(),
-            'product_icc_listversionid'=>$product->getProduct_icc_listversionid(),
-            // Item Classification Code ID eg. 9873242
-            'product_icc_id'=>$product->getProduct_icc_id(),
-            
-            'product_country_of_origin_code'=>$product->getProduct_country_of_origin_code(),
-            'product_name'=>$product->getProduct_name(),
-            'product_description' => $product->getProduct_description(),
-            'product_price' => $product->getProduct_price(),
-            'product_price_base_quantity' => $product->getProduct_price_base_quantity(),
-            'purchase_price' => $product->getPurchase_price(),
-            'provider_name' => $product->getProvider_name(),
-            // eg. colour 
-            'product_additional_item_property_name' => $product->getProduct_additional_item_property_name(),
-            // eg. black
-            'product_additional_item_property_value' => $product->getProduct_additional_item_property_value(),
-            'tax_rate_id'=>$product->getTax_rate_id(),
-            'unit_id'=>$product->getUnit_id(),
-            'unit_peppol_id'=>$product->getUnit_peppol_id(),
-            'family_id'=>$product->getFamily_id(), 
-            'product_tariff'=>$product->getProduct_tariff()
-            ];
+          'id'=>$product->getProduct_id(),
+          'product_sku'=>$product->getProduct_sku(),
+
+          // Standard Item Identification ID's Scheme Identifier eg. 0160
+          'product_sii_schemeid'=>$product->getProduct_sii_schemeid(),
+          // Standard Item Identification ID eg. 10986700 
+          'product_sii_id'=>$product->getProduct_sii_id(),
+
+          // Item Classification Code List ID eg. STI => uncl7143
+          'product_icc_listid'=>$product->getProduct_icc_listid(),
+          'product_icc_listversionid'=>$product->getProduct_icc_listversionid(),
+          // Item Classification Code ID eg. 9873242
+          'product_icc_id'=>$product->getProduct_icc_id(),
+
+          'product_country_of_origin_code'=>$product->getProduct_country_of_origin_code(),
+          'product_name'=>$product->getProduct_name(),
+          'product_description' => $product->getProduct_description(),
+          'product_price' => $product->getProduct_price(),
+          'product_price_base_quantity' => $product->getProduct_price_base_quantity(),
+          'purchase_price' => $product->getPurchase_price(),
+          'provider_name' => $product->getProvider_name(),
+          // eg. colour 
+          'product_additional_item_property_name' => $product->getProduct_additional_item_property_name(),
+          // eg. black
+          'product_additional_item_property_value' => $product->getProduct_additional_item_property_value(),
+          'tax_rate_id'=>$product->getTax_rate_id(),
+          'unit_id'=>$product->getUnit_id(),
+          'unit_peppol_id'=>$product->getUnit_peppol_id(),
+          'family_id'=>$product->getFamily_id(), 
+          'product_tariff'=>$product->getProduct_tariff()
+          ];
         return $body;
     }
     
     /**
-     * 
      * @param pR $pR
      * @param CurrentRoute $currentRoute
      * @param sR $sR
@@ -265,7 +265,7 @@ class ProductController
      * @param ViewRenderer $head
      * @param Request $request
      * @param CurrentRoute $currentRoute
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param pR $pR
      * @param sR $sR
      * @param fR $fR
@@ -276,7 +276,7 @@ class ProductController
      * @param upR $upR
      * @return Response
      */
-    public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute, ValidatorInterface $validator,
+    public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute, FormHydrator $formHydrator,
                     pR $pR, sR $sR, fR $fR, uR $uR, trR $trR, cvR $cvR, cfR $cfR, pcR $pcR, upR $upR 
     ): Response {
         $countries = new CountryHelper();
@@ -304,15 +304,15 @@ class ProductController
             'product_custom_values'=> $this->product_custom_values($product_id, $pcR), 
         ];
         if ($request->getMethod() === Method::POST) {            
-            $edited_body = $request->getParsedBody();
-            if (is_array($edited_body)) {
-                $returned_form = $this->edit_save_form_fields($edited_body, $product, $validator);
-                $parameters['body'] = $edited_body;
+            $body = $request->getParsedBody();
+            if (is_array($body)) {
+                $returned_form = $this->edit_save_form_fields($body, $product, $formHydrator);
+                $parameters['body'] = $body;
                 $product_id = $product->getProduct_id();
-                $parameters['errors']=$returned_form->getFormErrors(); 
+                $parameters['errors']=HtmlFormErrors::getFirstErrors($returned_form); 
                 // Only save custom fields if they exist
                 if ($cfR->repoTableCountquery('product_custom') > 0) { 
-                  $this->edit_save_custom_fields($edited_body, $validator, $pcR, $product_id); 
+                  $this->edit_save_custom_fields($body, $formHydrator, $pcR, $product_id); 
                 }
             }    
             return $this->responseFactory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
@@ -325,33 +325,37 @@ class ProductController
 }
 
     /**
-     * @param array $edited_body
+     * 
+     * @param array $body
      * @param Product $product
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return ProductForm
      */
-    public function edit_save_form_fields(array $edited_body, Product $product, ValidatorInterface $validator) : ProductForm {
+    public function edit_save_form_fields(array $body, Product $product, FormHydrator $formHydrator) : ProductForm {
         $form = new ProductForm();
-        if ($form->load($edited_body) && $validator->validate($form)->isValid()) {
-           $this->productService->saveProduct($product, $form);
-        }
+        if ($formHydrator->populate($form, $body) && $form->isValid() && !empty(HtmlFormErrors::getFirstErrors($form))) {
+          $this->productService->saveProduct($product, $form);
+        } 
         return $form;
     }
     
     /**
-     * @param array $edited_body
+     * 
+     * @param array $body
      * @param Product $product
-     * @param ValidatorInterface $validator
-     * @param sR $sR
+     * @param FormHydrator $formHydrator
      * @return string|Response
      */
-    public function add_form_fields_return_id(array $edited_body, Product $product, ValidatorInterface $validator, sR $sR) : string|Response {
+    public function add_form_fields_return_id(array $body, Product $product, FormHydrator $formHydrator) : string|Response {
         $form = new ProductForm();
         $product_id = '';
-        if ($form->load($edited_body) && $validator->validate($form)->isValid()) {
+        if ($formHydrator->populate($form, $body) 
+            && $form->isValid() 
+            && empty(HtmlFormErrors::getErrorSummaryFirstErrors($form))) {
            $product_id = $this->productService->saveProduct($product, $form);
+           $this->flash_message('info', $this->translator->translate('success','invoice.product.record.successfully.added'));
         }
-        if (!empty($form->getFormErrors()->getErrorSummaryFirstErrors())) {
+        if (!empty(HtmlFormErrors::getErrorSummaryFirstErrors($form))) {
            $this->flash_message('warning', $this->translator->translate('invoice.invoice.form.errors'));
            return $this->webService->getRedirectResponse('product/index');  
         }
@@ -359,14 +363,14 @@ class ProductController
     }
     
     /**
-     * @param array $edited_body
-     * @param ValidatorInterface $validator
+     * @param array $body
+     * @param FormHydrator $formHydrator
      * @param pcR $pcR
      * @param string $product_id
      * @return void
      */
-    public function edit_save_custom_fields(array $edited_body, ValidatorInterface $validator, pcR $pcR, string $product_id): void {
-      $custom = (array)$edited_body['custom'];
+    public function edit_save_custom_fields(array $body, FormHydrator $formHydrator, pcR $pcR, string $product_id): void {
+      $custom = (array)$body['custom'];
       /** @var string $value */
       foreach ($custom as $custom_field_id => $value) {
         $product_custom = $pcR->repoFormValuequery($product_id, (string)$custom_field_id);
@@ -377,7 +381,7 @@ class ProductController
               'value'=>$value
           ];
           $form = new ProductCustomForm();
-          if ($form->load($product_custom_input) && $validator->validate($form)->isValid())
+          if ($formHydrator->populate($form, $product_custom_input) && $form->isValid())
           {
               $this->productCustomService->saveProductCustom($product_custom, $form);     
           }
@@ -483,10 +487,10 @@ class ProductController
      * @param uR $unR
      * @param QIAR $qiaR
      * @param QIAS $qiaS
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return void
      */
-    private function save_product_lookup_item_quote(int $order, Product $product, string $quote_id, pR $pR, trR $trR, uR $unR, QIAR $qiaR, QIAS $qiaS, ValidatorInterface $validator) : void {
+    private function save_product_lookup_item_quote(int $order, Product $product, string $quote_id, pR $pR, trR $trR, uR $unR, QIAR $qiaR, QIAS $qiaS, FormHydrator $formHydrator) : void {
            $form = new QuoteItemForm();
            $ajax_content = [
                 'name'=>$product->getProduct_name(),        
@@ -505,7 +509,7 @@ class ProductController
                 'product_unit'=>$unR->singular_or_plural_name($product->getUnit_id(),1),
                 'product_unit_id'=>$product->getUnit_id(),
            ];
-           if ($form->load($ajax_content) && $validator->validate($form)->isValid()) {
+           if ($formHydrator->populate($form, $ajax_content) && $form->isValid()) {
                  $this->quoteitemService->addQuoteItem(new QuoteItem(), $form, $quote_id, $pR, $qiaR, $qiaS, $unR, $trR);
            }      
     }
@@ -521,10 +525,10 @@ class ProductController
      * @param uR $unR
      * @param iiaR $iiaR
      * @param uR $uR
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return void
      */
-    private function save_product_lookup_item_inv(int $order, Product $product, string $inv_id, pR $pR, sR $sR, trR $trR, uR $unR, iiaR $iiaR, uR $uR, ValidatorInterface $validator) : void {
+    private function save_product_lookup_item_inv(int $order, Product $product, string $inv_id, pR $pR, sR $sR, trR $trR, uR $unR, iiaR $iiaR, uR $uR, FormHydrator $formHydrator) : void {
            $form = new InvItemForm();
            $ajax_content = [
                 'name'=> $product->getProduct_name(),        
@@ -546,7 +550,7 @@ class ProductController
                 'product_unit'=>$unR->singular_or_plural_name($product->getUnit_id(),1),
                 'product_unit_id'=>$product->getUnit_id(),
            ];
-           if ($form->load($ajax_content) && $validator->validate($form)->isValid()) {
+           if ($formHydrator->populate($form, $ajax_content) && $form->isValid()) {
                 $this->invitemService->addInvItem_product(new InvItem(), $form, $inv_id, $pR, $trR, new iiaS($iiaR),$iiaR, $sR, $uR);                 
            }      
     }
@@ -554,7 +558,7 @@ class ProductController
     //views/invoice/product/modal-product-lookups-quote.php => modal_product_lookups.js $(document).on('click', '.select-items-confirm-quote', function () => selection_quote
     
     /**
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param Request $request
      * @param pR $pR
      * @param qaR $qaR
@@ -567,7 +571,7 @@ class ProductController
      * @param qiaR $qiaR
      * @param qiaS $qiaS
      */
-    public function selection_quote(ValidatorInterface $validator, Request $request,
+    public function selection_quote(FormHydrator $formHydrator, Request $request,
                                    pR $pR, qaR $qaR, qiR $qiR, qR $qR, qtrR $qtrR,
                                    sR $sR, trR $trR, uR $uR, qiaR $qiaR, qiaS $qiaS) : \Yiisoft\DataResponse\DataResponse {        
         $select_items = $request->getQueryParams();
@@ -583,7 +587,7 @@ class ProductController
         /** @var Product $product */
         foreach ($products as $product) {
             $product->setProduct_price((float)$numberHelper->format_amount($product->getProduct_price()));
-            $this->save_product_lookup_item_quote($order, $product, $quote_id, $pR, $trR, $uR, $qiaR, $qiaS, $validator);            
+            $this->save_product_lookup_item_quote($order, $product, $quote_id, $pR, $trR, $uR, $qiaR, $qiaS, $formHydrator);            
             $order++;          
         } 
         $numberHelper->calculate_quote((string)$this->session->get('quote_id'), $qiR, $qiaR, $qtrR, $qaR, $qR); 
@@ -593,7 +597,7 @@ class ProductController
     //views/invoice/product/modal-product-lookups-inv.php => modal_product_lookups.js $(document).on('click', '.select-items-confirm-inv', function () 
     
     /**
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param Request $request
      * @param pR $pR
      * @param sR $sR
@@ -607,7 +611,7 @@ class ProductController
      * @param pymR $pymR
      * @param aciR $aciR
      */
-    public function selection_inv(ValidatorInterface $validator, Request $request, pR $pR, sR $sR, trR $trR, uR $uR, iiaR $iiaR, iiR $iiR, itrR $itrR, iaR $iaR, iR $iR, pymR $pymR, aciR $aciR) : \Yiisoft\DataResponse\DataResponse {        
+    public function selection_inv(FormHydrator $formHydrator, Request $request, pR $pR, sR $sR, trR $trR, uR $uR, iiaR $iiaR, iiR $iiR, itrR $itrR, iaR $iaR, iR $iR, pymR $pymR, aciR $aciR) : \Yiisoft\DataResponse\DataResponse {        
         $select_items = $request->getQueryParams();
         /** @var array $select_items['product_ids'] */
         $product_ids = ($select_items['product_ids'] ?: []);
@@ -621,7 +625,7 @@ class ProductController
         /** @var Product $product */
         foreach ($products as $product) {
                 $product->setProduct_price((float)$numberHelper->format_amount($product->getProduct_price()));
-                $this->save_product_lookup_item_inv($order, $product, $inv_id, $pR, $sR, $trR, $uR, $iiaR, $uR, $validator);
+                $this->save_product_lookup_item_inv($order, $product, $inv_id, $pR, $sR, $trR, $uR, $iiaR, $uR, $formHydrator);
                 $order++;          
         }
         $numberHelper->calculate_inv((string)$this->session->get('inv_id'), $aciR, $iiR, $iiaR, $itrR, $iaR, $iR, $pymR);

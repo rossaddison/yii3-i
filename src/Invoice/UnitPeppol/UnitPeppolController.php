@@ -23,7 +23,8 @@ use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 
 use \Exception;
@@ -36,7 +37,7 @@ final class UnitPeppolController
     private WebControllerService $webService;
     private UserService $userService;
     private UnitPeppolService $unitpeppolService;
-        private TranslatorInterface $translator;
+    private TranslatorInterface $translator;
     
     public function __construct(
         Session $session,
@@ -62,15 +63,15 @@ final class UnitPeppolController
      * 
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param SettingRepository $settingRepository
      * @param UnitRepository $unitRepository
      * @return Response
      */
     public function add(ViewRenderer $head, Request $request, 
-                        ValidatorInterface $validator,
-                        SettingRepository $settingRepository,                        
-                        UnitRepository $unitRepository
+                       FormHydrator $formHydrator,
+                       SettingRepository $settingRepository,                        
+                       UnitRepository $unitRepository
     ) : Response
     {
         $enece = new Peppol_UNECERec20_11e();
@@ -107,12 +108,12 @@ final class UnitPeppolController
              * @psalm-suppress PossiblyInvalidArrayAssignment $parameters['body']['description']  
              */       
             array_key_exists('Description', $enece_array[$key]) ?
-             $parameters['body']['description'] = $enece_array[$key]['Description'] : '';
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+            $parameters['body']['description'] = $enece_array[$key]['Description'] : '';
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                 $this->unitpeppolService->saveUnitPeppol(new UnitPeppol(),$form);
                 return $this->webService->getRedirectResponse('unitpeppol/index');
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('_form', $parameters);
     }
@@ -198,14 +199,14 @@ final class UnitPeppolController
      * @param ViewRenderer $head
      * @param Request $request
      * @param CurrentRoute $currentRoute
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param UnitPeppolRepository $unitpeppolRepository
      * @param SettingRepository $settingRepository
      * @param UnitRepository $unitRepository
      * @return Response
      */    
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute, 
-      ValidatorInterface $validator,
+      FormHydrator $formHydrator,
       UnitPeppolRepository $unitpeppolRepository, 
       SettingRepository $settingRepository,                        
       UnitRepository $unitRepository
@@ -227,12 +228,12 @@ final class UnitPeppolController
             if ($request->getMethod() === Method::POST) {
                 $form = new UnitPeppolForm();
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     $this->unitpeppolService->saveUnitPeppol($unitpeppol,$form);
                     return $this->webService->getRedirectResponse('unitpeppol/index');
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('_form', $parameters);
         }

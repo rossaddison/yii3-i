@@ -20,7 +20,8 @@ use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 
 final class ProfileController
@@ -73,13 +74,13 @@ final class ProfileController
     /**
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param SettingRepository $settingRepository
      * @param CompanyRepository $companyRepository
      * @return Response
      */    
     public function add(ViewRenderer $head, Request $request, 
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         SettingRepository $settingRepository,                        
                         CompanyRepository $companyRepository
     ): Response
@@ -97,11 +98,11 @@ final class ProfileController
         if ($request->getMethod() === Method::POST) {
             
             $form = new ProfileForm();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                 $this->profileService->saveProfile(new Profile(),$form);
                 return $this->webService->getRedirectResponse('profile/index');
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('_form', $parameters);
     }
@@ -121,14 +122,14 @@ final class ProfileController
      * @param ViewRenderer $head
      * @param Request $request
      * @param CurrentRoute $currentRoute
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param ProfileRepository $profileRepository
      * @param SettingRepository $settingRepository
      * @param CompanyRepository $companyRepository
      * @return Response
      */
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute,
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         ProfileRepository $profileRepository, 
                         SettingRepository $settingRepository,                        
                         CompanyRepository $companyRepository
@@ -147,12 +148,12 @@ final class ProfileController
         if ($request->getMethod() === Method::POST) {
             $form = new ProfileForm();
             $body = $request->getParsedBody();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                 $this->profileService->saveProfile($profile, $form);
                 return $this->webService->getRedirectResponse('profile/index');
             }
             $parameters['body'] = $body;
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('_form', $parameters);
     }
@@ -198,7 +199,7 @@ final class ProfileController
                 'action' => ['profile/view', ['id' => $profile->getId()]],
                 'errors' => [],
                 'body' => $this->body($profile),
-                's'=>$settingRepository,             
+                's'=> $settingRepository,             
                 'profile'=>$profileRepository->repoProfilequery((string)$profile->getId()),
             ];
             return $this->viewRenderer->render('_view', $parameters);

@@ -22,7 +22,8 @@ use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 
 use \Exception;
@@ -68,12 +69,12 @@ final class PostalAddressController
      * @param CurrentRoute $currentRoute
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param ClientRepository $clientRepo
      * @return Response
      */
     public function add(CurrentRoute $currentRoute, ViewRenderer $head, Request $request, 
-                        ValidatorInterface $validator, ClientRepository $clientRepo
+                       FormHydrator $formHydrator, ClientRepository $clientRepo
     ) : Response
     {
         $client_id = $currentRoute->getArgument('client_id');
@@ -90,11 +91,11 @@ final class PostalAddressController
         if ($request->getMethod() === Method::POST) {
             
             $form = new PostalAddressForm();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                 $this->postaladdressService->savePostalAddress(new PostalAddress(), $form);
                 return $this->webService->getRedirectResponse('postaladdress/index');
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('_form', $parameters);
     }
@@ -194,13 +195,13 @@ final class PostalAddressController
      * @param ViewRenderer $head
      * @param Request $request
      * @param CurrentRoute $currentRoute
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param PostalAddressRepository $postaladdressRepository
      * @param SettingRepository $settingRepository
      * @return Response
      */    
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute, 
-                        ValidatorInterface $validator,
+                       FormHydrator $formHydrator,
                         PostalAddressRepository $postaladdressRepository, 
                         SettingRepository $settingRepository                        
 
@@ -217,12 +218,12 @@ final class PostalAddressController
             if ($request->getMethod() === Method::POST) {
                 $form = new PostalAddressForm();
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     $this->postaladdressService->savePostalAddress($postaladdress,$form);
                     return $this->webService->getRedirectResponse('postaladdress/index');
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('_form', $parameters);
         }

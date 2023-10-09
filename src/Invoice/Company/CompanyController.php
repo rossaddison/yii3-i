@@ -17,7 +17,8 @@ use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 
 final class CompanyController
@@ -73,12 +74,12 @@ final class CompanyController
      * 
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param SettingRepository $settingRepository
      * @return Response
      */
     public function add(ViewRenderer $head, Request $request, 
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         SettingRepository $settingRepository,                   
     ): Response
     {
@@ -95,11 +96,11 @@ final class CompanyController
         
         if ($request->getMethod() === Method::POST) {
             $form = new CompanyForm();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                 $this->companyService->saveCompany(new Company(),$form);
                 return $this->webService->getRedirectResponse('company/index');
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('_form', $parameters);
     }
@@ -108,17 +109,17 @@ final class CompanyController
      * 
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param CompanyRepository $companyRepository
      * @param SettingRepository $settingRepository
      * @param CurrentRoute $currentRoute
      * @return Response
      */
     public function edit(ViewRenderer $head, Request $request, 
-                        ValidatorInterface $validator,
-                        CompanyRepository $companyRepository, 
-                        SettingRepository $settingRepository,
-                        CurrentRoute $currentRoute
+                         FormHydrator $formHydrator,
+                         CompanyRepository $companyRepository, 
+                         SettingRepository $settingRepository,
+                         CurrentRoute $currentRoute
 
     ): Response {
         $company = $this->company($currentRoute, $companyRepository);
@@ -135,12 +136,12 @@ final class CompanyController
             if ($request->getMethod() === Method::POST) {
                 $form = new CompanyForm();
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     $this->companyService->saveCompany($company, $form);
                     return $this->webService->getRedirectResponse('company/index');
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('_form', $parameters);
         }

@@ -22,7 +22,8 @@ use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 use \Exception;
 
@@ -104,12 +105,12 @@ final class ProductImageController {
     /**
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param ProductRepository $productRepository
      * @return Response
      */
     public function add(ViewRenderer $head, Request $request,
-            ValidatorInterface $validator,
+            FormHydrator $formHydrator,
             ProductRepository $productRepository
     ): Response {
         $parameters = [
@@ -124,11 +125,11 @@ final class ProductImageController {
         if ($request->getMethod() === Method::POST) {
             $form = new ProductImageForm();
             $productimage = new ProductImage();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                 $this->productimageService->saveProductImage($productimage, $form);
                 return $this->webService->getRedirectResponse('productimage/index');
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('_form', $parameters);
     }
@@ -184,7 +185,7 @@ final class ProductImageController {
      * @param ViewRenderer $head
      * @param Request $request
      * @param CurrentRoute $currentRoute
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param ProductImageRepository $productimageRepository
      * @param SettingRepository $settingRepository
      * @param ProductRepository $productRepository
@@ -192,7 +193,7 @@ final class ProductImageController {
      */
     public function edit(ViewRenderer $head, 
             Request $request, CurrentRoute $currentRoute,
-            ValidatorInterface $validator,
+            FormHydrator $formHydrator,
             ProductImageRepository $productimageRepository,
             SettingRepository $settingRepository,
             ProductRepository $productRepository
@@ -210,12 +211,12 @@ final class ProductImageController {
             if ($request->getMethod() === Method::POST) {
                 $form = new ProductImageForm();
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     $this->productimageService->saveProductImage($productimage, $form);
                     return $this->webService->getRedirectResponse('productimage/index');
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('_form', $parameters);
         }
@@ -302,5 +303,4 @@ final class ProductImageController {
                 ->withSort($sort);
         return $productimages;
     }
-
 }

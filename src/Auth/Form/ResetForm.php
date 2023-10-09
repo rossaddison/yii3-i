@@ -29,7 +29,6 @@ final class ResetForm extends FormModel implements RulesProviderInterface
         private TranslatorInterface $translator,
         private UserRepository $userRepository,
     ) {
-        parent::__construct();
     }
     
     public function reset(): bool
@@ -130,11 +129,9 @@ final class ResetForm extends FormModel implements RulesProviderInterface
                 callback: function (): Result {
                     $result = new Result();
                     if (!$this->authService->login($this->login, $this->password)) {
-                        $this
-                            ->getFormErrors()
-                            ->addError('login', '');
-                        $result->addError($this->translator->translate('validator.invalid.login.password'));
+                      $result->addError($this->translator->translate('validator.invalid.login.password'));
                     }
+                    
                     return $result;
                 },
                 skipOnEmpty: true,
@@ -150,9 +147,6 @@ final class ResetForm extends FormModel implements RulesProviderInterface
                 callback: function (): Result {
                     $result = new Result();
                     if (!($this->password === $this->password_verify)) {
-                        $this
-                            ->getFormErrors()
-                            ->addError('password_verify', '');
                         $result->addError($this->translator->translate('validator.password.not.match'));
                     }
                     return $result;
@@ -170,10 +164,7 @@ final class ResetForm extends FormModel implements RulesProviderInterface
                 callback: function (): Result {
                     $result = new Result();
                     if (!($this->new_password === $this->new_password_verify)) {
-                        $this
-                            ->getFormErrors()
-                            ->addError('new_password_verify', '');
-                        $result->addError($this->translator->translate('validator.password.not.match.new'));
+                      $result->addError($this->translator->translate('validator.password.not.match.new'));
                     }
                     return $result;
                 },

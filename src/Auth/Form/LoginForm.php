@@ -20,7 +20,6 @@ final class LoginForm extends FormModel implements RulesProviderInterface
 
     public function __construct(private AuthService $authService, private TranslatorInterface $translator)
     {
-        parent::__construct();
     }
 
     /**
@@ -73,12 +72,9 @@ final class LoginForm extends FormModel implements RulesProviderInterface
                     $result = new Result();
 
                     if (!$this->authService->login($this->login, $this->password)) {
-                        $this
-                            ->getFormErrors()
-                            ->addError('login', '');
                         $result->addError($this->translator->translate('validator.invalid.login.password'));
                     }
-
+                    
                     return $result;
                 },
                 skipOnEmpty: true,

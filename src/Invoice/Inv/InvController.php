@@ -113,7 +113,8 @@ use Yiisoft\Session\SessionInterface;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\User\CurrentUser;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 // Psr\Http
 use Psr\Log\LoggerInterface;
@@ -453,7 +454,7 @@ final class InvController {
     
     /**
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param GR $gR
      * @param TRR $trR
      * @param SumexR $sumexR
@@ -462,7 +463,7 @@ final class InvController {
      * @param UIR $uiR
      * @return \Yiisoft\DataResponse\DataResponse
      */
-    public function create_confirm(Request $request, ValidatorInterface $validator, GR $gR, TRR $trR, SumexR $sumexR, UR $uR, UCR $ucR, UIR $uiR): \Yiisoft\DataResponse\DataResponse 
+    public function create_confirm(Request $request, FormHydrator $formHydrator, GR $gR, TRR $trR, SumexR $sumexR, UR $uR, UCR $ucR, UIR $uiR): \Yiisoft\DataResponse\DataResponse 
     {
       $body = $request->getQueryParams();
       $ajax_body = [
@@ -486,7 +487,7 @@ final class InvController {
       $ajax_content = new InvForm();
       $inv = new Inv();
       $invamount = new InvAmount();
-      if ($ajax_content->load($ajax_body) && $validator->validate($ajax_content)->isValid()) 
+      if ($formHydrator->populate($ajax_content, $ajax_body) && $ajax_content->isValid()) 
       {
         // Only clients that were assigned to user accounts were made available in dropdown 
         // therefore use the 'user client' user id
@@ -516,7 +517,7 @@ final class InvController {
           $model_id = $saved_model->getId();
           if ($model_id) {
             $this->inv_amount_service->initializeInvAmount($invamount, $model_id);
-            $this->default_taxes($inv, $trR, $validator);
+            $this->default_taxes($inv, $trR, $formHydrator);
             // if Settings...Views...Invoices...Sumex...Yes => Generate sumex patient details extension table
             // This table can be filled in via Invoice...View...Options...Edit...Sumex
             $this->sumex_add_record($sumexR, (int) $model_id);
@@ -544,7 +545,7 @@ final class InvController {
      * @see src/Invoice/Asset/rebuild1.13/js/inv.js function $(document).on('click', '#create-credit-confirm', function () 
      * @see resources/views/invoice/inv/modal_create_credit
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param IR $iR
      * @param GR $gR
      * @param IIR $iiR
@@ -554,7 +555,7 @@ final class InvController {
      * @param UR $uR
      * @return \Yiisoft\DataResponse\DataResponse
      */
-    public function create_credit_confirm(Request $request, ValidatorInterface $validator, IR $iR, GR $gR, IIR $iiR, IIAR $iiaR, UCR $ucR, UIR $uiR, UR $uR): \Yiisoft\DataResponse\DataResponse {
+    public function create_credit_confirm(Request $request, FormHydrator $formHydrator, IR $iR, GR $gR, IIR $iiR, IIAR $iiaR, UCR $ucR, UIR $uiR, UR $uR): \Yiisoft\DataResponse\DataResponse {
       $body = $request->getQueryParams();
       $basis_inv = $iR->repoInvLoadedquery((string) $body['inv_id']);
       $unsuccessful = $this->translator->translate('invoice.invoice.credit.note.creation.unsuccessful');
@@ -582,7 +583,7 @@ final class InvController {
         $iR->save($basis_inv);
         $ajax_content = new InvForm();
         $new_inv = new Inv();
-        if ($ajax_content->load($ajax_body) && $validator->validate($ajax_content)->isValid()) {
+        if ($formHydrator->populate($ajax_content, $ajax_body) && $ajax_content->isValid()) {
           /**
            * @var string $ajax_body['client_id']
            */
@@ -608,15 +609,15 @@ final class InvController {
      *
      * @param Inv $inv
      * @param TRR $trR
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return void
      */
-    public function default_taxes(Inv $inv, TRR $trR, ValidatorInterface $validator): void {
+    public function default_taxes(Inv $inv, TRR $trR, FormHydrator $formHydrator): void {
         if ($trR->repoCountAll() > 0) {
             $taxrates = $trR->findAllPreloaded();
             /** @var TaxRate $taxrate */
             foreach ($taxrates as $taxrate) {
-                $taxrate->getTax_rate_default() == 1 ? $this->default_tax_inv($taxrate, $inv, $validator) : '';
+                $taxrate->getTax_rate_default() == 1 ? $this->default_tax_inv($taxrate, $inv, $formHydrator) : '';
             }
         }
     }
@@ -625,17 +626,17 @@ final class InvController {
      *
      * @param TaxRate $taxrate
      * @param Inv $inv
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return void
      */
-    public function default_tax_inv(TaxRate $taxrate, Inv $inv, ValidatorInterface $validator): void {
+    public function default_tax_inv(TaxRate $taxrate, Inv $inv, FormHydrator $formHydrator): void {
         $inv_tax_rate_form = new InvTaxRateForm();
         $inv_tax_rate = [];
         $inv_tax_rate['inv_id'] = $inv->getId();
         $inv_tax_rate['tax_rate_id'] = $taxrate->getTax_rate_id();
         $inv_tax_rate['include_item_tax'] = 0;
         $inv_tax_rate['inv_tax_rate_amount'] = 0;
-        ($inv_tax_rate_form->load($inv_tax_rate) && $validator->validate($inv_tax_rate_form)->isValid()) ?
+        ($formHydrator->populate($inv_tax_rate_form, $inv_tax_rate) && $inv_tax_rate_form->isValid()) ?
                         $this->inv_tax_rate_service->saveInvTaxRate(new InvTaxRate(), $inv_tax_rate_form) : '';
     }
 
@@ -782,7 +783,7 @@ final class InvController {
      * @param ViewRenderer $head
      * @param Request $request
      * @param CurrentRoute $currentRoute
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param IR $invRepo
      * @param CR $clientRepo
      * @param ContractRepo $contractRepo
@@ -799,7 +800,7 @@ final class InvController {
      * @return \Yiisoft\DataResponse\DataResponse|Response
      */
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute,
-            ValidatorInterface $validator,
+            FormHydrator $formHydrator,
             IR $invRepo,
             CR $clientRepo,
             ContractRepo $contractRepo,
@@ -865,25 +866,25 @@ final class InvController {
                 'payment_term_array' => $this->sR->get_payment_term_array($this->translator)
             ];
             if ($request->getMethod() === Method::POST) {
-                $edited_body = $request->getParsedBody();
-                if (is_array($edited_body)) {
+                $body = $request->getParsedBody();
+                if (is_array($body)) {
                     // If the status has changed to 'paid', check that the balance on the invoice is zero
-                    if (!$this->edit_check_status_reconciling_with_balance($iaR, (int) $inv_id) && $edited_body['status_id'] === 4) {
+                    if (!$this->edit_check_status_reconciling_with_balance($iaR, (int) $inv_id) && $body['status_id'] === 4) {
                         return $this->factory->createResponse($this->view_renderer->renderPartialAsString('/invoice/setting/inv_message',
                                                 ['heading' => $this->sR->trans('errors'), 'message' => $this->sR->trans('error') . 'Balance does not equal zero. Status is Paid => Balance should be zero. ',
                                                     'url' => 'inv/view', 'id' => $inv_id]));
                     }
-                    $returned_form = $this->edit_save_form_fields($edited_body, $currentRoute, $validator, $invRepo, $groupRepo, $userRepo, $ucR, $uiR);
-                    $parameters['body'] = $edited_body;
+                    $returned_form = $this->edit_save_form_fields($body, $currentRoute, $formHydrator, $invRepo, $groupRepo, $userRepo, $ucR, $uiR);
+                    $parameters['body'] = $body;
                     if ($returned_form instanceof InvForm) {
-                        $parameters['errors'] = $returned_form->getFormErrors();
-                        $this->edit_save_custom_fields($edited_body, $validator, $icR, $inv_id);
+                        $parameters['errors'] = HtmlFormErrors::getFirstErrors($returned_form);
+                        $this->edit_save_custom_fields($body, $formHydrator, $icR, $inv_id);
                         return $this->factory->createResponse($this->view_renderer->renderPartialAsString('/invoice/setting/inv_message',
                                                 ['heading' => '', 'message' =>
                                                     $this->sR->trans('record_successfully_updated'),
                                                     'url' => 'inv/view', 'id' => $inv_id]));
                     }
-                } //$edited_body
+                } //$body
                 return $this->web_service->getRedirectResponse('inv/index');
             }
             return $this->view_renderer->render('/invoice/inv/_form', $parameters);
@@ -911,9 +912,9 @@ final class InvController {
     }
 
     /**
-     * @param array|object|null $edited_body
+     * @param array|object|null $body
      * @param CurrentRoute $currentRoute
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param IR $invRepo
      * @param GR $groupRepo
      * @param IAR $iaR
@@ -922,15 +923,15 @@ final class InvController {
      * @param UIR $uiR
      * @return InvForm|null
      */
-    public function edit_save_form_fields(array|object|null $edited_body, CurrentRoute $currentRoute, ValidatorInterface $validator, IR $invRepo, GR $groupRepo, UR $uR, UCR $ucR, UIR $uiR): InvForm|null {
+    public function edit_save_form_fields(array|object|null $body, CurrentRoute $currentRoute, FormHydrator $formHydrator, IR $invRepo, GR $groupRepo, UR $uR, UCR $ucR, UIR $uiR): InvForm|null {
       $inv = $this->inv($currentRoute, $invRepo, true);
       if ($inv) {
         $client_id = $inv->getClient_id();
         $user = $this->active_user($client_id, $uR, $ucR, $uiR);
         if (null!==$user) {
           $form = new InvForm();
-          if (null!==$edited_body && is_array($edited_body)) {
-            if ($form->load($edited_body) && $validator->validate($form)->isValid()) {
+          if (null!==$body && is_array($body)) {
+            if ($formHydrator->populate($form, $body) && $form->isValid()) {
               $this->inv_service->bothInv($user, $inv, $form, $this->sR, $groupRepo);
             } 
           }
@@ -942,12 +943,12 @@ final class InvController {
 
     /**
      * @param array|object|null $parse
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param ICR $icR
      * @param string|null $inv_id
      * @return void
      */
-    public function edit_save_custom_fields(array|object|null $parse, ValidatorInterface $validator, ICR $icR, string|null $inv_id): void {
+    public function edit_save_custom_fields(array|object|null $parse, FormHydrator $formHydrator, ICR $icR, string|null $inv_id): void {
         /**
          * @var array $parse['custom']
          */
@@ -962,7 +963,7 @@ final class InvController {
                     'value' => $value
                 ];
                 $form = new InvCustomForm();
-                if ($form->load($inv_custom_input) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $inv_custom_input) && $form->isValid()) {
                     $this->inv_custom_service->saveInvCustom($inv_custom, $form);
                 }
             } else {
@@ -974,7 +975,7 @@ final class InvController {
                         'value' => $value
                     ];
                     $form = new InvCustomForm();
-                    if ($form->load($inv_custom_input) && $validator->validate($form)->isValid()) {
+                    if ($formHydrator->populate($form, $inv_custom_input) && $form->isValid()) {
                         $this->inv_custom_service->saveInvCustom($inv_custom, $form);
                     }
                 } // inv_custom
@@ -2020,7 +2021,7 @@ final class InvController {
 
     /**
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param GR $gR
      * @param IIAS $iiaS
      * @param PR $pR
@@ -2037,7 +2038,7 @@ final class InvController {
      * @param UIR $uiR
      * @param UNR $unR
      */
-    public function inv_to_inv_confirm(Request $request, ValidatorInterface $validator,
+    public function inv_to_inv_confirm(Request $request, FormHydrator $formHydrator,
             GR $gR, IIAS $iiaS, PR $pR, TASKR $taskR, IAR $iaR, ICR $icR,
             IIAR $iiaR, IIR $iiR, IR $iR, ITRR $itrR, TRR $trR, UR $uR, UCR $ucR, UIR $uiR, UNR $unR): \Yiisoft\DataResponse\DataResponse|Response {
       $data_inv_js = $request->getQueryParams();
@@ -2061,7 +2062,7 @@ final class InvController {
           ];
           $form = new InvForm();
           $copy = new Inv();
-          if (($form->load($ajax_body) && $validator->validate($form)->isValid())) {
+          if (($formHydrator->populate($form, $ajax_body) && $form->isValid())) {
           /**
            * @var string $ajax_body['client_id']
            */
@@ -2072,9 +2073,9 @@ final class InvController {
             // Transfer each inv_item to inv_item and the corresponding inv_item_amount to inv_item_amount for each item
             $copy_id = $copy->getId();
             if (null !== $copy_id) {
-              $this->inv_to_inv_inv_items($inv_id, $copy_id, $iiaR, $iiaS, $pR, $taskR, $iiR, $trR, $validator, $unR);
-              $this->inv_to_inv_inv_tax_rates($inv_id, $copy_id, $itrR, $validator);
-              $this->inv_to_inv_inv_custom($inv_id, $copy_id, $icR, $validator);
+              $this->inv_to_inv_inv_items($inv_id, $copy_id, $iiaR, $iiaS, $pR, $taskR, $iiR, $trR, $formHydrator, $unR);
+              $this->inv_to_inv_inv_tax_rates($inv_id, $copy_id, $itrR, $formHydrator);
+              $this->inv_to_inv_inv_custom($inv_id, $copy_id, $icR, $formHydrator);
               $this->inv_to_inv_inv_amount($inv_id, $copy_id);
               $iR->save($copy);
               $parameters = ['success' => 1];
@@ -2097,7 +2098,7 @@ final class InvController {
     /**
      * @param string $copy_id
      */
-    private function inv_to_inv_inv_custom(string $inv_id, string $copy_id, ICR $icR, ValidatorInterface $validator): void {
+    private function inv_to_inv_inv_custom(string $inv_id, string $copy_id, ICR $icR, FormHydrator $formHydrator): void {
         $inv_customs = $icR->repoFields($inv_id);
         /**
          * @var InvCustom $inv_custom
@@ -2110,7 +2111,7 @@ final class InvController {
             ];
             $entity = new InvCustom();
             $form = new InvCustomForm();
-            if ($form->load($copy_custom) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $copy_custom) && $form->isValid()) {
                 $this->inv_custom_service->saveInvCustom($entity, $form);
             }
         }
@@ -2119,7 +2120,7 @@ final class InvController {
     /**
      * @param string $copy_id
      */
-    private function inv_to_inv_inv_items(string $inv_id, string $copy_id, IIAR $iiaR, IIAS $iiaS, PR $pR, TASKR $taskR, IIR $iiR, TRR $trR, ValidatorInterface $validator, UNR $unR): void {
+    private function inv_to_inv_inv_items(string $inv_id, string $copy_id, IIAR $iiaR, IIAS $iiaS, PR $pR, TASKR $taskR, IIR $iiR, TRR $trR, FormHydrator $formHydrator, UNR $unR): void {
         // Get all items that belong to the original invoice
         $items = $iiR->repoInvItemIdquery($inv_id);
         /**
@@ -2147,7 +2148,7 @@ final class InvController {
             // Create an equivalent invoice item for the invoice item
             $model = new InvItem();
             $form = new InvItemForm();
-            if ($form->load($copy_item) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $copy_item) && $form->isValid()) {
                 if (!empty($inv_item->getProduct_id()) && empty($inv_item->getTask_id())) {
                     // (InvItem $model, InvItemForm $form, string $inv_id,PR $pr, SR $s, UNR $unR)
                     $this->inv_item_service->addInvItem_product($model, $form, $copy_id, $pR, $trR, $iiaS, $iiaR, $this->sR, $unR);
@@ -2155,7 +2156,7 @@ final class InvController {
                     $this->inv_item_service->addInvItem_task($model, $form, $copy_id, $taskR, $trR, $iiaS, $iiaR, $this->sR);
                 }
             } else {
-                $form->getFormErrors();
+                HtmlFormErrors::getFirstErrors($form);
             }
         } // foreach
     }
@@ -2163,7 +2164,7 @@ final class InvController {
     /**
      * @param string $copy_id
      */
-    private function inv_to_inv_inv_tax_rates(string $inv_id, string $copy_id, ITRR $itrR, ValidatorInterface $validator): void {
+    private function inv_to_inv_inv_tax_rates(string $inv_id, string $copy_id, ITRR $itrR, FormHydrator $formHydrator): void {
         // Get all tax rates that have been setup for the invoice
         $inv_tax_rates = $itrR->repoInvquery($inv_id);
         /**
@@ -2178,7 +2179,7 @@ final class InvController {
             ];
             $entity = new InvTaxRate();
             $form = new InvTaxRateForm();
-            if ($form->load($copy_tax_rate) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $copy_tax_rate) && $form->isValid()) {
                 $this->inv_tax_rate_service->saveInvTaxRate($entity, $form);
             }
         }
@@ -2217,11 +2218,11 @@ final class InvController {
     // inv/view => '#btn_save_inv_custom_fields' => inv_custom_field.js => /invoice/inv/save_custom";
 
     /**
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param Request $request
      * @param ICR $icR
      */
-    public function save_custom(ValidatorInterface $validator, Request $request, ICR $icR): \Yiisoft\DataResponse\DataResponse {
+    public function save_custom(FormHydrator $formHydrator, Request $request, ICR $icR): \Yiisoft\DataResponse\DataResponse {
         $parameters = [
             'success' => 0
         ];
@@ -2231,20 +2232,20 @@ final class InvController {
         $custom_field_body = [
             'custom' => $js_data_custom,
         ];
-        $this->save_custom_fields($validator, $custom_field_body, $inv_id, $icR);
+        $this->save_custom_fields($formHydrator, $custom_field_body, $inv_id, $icR);
         $parameters['success'] = 1;
         return $this->factory->createResponse(Json::encode($parameters));
     }
 
     /**
      *
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param array $array
      * @param string $inv_id
      * @param ICR $icR
      * @return void
      */
-    public function save_custom_fields(ValidatorInterface $validator, array $array, string $inv_id, ICR $icR): void {
+    public function save_custom_fields(FormHydrator $formHydrator, array $array, string $inv_id, ICR $icR): void {
         if (!empty($array['custom'])) {
             $db_array = [];
             $values = [];
@@ -2283,8 +2284,8 @@ final class InvController {
                     $inv_custom['custom_field_id'] = $key;
                     $inv_custom['value'] = $value;
                     $model = ($icR->repoInvCustomCount($inv_id, $key) == 1 ? $icR->repoFormValuequery($inv_id, $key) : new InvCustom());
-                    if ($model && $ajax_custom->load($inv_custom) && $validator->validate($ajax_custom)->isValid()) {
-                        $this->inv_custom_service->saveInvCustom($model, $ajax_custom);
+                    if ($model && $formHydrator->populate($ajax_custom, $inv_custom) && $ajax_custom->isValid()) {
+                      $this->inv_custom_service->saveInvCustom($model, $ajax_custom);
                     }
                 }
             } // foreach
@@ -2296,11 +2297,11 @@ final class InvController {
     /**
      * @see C:\wamp64\www\yii3-i\src\Invoice\Asset\rebuild-1.13\inv.js $(document).on('click', '#allowance_charge_submit', function
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param ACR $acR
      * @return \Yiisoft\DataResponse\DataResponse
      */
-    public function save_inv_allowance_charge(Request $request, ValidatorInterface $validator, ACR $acR): \Yiisoft\DataResponse\DataResponse {
+    public function save_inv_allowance_charge(Request $request, FormHydrator $formHydrator, ACR $acR): \Yiisoft\DataResponse\DataResponse {
         $body = $request->getQueryParams();
         $amount = (float) $body['amount'];
         $allowance_charge_id = (int) $body['inv_allowance_charge_id'];
@@ -2314,7 +2315,7 @@ final class InvController {
                 'vat' => $vat_amount
             ];
             $ajax_content = new InvAllowanceChargeForm();
-            if ($ajax_content->load($ajax_body) && $validator->validate($ajax_content)->isValid()) {
+            if ($formHydrator->populate($ajax_content, $ajax_body) && $ajax_content->isValid()) {
                 $this->inv_allowance_charge_service->saveInvAllowanceCharge(new InvAllowanceCharge(), $ajax_content);
                 $parameters = [
                     'success' => 1,
@@ -2339,9 +2340,9 @@ final class InvController {
     /**
      * @see src/Invoice/Asset/rebuild-1.13/js/inv.js
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      */
-    public function save_inv_tax_rate(Request $request, ValidatorInterface $validator): \Yiisoft\DataResponse\DataResponse {
+    public function save_inv_tax_rate(Request $request, FormHydrator $formHydrator): \Yiisoft\DataResponse\DataResponse {
         $body = $request->getQueryParams();
         $ajax_body = [
             'inv_id' => $body['inv_id'],
@@ -2350,7 +2351,7 @@ final class InvController {
             'inv_tax_rate_amount' => floatval(0.00),
         ];
         $ajax_content = new InvTaxRateForm();
-        if ($ajax_content->load($ajax_body) && $validator->validate($ajax_content)->isValid()) {
+        if ($formHydrator->populate($ajax_content, $ajax_body) && $ajax_content->isValid()) {
             $this->inv_tax_rate_service->saveInvTaxRate(new InvTaxRate(), $ajax_content);
             $parameters = [
                 'success' => 1,

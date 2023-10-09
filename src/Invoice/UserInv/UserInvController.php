@@ -31,7 +31,8 @@ use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 
 final class UserInvController
@@ -155,14 +156,14 @@ final class UserInvController
      * 
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param UserInvRepository $userinvRepository
      * @param SettingRepository $settingRepository
      * @param uR $uR
      * @return Response
      */
     public function guest(ViewRenderer $head, Request $request, 
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         UserInvRepository $userinvRepository, 
                         SettingRepository $settingRepository,
                         uR $uR,
@@ -189,12 +190,12 @@ final class UserInvController
                     if ($request->getMethod() === Method::POST) {
                         $form = new UserInvForm();
                         $body = $request->getParsedBody();
-                        if ($form->load($body) && $validator->validate($form)->isValid()) {
+                        if ($formHydrator->populate($form, $body) && $form->isValid()) {
                             $this->userinvService->saveUserInv($user_inv, $form);
                             return $this->webService->getRedirectResponse('invoice/index');
                         }
                         $parameters['body'] = $body;
-                        $parameters['errors'] = $form->getFormErrors();
+                        $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
                     }
                     return $this->viewRenderer->render('_form_guest', $parameters);
                 }
@@ -230,13 +231,13 @@ final class UserInvController
      * 
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param SettingRepository $sR
      * @param uR $uR
      * @return Response
      */
     public function add(ViewRenderer $head, Request $request, 
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         SettingRepository $sR,
                         uR $uR, 
     ) : Response
@@ -261,14 +262,14 @@ final class UserInvController
         if ($request->getMethod() === Method::POST) {            
             $form = new UserInvForm();
             $userinv = new UserInv();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                 $this->userinvService->saveUserInv($userinv,$form);
                 // assign the observer role by default to a new user inv
                 $this->manager->assign('observer', $form->getUser_id());
                 $this->flash_message('info', $this->translator->translate('invoice.user.inv.role.all.new'));
                 return $this->webService->getRedirectResponse('userinv/index');
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('_form', $parameters);
     }
@@ -309,14 +310,14 @@ final class UserInvController
      * @param ViewRenderer $head
      * @param Request $request
      * @param CurrentRoute $currentRoute
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param UserInvRepository $userinvRepository
      * @param SettingRepository $settingRepository
      * @param uR $uR
      * @return Response
      */
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute, 
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         UserInvRepository $userinvRepository, 
                         SettingRepository $settingRepository,
                         uR $uR,
@@ -339,12 +340,12 @@ final class UserInvController
             if ($request->getMethod() === Method::POST) {
                 $form = new UserInvForm();
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     $this->userinvService->saveUserInv($user_inv, $form);
                     return $this->webService->getRedirectResponse('userinv/index');
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('_form', $parameters);
         }

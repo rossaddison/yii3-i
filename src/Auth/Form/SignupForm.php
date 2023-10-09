@@ -25,7 +25,6 @@ final class SignupForm extends FormModel implements RulesProviderInterface
         private TranslatorInterface $translator,
         private UserRepository $userRepository,
     ) {
-        parent::__construct();
     }
 
     /**

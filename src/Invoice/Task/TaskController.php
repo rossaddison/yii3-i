@@ -42,7 +42,8 @@ use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\Yii\View\ViewRenderer;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 
 final class TaskController
 {
@@ -109,7 +110,7 @@ final class TaskController
     * 
     * @param ViewRenderer $head
     * @param Request $request
-    * @param ValidatorInterface $validator
+    * @param FormHydrator $formHydrator
     * @param sR $sR
     * @param prjctR $projectRepository
     * @param trR $trR
@@ -117,7 +118,7 @@ final class TaskController
     */
     public function add(ViewRenderer $head, 
                         Request $request, 
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         sR $sR,                        
                         prjctR $projectRepository,
                         trR $trR
@@ -138,11 +139,11 @@ final class TaskController
         ];
         if ($request->getMethod() === Method::POST) {
             $form = new TaskForm();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                 $this->taskService->saveTask(new Task(), $form, $sR);
                 $this->flash_message('info', $sR->trans('record_successfully_created'));
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('_form', $parameters);
     }
@@ -151,7 +152,7 @@ final class TaskController
      * @param ViewRenderer $head
      * @param Request $request
      * @param CurrentRoute $currentRoute
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param tR $tR
      * @param sR $sR
      * @param prjctR $projectRepository
@@ -161,7 +162,7 @@ final class TaskController
     public function edit(ViewRenderer $head, 
                         Request $request, 
                         CurrentRoute $currentRoute,
-                        ValidatorInterface $validator,
+                       FormHydrator $formHydrator,
                         tR $tR, 
                         sR $sR,                        
                         prjctR $projectRepository,
@@ -185,13 +186,13 @@ final class TaskController
             if ($request->getMethod() === Method::POST) {
                 $body = $request->getParsedBody();
                 $form = new TaskForm();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     $this->taskService->saveTask($task, $form, $sR);
                     $this->flash_message('info', $sR->trans('record_successfully_updated'));
                     return $this->webService->getRedirectResponse('task/index');
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('_form', $parameters);
         }    
@@ -243,7 +244,7 @@ final class TaskController
     //views/invoice/task/modal-task-lookups-inv.php => modal_task_lookups_inv.js $(document).on('click', '.select-items-confirm-inv', function () 
     
     /**
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param Request $request
      * @param ACIR $aciR
      * @param tR $taskR
@@ -256,7 +257,7 @@ final class TaskController
      * @param iR $iR
      * @param pymR $pymR
      */
-    public function selection_inv(ValidatorInterface $validator, Request $request, 
+    public function selection_inv(FormHydrator $formHydrator, Request $request, 
                                   ACIR $aciR, tR $taskR, sR $sR, trR $trR, iiaR $iiaR, iiR $iiR, itrR $itrR, iaR $iaR, iR $iR, pymR $pymR)
                                   : \Yiisoft\DataResponse\DataResponse {        
         $select_items = $request->getQueryParams();
@@ -271,7 +272,7 @@ final class TaskController
         /** @var Task $task */ 
         foreach ($tasks as $task) {           
             $task->setPrice((float)$numberHelper->format_amount($task->getPrice()));
-            $this->save_task_lookup_item_inv($order, $task, $inv_id, $taskR, $trR, $iiaR, $sR, $validator);
+            $this->save_task_lookup_item_inv($order, $task, $inv_id, $taskR, $trR, $iiaR, $sR, $formHydrator);
             $order++;          
         }
         $numberHelper->calculate_inv((string)$this->session->get('inv_id'), $aciR, $iiR, $iiaR, $itrR, $iaR, $iR, $pymR);
@@ -287,10 +288,10 @@ final class TaskController
      * @param trR $trR
      * @param iiaR $iiaR
      * @param sR $sR
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return void
      */    
-    private function save_task_lookup_item_inv(int $order, Task $task, string $inv_id, tR $taskR, trR $trR, iiaR $iiaR, sR $sR, ValidatorInterface $validator) : void {
+    private function save_task_lookup_item_inv(int $order, Task $task, string $inv_id, tR $taskR, trR $trR, iiaR $iiaR, sR $sR, FormHydrator $formHydrator) : void {
       $form = new InvItemForm();
       $ajax_content = [
            'name'=> $task->getName(),        
@@ -307,7 +308,7 @@ final class TaskController
            'discount_amount'=>floatval(0),
            'order'=> $order
       ];
-      if ($form->load($ajax_content) && $validator->validate($form)->isValid()) {
+      if ($formHydrator->populate($form, $ajax_content) && $form->isValid()) {
            $this->invitemService->addInvItem_task(new InvItem(), $form, $inv_id, $taskR, $trR, new iiaS($iiaR), $iiaR, $sR);                 
       }
     }

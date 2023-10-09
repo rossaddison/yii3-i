@@ -22,7 +22,8 @@ use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 use \Exception;
 
@@ -68,12 +69,12 @@ final class ClientPeppolController {
    * 
    * @param CurrentRoute $currentRoute
    * @param Request $request
-   * @param ValidatorInterface $validator
+   * @param FormHydrator $formHydrator
    * @param SettingRepository $settingRepository
    * @return Response
    */
   public function add(CurrentRoute $currentRoute, Request $request,
-    ValidatorInterface $validator,
+    FormHydrator $formHydrator,
     SettingRepository $settingRepository
   ): Response {
     $client_id = $currentRoute->getArgument('client_id');
@@ -97,13 +98,13 @@ final class ClientPeppolController {
       ];
       if ($request->getMethod() === Method::POST) {
         $form = new ClientPeppolForm();
-        if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+        if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
           $this->clientpeppolService->saveClientPeppol(new ClientPeppol(), $form);
           return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/clientpeppol_successful_guest',
                 ['url' => $this->userService->hasPermission('editClientPeppol') && $this->userService->hasPermission('viewInv') && !$this->userService->hasPermission('editInv') ? 'client/guest' : 'client/index',
                   'heading' => $this->translator->translate('invoice.client.peppol'), 'message' => $settingRepository->trans('record_successfully_updated')]));
         }
-        $parameters['errors'] = $form->getFormErrors();
+        $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
       } // if
       return $this->viewRenderer->render('/invoice/clientpeppol/_form', $parameters);
     } // null !== $client
@@ -245,14 +246,14 @@ final class ClientPeppolController {
    * @param ViewRenderer $head
    * @param Request $request
    * @param CurrentRoute $currentRoute
-   * @param ValidatorInterface $validator
+   * @param FormHydrator $formHydrator
    * @param ClientPeppolRepository $clientpeppolRepository
    * @param SettingRepository $settingRepository
    * @param ClientRepository $clientRepository
    * @return Response
    */
   public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute,
-    ValidatorInterface $validator,
+    FormHydrator $formHydrator,
     ClientPeppolRepository $clientpeppolRepository,
     SettingRepository $settingRepository,
     ClientRepository $clientRepository
@@ -280,7 +281,7 @@ final class ClientPeppolController {
       if ($request->getMethod() === Method::POST) {
         $form = new ClientPeppolForm();
         $body = $request->getParsedBody();
-        if ($form->load($body) && $validator->validate($form)->isValid()) {
+        if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
           $this->clientpeppolService->saveClientPeppol($clientpeppol, $form);
           // Guest user's return url to see user's clients
           if ($this->userService->hasPermission('editClientPeppol') && $this->userService->hasPermission('viewInv') && !$this->userService->hasPermission('editInv')) {
@@ -293,7 +294,7 @@ final class ClientPeppolController {
           }
         }
         $parameters['body'] = $body;
-        $parameters['errors'] = $form->getFormErrors();
+        $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
       }
       return $this->viewRenderer->render('_form', $parameters);
     }

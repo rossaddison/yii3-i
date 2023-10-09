@@ -203,7 +203,7 @@ if (!empty($errors)) {
                             <label for="product_name">
                                 <?= $s->trans('product_name'); ?>
                             </label>
-                            <input type="text" name="product_name" id="product_name" class="form-control" required
+                            <input type="text" name="product_name" id="product_name" class="form-control" 
                                    value="<?= Html::encode($body['product_name'] ?? ''); ?>">
                         </div>
 

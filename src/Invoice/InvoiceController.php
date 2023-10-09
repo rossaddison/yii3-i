@@ -43,6 +43,7 @@ use App\User\UserService;
 use Psr\Http\Message\ResponseInterface as Response;
 
 // Yiisoft
+use Yiisoft\Form\FormHydrator;
 use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Security\Random;
 use Yiisoft\Session\SessionInterface;
@@ -63,6 +64,7 @@ final class InvoiceController
     private SessionInterface $session;
     private SettingRepository $s;
     private Crypt $crypt;
+    private FormHydrator $formHydrator;
            
     public function __construct(
         WebControllerService $webService, 
@@ -72,7 +74,8 @@ final class InvoiceController
         ViewRenderer $viewRenderer,
         SessionInterface $session,
         SettingRepository $s,
-        Crypt $crypt
+        Crypt $crypt,
+        FormHydrator $formHydrator,
     )
     {
         $this->webService = $webService;
@@ -83,6 +86,7 @@ final class InvoiceController
         $this->session = $session;
         $this->flash = new Flash($session);
         $this->s = $s;
+        $this->formHydrator = $formHydrator;
         $this->crypt = $crypt;
                 
         // Authenticated (Signed Up) and Unauthorised (No Permissions)
@@ -958,7 +962,7 @@ final class InvoiceController
                 'setting_key'=>$key,
                 'setting_value'=>$value,
             ];
-            if ($form->load($array)) {
+            if ($this->formHydrator->populate($form, $array)) {
                 $this->settingService->saveSetting(new Setting(), $form);
             }
         }    

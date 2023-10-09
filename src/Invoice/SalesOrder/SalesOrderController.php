@@ -79,7 +79,8 @@ use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\User\CurrentUser;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 
 use \Exception;
@@ -277,13 +278,13 @@ final class SalesOrderController
     /**
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param SettingRepository $settingRepository
      * @return Response
      */
     public function add(ViewRenderer $head, Request $request, 
-                        ValidatorInterface $validator,
-                        SettingRepository $settingRepository,                        
+                       FormHydrator $formHydrator,
+                       SettingRepository $settingRepository,                        
 
     ) : Response
     {
@@ -297,12 +298,12 @@ final class SalesOrderController
         ];
         if ($request->getMethod() === Method::POST) {
             $form = new SalesOrderForm();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                 /** @psalm-suppress PossiblyNullArgument $this->user_service->getUser() */
                 $this->salesorderService->addSo($this->userService->getUser(), new SalesOrder(),$form);
                 return $this->webService->getRedirectResponse('salesorder/index');
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('_form', $parameters);
     }
@@ -405,7 +406,7 @@ final class SalesOrderController
      * @param ViewRenderer $head
      * @param Request $request
      * @param CurrentRoute $currentRoute
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param SalesOrderRepository $salesorderRepository
      * @param CR $clientRepo
      * @param CFR $cfR
@@ -419,7 +420,7 @@ final class SalesOrderController
      * @return Response
      */
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute, 
-                         ValidatorInterface $validator,
+                         FormHydrator $formHydrator,
                          SalesOrderRepository $salesorderRepository, 
                          CR $clientRepo,
                          CFR $cfR,
@@ -469,11 +470,11 @@ final class SalesOrderController
             $body = $request->getParsedBody();
             if ($request->getMethod() === Method::POST) {
                 $form = new SalesOrderForm();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     $this->salesorderService->saveSo($so, $form, $settingRepository, $gR);
                     return $this->webService->getRedirectResponse('salesorder/index');
                 }
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
                 $parameters['body'] = $body;
             }
             return $this->viewRenderer->render('_form', $parameters);
@@ -692,7 +693,7 @@ final class SalesOrderController
      * The Sales Order will have the status 'invoice generated' against it 
      * The Invoice will have the status 'sent' against it
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param CFR $cfR
      * @param GR $gR
      * @param IIAR $iiaR
@@ -711,7 +712,7 @@ final class SalesOrderController
      * @param UIR $uiR
      * @return \Yiisoft\DataResponse\DataResponse|Response
      */
-    public function so_to_invoice_confirm(Request $request, ValidatorInterface $validator, CFR $cfR, 
+    public function so_to_invoice_confirm(Request $request, FormHydrator $formHydrator, CFR $cfR, 
                                              GR $gR, IIAR $iiaR, IIAS $iiaS, PR $pR, SOAR $soaR, SOCR $socR,
                                              SOIR $soiR, SOR $soR, SOTRR $sotrR, TRR $trR, UNR $unR, SettingRepository $sR, UR $uR, UCR $ucR, UIR $uiR) : \Yiisoft\DataResponse\DataResponse|Response
     {
@@ -736,7 +737,7 @@ final class SalesOrderController
             ];
             $form = new InvForm();
             $inv = new Inv();
-            if (($form->load($inv_body) && $validator->validate($form)->isValid()) &&
+            if (($formHydrator->populate($form, $inv_body) && $form->isValid()) &&
                   // Salesorder has not been copied before:  inv_id = 0
                   (($so->getInv_id()===(string)0))
               ) {
@@ -757,10 +758,10 @@ final class SalesOrderController
                     $inv_id = $inv->getId();
                     if (null!==$inv_id) {
                       // Transfer each so_item to inv_item and the corresponding so_item_amount to inv_item_amount for each item
-                      $this->so_to_invoice_so_items($so_id,$inv_id,$iiaR,$iiaS,$pR,$soiR,$trR,$validator, $sR, $unR);
-                      $this->so_to_invoice_so_tax_rates($so_id,$inv_id,$sotrR,$validator);
-                      $this->so_to_invoice_so_custom($so_id,$inv_id,$socR,$cfR,$validator);
-                      $this->so_to_invoice_so_amount($so_id,$inv_id,$soaR,$validator);
+                      $this->so_to_invoice_so_items($so_id,$inv_id,$iiaR,$iiaS,$pR,$soiR,$trR,$formHydrator, $sR, $unR);
+                      $this->so_to_invoice_so_tax_rates($so_id,$inv_id,$sotrR,$formHydrator);
+                      $this->so_to_invoice_so_custom($so_id,$inv_id,$socR,$cfR,$formHydrator);
+                      $this->so_to_invoice_so_amount($so_id,$inv_id,$soaR,$formHydrator);
                       // Update the sos inv_id.
                       $so->setInv_id($inv_id);
                       // Set salesorder's status to invoice generated
@@ -795,12 +796,12 @@ final class SalesOrderController
      * @param PR $pR
      * @param SOIR $soiR
      * @param TRR $trR
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param SettingRepository $sR
      * @param UNR $unR
      * @return void
      */
-    private function so_to_invoice_so_items(string $so_id, string $inv_id, IIAR $iiaR, IIAS $iiaS, PR $pR, SOIR $soiR, TRR $trR, ValidatorInterface $validator, SettingRepository $sR, UNR $unR): void {
+    private function so_to_invoice_so_items(string $so_id, string $inv_id, IIAR $iiaR, IIAS $iiaS, PR $pR, SOIR $soiR, TRR $trR, FormHydrator $formHydrator, SettingRepository $sR, UNR $unR): void {
         // Get all items that belong to the salesorder
         $items = $soiR->repoSalesOrderItemIdquery($so_id);
         /** @var SalesOrderItem $so_item */
@@ -827,7 +828,7 @@ final class SalesOrderController
             // Create an equivalent invoice item for the so item
             $invitem = new InvItem();
             $form = new InvItemForm();
-            if ($form->load($inv_item) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $inv_item) && $form->isValid()) {
                 $this->invItemService->addInvItem_product($invitem, $form, $inv_id, $pR, $trR, $iiaS, $iiaR, $sR, $unR);
             }
         } // items
@@ -837,10 +838,10 @@ final class SalesOrderController
      * @param string $so_id
      * @param string|null $inv_id
      * @param SOTRR $sotrR
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return void
      */
-    private function so_to_invoice_so_tax_rates(string $so_id, string|null $inv_id, SOTRR $sotrR, ValidatorInterface $validator): void {
+    private function so_to_invoice_so_tax_rates(string $so_id, string|null $inv_id, SOTRR $sotrR, FormHydrator $formHydrator): void {
         // Get all tax rates that have been setup for the salesorder
         $so_tax_rates = $sotrR->repoSalesOrderquery($so_id);        
         /** @var SalesOrderTaxRate $so_tax_rate */
@@ -853,7 +854,7 @@ final class SalesOrderController
             ];
             $entity = new InvTaxRate();
             $form = new InvTaxRateForm();
-            if ($form->load($inv_tax_rate) && $validator->validate($form)->isValid()
+            if ($formHydrator->populate($form, $inv_tax_rate) && $form->isValid()
             ) {    
                $this->invTaxRateService->saveInvTaxRate($entity,$form);
             }
@@ -866,14 +867,14 @@ final class SalesOrderController
      * @param string|null $inv_id
      * @param SOCR $socR
      * @param CFR $cfR
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return void
      * 
      */
     private function so_to_invoice_so_custom(string $so_id, string|null $inv_id, 
                                                    SOCR $socR,                                                     
                                                    CFR $cfR, 
-                                                   ValidatorInterface $validator) : void {
+                                                   FormHydrator $formHydrator) : void {
         $so_customs = $socR->repoFields($so_id);
         // For each salesorder custom field, build a new custom field for 'inv_custom' using the custom_field_id to find details
         /** @var SalesOrderCustom $so_custom */
@@ -893,13 +894,13 @@ final class SalesOrderController
                 $cfR->save($custom_field);
                 // Build the inv_custom field record
                 $inv_custom = [
-                    'inv_id'=>$inv_id,
-                    'custom_field_id'=>$custom_field->getId(),
-                    'value'=>$so_custom->getValue(),
+                  'inv_id'=>$inv_id,
+                  'custom_field_id'=>$custom_field->getId(),
+                  'value'=>$so_custom->getValue(),
                 ];
                 $entity = new InvCustom();
                 $form = new InvCustomForm();
-                if ($form->load($inv_custom) && $validator->validate($form)->isValid()) {    
+                if ($formHydrator->populate($form, $inv_custom) && $form->isValid()) {    
                     $this->inv_custom_service->saveInvCustom($entity,$form);            
                 }
             } // existing_custom_field    
@@ -907,14 +908,13 @@ final class SalesOrderController
     }
     
     /**
-     * 
      * @param string $so_id
      * @param string|null $inv_id
      * @param SOAR $soaR
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return void
      */
-    private function so_to_invoice_so_amount(string $so_id, string|null $inv_id, SOAR $soaR, ValidatorInterface $validator) : void {
+    private function so_to_invoice_so_amount(string $so_id, string|null $inv_id, SOAR $soaR, FormHydrator $formHydrator) : void {
         $so_amount = $soaR->repoSalesOrderquery($so_id);
         $inv_amount = [];
         if ($so_amount) {
@@ -931,8 +931,8 @@ final class SalesOrderController
         }    
         $entity = new InvAmount();
         $form = new InvAmountForm();
-        if ($form->load($inv_amount) && $validator->validate($form)->isValid()) {    
-                $this->invAmountService->saveInvAmount($entity,$form);            
+        if ($formHydrator->populate($form, $inv_amount) && $form->isValid()) {    
+          $this->invAmountService->saveInvAmount($entity, $form);            
         }
     }
     
@@ -1071,7 +1071,7 @@ final class SalesOrderController
         return $this->webService->getNotFoundResponse(); 
     }
     
-    /**
+  /**
    * @return string
    */
    private function alert(): string {

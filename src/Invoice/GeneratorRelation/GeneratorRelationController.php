@@ -15,7 +15,8 @@ use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 
 use Psr\Http\Message\ResponseInterface as Response;
@@ -73,10 +74,10 @@ final class GeneratorRelationController
      * @param Request $request
      * @param GeneratorRepository $generatorRepository
      * @param SettingRepository $settingRepository
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return Response
      */
-    public function add(Request $request, GeneratorRepository $generatorRepository, SettingRepository $settingRepository,ValidatorInterface $validator): Response
+    public function add(Request $request, GeneratorRepository $generatorRepository, SettingRepository $settingRepository, FormHydrator $formHydrator): Response
     {
         $parameters = [
             'title' => $settingRepository->trans('Add'),
@@ -89,11 +90,11 @@ final class GeneratorRelationController
         
         if ($request->getMethod() === Method::POST) {
             $form = new GeneratorRelationForm();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                 $this->generatorrelationService->saveGeneratorRelation(new GentorRelation(), $form);
                 return $this->webService->getRedirectResponse('generatorrelation/index');
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('__form', $parameters);
     }
@@ -105,10 +106,10 @@ final class GeneratorRelationController
      * @param GeneratorRelationRepository $generatorrelationRepository
      * @param GeneratorRepository $generatorRepository
      * @param SettingRepository $settingRepository
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return Response
      */
-    public function edit(Request $request, CurrentRoute $currentRoute,GeneratorRelationRepository $generatorrelationRepository, GeneratorRepository $generatorRepository, SettingRepository $settingRepository, ValidatorInterface $validator): Response 
+    public function edit(Request $request, CurrentRoute $currentRoute,GeneratorRelationRepository $generatorrelationRepository, GeneratorRepository $generatorRepository, SettingRepository $settingRepository, FormHydrator $formHydrator): Response 
     {
         $generatorrelation = $this->generatorrelation($currentRoute, $generatorrelationRepository);
         if ($generatorrelation) {
@@ -130,12 +131,12 @@ final class GeneratorRelationController
             if ($request->getMethod() === Method::POST) {
                 $form = new GeneratorRelationForm();
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     $this->generatorrelationService->saveGeneratorRelation($generatorrelation, $form);
                     return $this->webService->getRedirectResponse('generatorrelation/index');
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('__form', $parameters);
         }
@@ -163,10 +164,10 @@ final class GeneratorRelationController
      * @param CurrentRoute $currentRoute
      * @param GeneratorRelationRepository $generatorrelationRepository
      * @param SettingRepository $settingRepository
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return \Yiisoft\DataResponse\DataResponse|Response
      */
-    public function view(CurrentRoute $currentRoute, GeneratorRelationRepository $generatorrelationRepository,SettingRepository $settingRepository,ValidatorInterface $validator): \Yiisoft\DataResponse\DataResponse|Response {
+    public function view(CurrentRoute $currentRoute, GeneratorRelationRepository $generatorrelationRepository, SettingRepository $settingRepository, FormHydrator $formHydrator): \Yiisoft\DataResponse\DataResponse|Response {
         $generatorrelation = $this->generatorrelation($currentRoute, $generatorrelationRepository);
         if ($generatorrelation) {
             $parameters = [

@@ -116,7 +116,7 @@ final class <?= $generator->getCamelcase_capital_name(); ?>Controller
                 $this-><?= $generator->getSmall_singular_name(); ?>Service->save<?= $generator->getCamelcase_capital_name(); ?>(new <?= $generator->getCamelcase_capital_name(); ?>(),$form);
                 return $this->webService->getRedirectResponse('<?= $generator->getSmall_singular_name(); ?>/index');
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = $form->getValidationResult();
         }
         return $this->viewRenderer->render('_form', $parameters);
     }
@@ -238,7 +238,7 @@ final class <?= $generator->getCamelcase_capital_name(); ?>Controller
                     return $this->webService->getRedirectResponse('<?= $generator->getSmall_singular_name(); ?>/index');
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = $form->getValidationResult();
             }
             return $this->viewRenderer->render('_form', $parameters);
         }

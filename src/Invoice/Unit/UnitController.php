@@ -20,7 +20,8 @@ use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 
 final class UnitController
@@ -77,10 +78,10 @@ final class UnitController
     /**
      * @param Request $request
      * @param SettingRepository $settingRepository
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return Response
      */
-    public function add(Request $request, SettingRepository $settingRepository, ValidatorInterface $validator): Response
+    public function add(Request $request, SettingRepository $settingRepository, FormHydrator $formHydrator): Response
     {
         $parameters = [
             'title' => $settingRepository->trans('add'),
@@ -92,12 +93,12 @@ final class UnitController
         if ($request->getMethod() === Method::POST) {
             $form = new UnitForm();
             $unit = new Unit();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                 $this->unitService->saveUnit($unit, $form);
                 $this->flash_message('info', $settingRepository->trans('record_successfully_created'));
                 return $this->webService->getRedirectResponse('unit/index');
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('__form', $parameters);
     }
@@ -108,16 +109,16 @@ final class UnitController
      * @param CurrentRoute $currentRoute
      * @param UnitRepository $unitRepository
      * @param SettingRepository $settingRepository
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return Response
      */
     public function edit(Request $request, CurrentRoute $currentRoute,
-            UnitRepository $unitRepository, SettingRepository $settingRepository, ValidatorInterface $validator): Response 
+      UnitRepository $unitRepository, SettingRepository $settingRepository, FormHydrator $formHydrator): Response 
     {
         $unit = $this->unit($currentRoute, $unitRepository);
         if ($unit) {
             $parameters = [
-                'title' => 'Edit unit',
+                'title' => $this->translator->translate('invoice.unit.edit'),
                 'action' => ['unit/edit', ['id' => $unit->getUnit_id()]],
                 'errors' => [],
                 'body' => [
@@ -129,13 +130,13 @@ final class UnitController
             if ($request->getMethod() === Method::POST) {
                 $form = new UnitForm();
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     $this->unitService->saveUnit($unit, $form);
                     $this->flash_message('info', $settingRepository->trans('record_successfully_updated'));
                     return $this->webService->getRedirectResponse('unit/index');
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('__form', $parameters);
         } 
@@ -165,9 +166,9 @@ final class UnitController
      * @param CurrentRoute $currentRoute
      * @param UnitRepository $unitRepository
      * @param SettingRepository $settingRepository
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      */
-    public function view(CurrentRoute $currentRoute, UnitRepository $unitRepository,SettingRepository $settingRepository, ValidatorInterface $validator)
+    public function view(CurrentRoute $currentRoute, UnitRepository $unitRepository,SettingRepository $settingRepository, FormHydrator $formHydrator)
     : \Yiisoft\DataResponse\DataResponse|Response {
         $unit = $this->unit($currentRoute, $unitRepository);
         if ($unit) {

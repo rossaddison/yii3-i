@@ -11,7 +11,8 @@ use App\Invoice\Setting\SettingRepository;
 use App\Invoice\Client\ClientRepository;
 use App\Invoice\Helpers\DateHelper;
 use App\User\UserService;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use App\Service\WebControllerService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -76,14 +77,14 @@ final class ClientNoteController
     /**
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param DateHelper $dateHelper
      * @param SettingRepository $settingRepository
      * @param ClientRepository $clientRepository
      * @return Response
      */
     public function add(ViewRenderer $head, Request $request, 
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         DateHelper $dateHelper, 
                         SettingRepository $settingRepository,                        
                         ClientRepository $clientRepository
@@ -103,11 +104,11 @@ final class ClientNoteController
         if ($request->getMethod() === Method::POST) {
             
             $form = new ClientNoteForm();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                 $this->clientnoteService->addClientNote(new ClientNote(),$form, $settingRepository);
                 return $this->webService->getRedirectResponse('clientnote/index');
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('_form', $parameters);
     }
@@ -116,7 +117,7 @@ final class ClientNoteController
      * 
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param ClientNoteRepository $clientnoteRepository
      * @param SettingRepository $settingRepository
      * @param ClientRepository $clientRepository
@@ -125,7 +126,7 @@ final class ClientNoteController
      * @return Response
      */
     public function edit(ViewRenderer $head, Request $request, 
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         ClientNoteRepository $clientnoteRepository, 
                         SettingRepository $settingRepository,                        
                         ClientRepository $clientRepository,
@@ -147,12 +148,12 @@ final class ClientNoteController
             if ($request->getMethod() === Method::POST) {
                 $form = new ClientNoteForm();
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     $this->clientnoteService->saveClientNote($client_note, $form, $settingRepository);
                     return $this->webService->getRedirectResponse('clientnote/index');
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('_form', $parameters);
         } //client note

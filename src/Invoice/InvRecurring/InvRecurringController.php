@@ -36,7 +36,8 @@ use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 
 final class InvRecurringController
@@ -135,9 +136,9 @@ final class InvRecurringController
     
     /**
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      */
-    public function create_recurring_confirm(Request $request, ValidatorInterface $validator) : \Yiisoft\DataResponse\DataResponse {
+    public function create_recurring_confirm(Request $request, FormHydrator $formHydrator) : \Yiisoft\DataResponse\DataResponse {
         $body = $request->getQueryParams();
         $form = new InvRecurringForm();
         $invrecurring = new InvRecurring(); 
@@ -149,9 +150,9 @@ final class InvRecurringController
             // The next invoice date is the new recur start date
             'next'=>$body['recur_start_date'] ?? null
         ];
-        if ($form->load($body_array) && $validator->validate($form)->isValid()) {    
+        if ($formHydrator->populate($form, $body_array) && $form->isValid()) {    
                 $this->invrecurringService->saveInvRecurring($invrecurring,$form);
-                 $parameters = ['success'=>1];
+                $parameters = ['success'=>1];
            //return response to inv.js to reload page at location
             return $this->factory->createResponse(Json::encode($parameters));          
         } else {
@@ -239,13 +240,13 @@ final class InvRecurringController
      * @param ViewRenderer $head
      * @param Request $request
      * @param CurrentRoute $currentRoute
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param IRR $invrecurringRepository
      * @return Response
      */
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute, 
-                        ValidatorInterface $validator,
-                        IRR $invrecurringRepository    
+                         FormHydrator $formHydrator,
+                         IRR $invrecurringRepository    
 
     ): Response {
         $inv_recurring = $this->invrecurring($currentRoute, $invrecurringRepository);
@@ -261,12 +262,12 @@ final class InvRecurringController
             if ($request->getMethod() === Method::POST) {
                 $form = new InvRecurringForm();
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     $this->invrecurringService->saveInvRecurring($inv_recurring, $form);
                     return $this->webService->getRedirectResponse('invrecurring/index');
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('_form', $parameters);
         }
@@ -384,11 +385,11 @@ final class InvRecurringController
     /**
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return Response
      */
     public function add(ViewRenderer $head, Request $request, 
-      ValidatorInterface $validator  
+     FormHydrator $formHydrator  
 
     ) : Response
     {
@@ -402,13 +403,12 @@ final class InvRecurringController
         ];
         
         if ($request->getMethod() === Method::POST) {
-            
             $form = new InvRecurringForm();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                 $this->invrecurringService->saveInvRecurring(new InvRecurring(),$form);
                 return $this->webService->getRedirectResponse('invrecurring/index');
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('_form', $parameters);
     }       

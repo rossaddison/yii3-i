@@ -21,7 +21,8 @@ use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 
 final class ProjectController
@@ -80,13 +81,13 @@ final class ProjectController
      * 
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param SettingRepository $settingRepository
      * @param ClientRepository $clientRepository
      * @return Response
      */
     public function add(ViewRenderer $head, Request $request, 
-                        ValidatorInterface $validator,
+                       FormHydrator $formHydrator,
                         SettingRepository $settingRepository,                        
                         ClientRepository $clientRepository
     ): Response
@@ -104,16 +105,16 @@ final class ProjectController
         if ($request->getMethod() === Method::POST) {
             
             $form = new ProjectForm();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
-                $this->projectService->saveProject(new Project(),$form);
-                return $this->webService->getRedirectResponse('project/index');
-            }
-            $parameters['errors'] = $form->getFormErrors();
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
+              $this->projectService->saveProject(new Project(),$form);
+              return $this->webService->getRedirectResponse('project/index');
+          }
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('_form', $parameters);
     }
     
-    /**
+  /**
    * @return string
    */
    private function alert(): string {
@@ -139,14 +140,14 @@ final class ProjectController
      * @param ViewRenderer $head
      * @param Request $request
      * @param CurrentRoute $currentRoute
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param ProjectRepository $projectRepository
      * @param SettingRepository $settingRepository
      * @param ClientRepository $clientRepository
      * @return Response
      */
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute,
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         ProjectRepository $projectRepository, 
                         SettingRepository $settingRepository,                        
                         ClientRepository $clientRepository
@@ -165,12 +166,12 @@ final class ProjectController
             if ($request->getMethod() === Method::POST) {
                 $form = new ProjectForm();
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                 $this->projectService->saveProject($project, $form);
                     return $this->webService->getRedirectResponse('project/index');
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('_form', $parameters);
         }

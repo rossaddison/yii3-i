@@ -15,7 +15,7 @@ use App\Invoice\Client\ClientRepository as CR;
 use Cycle\ORM\Select;
 use Throwable;
 use Yiisoft\Data\Reader\Sort;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\Cycle\Data\Writer\EntityWriter;
 
@@ -220,10 +220,10 @@ final class UserClientRepository extends Select\Repository
      * @param UIR $uiR
      * @param CR $cR
      * @param UCS $ucS
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return void
      */
-    public function reset_users_all_clients(UIR $uiR, CR $cR, UCS $ucS, ValidatorInterface $validator) : void
+    public function reset_users_all_clients(UIR $uiR, CR $cR, UCS $ucS, FormHydrator $formHydrator) : void
     {
         // Users that have their all_clients setting active
         if ($uiR->countAllWithAllClients()>0) {
@@ -232,7 +232,7 @@ final class UserClientRepository extends Select\Repository
             foreach ($users as $user) {
                 $user_id = $user->getUser_id();
                 $available_client_ids = $this->get_not_assigned_to_user($user_id, $cR); 
-                $this->assign_to_user_client($available_client_ids, $user_id, $validator, $ucS);
+                $this->assign_to_user_client($available_client_ids, $user_id, $formHydrator, $ucS);
             }
         }            
     }
@@ -241,11 +241,11 @@ final class UserClientRepository extends Select\Repository
      * 
      * @param array $available_client_ids
      * @param string $user_id
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param UCS $ucS
      * @return void
      */
-    public function assign_to_user_client(array $available_client_ids, string $user_id, ValidatorInterface $validator, UCS $ucS): void{
+    public function assign_to_user_client(array $available_client_ids, string $user_id, FormHydrator $formHydrator, UCS $ucS): void{
         /** @var int $value */
         foreach ($available_client_ids as $_key => $value) {
                    $user_client = [
@@ -254,7 +254,7 @@ final class UserClientRepository extends Select\Repository
                     ]; 
                     $form = new UserClientForm();
                     $model = new UserClient();
-                    ($form->load($user_client) && $validator->validate($form)->isValid()) ? $ucS->saveUserClient($model, $form) : '';
+                    ($formHydrator->populate($form, $user_client) && $form->isValid()) ? $ucS->saveUserClient($model, $form) : '';
         }
     }
     

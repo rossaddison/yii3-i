@@ -20,7 +20,8 @@ use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Translator\TranslatorInterface as Translator; 
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 
 final class TaxRateController
@@ -79,10 +80,10 @@ final class TaxRateController
      * @param ViewRenderer $head
      * @param Request $request
      * @param SettingRepository $settingRepository
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return Response
      */
-    public function add(ViewRenderer $head, Request $request,SettingRepository $settingRepository,ValidatorInterface $validator): Response
+    public function add(ViewRenderer $head, Request $request,SettingRepository $settingRepository, FormHydrator $formHydrator): Response
     {
         $peppol_arrays = new PeppolArrays();
         $parameters = [
@@ -97,12 +98,12 @@ final class TaxRateController
         
         if ($request->getMethod() === Method::POST) {
             $form = new TaxRateForm();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
-                $this->taxrateService->saveTaxRate(new TaxRate(), $form);
-                $this->flash_message('success', $settingRepository->trans('record_successfully_created'));
-                return $this->webService->getRedirectResponse('taxrate/index');
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
+              $this->taxrateService->saveTaxRate(new TaxRate(), $form);
+              $this->flash_message('success', $settingRepository->trans('record_successfully_created'));
+              return $this->webService->getRedirectResponse('taxrate/index');
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('__form', $parameters);
     }
@@ -110,16 +111,15 @@ final class TaxRateController
     /**
      * 
      * @param ViewRenderer $head
-     * @param Session $session
      * @param Request $request
      * @param CurrentRoute $currentRoute
      * @param SettingRepository $settingRepository
      * @param TaxRateRepository $taxrateRepository
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @return Response
      */
-    public function edit(ViewRenderer $head, Session $session, Request $request, CurrentRoute $currentRoute,
-            SettingRepository $settingRepository, TaxRateRepository $taxrateRepository, ValidatorInterface $validator): Response 
+    public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute,
+            SettingRepository $settingRepository, TaxRateRepository $taxrateRepository, FormHydrator $formHydrator): Response 
     {
         $taxrate = $this->taxrate($currentRoute, $taxrateRepository);
         $peppol_arrays = new PeppolArrays();
@@ -144,13 +144,13 @@ final class TaxRateController
             if ($request->getMethod() === Method::POST) {
                 $form = new TaxRateForm();
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     $this->taxrateService->saveTaxRate($taxrate, $form);                
                     $this->flash_message('success', $settingRepository->trans('record_successfully_updated'));
                     return $this->webService->getRedirectResponse('taxrate/index');
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('__form', $parameters);
         }
@@ -181,14 +181,14 @@ final class TaxRateController
      * @param CurrentRoute $currentRoute
      * @param TaxRateRepository $taxrateRepository
      * @param SettingRepository $settingRepository
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      */
-    public function view(CurrentRoute $currentRoute, TaxRateRepository $taxrateRepository,SettingRepository $settingRepository,ValidatorInterface $validator)
+    public function view(CurrentRoute $currentRoute, TaxRateRepository $taxrateRepository,SettingRepository $settingRepository, FormHydrator $formHydrator)
         : \Yiisoft\DataResponse\DataResponse|Response {
         $taxrate = $this->taxrate($currentRoute, $taxrateRepository);
         if ($taxrate) {
             $parameters = [
-                'title' => 'Edit Tax Rate',
+                'title' =>  $this->translator->translate('invoice.tax.rate.edit'),
                 'action' => ['taxrate/edit', ['tax_rate_id' => $taxrate->getTax_rate_id()]],
                 'errors' => [],
                 'taxrate'=>$taxrate,

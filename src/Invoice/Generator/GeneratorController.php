@@ -32,7 +32,8 @@ use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\User\CurrentUser;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\View\View;
 use Yiisoft\Yii\View\ViewRenderer;
 use Yiisoft\Json\Json;
@@ -108,11 +109,11 @@ final class GeneratorController
      * 
      * @param Request $request
      * @param SettingRepository $settingRepository
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param DatabaseManager $dbal
      * @return Response
      */
-    public function add(Request $request, SettingRepository $settingRepository,ValidatorInterface $validator, DatabaseManager $dbal): Response
+    public function add(Request $request, SettingRepository $settingRepository, FormHydrator $formHydrator, DatabaseManager $dbal): Response
     {
         $parameters = [
             'title' => $settingRepository->trans('add'),
@@ -125,11 +126,11 @@ final class GeneratorController
         ];
         if ($request->getMethod() === Method::POST) {
             $form = new GeneratorForm();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                 $this->generatorService->saveGenerator(new Gentor(), $form);
                 return $this->webService->getRedirectResponse('generator/index');
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('__form', $parameters);
     }
@@ -140,11 +141,11 @@ final class GeneratorController
      * @param Request $request
      * @param GeneratorRepository $generatorRepository
      * @param SettingRepository $s
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param DatabaseManager $dbal
      * @return Response
      */
-    public function edit(CurrentRoute $currentRoute, Request $request, GeneratorRepository $generatorRepository, SettingRepository $s, ValidatorInterface $validator, DatabaseManager $dbal): Response 
+    public function edit(CurrentRoute $currentRoute, Request $request, GeneratorRepository $generatorRepository, SettingRepository $s, FormHydrator $formHydrator, DatabaseManager $dbal): Response 
     {
         $generator = $this->generator($currentRoute, $generatorRepository);
         if ($generator) {
@@ -160,13 +161,13 @@ final class GeneratorController
             if ($request->getMethod() === Method::POST) {
                 $form = new GeneratorForm();
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     $this->generatorService->saveGenerator($generator, $form);
                     $this->flash_message('warning', $s->trans('record_successfully_updated'));
                     return $this->webService->getRedirectResponse('generator/index');
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('__form', $parameters);
         } else {
@@ -203,9 +204,8 @@ final class GeneratorController
      * @param CurrentRoute $currentRoute
      * @param GeneratorRepository $generatorRepository
      * @param SettingRepository $settingRepository
-     * @param ValidatorInterface $validator
      */
-    public function view(CurrentRoute $currentRoute, GeneratorRepository $generatorRepository, SettingRepository $settingRepository, ValidatorInterface $validator): Response {
+    public function view(CurrentRoute $currentRoute, GeneratorRepository $generatorRepository, SettingRepository $settingRepository): Response {
         $generator = $this->generator($currentRoute, $generatorRepository);
         if ($generator) {
             $parameters = [

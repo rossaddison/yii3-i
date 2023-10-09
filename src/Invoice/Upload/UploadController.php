@@ -22,7 +22,8 @@ use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 use \Exception;
 
@@ -104,12 +105,12 @@ final class UploadController {
     /**
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param ClientRepository $clientRepository
      * @return Response
      */
     public function add(ViewRenderer $head, Request $request,
-            ValidatorInterface $validator,
+            FormHydrator $formHydrator,
             ClientRepository $clientRepository
     ): Response {
         $parameters = [
@@ -124,11 +125,11 @@ final class UploadController {
         if ($request->getMethod() === Method::POST) {
             $form = new UploadForm();
             $upload = new Upload();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                 $this->uploadService->saveUpload($upload, $form);
                 return $this->webService->getRedirectResponse('upload/index');
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('_form', $parameters);
     }
@@ -184,7 +185,7 @@ final class UploadController {
      * @param ViewRenderer $head
      * @param Request $request
      * @param CurrentRoute $currentRoute
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param UploadRepository $uploadRepository
      * @param SettingRepository $settingRepository
      * @param ClientRepository $clientRepository
@@ -192,7 +193,7 @@ final class UploadController {
      */
     public function edit(ViewRenderer $head, 
             Request $request, CurrentRoute $currentRoute,
-            ValidatorInterface $validator,
+            FormHydrator $formHydrator,
             UploadRepository $uploadRepository,
             SettingRepository $settingRepository,
             ClientRepository $clientRepository
@@ -210,12 +211,12 @@ final class UploadController {
             if ($request->getMethod() === Method::POST) {
                 $form = new UploadForm();
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     $this->uploadService->saveUpload($upload, $form);
                     return $this->webService->getRedirectResponse('upload/index');
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('_form', $parameters);
         }

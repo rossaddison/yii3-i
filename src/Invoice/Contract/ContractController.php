@@ -23,7 +23,8 @@ use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 
 use \Exception;
@@ -108,13 +109,13 @@ final class ContractController
      * @param CurrentRoute $currentRoute
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param sR $settingRepository
      * @return Response
      */
     public function add(CurrentRoute $currentRoute, ViewRenderer $head, Request $request, 
-                        ValidatorInterface $validator,
-                        sR $settingRepository
+                       FormHydrator $formHydrator,
+                       sR $settingRepository
     ) : Response
     {   
         $parameters = [
@@ -129,11 +130,11 @@ final class ContractController
         
         if ($request->getMethod() === Method::POST) {
             $form = new ContractForm();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                 $this->contractService->bothContract(new Contract(),$form, $settingRepository);
                 return $this->webService->getRedirectResponse('contract/index');
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('_form', $parameters);
     }
@@ -143,15 +144,15 @@ final class ContractController
      * @param ViewRenderer $head
      * @param Request $request
      * @param CurrentRoute $currentRoute
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param contractR $contractRepository
      * @param sR $settingRepository
      * @return Response
      */
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute, 
-                        ValidatorInterface $validator,
-                        contractR $contractRepository, 
-                        sR $settingRepository
+                         FormHydrator $formHydrator,
+                         contractR $contractRepository, 
+                         sR $settingRepository
     ): Response {
         $contract = $this->contract($currentRoute, $contractRepository);
         if ($contract){
@@ -166,12 +167,12 @@ final class ContractController
             if ($request->getMethod() === Method::POST) {
                 $form = new ContractForm();
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     $this->contractService->bothContract($contract, $form, $settingRepository);
                     return $this->webService->getRedirectResponse('contract/index');
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('_form', $parameters);
         }

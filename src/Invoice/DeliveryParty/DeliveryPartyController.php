@@ -20,7 +20,8 @@ use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 
 use \Exception;
@@ -59,12 +60,12 @@ final class DeliveryPartyController
      * 
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param SettingRepository $settingRepository
      * @return Response
      */
     public function add(ViewRenderer $head, Request $request, 
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         SettingRepository $settingRepository,                        
 
     ) : Response
@@ -81,11 +82,11 @@ final class DeliveryPartyController
         if ($request->getMethod() === Method::POST) {
             
             $form = new DeliveryPartyForm();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                 $this->deliverypartyService->saveDeliveryParty(new DeliveryParty(),$form);
                 return $this->webService->getRedirectResponse('deliveryparty/index');
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('_form', $parameters);
     }
@@ -145,13 +146,13 @@ final class DeliveryPartyController
      * @param ViewRenderer $head
      * @param Request $request
      * @param CurrentRoute $currentRoute
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param DeliveryPartyRepository $deliverypartyRepository
      * @param SettingRepository $settingRepository
      * @return Response
      */    
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute, 
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         DeliveryPartyRepository $deliverypartyRepository, 
                         SettingRepository $settingRepository,                        
 
@@ -169,12 +170,12 @@ final class DeliveryPartyController
             if ($request->getMethod() === Method::POST) {
                 $form = new DeliveryPartyForm();
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     $this->deliverypartyService->saveDeliveryParty($deliveryparty, $form);
                     return $this->webService->getRedirectResponse('deliveryparty/index');
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('_form', $parameters);
         }

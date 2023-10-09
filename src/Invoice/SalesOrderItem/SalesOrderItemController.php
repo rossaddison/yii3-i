@@ -30,7 +30,8 @@ use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 
 use \Exception;
@@ -115,7 +116,7 @@ final class SalesOrderItemController
         return $body;
     }
     
-    public function edit(ViewRenderer $head, CurrentRoute $currentRoute, Request $request, ValidatorInterface $validator,
+    public function edit(ViewRenderer $head, CurrentRoute $currentRoute, Request $request, FormHydrator $formHydrator,
                         SOIR $soiR, SettingRepository $sR, TRR $trR, PR $pR, UR $uR, SOR $qR): \Yiisoft\DataResponse\DataResponse|Response {
         $so_item = $this->salesorderitem($currentRoute, $soiR);
         if ($so_item) {
@@ -136,7 +137,7 @@ final class SalesOrderItemController
             if ($request->getMethod() === Method::POST) {
                 $form = new SalesOrderItemForm();            
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     // The only item that is different from the quote is the customer's purchase order number
                     $this->salesorderitemService->savePeppol_po_itemid($so_item, $form);
                     $this->salesorderitemService->savePeppol_po_lineid($so_item, $form);
@@ -144,7 +145,7 @@ final class SalesOrderItemController
                     ['heading'=> $this->translator->translate('invoice.successful'), 'message'=>$sR->trans('record_successfully_updated'),'url'=>'salesorder/view','id'=>$so_item->getSales_order_id()])); 
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             } 
             return $this->viewRenderer->render('_item_edit_form', $parameters);
         } //so_item

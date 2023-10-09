@@ -16,12 +16,13 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
 use Yiisoft\Data\Paginator\OffsetPaginator;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Http\Method;
 use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
 use Yiisoft\Yii\View\ViewRenderer;
 
 use \Exception;
@@ -63,7 +64,7 @@ final class AllowanceChargeController
     }
     
     public function add_allowance(ViewRenderer $head, Request $request, 
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         SettingRepository $settingRepository,
                         TaxRateRepository $tR,
 
@@ -108,17 +109,17 @@ final class AllowanceChargeController
         }
         if ($request->getMethod() === Method::POST) {
             $form = new AllowanceChargeForm();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $body) && $form->isValid()) {
                 $this->allowancechargeService->saveAllowanceCharge(new AllowanceCharge(),$form);
                 return $this->webService->getRedirectResponse('allowancecharge/index');
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('_form_allowance', $parameters);
     }
     
     public function add_charge(ViewRenderer $head, Request $request, 
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         SettingRepository $settingRepository,
                         TaxRateRepository $tR,
 
@@ -162,11 +163,11 @@ final class AllowanceChargeController
         }
         if ($request->getMethod() === Method::POST) {
             $form = new AllowanceChargeForm();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $body) && $form->isValid()) {
                 $this->allowancechargeService->saveAllowanceCharge(new AllowanceCharge(),$form);
                 return $this->webService->getRedirectResponse('allowancecharge/index');
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('_form_charge', $parameters);
     }
@@ -239,7 +240,7 @@ final class AllowanceChargeController
     }
         
     public function edit_allowance(ViewRenderer $head, Request $request, CurrentRoute $currentRoute, 
-                        ValidatorInterface $validator,
+                       FormHydrator $formHydrator,
                         AllowanceChargeRepository $allowancechargeRepository, 
                         SettingRepository $settingRepository, 
                         TaxRateRepository $tR
@@ -262,12 +263,12 @@ final class AllowanceChargeController
             if ($request->getMethod() === Method::POST) {
                 $form = new AllowanceChargeForm();
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     $this->allowancechargeService->saveAllowanceCharge($allowancecharge,$form);
                     return $this->webService->getRedirectResponse('allowancecharge/index');
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('_form_allowance', $parameters);
         }
@@ -275,7 +276,7 @@ final class AllowanceChargeController
     }
     
     public function edit_charge(ViewRenderer $head, Request $request, CurrentRoute $currentRoute, 
-                        ValidatorInterface $validator,
+                       FormHydrator $formHydrator,
                         AllowanceChargeRepository $allowancechargeRepository, 
                         SettingRepository $settingRepository, 
                         TaxRateRepository $tR
@@ -298,12 +299,12 @@ final class AllowanceChargeController
             if ($request->getMethod() === Method::POST) {
                 $form = new AllowanceChargeForm();
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     $this->allowancechargeService->saveAllowanceCharge($allowancecharge,$form);
                     return $this->webService->getRedirectResponse('allowancecharge/index');
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('_form_charge', $parameters);
         }

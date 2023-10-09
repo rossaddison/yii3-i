@@ -35,7 +35,8 @@ use Yiisoft\Router\FastRoute\UrlGenerator;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\Cycle\Data\Reader\EntityReader;
 use Yiisoft\Yii\View\ViewRenderer;
 
@@ -77,7 +78,7 @@ final class InvItemController
     /**
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param SR $sR
      * @param PR $pR
      * @param UR $uR
@@ -85,7 +86,7 @@ final class InvItemController
      * @param IIAR $iiar
      */
     public function add_product(ViewRenderer $head, Request $request, 
-                        ValidatorInterface $validator,
+                       FormHydrator $formHydrator,
                         SR $sR,
                         PR $pR,
                         UR $uR,                                                
@@ -111,13 +112,13 @@ final class InvItemController
         
         if ($request->getMethod() === Method::POST) {            
             $form = new InvItemForm();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
               $this->invitemService->addInvItem_product(new InvItem(), $form, $inv_id, $pR, $trR, new IIAS($iiar), $iiar, $sR, $uR);
               $this->flash_message('info', $sR->trans('record_successfully_created'));
               return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
                      ['heading'=>'', 'message'=>$sR->trans('record_successfully_created'),'url'=>'inv/view','id'=>$inv_id]));  
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('_item_form_product', $parameters);
     }
@@ -125,7 +126,7 @@ final class InvItemController
     /**
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param SR $sR
      * @param TaskR $taskR
      * @param UR $uR
@@ -133,7 +134,7 @@ final class InvItemController
      * @param IIAR $iiar
      */
     public function add_task(ViewRenderer $head, Request $request, 
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         SR $sR,
                         TaskR $taskR,
                         UR $uR,                                                
@@ -159,13 +160,13 @@ final class InvItemController
         
         if ($request->getMethod() === Method::POST) {            
             $form = new InvItemForm();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                   $this->invitemService->addInvItem_task(new InvItem(), $form, $inv_id, $taskR, $trR, new IIAS($iiar), $iiar, $sR);
                   $this->flash_message('info', $sR->trans('record_successfully_created'));
                   return $this->factory->createResponse($this->viewRenderer->renderPartialAsString('/invoice/setting/inv_message',
                          ['heading'=>'','message'=>$sR->trans('record_successfully_created'),'url'=>'inv/view','id'=>$inv_id]));  
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }        
         return $this->viewRenderer->renderPartial('_item_form_task', $parameters);
     }
@@ -241,7 +242,7 @@ final class InvItemController
      * @param ViewRenderer $head
      * @param CurrentRoute $currentRoute
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param IIR $iiR
      * @param SR $sR
      * @param TRR $trR
@@ -253,7 +254,7 @@ final class InvItemController
      * @param IIAR $iiar
      * @return \Yiisoft\DataResponse\DataResponse|\Psr\Http\Message\ResponseInterface
      */
-    public function edit_product(ViewRenderer $head, CurrentRoute $currentRoute, Request $request, ValidatorInterface $validator,
+    public function edit_product(ViewRenderer $head, CurrentRoute $currentRoute, Request $request, FormHydrator $formHydrator,
                         IIR $iiR, SR $sR, TRR $trR, PR $pR, TaskR $taskR, UR $uR, IR $iR, IIAS $iias, IIAR $iiar, ACIIR $aciiR): \Yiisoft\DataResponse\DataResponse|\Psr\Http\Message\ResponseInterface  {
         $inv_id = (string)$this->session->get('inv_id');
         $inv_item = $this->invitem($currentRoute, $iiR);
@@ -284,7 +285,7 @@ final class InvItemController
             if ($request->getMethod() === Method::POST) {
                 $form = new InvItemForm();
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     // Goal: Use the invitem/item_edit_product form data 
                     // to build invitemamount->subtotal=(form[quantity]*form[price])
                     // to build invitemamount->discount=(quantity*form[discount])
@@ -324,7 +325,7 @@ final class InvItemController
                     $this->webService->getRedirectResponse('inv/view',['id'=>$inv_id]);
                     }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             } 
             return $this->viewRenderer->render('_item_edit_product', $parameters);
         }
@@ -400,7 +401,7 @@ final class InvItemController
      * @param ViewRenderer $head
      * @param CurrentRoute $currentRoute
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param IIR $iiR
      * @param SR $sR
      * @param TRR $trR
@@ -412,12 +413,12 @@ final class InvItemController
      * @param IIAR $iiar
      * @return Response
      */
-    public function edit_task(ViewRenderer $head, CurrentRoute $currentRoute, Request $request, ValidatorInterface $validator,
+    public function edit_task(ViewRenderer $head, CurrentRoute $currentRoute, Request $request, FormHydrator $formHydrator,
                         IIR $iiR, SR $sR, TRR $trR, TaskR $taskR, UR $uR, IR $iR, IIAS $iias, IIAR $iiar): Response {
         $inv_id = (string)$this->session->get('inv_id');
         $inv_item = $this->invitem($currentRoute, $iiR);
         $parameters = [
-            'title' => 'Edit',
+            'title' =>  $sR->trans('edit'),
             'action' => ['invitem/edit_task', ['id' => $currentRoute->getArgument('id')]],
             'errors' => [],
             // if null inv_item, initialize it => prevent psalm PossiblyNullArgument error
@@ -435,7 +436,7 @@ final class InvItemController
         if ($request->getMethod() === Method::POST) {
             $form = new InvItemForm();
             $body = $request->getParsedBody();
-            if ($form->load($body) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $body) && $form->isValid()) {
                 $quantity = $form->getQuantity() ?? 0.00;
                 $price = $form->getPrice() ?? 0.00;
                 $discount = $form->getDiscount_amount() ?? 0.00;
@@ -452,7 +453,7 @@ final class InvItemController
                 }
             }
             $parameters['body'] = $body;
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         } 
         return $this->viewRenderer->render('_item_edit_task', $parameters);        
     }           

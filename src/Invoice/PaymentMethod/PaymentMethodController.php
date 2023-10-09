@@ -20,7 +20,8 @@ use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface as Session;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 
 final class PaymentMethodController
@@ -97,12 +98,12 @@ final class PaymentMethodController
      * 
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param SettingRepository $settingRepository
      * @return Response
      */
     public function add(ViewRenderer $head,Request $request, 
-                        ValidatorInterface $validator,
+                       FormHydrator $formHydrator,
                         SettingRepository $settingRepository                        
 
     ): Response
@@ -114,16 +115,15 @@ final class PaymentMethodController
             'body' => $request->getParsedBody(),
             's'=>$settingRepository,
             'head'=>$head,
-            
         ];
         
         if ($request->getMethod() === Method::POST) {
             $form = new PaymentMethodForm();
-            if ($form->load($parameters['body']) && $validator->validate($form)->isValid()) {
+            if ($formHydrator->populate($form, $parameters['body']) && $form->isValid()) {
                 $this->paymentmethodService->savePaymentMethod(new PaymentMethod(),$form);
                 return $this->webService->getRedirectResponse('paymentmethod/index');
             }
-            $parameters['errors'] = $form->getFormErrors();
+            $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
         }
         return $this->viewRenderer->render('_form', $parameters);
     }
@@ -133,13 +133,13 @@ final class PaymentMethodController
      * @param ViewRenderer $head
      * @param Request $request
      * @param CurrentRoute $currentRoute
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param PaymentMethodRepository $paymentmethodRepository
      * @param SettingRepository $settingRepository
      * @return Response
      */
     public function edit(ViewRenderer $head, Request $request, CurrentRoute $currentRoute,
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         PaymentMethodRepository $paymentmethodRepository, 
                         SettingRepository $settingRepository                        
 
@@ -157,12 +157,12 @@ final class PaymentMethodController
             if ($request->getMethod() === Method::POST) {
                 $form = new PaymentMethodForm();
                 $body = $request->getParsedBody();
-                if ($form->load($body) && $validator->validate($form)->isValid()) {
+                if ($formHydrator->populate($form, $body) && $form->isValid()) {
                     $this->paymentmethodService->savePaymentMethod($payment_method, $form);
                     return $this->webService->getRedirectResponse('paymentmethod/index');
                 }
                 $parameters['body'] = $body;
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             }
             return $this->viewRenderer->render('_form', $parameters);
         } // if payment_method

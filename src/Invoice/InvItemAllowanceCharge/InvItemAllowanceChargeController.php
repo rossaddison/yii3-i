@@ -24,7 +24,8 @@ use Yiisoft\Router\CurrentRoute;
 use Yiisoft\Session\SessionInterface;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 
 use \Exception;
@@ -70,7 +71,7 @@ final class InvItemAllowanceChargeController
      * @param CurrentRoute $currentRoute
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param AllowanceChargeRepository $acR
      * @param InvItemAllowanceChargeRepository $aciiR
      * @param InvItemRepository $iiR
@@ -79,7 +80,7 @@ final class InvItemAllowanceChargeController
      * @return Response
      */
     public function add(CurrentRoute $currentRoute, ViewRenderer $head, Request $request, 
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         AllowanceChargeRepository $acR,
                         InvItemAllowanceChargeRepository $aciiR,
                         InvItemRepository $iiR,
@@ -117,7 +118,7 @@ final class InvItemAllowanceChargeController
                     $amount = (float)$body['amount'];
                     $percent = $allowance_charge->getTaxRate()?->getTax_rate_percent() ?? 0.00;
                     $vat = $amount * $percent / 100; 
-                    if ($form->load($body) && $validator->validate($form)->isValid()) {
+                    if ($formHydrator->populate($form, $body) && $form->isValid()) {
                         $this->aciiService->saveInvItemAllowanceCharge(new InvItemAllowanceCharge(), $form, $vat);
                         $all_charges = 0.00;
                         $all_charges_vat = 0.00;                        
@@ -155,7 +156,7 @@ final class InvItemAllowanceChargeController
                     }
                 } //allowance_charge
 
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
                 
                 return $this->webService->getNotFoundResponse();
             }   // request 
@@ -256,7 +257,7 @@ final class InvItemAllowanceChargeController
      * @param CurrentRoute $currentRoute
      * @param ViewRenderer $head
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param AllowanceChargeRepository $acR
      * @param InvItemAllowanceChargeRepository $aciiR
      * @param InvItemAmountRepository $iiaR
@@ -264,7 +265,7 @@ final class InvItemAllowanceChargeController
      * @return Response
      */ 
     public function edit(CurrentRoute $currentRoute, ViewRenderer $head, Request $request, 
-                        ValidatorInterface $validator,
+                        FormHydrator $formHydrator,
                         AllowanceChargeRepository $acR,
                         InvItemAllowanceChargeRepository $aciiR,
                         InvItemAmountRepository $iiaR,
@@ -300,7 +301,7 @@ final class InvItemAllowanceChargeController
                     if ($allowance_charge && null!==$body) {
                         $percent = $allowance_charge->getTaxRate()?->getTax_rate_percent() ?? 0.00;
                         $vat = $amount * $percent/100;
-                        if ($form->load($body) && $validator->validate($form)->isValid()) {
+                        if ($formHydrator->populate($form, $body) && $form->isValid()) {
                             $this->aciiService->saveInvItemAllowanceCharge($acii, $form, $vat);
                             $all_charges = 0.00;
                             $all_allowances = 0.00;
@@ -348,7 +349,7 @@ final class InvItemAllowanceChargeController
                     } //allowance_charge
                     return $this->webService->getNotFoundResponse();                        
                 } // allowance_charge_id
-                $parameters['errors'] = $form->getFormErrors();
+                $parameters['errors'] = HtmlFormErrors::getFirstErrors($form);
             } // request
             return $this->viewRenderer->render('/invoice/invitemallowancecharge/_form_edit', $parameters);
         } // if acii

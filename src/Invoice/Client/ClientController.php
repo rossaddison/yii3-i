@@ -55,7 +55,8 @@ use Yiisoft\Session\SessionInterface;
 use Yiisoft\Session\Flash\Flash;
 use Yiisoft\Translator\TranslatorInterface;
 use Yiisoft\User\CurrentUser;
-use Yiisoft\Validator\ValidatorInterface;
+use Yiisoft\Form\FormHydrator;
+use Yiisoft\Form\Helper\HtmlFormErrors;
 use Yiisoft\Yii\View\ViewRenderer;
 // Miscellaneous
 
@@ -219,7 +220,7 @@ final class ClientController
     }
     
     // Data fed from client.js->$(document).on('click', '#client_create_confirm', function () {
-    public function create_confirm(Request $request, ValidatorInterface $validator, cfR $cfR, sR $sR) : \Yiisoft\DataResponse\DataResponse
+    public function create_confirm(Request $request, FormHydrator $formHydrator, cfR $cfR, sR $sR) : \Yiisoft\DataResponse\DataResponse
     {
         $body = $request->getQueryParams();
         $datehelper = new DateHelper($sR);
@@ -232,7 +233,7 @@ final class ClientController
             'client_gender'=>2
         ];
         $ajax_content = new ClientForm();
-        if ($ajax_content->load($ajax_body) && $validator->validate($ajax_content)->isValid()) {  
+        if ($formHydrator->populate($ajax_content, $ajax_body) && $ajax_content->isValid()) {  
             $newclient = new Client();
             $this->clientService->saveClient($newclient, $ajax_content, $sR);
                 $client_id = $newclient->getClient_id();
@@ -246,8 +247,8 @@ final class ClientController
                     $client_custom['custom_field_id'] = $custom_field->getId();                    
                     // Note: There are no Required rules for value under ClientCustomForm
                     $client_custom['value'] = '';                    
-                    if ($init_client_custom->load($client_custom) && $validator->validate($init_client_custom)->isValid()) {
-                        $this->clientCustomService->saveClientCustom(new ClientCustom(), $init_client_custom);
+                    if ($formHydrator->populate($init_client_custom, $client_custom) && $init_client_custom->isValid()) {
+                      $this->clientCustomService->saveClientCustom(new ClientCustom(), $init_client_custom);
                     }
                 }
                 $parameters = [
@@ -267,14 +268,14 @@ final class ClientController
     
     /**
      * 
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param array $body
      * @param mixed $matches
      * @param string $client_id
      * @param ccR $ccR
      * @return \Yiisoft\DataResponse\DataResponse
      */
-    public function custom_fields(ValidatorInterface $validator, array $body, mixed $matches, string $client_id, ccR $ccR) : \Yiisoft\DataResponse\DataResponse
+    public function custom_fields(FormHydrator $formHydrator, array $body, mixed $matches, string $client_id, ccR $ccR) : \Yiisoft\DataResponse\DataResponse
     {   
         if (!empty($body['custom'])) {
             $db_array = [];
@@ -315,7 +316,7 @@ final class ClientController
                 $client_custom['value']=$value; 
                 $model = ($ccR->repoClientCustomCount($client_id,$key) == 1 ? $ccR->repoFormValuequery($client_id,$key) : new ClientCustom());
                 if ($model instanceof ClientCustom) {
-                   if ($ajax_custom->load($client_custom) && $validator->validate($ajax_custom)->isValid()) { 
+                   if ($formHydrator->populate($ajax_custom, $client_custom) && $ajax_custom->isValid()) { 
                         $this->clientCustomService->saveClientCustom($model, $ajax_custom);
                    }     
                 }
@@ -347,7 +348,7 @@ final class ClientController
     } 
     
     public function edit(Request $request, cR $cR, ccR $ccR, cfR $cfR, cvR $cvR, 
-            ValidatorInterface $validator, paR $paR, sR $sR, CurrentRoute $currentRoute
+           FormHydrator $formHydrator, paR $paR, sR $sR, CurrentRoute $currentRoute
     ): Response {
      $client = null!==$this->client($currentRoute, $cR) ? $this->client($currentRoute, $cR) : null;
      if ($client) {
@@ -378,14 +379,14 @@ final class ClientController
                 'client_custom_values'=> $this->client_custom_values((string)$client_id, $ccR),                
             ];
             if ($request->getMethod() === Method::POST) {            
-                $edited_body = $request->getParsedBody();
-                if (is_array($edited_body)) {
-                    $returned_form = $this->edit_save_form_fields($edited_body, $client, $validator, $sR);
-                    $parameters['body'] = $edited_body;
-                    $parameters['errors']=$returned_form->getFormErrors(); 
+                $body = $request->getParsedBody();
+                if (is_array($body)) {
+                    $returned_form = $this->edit_save_form_fields($body, $client, $formHydrator, $sR);
+                    $parameters['body'] = $body;
+                    $parameters['errors']= HtmlFormErrors::getFirstErrors($returned_form); 
                     // Only save custom fields if they exist
                     if ($cfR->repoTableCountquery('client_custom') > 0) { 
-                      $this->edit_save_custom_fields($edited_body, $validator, $ccR, (string)$client_id); 
+                      $this->edit_save_custom_fields($body, $formHydrator, $ccR, (string)$client_id); 
                     }
                 }    
                 $this->flash_message('info', $sR->trans('record_successfully_updated'));
@@ -399,15 +400,15 @@ final class ClientController
     
     /**
      * 
-     * @param array $edited_body
+     * @param array $body
      * @param Client $client
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param sR $sR
      * @return ClientForm
      */
-    public function edit_save_form_fields(array $edited_body, Client $client, ValidatorInterface $validator, sR $sR) : ClientForm {
+    public function edit_save_form_fields(array $body, Client $client, FormHydrator $formHydrator, sR $sR) : ClientForm {
         $form = new ClientForm();
-        if ($form->load($edited_body) && $validator->validate($form)->isValid()) {
+        if ($formHydrator->populate($form, $body) && $form->isValid()) {
            $this->clientService->saveClient($client, $form, $sR);
         }
         return $form;
@@ -415,14 +416,14 @@ final class ClientController
     
     /**
      * 
-     * @param array $edited_body
-     * @param ValidatorInterface $validator
+     * @param array $body
+     * @param FormHydrator $formHydrator
      * @param ccR $ccR
      * @param string $client_id
      * @return void
      */
-    public function edit_save_custom_fields(array $edited_body, ValidatorInterface $validator, ccR $ccR, string $client_id): void {
-        $custom = (array)$edited_body['custom'];
+    public function edit_save_custom_fields(array $body, FormHydrator $formHydrator, ccR $ccR, string $client_id): void {
+        $custom = (array)$body['custom'];
         /** @var string $value */
         foreach ($custom as $custom_field_id => $value) {
           $client_custom = $ccR->repoFormValuequery($client_id, (string)$custom_field_id);
@@ -433,7 +434,7 @@ final class ClientController
                   'value'=>$value
               ];
               $form = new ClientCustomForm();
-              if ($form->load($client_custom_input) && $validator->validate($form)->isValid())
+              if ($formHydrator->populate($form, $client_custom_input) && $form->isValid())
               {
                   $this->clientCustomService->saveClientCustom($client_custom, $form);     
               }
@@ -546,13 +547,13 @@ final class ClientController
     
     /**
      * 
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param ccR $ccR
      * @param string $client_id
      * @param array $body
      * @return \Yiisoft\DataResponse\DataResponse
      */
-    public function save_client_custom_fields(ValidatorInterface $validator, ccR $ccR, string $client_id, array $body)
+    public function save_client_custom_fields(FormHydrator $formHydrator, ccR $ccR, string $client_id, array $body)
                     : \Yiisoft\DataResponse\DataResponse
     {  
        $custom = (array)$body['custom'];
@@ -591,7 +592,7 @@ final class ClientController
                 $client_custom['custom_field_id']=$key;
                 $client_custom['value']=$value; 
                 $model = ($ccR->repoClientCustomCount($client_id,$key) == 1 ? $ccR->repoFormValuequery($client_id, $key) : new ClientCustom());
-                if (null!==$model && $ajax_custom->load($client_custom) && $validator->validate($ajax_custom)->isValid()) {
+                if (null!==$model && $formHydrator->populate($ajax_custom, $client_custom) && $ajax_custom->isValid()) {
                     $this->clientCustomService->saveClientCustom($model, $ajax_custom);
                 }           
             }
@@ -610,12 +611,12 @@ final class ClientController
     
     /**
      * 
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param Request $request
      * @param ccR $ccR
      * @return \Yiisoft\DataResponse\DataResponse
      */
-    public function save_custom_fields(ValidatorInterface $validator, Request $request, ccR $ccR)
+    public function save_custom_fields(FormHydrator $formHydrator, Request $request, ccR $ccR)
                     : \Yiisoft\DataResponse\DataResponse
     {
        $body = $request->getQueryParams();
@@ -660,8 +661,8 @@ final class ClientController
                  */
                 $client_custom['value']=$value; 
                 $model = ($ccR->repoClientCustomCount($client_id, $key) == 1 ? $ccR->repoFormValuequery($client_id, $key) : new ClientCustom());
-                if (null!==$model && $ajax_custom->load($client_custom) && $validator->validate($ajax_custom)->isValid()) {
-                    $this->clientCustomService->saveClientCustom($model, $ajax_custom);                
+                if (null!==$model && $formHydrator->populate($ajax_custom, $client_custom) && $ajax_custom->isValid()) {
+                  $this->clientCustomService->saveClientCustom($model, $ajax_custom);                
                 }
             }
             $parameters = [
@@ -679,12 +680,12 @@ final class ClientController
     /**
      * 
      * @param Request $request
-     * @param ValidatorInterface $validator
+     * @param FormHydrator $formHydrator
      * @param cnS $cnS
      * @param sR $sR
      * @return \Yiisoft\DataResponse\DataResponse
      */
-    public function save_client_note_new(Request $request, ValidatorInterface $validator, cnS $cnS, sR $sR) : \Yiisoft\DataResponse\DataResponse 
+    public function save_client_note_new(Request $request, FormHydrator $formHydrator, cnS $cnS, sR $sR) : \Yiisoft\DataResponse\DataResponse 
     {
         $datehelper = new DateHelper($sR);
         //receive data ie. note
@@ -704,7 +705,7 @@ final class ClientController
             'note'=>$note,
         ];
         $content = new ClientNoteForm();        
-        if ($content->load($data) && $validator->validate($content)->isValid()) {    
+        if ($formHydrator->populate($content, $data) && $content->isValid()) {    
             $cnS->addClientNote(new ClientNote(), $content, $sR);
             $parameters = [
                 'success' => 1,
@@ -712,7 +713,7 @@ final class ClientController
         } else {
             $parameters = [
                 'success' => 0,
-                'validation_errors' => $content->getFormErrors()
+                'validation_errors' => HtmlFormErrors::getFirstErrors($content)
             ];
         }        
         return $this->factory->createResponse(Json::encode($parameters));          
