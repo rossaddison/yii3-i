@@ -568,6 +568,7 @@ $lang = [
   'invoice.upload.plural' => 'Uploads',
   'invoice.user.account' => 'Invoice User Account',
   'invoice.user.api.list' => 'Pre-Invoice Users - Signed Up Users',
+  'invoice.user.client.active.no' => 'You have no clients with active user accounts',
   'invoice.user.inv.active.not' => 'The User Account is not Active',
   'invoice.user.inv.more.than.one.assigned' => 'Invoice Creation Unsuccessful: Consult your Settings ... User Account. More than one user has been assigned to this client.',
   'invoice.user.inv.role.accountant' => 'Accountant',

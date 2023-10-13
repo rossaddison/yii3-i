@@ -19,6 +19,7 @@ final class SignupForm extends FormModel implements RulesProviderInterface
 {
     private string $login = '';
     private string $password = '';
+    private string $passwordVerify = '';
 
     public function __construct(
         private ValidatorInterface $validator,

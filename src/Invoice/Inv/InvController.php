@@ -1482,64 +1482,69 @@ final class InvController {
      * @param DLR $dlR
      * @param UCR $ucR
      * @param CurrentRoute $currentRoute
-     * @return \Yiisoft\DataResponse\DataResponse
+     * @return \Yiisoft\DataResponse\DataResponse|Response
      */
-    public function index(Request $request, IAR $iaR, IR $invRepo, IRR $irR, CR $clientRepo, GR $groupRepo, QR $qR, SOR $soR, DLR $dlR, UCR $ucR, CurrentRoute $currentRoute): \Yiisoft\DataResponse\DataResponse {
+    public function index(Request $request, IAR $iaR, IR $invRepo, IRR $irR, CR $clientRepo, GR $groupRepo, QR $qR, SOR $soR, DLR $dlR, UCR $ucR, CurrentRoute $currentRoute): \Yiisoft\DataResponse\DataResponse|Response {
         // If the language dropdown changes
         $this->session->set('_language', $currentRoute->getArgument('_language'));
         $active_clients = $ucR->getClients_with_user_accounts();
-        $clients = $clientRepo->repoUserClient($active_clients);
-        $query_params = $request->getQueryParams();
-        $page = (int) $currentRoute->getArgument('page', '1');
-        //status 0 => 'all';
-        $status = (int) $currentRoute->getArgument('status', '0');
-        /**
-         * @var string|null $query_params['sort']
-         */
-        $sort_string = $query_params['sort'] ?? '-id';
-        $sort = Sort::only(['status_id', 'number', 'date_created', 'date_due', 'id', 'client_id'])
-                // (@see vendor\yiisoft\data\src\Reader\Sort
-                // - => 'desc'  so -id => default descending on id
-                // Show the latest quotes first => -id
-                ->withOrderString($sort_string);
-        $invs = $this->invs_status_with_sort($invRepo, $status, $sort);
-        $paginator = (new OffsetPaginator($invs))
-                ->withPageSize((int) $this->sR->get_setting('default_list_limit'))
-                ->withCurrentPage($page)
-                ->withNextPageToken((string) $page);
-        $inv_statuses = $invRepo->getStatuses($this->sR);
-        $label = $invRepo->getSpecificStatusArrayLabel((string) $status);
-        $this->draft_flash($currentRoute);
-        $parameters = [
-            'page' => $page,
-            'paginator' => $paginator,
-            's' => $this->sR,
-            'sortOrder' => $query_params['sort'] ?? '',
-            'alert' => $this->alert(),'client_count' => $clientRepo->count(),
-            'invs' => $invs,
-            'grid_summary' => $this->sR->grid_summary(
-                    $paginator,
-                    $this->translator,
-                    (int) $this->sR->get_setting('default_list_limit'),
-                    $this->translator->translate('invoice.invoice.invoices'),
-                    $label
-            ),
-            'inv_statuses' => $inv_statuses,
-            'status' => $status,
-            'iaR' => $iaR,
-            'qR' => $qR,
-            'dlR' => $dlR,
-            'soR' => $soR,
-            'irR' => $irR,
-            'max' => (int) $this->sR->get_setting('default_list_limit'),
-            'modal_create_inv' => $this->view_renderer->renderPartialAsString('/invoice/inv/modal_create_inv', [
-                // Only make available clients that have active user accounts => use user_client repository
-                'clients' => $clients,
-                'invoice_groups' => $groupRepo->findAllPreloaded(),
-                'datehelper' => $this->date_helper,
-            ]),
-        ];
-        return $this->view_renderer->render('/invoice/inv/index', $parameters);
+        if ($active_clients) {
+            $clients = $clientRepo->repoUserClient($active_clients);
+            $query_params = $request->getQueryParams();
+            $page = (int) $currentRoute->getArgument('page', '1');
+            //status 0 => 'all';
+            $status = (int) $currentRoute->getArgument('status', '0');
+            /**
+             * @var string|null $query_params['sort']
+             */
+            $sort_string = $query_params['sort'] ?? '-id';
+            $sort = Sort::only(['status_id', 'number', 'date_created', 'date_due', 'id', 'client_id'])
+                    // (@see vendor\yiisoft\data\src\Reader\Sort
+                    // - => 'desc'  so -id => default descending on id
+                    // Show the latest quotes first => -id
+                    ->withOrderString($sort_string);
+            $invs = $this->invs_status_with_sort($invRepo, $status, $sort);
+            $paginator = (new OffsetPaginator($invs))
+                    ->withPageSize((int) $this->sR->get_setting('default_list_limit'))
+                    ->withCurrentPage($page)
+                    ->withNextPageToken((string) $page);
+            $inv_statuses = $invRepo->getStatuses($this->sR);
+            $label = $invRepo->getSpecificStatusArrayLabel((string) $status);
+            $this->draft_flash($currentRoute);
+            $parameters = [
+                'page' => $page,
+                'paginator' => $paginator,
+                's' => $this->sR,
+                'sortOrder' => $query_params['sort'] ?? '',
+                'alert' => $this->alert(),'client_count' => $clientRepo->count(),
+                'invs' => $invs,
+                'grid_summary' => $this->sR->grid_summary(
+                        $paginator,
+                        $this->translator,
+                        (int) $this->sR->get_setting('default_list_limit'),
+                        $this->translator->translate('invoice.invoice.invoices'),
+                        $label
+                ),
+                'inv_statuses' => $inv_statuses,
+                'status' => $status,
+                'iaR' => $iaR,
+                'qR' => $qR,
+                'dlR' => $dlR,
+                'soR' => $soR,
+                'irR' => $irR,
+                'max' => (int) $this->sR->get_setting('default_list_limit'),
+                'modal_create_inv' => $this->view_renderer->renderPartialAsString('/invoice/inv/modal_create_inv', [
+                    // Only make available clients that have active user accounts => use user_client repository
+                    'clients' => $clients,
+                    'invoice_groups' => $groupRepo->findAllPreloaded(),
+                    'datehelper' => $this->date_helper,
+                ]),
+            ];
+            return $this->view_renderer->render('/invoice/inv/index', $parameters);
+        } else {
+            $this->flash_message('info',$this->translator->translate('invoice.user.client.active.no'));
+            return $this->web_service->getRedirectResponse('client/index');  
+        }
     }
 
     /**
