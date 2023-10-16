@@ -1,34 +1,34 @@
 defaults:
   run:
-    working-directory: invoice-api
+    working-directory: invoice
     
 on:
   pull_request:
     paths-ignore:
-      - 'invoice-api/invoice-api/docs/**'
-      - 'invoice-api/README.md'
-      - 'invoice-api/CHANGELOG.md'
-      - 'invoice-api/.gitignore'
-      - 'invoice-api/.env.example'
-      - 'invoice-api/.gitattributes'
-      - 'invoice-api/infection.json.dist'
-      - 'invoice-api/phpunit.xml.dist'
+      - 'invoice/docs/**'
+      - 'invoice/README.md'
+      - 'invoice/CHANGELOG.md'
+      - 'invoice/.gitignore'
+      - 'invoice/.env.example'
+      - 'invoice/.gitattributes'
+      - 'invoice/infection.json.dist'
+      - 'invoice/phpunit.xml.dist'
 
   push:
     paths-ignore:
-      - 'invoice-api/docs/**'
-      - 'invoice-api/README.md'
-      - 'invoice-api/CHANGELOG.md'
-      - 'invoice-api/.gitignore'
-      - 'invoice-api/.env.example'
-      - 'invoice-api/.gitattributes'
-      - 'invoice-api/infection.json.dist'
-      - 'invoice-api/phpunit.xml.dist'
+      - 'invoice/docs/**'
+      - 'invoice/README.md'
+      - 'invoice/CHANGELOG.md'
+      - 'invoice/.gitignore'
+      - 'invoice/.env.example'
+      - 'invoice/.gitattributes'
+      - 'invoice/infection.json.dist'
+      - 'invoice/phpunit.xml.dist'
 
   schedule:
     - cron: '0 0 * * *'
 
-name: invoice-api static analysis
+name: invoice static analysis
 
 jobs:
   mutation:
