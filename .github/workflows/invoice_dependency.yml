@@ -1,30 +1,30 @@
 defaults:
   run:
-    working-directory: invoice-api
+    working-directory: invoice
 
 on:
   pull_request:
     paths-ignore:
-      - 'invoice-api/docs/**'
-      - 'invoice-api/README.md'
-      - 'invoice-api/CHANGELOG.md'
-      - 'invoice-api/.gitignore'
-      - 'invoice-api/.env.example'
-      - 'invoice-api/.gitattributes'
-      - 'invoice-api/phpunit.xml.dist'
-      - 'invoice-api/psalm.xml'
+      - 'invoice/docs/**'
+      - 'invoice/README.md'
+      - 'invoice/CHANGELOG.md'
+      - 'invoice/.gitignore'
+      - 'invoice/.env.example'
+      - 'invoice/.gitattributes'
+      - 'invoice/phpunit.xml.dist'
+      - 'invoice/psalm.xml'
 
   push:
     branches: ['main']  
     paths-ignore:
-      - 'invoice-api/docs/**'
-      - 'invoice-api/README.md'
-      - 'invoice-api/CHANGELOG.md'
-      - 'invoice-api/.gitignore'
-      - 'invoice-api/.env.example'
-      - 'invoice-api/.gitattributes'
-      - 'invoice-api/phpunit.xml.dist'
-      - 'invoice-api/psalm.xml'
+      - 'invoice/docs/**'
+      - 'invoice/README.md'
+      - 'invoice/CHANGELOG.md'
+      - 'invoice/.gitignore'
+      - 'invoice/.env.example'
+      - 'invoice/.gitattributes'
+      - 'invoice/phpunit.xml.dist'
+      - 'invoice/psalm.xml'
 
   schedule:
     - cron: '0 0 * * *'
