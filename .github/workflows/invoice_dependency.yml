@@ -1,35 +1,43 @@
+defaults:
+  run:
+    working-directory: invoice-api
+
 on:
   pull_request:
     paths-ignore:
-      - 'docs/**'
-      - 'README.md'
-      - 'CHANGELOG.md'
-      - '.gitignore'
-      - '.env.example'
-      - '.gitattributes'
-      - 'phpunit.xml.dist'
-      - 'psalm.xml'
+      - 'invoice-api/docs/**'
+      - 'invoice-api/README.md'
+      - 'invoice-api/CHANGELOG.md'
+      - 'invoice-api/.gitignore'
+      - 'invoice-api/.env.example'
+      - 'invoice-api/.gitattributes'
+      - 'invoice-api/phpunit.xml.dist'
+      - 'invoice-api/psalm.xml'
 
   push:
+    branches: ['main']  
     paths-ignore:
-      - 'docs/**'
-      - 'README.md'
-      - 'CHANGELOG.md'
-      - '.gitignore'
-      - '.env.example'
-      - '.gitattributes'
-      - 'phpunit.xml.dist'
-      - 'psalm.xml'
+      - 'invoice-api/docs/**'
+      - 'invoice-api/README.md'
+      - 'invoice-api/CHANGELOG.md'
+      - 'invoice-api/.gitignore'
+      - 'invoice-api/.env.example'
+      - 'invoice-api/.gitattributes'
+      - 'invoice-api/phpunit.xml.dist'
+      - 'invoice-api/psalm.xml'
 
   schedule:
     - cron: '0 0 * * *'
 
-name: dependency checker
+name: invoice-api dependency checker
 
 jobs:
   mutation:
     name: PHP ${{ matrix.php }}-${{ matrix.os }}
-
+    
+    env:
+      working_directory: blog-api
+     
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -43,6 +51,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          working-directory: ${{ env.working_directory }}
 
       - name: Install PHP
         uses: shivammathur/setup-php@v2
@@ -50,9 +60,11 @@ jobs:
           php-version: ${{ matrix.php }}
           tools: composer:v2, cs2pr
           coverage: none
+          working-directory: ${{ env.working_directory }}
 
       - name: Determine composer cache directory
         run: echo "COMPOSER_CACHE_DIR=$(composer config cache-dir)" >> $GITHUB_ENV
+        working-directory: ${{ env.working_directory }}
 
       - name: Cache dependencies installed with composer
         uses: actions/cache@v3
@@ -61,12 +73,16 @@ jobs:
           key: php${{ matrix.php }}-composer-${{ hashFiles('**/composer.json') }}
           restore-keys: |
             php${{ matrix.php }}-composer-
+          working-directory: ${{ env.working_directory }}  
 
       - name: Update composer
         run: composer self-update
+        working-directory: ${{ env.working_directory }}
 
       - name: Install maglnet/composer-require-checker
         run: composer require maglnet/composer-require-checker:^4.0
+        working-directory: ${{ env.working_directory }}
 
       - name: Check dependency
         run: vendor/bin/composer-require-checker
+        working-directory: ${{ env.working_directory }}
