@@ -181,7 +181,7 @@ class ProductController
                 }
             }
         }
-        return $this->viewRenderer->render('_form_new', $parameters);                
+        return $this->viewRenderer->render('_form', $parameters);                
     }
     
     /**
@@ -328,7 +328,7 @@ class ProductController
             ['heading'=>'','message'=>$sR->trans('record_successfully_updated'),'url'=>'product/view',
              'id'=>$product_id]));  
         }
-        return $this->viewRenderer->render('_form_new', $parameters);
+        return $this->viewRenderer->render('_form', $parameters);
     } //if $product 
     return $this->webService->getRedirectResponse('product/index');   
     }
