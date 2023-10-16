@@ -35,7 +35,7 @@ jobs:
     name: PHP ${{ matrix.php }}-${{ matrix.os }}
     
     env:
-      working_directory: invoice-api
+      working_directory: invoice
 
     runs-on: ${{ matrix.os }}
 
