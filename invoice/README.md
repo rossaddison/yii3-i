@@ -15,11 +15,14 @@ Yii3 Invoice
 * Install with Composer.
 
 **Installing with Composer in Windows**
-* Step 1: c:\windows\system32>cd\
-* Step 2: c:\>**md** wamp64\www\yii3-i
-* Step 3: c:\wamp64\yii3-i>**composer update**
+*````composer update````*
 
-Adjust c:\wamp64\yii3-i\config\common\params.php file line approx. 193 to **MODE_WRITE_ONLY** for installation.
+**Installing npm_modules folder containing bootstrap as mentioned in package.json**
+* Step 1: Download node.js at https://nodejs.org/en/download
+* Step 2: Ensure C:\ProgramFiles\nodejs is in environment variable path. Search ... edit the system environment variables
+* Step 3: Run ````npm i```` in ````c:\wamp64\yii3-i\invoice```` folder.
+
+Adjust c:\wamp64\yii3-i\invoice\config\common\params.php file line approx. 193 to **MODE_WRITE_ONLY** for installation.
 This will automatically build up the tables under database yii3-i.
 
 ````'mode' => PhpFileSchemaProvider::MODE_WRITE_ONLY,````
