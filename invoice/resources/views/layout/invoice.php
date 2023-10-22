@@ -157,16 +157,17 @@ $this->beginPage();
         $this->beginBody();
 
         $offcanvas = new Offcanvas();
+        $offcanvas->title($s->get_setting('custom_title') ?: 'Yii-Invoice');
 
         echo NavBar::widget()
           // public folder represented by first forward slash ie. root
           ->brandImage('/site/favicon.ico')
           ->brandImageAttributes(['width' => 40, 'height' => 20])
           ->brandUrl($urlGenerator->generate('invoice/index'))
-          ->offCanvas(
+          ->withWidget(
             // If not full screen => 'burger icon ie. 3 horizontal lines' represents menu and
             // navbar moves in from left
-            $offcanvas->title($s->get_setting('custom_title') ?: 'Yii-Invoice')
+            $offcanvas
           )
           ->begin();
 
