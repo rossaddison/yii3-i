@@ -36,7 +36,7 @@ public function modal(string $class, string $target, string $icon, string $label
 {
     $this->s->load_settings();
     echo Modal::widget()
-    ->title('')
+    ->title($title)
     ->titleOptions(['class' => 'text-center'])
     ->options(['class' => 'col-xs-12 col-sm-10 col-sm-offset-1'])
     ->size(Modal::SIZE_LARGE)        
