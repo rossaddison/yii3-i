@@ -761,7 +761,8 @@ final class InvoiceController
      * @return Flash
      */
     private function flash_message(string $level, string $message): Flash {
-      $this->flash->add($level, $message, true);
+     $this->flash->removeAll(); 
+     $this->flash->add($level, $message, true);
       return $this->flash;
     }
     
@@ -832,6 +833,7 @@ final class InvoiceController
                 $this->install_test_data($trR, $uR, $fR, $pR, $cR, $sR);
         } else {
                 // Test Data Already exists => Settings...View install_test_data must be set back to No
+                $this->flash_message('warning', $this->translator->translate('invoice.install.test.data.exists.already'));
                 $setting = $sR->withKey('install_test_data');
                 if ($setting) {
                     $setting->setSetting_value('0');

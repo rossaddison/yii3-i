@@ -252,6 +252,11 @@ $this->beginPage();
                 'items' => [['options' => ['class' => 'nav fs-4 ajax-loader'], 'label' => $s->trans('view'), 'options' => ['style' => 'background-color: #ffcccb'], 'url' => $urlGenerator->generate('setting/debug_index'), 'visible' => $debug_mode],
                   ['options' => ['class' => 'nav fs-4'], 'label' => $s->trans('add'), 'options' => ['style' => 'background-color: #ffcccb'], 'url' => $urlGenerator->generate('setting/add'), 'visible' => $debug_mode],
                   ['options' => ['class' => 'nav fs-4 ajax-loader'], 'label' => $s->trans('view'), 'url' => $urlGenerator->generate('setting/tab_index')],
+                  ['options' => ['class' => 'nav fs-4'], 'label' => $translator->translate((($s->get_setting('install_test_data') == '1') && ($s->get_setting('use_test_data') == '1')) 
+                                                                   ? 'invoice.install.test.data' : 'invoice.install.test.data.goto.tab.index'), 
+                                                          'url' =>  (($s->get_setting('install_test_data') == '1' && $s->get_setting('use_test_data') == '1') 
+                                                                   ? $urlGenerator->generate('invoice/index') : $urlGenerator->generate('setting/tab_index')),
+                                                          'visible' => ($s->get_setting('install_test_data') == '1' && $s->get_setting('use_test_data') == '1')],         
                   ['options' => ['class' => 'nav fs-4'], 'label' => $s->trans('email_template'), 'url' => $urlGenerator->generate('emailtemplate/index')],
                   ['options' => ['class' => 'nav fs-4'], 'label' => $translator->translate('invoice.email.from.dropdown'), 'url' => $urlGenerator->generate('from/index')],
                   ['options' => ['class' => 'nav fs-4'], 'label' => $s->trans('custom_fields'), 'url' => $urlGenerator->generate('customfield/index')],

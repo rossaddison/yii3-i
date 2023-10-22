@@ -93,6 +93,11 @@ return [
   'yiisoft/cookies' => [
     'secretKey' => '53136271c432a1af377c3806c3112ddf',
   ],
+  // works in association with yiisoft/yii-debug-viewer which is not installed 
+  // @see blog/common/config/di/router.php  which relies on Yiisoft\Yii\Debug\Viewer\Middleware\ToolbarMiddleware
+  'yiisoft/yii-debug' => [
+    'enabled' => false,  
+  ],  
   'yiisoft/yii-view' => [
     'viewPath' => '@views',
     'layout' => '@views/layout/main',

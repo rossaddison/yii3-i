@@ -41,12 +41,12 @@ if (!empty($errors)) {
  <div class="mb3 form-group">
    <label for="left_pad"><?= $s->trans('left_pad'); ?></label>
    <input type="text" name="left_pad" id="left_pad" class="form-control"
- value="<?= Html::encode($body['left_pad'] ??  ''); ?>" required placeholder="0">
+ value="<?= Html::encode($body['left_pad'] ??  '0'); ?>" required placeholder="0">
  </div>
  <div class="mb3 form-group">
    <label for="next_id"><?= $s->trans('next_id'); ?></label>
    <input type="number" name="next_id" id="next_id" class="form-control"
- value="<?= Html::encode($body['next_id'] ??  ''); ?>" required placeholder="1">
+ value="<?= Html::encode($body['next_id'] ??  '1'); ?>" required placeholder="1">
  </div>
 </div>
 <hr>

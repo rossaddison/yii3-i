@@ -123,6 +123,9 @@
         "yiisoft/yii-console": "^2.0",
         "yiisoft/yii-cycle":"dev-master",
         "yiisoft/yii-dataview": "^3.0@dev",
+        
+        "yiisoft/yii-debug": "*",
+        
         "yiisoft/yii-event": "^2.0",
         "yiisoft/yii-http": "^1.0",
         "yiisoft/yii-middleware": "^1.0",
