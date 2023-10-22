@@ -43,16 +43,16 @@ public function modal(string $class, string $target, string $icon, string $label
     ->headerOptions(['class' => 'text-danger'])
     ->bodyOptions(['class' => 'modal-body', 'style' => 'text-align:center;',])
     ->footerOptions(['class' => 'text-dark'])
-    ->closeButton(['tag'=>'button','label'=>"&times;"])
+    ->withCloseButtonLabel("&times;")
     //btn_add_product will be used in invoice.js to populate the modal-placeholder below
-    ->toggleButton([
-                    'class' => [$class],
+    ->withToggleOptions(['class' => [$class],
                     'data-bs-toggle'=>'modal',
                     'data-bs-keyboard'=>$keyboard,
                     'data-bs-target'=>$target,
                     'data-toggle'=>'tooltip',
-                    'title'=>$this->s->trans($title),
-                    'label' =>'<i class="'.$icon.'"></i>'. $this->s->trans($label)])
+                    'title'=>$this->s->trans($title)])
+    ->withToggleLabel('<i class="'.$icon.'"></i>'. $this->s->trans($label))
+    ->withToggle(true)
     ->begin();
     echo '<p></p>';
     echo '<div id="modal-placeholder-'.$placeholdername.'">';
